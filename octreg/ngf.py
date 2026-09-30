@@ -6,7 +6,7 @@ On its base grid each volume I with mask m is smoothed and differentiated inside
 g = grad(G_s(I m) / G_s(m)), so the mask edge adds no gradient; g is taken to world coordinates and n = g / sqrt(|g|^2 + eps^2), eps the median |g| over the MRI points used and over the OCT specimen mask. Both masks are eroded by ngf_erode_mm, so the outlines are left to §2-4. Over the MRI interior
 points x (every second interior MRI voxel along each axis), with the OCT interior weight w,
     F(T) = sum_x w(T^-1 x) (n_O(x) . n_M(x))^2 / sum_x w(T^-1 x),   g_O(x) = A^-T g_OCT(T^-1 x) (A the linear part of T),
-and L = 1 - F + lam (sum ls^2 + sum sh^2) (refine.compose, the prior of §4) is minimised with Adam from the §4 pose, one pass
+and L = 1 - F + ngf_lam (sum ls^2 + sum sh^2) (the prior of §4 with its own weight) is minimised with Adam from the §4 pose, one pass
 per sigma in ngf_sigmas_mm (coarse to fine), learning rates a fifth of those of §4, |ls|, |sh| <= clamp; each pass keeps its
 lowest-L iterate.
 """
@@ -81,7 +81,7 @@ def refine_ngf(mri, oct, T0, params: Params = Params(), device="cuda"):
             with torch.no_grad():
                 info["F_start"] = float(grid.F(torch.tensor(np.asarray(T0, float), dtype=torch.float32, device=grid.w.device)))
         T, Fv, L = fit_adam(grid, T, lambda x: (grid.F(x),), params.ngf_iters + 1, params.ngf_iters,
-                            LR_FRACTION, params)
+                            LR_FRACTION, params, lam=params.ngf_lam)
         del grid
     info.update(F=Fv, L=L, seconds=time.time() - t0)
     return T, info
