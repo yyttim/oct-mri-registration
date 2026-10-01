@@ -166,14 +166,21 @@ def flattened(arr, mask, voxel_mm, params: Params = Params()):
     return x / _upsample(np.divide(gn, gd, out=np.ones_like(gn), where=gd > 0), k, x.shape)
 
 
+def masked_blur(arr, mask):
+    m = np.asarray(mask, bool)
+    weight = ndimage.gaussian_filter(m.astype(np.float32), 1.0)
+    x = ndimage.gaussian_filter(np.where(m, arr, 0), 1.0)
+    return np.divide(x, weight, out=x, where=weight > 0)
+
+
 def two_class(arr, mask, voxel_mm, params: Params = Params(), flatten=True):
+    """Soft bright-tissue map: flatten the foreground, blur it as G(xM)/G(M), then apply an Otsu-centred sigmoid.
+    mask is boolean or fractional (> 0.5 = foreground); return float32 [D, H, W] in [0, 1]."""
     m = np.asarray(mask) > 0.5
     if not m.any():
         raise ValueError("two_class: empty foreground mask")
     x = flattened(arr, m, voxel_mm, params) if flatten else np.asarray(arr, np.float32)
-    weight = ndimage.gaussian_filter(m.astype(np.float32), 1.0)
-    x = ndimage.gaussian_filter(np.where(m, x, 0), 1.0)
-    np.divide(x, weight, out=x, where=weight > 0)
+    x = masked_blur(x, m)
     vals = np.minimum(x[m], np.percentile(x[m], 99.5))
     sd = float(vals.std())
     if not sd > 0:
