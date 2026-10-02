@@ -92,7 +92,7 @@ median |g| over the MRI points used and over the OCT specimen mask. Both masks a
     F(T) = Σ_x w(T⁻¹x) (n_O(x) · n_M(x))² / Σ_x w(T⁻¹x),   g_O(x) = A⁻ᵀ g_OCT(T⁻¹x),
 
 A the linear part of T. A squared cosine needs neither an intensity mapping nor the polarity. L = 1 − F + λ (Σ ℓ_i² + Σ h_i²) is
-minimised as in §4 from the §4 pose, with learning rates a fifth of those of §4, one pass of 150 iterations at each of σ = 0.6,
+minimised as in §4 from the §4 pose, λ the weight `ngf_lam` of §5 (2.0, the value §4 uses), with learning rates a fifth of those of §4, one pass of 150 iterations at each of σ = 0.6,
 0.4 and 0.3 mm, at which section stripes a few tenths of a millimetre apart are smoothed away. §5 refines and does not search: F
 alone does not find the block (among the 24 poses of §4 on I58, one 41 mm away reaches a higher F after refinement than the
 result), and it can lower S, whose outline and tissue classes are coarse.
@@ -331,6 +331,34 @@ split the scale prior show that all of it is the penalty: without the penalty th
 0.88 of its length, and without the clamp the pose does not move at all. §5 itself moves the result by 2.4 mm. The next five
 changes of the §4 pose lie within the reach of §5, which settles them; those steps stay for the §4 pose they give.
 
+The prior of §5 was measured on its own, which `ngf_lam` makes possible: until it was separated, §5 inherited the weight of §4
+through `refine.fit_adam`. From the §4 pose of the released run, §5 was fitted at λ 2, 1, 0.5, 0.2 and 0 on cached base grids
+(`bench/ngf_lam.py`), and every pose was scored by the outline agreement of `bench/evaluate.py`, which §5 does not read.
+
+| `ngf_lam` | F | scales per OCT axis | OCT to MRI rim (mm) | MRI to OCT rim (mm) |
+|---|---|---|---|---|
+| 2.0 (the method) | 0.1026 | 0.977 / 0.974 / 0.985 | 1.119 | 1.676 |
+| 1.0 | 0.1080 | 0.955 / 0.952 / 0.972 | 0.986 | 1.495 |
+| 0.5 | 0.1113 | 0.942 / 0.932 / 0.965 | 0.911 | 1.387 |
+| 0.2 | 0.1140 | 0.932 / 0.899 / 0.964 | 0.878 | 1.289 |
+| 0 | 0.1181 | 0.861 / 0.861 / 0.901 | 1.123 | 1.373 |
+
+F rises as the weight falls, which it must, since F is what §5 maximises. The outline agreement, which it never sees, improves
+with it down to λ 0.2, by 0.24 mm forward and 0.39 mm reverse, and the gain is spread over the faces rather than taken on one
+of them: a0+ 1.34 to 1.06, a1+ 0.93 to 0.56, a1− 1.06 to 0.76, a2+ 2.28 to 2.01, a2− 2.40 to 2.04, with a0− flat at 0.77 to
+0.79. Which of these faces carries the expansion of the block end is not read off here: the face classes are of the raw OCT
+axes and the expansion is stated along MRI axis 1.
+At λ 0 two log-scales sit on the clamp (0.8607 = exp(−0.15)) and the agreement breaks: a0+ falls to 0.80 mm while a0− rises to
+1.41 and a1+ to 1.29, opposite faces moving opposite ways. The penalty is therefore load bearing in §5 as it is in §4, and the
+clamp binds as soon as it goes.
+
+What one weight cannot do is give the correction the shape the interior asks for. The local affine of the interior matches is
+anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points between its largest and smallest; sorted the same
+way, λ 1 shrinks by 4.8, 4.5 and 2.8 % (spread 2.0) and λ 2 by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the
+same frame, so only the spread compares: lowering the weight scales the block down as a whole and does not reach the shape. The rendered
+pose at λ 1 is not distinguishable from the released one by eye, which the blinded readings above would predict of a tenth of a
+millimetre. The weight stays at 2.0, and the anisotropy stays with §6, which fits it where it lies.
+
 Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, and neither is kept on this
 pair's evidence. The one-sided outline (0.23 mm here) is what holds the block at a cut face: with one simulated, the two-sided
 version ends 3.9 mm off, in the last row of the table. MRI flattening (0.18 mm here) does nothing on this pair, whose MRI is a
@@ -460,7 +488,7 @@ dataset needs, they do not enter the Params hash, and their values are in the te
 | `nms_mm`, `nms_deg` | 3 mm, 10° | poses closer in both count as one |
 | `iters`, `lam`, `clamp` | 200, 2.0, 0.15 | Adam iterations, prior weight λ, bound on log-scales and shears |
 | `lr_rot`, `lr_t`, `lr_ls`, `lr_sh` | 0.02 rad, 0.3 mm, 0.01, 0.01 | Adam learning rates (§5: a fifth of these) |
-| `ngf_sigmas_mm`, `ngf_erode_mm`, `ngf_iters` | 0.6, 0.4, 0.3 mm; 0.8 mm; 150 | gradient scales of the §5 passes, mask erosion, Adam iterations per pass |
+| `ngf_sigmas_mm`, `ngf_erode_mm`, `ngf_iters`, `ngf_lam` | 0.6, 0.4, 0.3 mm; 0.8 mm; 150; 2.0 | gradient scales of the §5 passes, mask erosion, Adam iterations per pass, prior weight λ of §5 (§4 uses `lam`) |
 | `df_sigma_mm`, `df_block_mm`, `df_step_mm` | 0.24, 4.5, 1.5 mm | §6: Gaussian σ of the gradients of the structure feature, edge of the matched blocks, grid step of the block centres |
 | `df_z_min`, `df_erode_mm` | 4, 0.6 mm | §6: standard deviations above the mean of its score map a match needs, erosion of both masks that keeps the blocks inside |
 | `df_range_mm`, `df_reach_mm`, `df_profile_mm` | 1.35, 1.35, 2.1 mm | §6: search range of the interior matches, largest distance of a surface edge from the MRI foreground surface, half length of a boundary profile |
