@@ -357,7 +357,20 @@ anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points betw
 way, λ 1 shrinks by 4.8, 4.5 and 2.8 % (spread 2.0) and λ 2 by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the
 same frame, so only the spread compares: lowering the weight scales the block down as a whole and does not reach the shape. The rendered
 pose at λ 1 is not distinguishable from the released one by eye, which the blinded readings above would predict of a tenth of a
-millimetre. The weight stays at 2.0, and the anisotropy stays with §6, which fits it where it lies.
+millimetre.
+
+Two further sweeps ask whether §5 can be made to reach that shape. The penalty splits into the size of the block, the mean of
+the log-scales, and its shape, their deviations from that mean (`ngf_lam_shape`); the two weights at one value are the penalty
+of §4. Relaxing the shape alone moves the fit the other way: at 0.2 the third OCT axis grows to 1.011 and at 0 to 1.106, while
+the singular values of the interior are all above 1 in the other direction, and the outline buys less per millimetre of pose
+than the size weight did, 0.09 mm of rim for 0.56 mm of pose against 0.13 for 0.62. A finer last pass costs instead of gains:
+with σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it is 1.135 / 1.696, against 1.120 / 1.677 at the
+method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of 0.6, 0.4, 0.3, 0.2 to 0.01 mm, so the last pass is
+what decides. 0.2 mm is below the base grid and at the spacing of the section stripes, the scale §5 smooths away by stopping at
+0.3. (F does not compare between schedules, each row reporting it at its own finest σ; the outline does.)
+
+So the prior of §5 sits at a reasonable weight and its passes stop at a reasonable scale. What the interior asks for is not an
+affine the prior is holding back, and the misfit that is left is where §6 fits it.
 
 Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, and neither is kept on this
 pair's evidence. The one-sided outline (0.23 mm here) is what holds the block at a cut face: with one simulated, the two-sided

@@ -75,12 +75,19 @@ def do_sweep(args):
     elif not args.no_boundary:
         print("cache has no oct_valid: rebuild it for the boundary read-out", flush=True)
     rows = []
-    for lam in [float(x) for x in args.lams.split(",")]:
-        P = Params.from_dict({"ngf_lam": lam})
+    key = {"lam": "ngf_lam", "shape": "ngf_lam_shape", "sigmas": "ngf_sigmas_mm"}[args.vary]
+    if args.vary == "sigmas":
+        settings = [(s, {"ngf_sigmas_mm": [float(x) for x in s.split(",")]}) for s in args.sigmas.split("|")]
+    else:
+        settings = [(f"{v:g}", {key: v} if args.vary == "lam" else {"ngf_lam": args.ngf_lam, key: v})
+                    for v in (float(x) for x in args.lams.split(","))]
+    for label, over in settings:
+        P = Params.from_dict(over)
         t = time.time()
         T, info = ngf.refine_ngf(mri, oct_, T0, P, args.device)
         _, _, ls, sh = decompose(T, c)
-        row = {"ngf_lam": lam, "F_start": info["F_start"], "F": info["F"], "L": info["L"],
+        row = {"ngf_lam": P.ngf_lam, "ngf_lam_shape": P.ngf_lam_shape, "ngf_sigmas_mm": list(P.ngf_sigmas_mm),
+               "varied": key, "value": label, "F_start": info["F_start"], "F": info["F"], "L": info["L"],
                "scales": np.exp(ls).tolist(), "shears": sh.tolist(),
                "corners_vs_run_mean_mm": distance(T, T_run, pts)[0], "corners_vs_run_max_mm": distance(T, T_run, pts)[1],
                "corners_vs_affine_mean_mm": distance(T, T0, pts)[0], "seconds": time.time() - t, "T": T.tolist()}
@@ -89,7 +96,7 @@ def do_sweep(args):
             row["rim_median_mm"] = row["boundary"]["rim_median_mm"]
         rows.append(row)
         rim = "" if bnd is None else ("  rim " + " / ".join(f"{x:.3f}" for x in row["rim_median_mm"]) + " mm")
-        print(f"ngf_lam {lam:>5}: F {info['F_start']:.4f} -> {info['F']:.4f}  scales "
+        print(f"{key} {label:>16}: F {info['F_start']:.4f} -> {info['F']:.4f}  scales "
               f"{', '.join(f'{s:.4f}' for s in row['scales'])}  moved {row['corners_vs_affine_mean_mm']:.2f} mm from §4, "
               f"{row['corners_vs_run_mean_mm']:.2f} mm from the run{rim}  ({row['seconds']:.0f} s)", flush=True)
     if args.out:
@@ -102,7 +109,7 @@ def do_transforms(args):
     out = Path(args.out or Path(args.sweep).parent)
     out.mkdir(parents=True, exist_ok=True)
     for r in d["rows"]:
-        f = out / f"T_ngf_lam_{r['ngf_lam']:g}.txt"
+        f = out / f"T_{r.get('varied', 'ngf_lam')}_{str(r.get('value', r['ngf_lam'])).replace(',', '-')}.txt"
         np.savetxt(f, np.asarray(r["T"], float), fmt="%.17g")
         print(f"wrote {f}")
 
@@ -118,6 +125,10 @@ def main():
     s.add_argument("--cache", required=True)
     s.add_argument("--run", required=True, help="an octreg run directory (result.json)")
     s.add_argument("--lams", default="2,1,0.5,0.2,0")
+    s.add_argument("--vary", choices=("lam", "shape", "sigmas"), default="lam", help="what the sweep varies")
+    s.add_argument("--sigmas", default="0.6,0.4,0.3|0.6,0.4,0.3,0.25|0.6,0.4,0.3,0.2|0.45,0.3,0.2",
+                   help="--vary sigmas: schedules of ngf_sigmas_mm, one per |")
+    s.add_argument("--ngf-lam", type=float, default=2.0, help="the size weight held fixed while --vary shape")
     s.add_argument("--device", default="cpu")
     s.add_argument("--no-boundary", action="store_true", help="skip the outline read-out of bench/evaluate.py")
     s.add_argument("-o", "--out", default=None)

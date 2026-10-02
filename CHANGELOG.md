@@ -10,6 +10,8 @@
   agreement of `bench/evaluate.py` at every pose. The measurement on the brainstem pair is in docs/METHOD.md: the penalty is
   load bearing in §5 as it is in §4, the clamp binds without it, and one weight cannot give the correction the shape the
   interior asks for. The default stays at 2.0.
+- §5's prior splits into the size of the block and its shape, `ngf_lam` and `ngf_lam_shape`, equal at 2.0 by default, where
+  together they are the penalty of §4. The default Params hash is `ab058ece8f3093ba`.
 - tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
   and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
 
