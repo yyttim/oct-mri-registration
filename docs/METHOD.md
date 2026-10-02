@@ -369,7 +369,16 @@ method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of 0.6
 what decides. 0.2 mm is below the base grid and at the spacing of the section stripes, the scale §5 smooths away by stopping at
 0.3. (F does not compare between schedules, each row reporting it at its own finest σ; the outline does.)
 
-So the prior of §5 sits at a reasonable weight and its passes stop at a reasonable scale. What the interior asks for is not an
+Neither the stripes nor the grid is what stops the finer passes. A per-section flat field along the array axis the stripes vary
+on, axis 0 here and 1.4 % of the mean, applied to the OCT before §5, is worth 0.006 mm of rim at the method's schedule and
+leaves the finer ones where they were (1.131 / 1.695 mm with σ 0.25 appended). And §5 on a 0.08 mm grid of its own, the
+resolution of the MRI, built by `bench/ngf_lam.py cache --grid-mm`, moves the pose 0.19 mm from the released one at the method's
+schedule and 0.33 mm at 0.3, 0.2, 0.15, with the outline on that grid 1.160 / 1.870 and 1.145 / 1.855 mm against 1.135 / 1.841
+at the released pose: the finer schedule recovers part of what the finer grid costs and neither reaches it. At 0.08 mm the MRI
+carries its own noise and the OCT its speckle, and the gradient directions are noisier, not sharper.
+
+So the prior of §5 sits at a reasonable weight, its passes stop at a reasonable scale and the grid it runs on is fine enough.
+What the interior asks for is not an
 affine the prior is holding back, and the misfit that is left is where §6 fits it.
 
 Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, and neither is kept on this

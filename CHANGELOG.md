@@ -12,6 +12,9 @@
   interior asks for. The default stays at 2.0.
 - §5's prior splits into the size of the block and its shape, `ngf_lam` and `ngf_lam_shape`, equal at 2.0 by default, where
   together they are the penalty of §4. The default Params hash is `ab058ece8f3093ba`.
+- `bench/ngf_lam.py` also sweeps the gradient scales, flat-fields the section stripes out of the OCT (`--destripe`) and
+  caches the volumes on a grid of its own (`--grid-mm`), so §5 can be run finer than §1-4. All three are measured in
+  docs/METHOD.md and none of them improves the pose.
 - tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
   and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
 
