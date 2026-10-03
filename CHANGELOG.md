@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- §5 has its own prior weight `ngf_lam`, default 2.0, the value §4 uses, so §1-5 compute the same affine as 1.1.0 and the
+  released run reproduces to the digits docs/METHOD.md prints. Until now the fine refinement inherited §4's `lam` through
+  `refine.fit_adam` and the two could not be varied apart; `refine.fit_adam` now takes the weight as an argument, defaulting to
+  `params.lam`. The default Params hash moves from `892a1f3b4fd6f7ed` to `103862dbe275572e`; §1-4 and §6 are untouched.
+- `bench/ngf_lam.py`: the §1 base grids cached once, then §5 alone from a run's §4 pose, once per weight, with the outline
+  agreement of `bench/evaluate.py` at every pose. The measurement on the brainstem pair is in docs/METHOD.md: the penalty is
+  load bearing in §5 as it is in §4, the clamp binds without it, and one weight cannot give the correction the shape the
+  interior asks for. The default stays at 2.0.
+- §5's prior splits into the size of the block and its shape, `ngf_lam` and `ngf_lam_shape`, equal at 2.0 by default, where
+  together they are the penalty of §4. The default Params hash is `ab058ece8f3093ba`.
+- `bench/ngf_lam.py` also sweeps the gradient scales, flat-fields the section stripes out of the OCT (`--destripe`) and
+  caches the volumes on a grid of its own (`--grid-mm`), so §5 can be run finer than §1-4. All three are measured in
+  docs/METHOD.md and none of them improves the pose.
+- tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
+  and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
+
 ## 1.1.0
 
 A new final stage, §6 smooth deformation (`octreg/deform.py`, docs/METHOD.md §6). §1-5 compute the same affine as 1.0, to
