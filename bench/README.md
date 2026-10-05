@@ -16,6 +16,7 @@ is machine-specific.
 | `paths.py` | the two machine roots and the input files derived from them |
 | `evaluate.py` | one run measured against the data itself: boundary agreement, OCT mask volume, raw-data frame check, and the pose distance to an earlier octreg run |
 | `ablate.py` | the preprocessing once, then the variants base and A0-A12, one JSON table, the §6 read-outs of base |
+| `ablate_deform.py` | §6 from the cached base grids of `ngf_lam.py cache`: the ablation table of METHOD.md §6 plus wider reaches of the boundary evidence, every row scored by the same measurement, and the boundary residual along the sectioning axis |
 | `dandi.py` | the DANDI blocks: MRI crop, `octreg register`, the cortical-layer read-out and its figure, a markdown summary |
 | `report.py` | writes `bench/BENCHMARK.md` and two figures in `bench/figures/` from the outputs |
 | `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_xiangrui.png`) |
