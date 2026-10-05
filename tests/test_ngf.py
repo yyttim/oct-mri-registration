@@ -1,6 +1,6 @@
 """§5 fine-structure refinement: world gradients of a ramp on a permuted, flipped grid; F is unchanged by inverting or rescaling
 the OCT contrast; a pose 1 mm and 3 degrees off is recovered on a synthetic pair whose OCT is a non-linear, inverted function of
-the MRI structure."""
+the MRI structure; and ngf_lam decides whether the fit takes the scale the fine structure asks for."""
 import numpy as np
 import torch
 from scipy import ndimage
@@ -8,6 +8,8 @@ from scipy.spatial.transform import Rotation
 
 from octreg import geometry as G, ngf
 from octreg.params import Params
+from octreg.refine import decompose
+from octreg.search import box
 
 H = 0.15
 
@@ -41,7 +43,7 @@ def test_gradient_field_ramp():
     assert np.abs(flat).max() < 1e-3                                                  # the mask edge adds no gradient
 
 
-def pair(seed=0):
+def pair(seed=0, scale=(1.0, 1.0, 1.0)):
     rng = np.random.default_rng(seed)
     shape_m = (64, 64, 64)
     A_M = grid(shape_m)
@@ -51,7 +53,7 @@ def pair(seed=0):
     mask_m = ((xm / np.array([4.2, 4.0, 3.8])) ** 2).sum(-1) <= 1
     mri = np.where(mask_m, 1.0 + 0.3 * s, 0.0).astype(np.float32)
     T = np.eye(4)
-    T[:3, :3] = Rotation.from_rotvec([0.2, -0.4, 0.3]).as_matrix()
+    T[:3, :3] = Rotation.from_rotvec([0.2, -0.4, 0.3]).as_matrix() @ np.diag(scale)
     T[:3, 3] = [0.3, -0.2, 0.25]
     shape_o = (60, 62, 58)
     A_O = grid(shape_o, perm=False)
@@ -99,3 +101,16 @@ def test_ngf_separates_mirror_images():
     _, true = ngf.refine_ngf(mri, (o, mo, A_O), T, P, "cpu")
     _, mirrored = ngf.refine_ngf(mri, (o, mo, MIRROR @ A_O), T, P, "cpu")
     assert true["F"] > 1.5 * mirrored["F"], (true["F"], mirrored["F"])
+
+def test_ngf_lam_decides_the_scale():
+    """§5 has its own prior weight. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
+    difference only the fine structure sees: with ngf_lam 0 the fit takes that scale, with a strong ngf_lam it keeps the size
+    it was given."""
+    mri, oct_, T = pair(scale=(1.06, 1.0, 1.0))
+    T0 = T.copy()
+    T0[:3, :3] = Rotation.from_rotvec([0.2, -0.4, 0.3]).as_matrix()                   # the same pose without the scale
+    c = box(oct_[2], oct_[0].shape)[0]
+    base = {"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6, "ngf_iters": 80}
+    ls = lambda lam: decompose(ngf.refine_ngf(mri, oct_, T0, Params.from_dict({**base, "ngf_lam": lam}), "cpu")[0], c)[2][0]
+    free, held, true = ls(0.0), ls(50.0), np.log(1.06)
+    assert free > held and abs(free - true) < abs(held - true), (free, held, true)
