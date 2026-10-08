@@ -6,16 +6,6 @@ octreg aligns an OCT volume of a tissue block embedded in scatterer-doped agaros
 It writes the affine transform between the two input files, a smooth displacement field on top of it where the data support
 one, each volume resampled into the other's frame, and QC images.
 
-![Registration of the I58 brainstem pair](docs/figures/registration_I58.png)
-
-*I58 brainstem pair, one plane per MRI array axis through the registered specimen, read from the original files: the MRI, the
-OCT through the transform and the smooth field, and those two panels cut into 8 mm squares and interleaved. The checkerboard
-is nothing but the two of them, on the same two grey scales, not inverted, not matched to each other and not masked, so every
-square can be checked against the panel it came from and a structure runs on across a square edge where the two agree. What a
-checkerboard settles, and what it does not, is measured in docs/METHOD.md; the panel that resolves a few millimetres is the
-fourth column of the run's qc.png. Two places where the two volumes do not agree are disclosed there as well: the cerebellar
-pieces that tore during sectioning, and the sections at one end of the block.*
-
 ## Installation
 
 ```
@@ -53,7 +43,7 @@ OCT-frame file when it is a TIFF or NPY that no longer sits where the run read i
 | `oct_in_mri.nii.gz` | OCT on the MRI grid through the affine and the deformation |
 | `oct_in_mri_affine.nii.gz` | OCT on the MRI grid through the affine alone (the same image when no deformation is applied) |
 | `mri_in_oct.nii.gz` | MRI on a 0.15 mm grid in the OCT frame, through the affine |
-| `qc.png`, `qc_montage.png` | visual QC of the affine, four columns: OCT, MRI through the transform, a checkerboard of the two, and the OCT with the MRI foreground (red) and specimen mask (cyan) outlines. The outlines are what decides a pose; in every plane the MRI boundary should follow the edge of the OCT specimen and the OCT should lie on the same MRI anatomy |
+| `qc.png`, `qc_montage.png` | visual QC of the affine, four columns: OCT, MRI through the transform, a checkerboard of the two, and the OCT with the MRI foreground (red) and specimen mask (cyan) outlines. In every plane the MRI boundary should follow the edge of the OCT specimen and the OCT should lie on the same MRI anatomy |
 | `qc_deform.png` | only with a deformation: MRI, OCT through the affine, OCT through affine and deformation, and the field magnitude, on three planes with the MRI outline |
 | `result.json` | scores, fine-structure agreement, handedness, contrast polarity, scales, deformation read-outs, flags, runtime |
 
@@ -72,9 +62,10 @@ OCT-frame file when it is a TIFF or NPY that no longer sits where the run read i
    held-out error under a strain limit, and without a held-out gain, or with no weight that keeps the limit, no field is
    applied. The affine stays the primary result.
 
-The method assumes an OCT block embedded in scatterer-doped agarose and an MRI cropped around it. On the brainstem pair above
-it places the block to about 0.3 mm over the specimen. On the cortex slabs of DANDI:000026, which are not embedded, the outline
-carries almost nothing and the search finds the block on one of eight. Within that set the runs say so in their own scores, but
-the scores are not a threshold that carries from one kind of specimen to another, and the overlay is what decides.
+The method assumes an OCT block embedded in scatterer-doped agarose and an MRI cropped around it. It was developed and
+benchmarked on the I58 brainstem pair, which is unpublished, so the figures of that pair are drawn locally by the bench scripts
+and are not in the repository. Results on the cortex blocks of DANDI:000026 (public, CC-BY 4.0, Costantini et al. 2023), which
+are not embedded, are withdrawn until a re-run: `bench/dandi.py` built six of the eight MRI crops through label headers that
+do not match the MRI.
 
 Details, evaluation and parameters: [docs/METHOD.md](docs/METHOD.md).

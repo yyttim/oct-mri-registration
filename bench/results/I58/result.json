@@ -2,7 +2,7 @@
  "octreg_version": "1.1.0",
  "inputs": {
   "oct": {
-   "path": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
+   "path": "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
    "shape": [
     1457,
     2013,
@@ -42,7 +42,7 @@
    "frame": "header"
   },
   "mri": {
-   "path": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_brainstem_MRI_cropped_to_OCT.nii.gz",
+   "path": "I58_brainstem_MRI_cropped_to_OCT.nii.gz",
    "shape": [
     343,
     489,

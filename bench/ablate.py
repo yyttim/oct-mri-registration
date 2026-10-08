@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ablations of octreg on Xiangrui's I58 brainstem pair.
+"""Ablations of octreg on the I58 brainstem pair.
 
     python bench/ablate.py --out ABL [--main RUN] [--previous OLD/ablations.json ...] [--only A1,A4] [--device cuda] [--force]
 
@@ -292,7 +292,7 @@ def main():
     prep = {s: json.loads((a.out / "prep" / s / "prep.json").read_text()) for s in sources + ["mri"]}
     grid = next((p["grid"] for p in prep.values() if "grid" in p), {})
     work = [grid.get("seconds", 0)] + [p.get("mask_seconds", p.get("seconds", 0)) for p in prep.values()] + [r["seconds"] for r in rows.values()]
-    res = {"pair": "Xiangrui I58 brainstem", "oct": E.OCT, "mri": E.MRI, "params_hash": Params().hash(), "prep": prep,
+    res = {"pair": "I58 brainstem", "oct": E.OCT, "mri": E.MRI, "params_hash": Params().hash(), "prep": prep,
            "variants": table, "seconds": sum(work),          # the computation in the table, also when variants come from the cache
            "peak_rss_gb": max([p.get("peak_rss_gb") or 0 for p in prep.values()] + [r.get("peak_rss_gb") or 0 for r in rows.values()]),
            "driver_seconds": time.time() - t0}
@@ -313,7 +313,7 @@ def main():
             want = ", ".join(n for g in REMOVED for n in g["step"])
             print(f"warning: --previous {path} holds none of the removed steps ({want}); its variants are "
                   f"{', '.join(prev.get('variants', {}))}. The removed-step rows of the report will be missing: point "
-                  "--previous at the ablation run that measured them, bench_runs/xiangrui_I58/ablate/ablations.json.",
+                  "--previous at the ablation run that measured them, bench_runs/I58/ablate/ablations.json.",
                   flush=True)
     if a.main:
         T_main = E.load_T(a.main / "T_oct2mri.txt")

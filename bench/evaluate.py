@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Label-free evaluation of an octreg run on Xiangrui's I58 brainstem pair (bench only; the method never sees any of this).
+"""Label-free evaluation of an octreg run on the I58 brainstem pair (bench only; the method never sees any of this).
 
     python bench/evaluate.py RUN [--masks DIR] [--previous OLD_RUN] [--no-frame-check] [-o RUN/eval.json]
     python bench/evaluate.py --selftest                     # synthetic, CPU, a few seconds
@@ -40,7 +40,7 @@ import numpy as np
 from scipy import ndimage
 from scipy.stats import spearmanr
 
-from paths import MRI_I58 as MRI, OCT_I58 as OCT          # bench/paths.py: OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT
+from paths import MRI_I58 as MRI, OCT_I58 as OCT          # bench/paths.py: OCTREG_DATA_ROOT, OCTREG_I58_DIR
 
 MASK_FILES = ("oct_mask.nii.gz", "oct_valid.nii.gz", "mri_mask.nii.gz")
 DEEP_END = "a0+"                                        # raw OCT axis 0, high index: the rim-less deep end

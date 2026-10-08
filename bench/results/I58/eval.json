@@ -1,7 +1,7 @@
 {
- "run": "D:\\Projects\\oct-mri-registration\\bench_runs\\xiangrui_I58\\rel8\\main",
- "oct": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
- "mri": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_brainstem_MRI_cropped_to_OCT.nii.gz",
+ "run": "bench_runs/I58/rel8/main",
+ "oct": "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
+ "mri": "I58_brainstem_MRI_cropped_to_OCT.nii.gz",
  "T_oct2mri": [
   [
    0.9667977690696716,
@@ -29,7 +29,7 @@
   ]
  ],
  "mask": {
-  "source": "D:\\Projects\\oct-mri-registration\\bench_runs\\xiangrui_I58\\rel8\\ablate\\prep\\texture",
+  "source": "bench_runs/I58/rel8/ablate/prep/texture",
   "volume_cm3": 19.241366668749464
  },
  "boundary": {
@@ -101,7 +101,7 @@
   }
  },
  "pose_to_previous": {
-  "run": "D:\\Projects\\oct-mri-registration\\bench_runs\\xiangrui_I58\\rel7\\main",
+  "run": "bench_runs/I58/rel7/main",
   "points": "the run's OCT specimen mask",
   "n_points": 89408,
   "mean_mm": 0.0011683626887297725,

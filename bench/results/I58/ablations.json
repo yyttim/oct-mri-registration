@@ -1,7 +1,7 @@
 {
- "pair": "Xiangrui I58 brainstem",
- "oct": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
- "mri": "D:\\Datasets\\oct-mri-registration\\xiangrui\\OCT_to_MRI\\I58_brainstem_MRI_cropped_to_OCT.nii.gz",
+ "pair": "I58 brainstem",
+ "oct": "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz",
+ "mri": "I58_brainstem_MRI_cropped_to_OCT.nii.gz",
  "params_hash": "892a1f3b4fd6f7ed",
  "prep": {
   "intensity": {
@@ -3033,7 +3033,7 @@
     "A7": "rigid -> similarity -> affine ladder"
    },
    "note": "Copied from the first ablation run, whose base still had the section-stripe flat field and the ladder (and the earlier score, two-class maps under an overlap gate), so pose changes in these rows are against that base. Removing either step moved the pose by less than the 0.5 mm deletion threshold and both were deleted.",
-   "source": "D:\\Projects\\oct-mri-registration\\bench_runs\\xiangrui_I58\\ablate\\ablations.json",
+   "source": "bench_runs/I58/ablate/ablations.json",
    "rows": {
     "A3": {
      "change": "section-stripe flat field off",
@@ -3349,7 +3349,7 @@
   }
  ],
  "driver_check": {
-  "main_run": "D:\\Projects\\oct-mri-registration\\bench_runs\\xiangrui_I58\\rel8\\main",
+  "main_run": "bench_runs/I58/rel8/main",
   "base_vs_main": {
    "mean_mm": 0.0,
    "max_mm": 0.0,

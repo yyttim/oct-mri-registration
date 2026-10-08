@@ -5,7 +5,7 @@
 - §5 has its own prior weight `ngf_lam`, default 2.0, the value §4 uses, so §1-5 compute the same affine as 1.1.0 and the
   released run reproduces to the digits docs/METHOD.md prints. Until now the fine refinement inherited §4's `lam` through
   `refine.fit_adam` and the two could not be varied apart; `refine.fit_adam` now takes the weight as an argument, defaulting to
-  `params.lam`. The default Params hash moves from `892a1f3b4fd6f7ed` to `103862dbe275572e`; §1-4 and §6 are untouched.
+  `params.lam`. §1-4 and §6 are untouched.
 - `bench/ngf_lam.py`: the §1 base grids cached once, then §5 alone from a run's §4 pose, once per weight, with the outline
   agreement of `bench/evaluate.py` at every pose. The measurement on the brainstem pair is in docs/METHOD.md: the penalty is
   load bearing in §5 as it is in §4, the clamp binds without it, and one weight cannot give the correction the shape the
@@ -17,6 +17,19 @@
   docs/METHOD.md and none of them improves the pose.
 - tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
   and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
+- The figures of the I58 pair are no longer in the repository, since the data are unpublished. The bench scripts draw them
+  locally.
+- The DANDI:000026 results are withdrawn until a re-run. `bench/dandi.py` built six of the eight MRI crops through label
+  headers that do not match the MRI, and only sub-I46 and sub-I55 were placed correctly. Their table,
+  `bench/results/dandi/summary.json`, is removed, and `bench/dandi.py --steps summary` now writes `summary.json` into its
+  output root.
+- The documents no longer report counts or measurements from visual readings of the QC images. The numbers the code computes
+  are unchanged.
+- The I58 pair is named by its subject alone, and the bench files follow: the runner is `bench/run_i58.py`, the stored results
+  are in `bench/results/I58/`, the figures are `fig_*_I58.png` and the default run directory is `bench_runs/I58`.
+- The bench paths default to the repository, runs under `bench_runs/` and data under `data/`, both ignored by git.
+  `OCTREG_PROJECT_ROOT` and `OCTREG_DATA_ROOT` override the two, and `OCTREG_I58_DIR` the folder that holds the two I58 input
+  files (default `<data root>/I58`). Stored result JSON keeps file names and run paths relative to the repository.
 
 ## 1.1.0
 
@@ -37,7 +50,7 @@ from docstrings.
   evidence (the rim is a layer below the surface, so the ridge reads a bias that depends on the face), a search over lattice
   spacings, and further rounds of measuring and refitting (docs/METHOD.md, I58 brainstem pair).
 - `octreg/blockmatch.py` now holds the interior evidence of §6 and nothing else: the prior-free robust affine of 1.0.1, tried
-  in place of §5 and rejected by blinded judging, is gone from the package, and with it the ablation variant A13.
+  in place of §5 and dropped, is gone from the package, and with it the ablation variant A13.
 - New outputs: `oct2mri_warp.nii.gz` (the field, a NIfTI vector image on the MRI base grid, pull-back convention stated in
   `octreg/deform.py`) and `qc_deform.png`, both only when a field is applied, and `oct_in_mri_affine.nii.gz`, which is what
   `oct_in_mri.nii.gz` was before. `oct_in_mri.nii.gz` now goes through the affine and the field. `result.json` gains the block
@@ -46,15 +59,15 @@ from docstrings.
 - `octreg apply` uses the field of the run for OCT-frame volumes, `--affine-only` leaves it out, and `--inverse` stays affine
   (the field is not inverted). `geometry.resample_to` takes an optional pull-back field, and `io.save_field` / `io.load_field`
   write and read it.
-- `bench/dandi.py` is one honest protocol instead of several. It crops the MRI to the subject's own Broca-area label box plus
+- `bench/dandi.py` is one protocol instead of several. It crops the MRI to the subject's own Broca-area label box plus
   5 mm, with every side grown to at least the longest side of the OCT array, then calls `octreg register`, the released entry
   point, and evaluates the result against the cortical-layer label the method never reads. The location prior of the
   superseded pipeline, the whole-hemisphere coarse search, the per-subject voxel spacings and the hand-written verdicts are
   gone. Eight of the nine subjects with both modalities are used, and the crop step refuses sub-I56, whose label files have an
-  affine that disagrees with their array. The result is in docs/METHOD.md, "Beyond the target data".
+  affine that disagrees with their array.
 - Every JSON octreg writes (`result.json` and the benchmark's tables) now has LF line ends on every OS, as the transform
   files have had since 1.0.1.
-- `bench/run_xiangrui.sh` is gone. It only ran on one server, and `bench/run_xiangrui.py` does the same on any machine.
+- The shell runner of the I58 pair is gone. It only ran on one server, and `bench/run_i58.py` does the same on any machine.
 - The benchmark no longer needs the tree of the superseded pipeline. The ablation variant A0b fed that pipeline's OCT specimen
   mask to the method and is gone. So is the reference column `vs R5 corners max (mm)`, which held the distance to that
   pipeline's pose, and `V1_ROOT` in `bench/paths.py` went with them. `bench/evaluate.py` and `bench/ablate.py` now read the two
@@ -65,25 +78,19 @@ from docstrings.
   `octreg/geometry.py` as `gauss_1d` and `filter_sep`. Identical bytes in, identical bytes out, so no number moves.
 - The scale prior of §4 was ablated as one thing and is two. New variants A6p and A6c take the penalty and the clamp apart:
   with λ 0 and the clamp kept the §4 pose moves 16.9 mm and every scale sits on the bound, and with the clamp removed and λ 2
-  kept the pose does not move at all. All of the prior is the penalty. The clamp stays as a bound that has never bound in any
-  of the twelve registrations in this repository, and `clamp_saturated` is how a run says it did.
+  kept the pose does not move at all. All of the prior is the penalty. The clamp stays as a bound that has never bound on
+  the I58 pair, and `clamp_saturated` is how a run says it did.
 - `bench/ablate.py --only` used to overwrite the whole table with the rows it ran. It now merges into what is there, and
   refuses to merge rows written under other Params.
 - `bench/dandi.py` gains `--tag`, which evaluates a variant run of a subject such as the `_allmeasured` diagnostic against the
-  subject's own crop and the mask that run was given. The numbers docs/METHOD.md quotes for that diagnostic now come from
-  eval.json files the repository can write. `--steps summary` refuses to write the released table unless every subject has a
-  run, so a partial run cannot overwrite it.
-- `bench/report.py --store` copies the run's result.json, eval.json and ablations.json into bench/results/xiangrui_I58, and
+  subject's own crop and the mask that run was given. `--steps summary` refuses to write the released table unless every
+  subject has a run, so a partial run cannot overwrite it.
+- `bench/report.py --store` copies the run's result.json, eval.json and ablations.json into bench/results/I58, and
   the figures step now writes every figure bench/BENCHMARK.md shows, not two of the four. The report is one command again.
-- Two stored results that no document or script named, `bench/results/xiangrui_I58/first_run` and `no_flattening`, are gone.
+- Two stored results of the I58 pair that no document or script named, `first_run` and `no_flattening`, are gone.
   Both were written under Params that no longer exist.
-- Corrections to the documents, from reading them against the stored runs. The DANDI table gains the layer separation at the
-  §4 pose, which was stored all along and never reported, and it shows that on sub-I58 §4 lands above the random range and §5
-  moves it off, so the failures are not all the search. The claim that the scores flag a failure is now stated as within that
-  set, because the brainstem pair is a correct registration whose own |S_class| is 0.11, below every failing block there. The
-  blinded-reading paragraph now says what was rendered and how many images and readers. Two steps, not one, sit inside the
-  deletion threshold, and each is kept on evidence from outside this pair: MRI flattening is worth 0.047 of |S_class| on the
-  whole-hemisphere MRI of DANDI sub-I55, and the one-sided outline is what holds the block at a cut face.
+- Corrections to the documents, from reading them against the stored runs. Two steps, not one, sit inside the deletion
+  threshold: MRI flattening, and the one-sided outline, which is what holds the block at a cut face.
 - §4 now says that the winning pose is the third of the 24 by search score, so refining more than one is load bearing, and
   what that costs.
 - The README figure shows the result as directly as it can be shown: per plane the MRI, the registered OCT, and those two
@@ -91,11 +98,6 @@ from docstrings.
   neither inverted nor matched to each other nor masked, so every square can be checked against the panel it came from.
   Nothing is drawn on the data and nothing in the figure is derived from either mask; the script lost a third of its lines
   and one of its inputs with the machinery that used to do all that.
-- Two more blinded readings, which the documents now carry. The interior of the OCT with the MRI's structure edges on it came
-  back 9 right, 1 wrong and 2 refusals out of 12 against 3 mm of imposed error, between the boundary outline's 12 of 12 and
-  the checkerboard's chance. The checkerboard in the 14 mm window, the scale at which a square holds a structure, came back 5
-  right, 6 wrong and 1 refusal: zooming does not rescue it, and one reader gave the reason, that the two volumes are
-  inversely contrasted there, so a correct alignment makes the grid of steps look stronger rather than weaker.
 - The QC figures read better and nothing about the transforms changed. The MRI column of `qc.png`, `qc_montage.png` and
   `qc_deform.png` is now mapped by rank onto the grey scale of the OCT in the tissue both show, instead of being stretched
   between its own percentiles, where it used to clip to white over large parts of the specimen. The checkerboard is drawn
@@ -103,14 +105,11 @@ from docstrings.
   field out of the panel without hiding anything that could disagree: that support grows as the pose gets worse, and tissue in
   the tiles of one volume against nothing in the tiles of the other stays visible. `bench/fig_registration.py` follows, and
   `bench/dandi.py` cuts the label outlines of `qc_labels.png` to the measured OCT and names the labels in a legend. Two
-  controls on the I58 pair decided this. Local evening of the two volumes before the checkerboard was tried and dropped, since
-  a pose moved 2 mm does not read worse with it. Drawing the checkerboard only where both maps reach was tried and dropped as
-  unfair: the visible disagreement inside that support is identically zero at 0, 2 and 5 mm of imposed error, so the rule is
-  blind to a misplaced block by construction.
-- The README figure gains the MRI tissue boundary on its registered-OCT panel, because blinded readers can decide a pose on
-  that panel and not on a checkerboard: 12 of 12 against 3 mm of imposed error, where the checkerboard gave 7 right, 5 wrong
-  and 6 refusals (docs/METHOD.md, "Evaluation"). The file keeps one outline colour beside its greys instead of being flattened
-  to grey.
+  alternatives were tried on the I58 pair and dropped: local evening of the two volumes before the checkerboard, and drawing
+  the checkerboard only where both maps reach, which is blind to a misplaced block by construction, since the visible
+  disagreement inside that support is identically zero at 0, 2 and 5 mm of imposed error.
+- The README figure gains the MRI tissue boundary on its registered-OCT panel. The file keeps one outline colour beside its
+  greys instead of being flattened to grey.
 - New Params `df_*` (METHOD.md, Parameters), so the default Params hash changes from `7d01b8a167a83631` to
   `892a1f3b4fd6f7ed` although §1-5 are untouched. `bench/ablate.py` therefore checks a prep against the §1 fields only
   (`prep_hash`) and accepts the preps of 1.0. It runs §6 for base and stores its read-outs, and `bench/report.py` prints them.
@@ -121,12 +120,11 @@ No change to the method or its results: same Params and hash, same `result.json`
 
 - Windows portability. The transform files (`T_oct2mri.txt`, `T_mri2oct.txt`, `oct2mri.lta`, `oct2mri_itk.txt`) are written with
   LF line ends on every OS. `peak_rss_gb` in `result.json` is filled on Windows too (the peak working set;
-  `octreg.register.peak_rss_gb`). The benchmark reads its machine roots from `bench/paths.py`, and `bench/run_xiangrui.py` is the
-  cross-platform runner next to the POSIX `bench/run_xiangrui.sh` of this release.
+  `octreg.register.peak_rss_gb`). The benchmark reads its machine roots from `bench/paths.py`, and a Python runner of the I58 pair,
+  now `bench/run_i58.py`, works on any OS next to the POSIX shell runner of this release.
 - `octreg/blockmatch.py`, at this release a diagnostic the method does not call. It measures a label-free residual displacement
   field between the MRI and the registered OCT from local fine structure. A robust affine fitted to this field alone was tested
-  in place of §5 and rejected by blinded visual judging on the I58 pair (58 votes to 10 for the pose of 1.0): it shrinks the
-  OCT by 2 to 3 % relative to the specimen outline. `bench/ablate.py` documents it as variant A13. Both the robust affine and
+  in place of §5 on the I58 pair and not adopted. `bench/ablate.py` documents it as variant A13. Both the robust affine and
   A13 were removed in 1.1.0, where what is left of the module became the interior evidence of §6.
 
 ## 1.0.0

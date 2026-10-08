@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""README registration figure in the MRI frame, read from the original files: three MRI array planes through the registered
-OCT specimen centre, three panels each.
+"""Registration figure in the MRI frame, read from the original files: three MRI array planes through the registered
+OCT specimen centre, three panels each. For the I58 pair it is drawn locally and not published.
 
     MRI              the reference, as it is, on its own grey scale.
     registered OCT   the OCT through the run's transform and its smooth field, on the same plane and its own grey scale.
@@ -9,8 +9,7 @@ OCT specimen centre, three panels each.
                      runs on across a square edge where the two agree and steps where they do not, and the reader can check
                      any square against the panel it came from.
 
-The OCT is box-averaged to the MRI voxel size before it is sampled. What a checkerboard settles, and what it does not, is
-measured in docs/METHOD.md under "Evaluation".
+The OCT is box-averaged to the MRI voxel size before it is sampled.
 
     python bench/fig_registration.py --run RUN --mask MASK --oct OCT --mri MRI -o FIG.png
 

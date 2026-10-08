@@ -1,50 +1,49 @@
 # bench
 
-Benchmark of octreg 1.1 on Xiangrui's I58 brainstem pair, and a generality check on the DANDI:000026 Broca-area blocks. It
-lives in the repository but is not part of the package, and the method never reads anything here. The I58 pair has no labels,
-so its metrics are label-free.
+Benchmark of octreg 1.1 on the I58 brainstem pair, and a script for the DANDI:000026 Broca-area blocks. It lives in the
+repository but is not part of the package, and the method never reads anything here. The I58 pair has no labels, so its
+metrics are label-free.
 
-The scripts find their files through `bench/paths.py`: a project root, which holds `bench_runs/`, and a data root, which holds
-the two I58 files and the DANDI tree. `OCTREG_PROJECT_ROOT` and `OCTREG_DATA_ROOT` override the two. Without an override the
-project root is `D:/Projects/oct-mri-registration`, and the data root is `<project root>/oct-mri-registration/data` where that
-directory exists and `D:/Datasets/oct-mri-registration` otherwise. On any other machine set both variables. Nothing else here
-is machine-specific.
+The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/` and the data are read from
+`data/` of the repository, and both are in `.gitignore`. `OCTREG_PROJECT_ROOT` moves the runs to `<project root>/bench_runs`,
+`OCTREG_DATA_ROOT` moves the data root, which holds the I58 folder and the DANDI tree, and `OCTREG_I58_DIR` names the folder
+that holds the two I58 input files (by default `<data root>/I58`). Nothing else here is machine-specific.
 
 | file | what it does |
 |---|---|
-| `run_xiangrui.py` | the runner for the I58 pair: the steps register, ablate, evaluate and report, their overrides and log files, on any OS |
-| `paths.py` | the two machine roots and the input files derived from them |
+| `run_i58.py` | the runner for the I58 pair: the steps register, ablate, evaluate and report, their overrides and log files, on any OS |
+| `paths.py` | the run and data roots and the input files derived from them |
 | `evaluate.py` | one run measured against the data itself: boundary agreement, OCT mask volume, raw-data frame check, and the pose distance to an earlier octreg run |
 | `ablate.py` | the preprocessing once, then the variants base and A0-A12, one JSON table, the §6 read-outs of base |
 | `ablate_deform.py` | §6 from the cached base grids of `ngf_lam.py cache`: the ablation table of METHOD.md §6 plus wider reaches of the boundary evidence, every row scored by the same measurement, and the boundary residual along the sectioning axis |
-| `dandi.py` | the DANDI blocks: MRI crop, `octreg register`, the cortical-layer read-out and its figure, a markdown summary |
-| `report.py` | writes `bench/BENCHMARK.md` and two figures in `bench/figures/` from the outputs |
-| `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_xiangrui.png`) |
+| `dandi.py` | the DANDI blocks: MRI crop, `octreg register`, the cortical-layer read-out and its figure, a markdown summary (results withdrawn, see below) |
+| `report.py` | writes `bench/BENCHMARK.md` from the outputs, and the qc figures it describes into `bench/figures/` |
+| `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
 | `fig_registration.py` | the registration figure: an MRI plane, the OCT placed on it by the run, and those two panels cut into 8 mm squares and interleaved |
 | `BENCHMARK.md` | the I58 report, written by `report.py`, which keeps its hand-written "Visual result" section and its closing reading |
 | `results/` | the JSON copied out of the run directories |
-| `figures/` | the figures of `BENCHMARK.md` and of the registration figure |
+| `figures/` | the figures of the I58 pair, which these scripts draw locally and which are not published |
 
 ## Running the I58 benchmark
 
-`bench/run_xiangrui.py` runs the steps from the repository root, with the interpreter that runs it. The whole benchmark is
+`bench/run_i58.py` runs the steps from the repository root, with the interpreter that runs it. The whole benchmark is
 `register ablate evaluate report`, with `evaluate` run twice: the mask and boundary metrics need the preprocessing that the
 ablate step writes.
 
 ```bash
-export OUT=/new/dir/bench_runs/xiangrui_I58/myrun/main          # a directory that holds no run yet
-export ABL=/new/dir/bench_runs/xiangrui_I58/myrun/ablate
-STEPS="register evaluate" python bench/run_xiangrui.py          # the registration, then the metrics that need no masks
-STEPS="ablate evaluate report" python bench/run_xiangrui.py     # the ablations, then all metrics, then BENCHMARK.md
+export OUT=/new/dir/bench_runs/I58/myrun/main               # a directory that holds no run yet
+export ABL=/new/dir/bench_runs/I58/myrun/ablate
+STEPS="register evaluate" python bench/run_i58.py           # the registration, then the metrics that need no masks
+STEPS="ablate evaluate report" python bench/run_i58.py      # the ablations, then all metrics, then BENCHMARK.md
 ```
 
 PowerShell sets the same variables with `$env:OUT = "...\myrun\main"`. To detach: `setsid nohup ... &` on POSIX,
-`Start-Process -WindowStyle Hidden python bench/run_xiangrui.py` on Windows.
+`Start-Process -WindowStyle Hidden python bench/run_i58.py` on Windows.
 
 `register` is `python -m octreg register OCT MRI -o OUT` on the two original files, with default parameters. The other
 overrides are `PREV` (the `ablations.json` of the run that measured the removed steps A3 and A7, by default
-`bench_runs/xiangrui_I58/ablate/ablations.json`, the first ablation run), `PREV_MAIN` (an earlier run for the pose distance,
-by default `bench_runs/xiangrui_I58/rel7/main`, release 1.0), `DEVICE` (`cuda` or `cpu`) and `CODE` (the repository to run
+`bench_runs/I58/ablate/ablations.json`, the first ablation run), `PREV_MAIN` (an earlier run for the pose distance,
+by default `bench_runs/I58/rel7/main`, release 1.0), `DEVICE` (`cuda` or `cpu`) and `CODE` (the repository to run
 from, by default the one this file is in). `OUT` and `ABL` default to the released run, `rel8/main` and `rel8/ablate`, so a
 new run has to set both. Every step writes `NAME.log`, `NAME.time` (wall time, peak RSS) and `NAME.gpu_mib`
 (nvidia-smi samples, when nvidia-smi is on the PATH) into `${OUT}_logs`, and a start and a done line per step (and the last 5
@@ -58,16 +57,21 @@ without an override is the released run.
 `python bench/evaluate.py --selftest` checks the frame check, the boundary agreement, the pose distance and the mask volume on
 synthetic arrays in a few seconds, on the CPU and without any of the data.
 
-The released run is `bench_runs/xiangrui_I58/rel8`. The report step copies its `result.json`, `eval.json` and
-`ablations.json` into `bench/results/xiangrui_I58/` (`report.py --store`) and writes `BENCHMARK.md` and `bench/figures` from
-them, so the document and the numbers it quotes are one command and never drift apart.
+The released run is `bench_runs/I58/rel8`. The report step copies its `result.json`, `eval.json` and `ablations.json`
+into `bench/results/I58/` (`report.py --store`, with every absolute path cut to a file name or a `bench_runs/` path) and
+writes `BENCHMARK.md` and `bench/figures` from them, so the document and the numbers it quotes are one command and never
+drift apart.
 
 ## The DANDI:000026 blocks
 
-`bench/dandi.py` is the generality check of the method on cortex. Nine subjects have both an OCT block (OME-TIFF of the
-scattering coefficient, no orientation in its header, voxel spacing from the BIDS sidecar) and an ex-vivo MRI of the hemisphere
-it was cut from. Eight are used. sub-I56 is refused: the affine of every one of its label files disagrees with its array, so
-only 30 to 72 % of each label lands inside the MRI and neither the crop nor the evaluation can be read from it.
+`bench/dandi.py` runs the method on the Broca-area blocks of DANDI:000026 (Costantini et al. 2023), public CC-BY 4.0 data.
+Nine subjects have both an OCT block (OME-TIFF of the scattering coefficient, no orientation in its header, voxel spacing
+from the BIDS sidecar) and an ex-vivo MRI of the hemisphere it was cut from. Eight are used. sub-I56 is refused: the affine
+of every one of its label files disagrees with its array, so only 30 to 72 % of each label lands inside the MRI and neither
+the crop nor the evaluation can be read from it.
+
+The script was run on the eight subjects, and those results are withdrawn until a re-run: it built the MRI crops of six of
+them through label headers that do not match the MRI, and only sub-I46 and sub-I55 were placed correctly.
 
 ```bash
 python bench/dandi.py [SUBJ ...] [--steps crop register evaluate summary] [--device cuda] [--out DIR]
@@ -77,9 +81,8 @@ The default output root is `bench_runs/dandi`, one directory per subject.
 
 The MRI is one EPIC `*_VFA.nii.gz` asset per subject, pinned in `MRI_FLIP` of `bench/dandi.py` and not chosen by a glob or by
 flip angle, so every run reads the same file whatever else a download holds: `flip-2` for sub-I38, sub-I46, sub-I48 and
-sub-I55, `flip-3` for sub-I58 and sub-I62, `flip-4` for sub-I57 and sub-I61. These are the assets the published runs used.
-Their sidecars give no rule that would reproduce them (sub-I48 has no sidecar, and sub-I58's pinned `flip-3` has FlipAngle 10
-against 30 for its `flip-1`), so the map is explicit.
+sub-I55, `flip-3` for sub-I58 and sub-I62, `flip-4` for sub-I57 and sub-I61. The sidecars give no rule for this choice
+(sub-I48 has no sidecar, and sub-I58's pinned `flip-3` has FlipAngle 10 against 30 for its `flip-1`), so the map is explicit.
 
 - `crop`: the method assumes an MRI already cropped around the block, so the MRI is cut to the bounding box of the subject's own
   Broca-area label plus 5 mm and written to `OUT/SUBJ/mri_crop.nii.gz`. That label says which part of the hemisphere the block
@@ -94,18 +97,19 @@ against 30 for its `flip-1`), so the map is explicit.
   the registered OCT tells the two ends of the cortex apart, and does not depend on which modality is bright where. The same
   number at the pose of §4 and at 10 random poses of the block inside the crop says what it is worth on that subject. A random
   pose that lands fewer than 500 labelled points inside the specimen mask, or fewer than 100 in a class, is not scored, so the
-  median and the max are over 3 to 8 of those 10 poses, and `random_separation["n"]` of `eval.json` says how many.
+  median and the max are over the scored ones, and `random_separation["n"]` of `eval.json` says how many.
   It also writes `qc_labels.png`, the registered OCT with the outlines of that label: where the pose is right they follow
   the bright and dark bands of the OCT.
 - `summary`: prints one markdown row per subject that has a run: crop size, the scores of §4, the handedness, F, the scale per
-  OCT axis, §6, and the layer separation next to the random poses, whose column carries the number of poses actually scored.
+  OCT axis, §6, and the layer separation next to the random poses, whose column carries the number of poses actually scored,
+  and writes the same as JSON to `OUT/summary.json`.
 
 Visual inspection stays the evaluation (docs/METHOD.md): `qc.png`, `qc_montage.png` and `qc_labels.png` of every run are the
 primary evidence and these numbers only support them.
 
-Where the texture specimen mask of §1 keeps less than half of what the OCT measured, the block was registered again with the
-OCT given as its own mask, which is the mask a block without embedding should have. The registration is the released command
-with one more argument, since a mask file is read as its positive voxels, and the read-out is the evaluate step with a tag:
+A block can also be registered with the OCT given as its own mask, which is the mask a block without embedding should have.
+The registration is the released command with one more argument, since a mask file is read as its positive voxels, and the
+read-out is the evaluate step with a tag:
 
 ```bash
 python -m octreg register OCT OUT/SUBJ/mri_crop.nii.gz -o OUT/SUBJ_allmeasured     --oct-spacing-um Z,Y,X --oct-mask OCT
@@ -113,7 +117,6 @@ python bench/dandi.py SUBJ --steps evaluate --tag _allmeasured --out OUT
 ```
 
 The second command writes `OUT/SUBJ_allmeasured/eval.json`, the read-out of that run, taken over the mask the run was given.
-The numbers docs/METHOD.md quotes for the diagnostic come from those files.
 
 ## What is measured
 
@@ -180,7 +183,7 @@ with development scripts that are not part of this repository. Since 1.1 a prep 
 (`prep_hash` in `prep.json`), so new Params of later stages leave it valid, and the preps of 1.0 are accepted.
 
 A3 and A7 were run in the first ablation run, with the earlier two-class score, the overlap gate and mirrored orientations in
-the search (`bench_runs/xiangrui_I58/ablate/ablations.json`, the default `PREV`), against a base that still had the flat field
+the search (`bench_runs/I58/ablate/ablations.json`, the default `PREV`), against a base that still had the flat field
 and the ladder. Neither moved the pose by more than 0.5 mm, so both steps were deleted. `ablate.py --previous` copies their rows
 and reports how far the present base lies from that earlier base.
 
@@ -189,5 +192,5 @@ makes `ablate.py` print a warning naming the variants it did find, so the rows c
 
 The deletion rule: a step whose removal moves the pose by at most 0.5 mm (mean over the specimen-mask points; the pose after §4
 for steps of §1-4, the final pose for §5) and changes no metric beyond noise is deleted before release, unless a test outside
-this pair shows it load bearing. Two steps are kept that way, MRI flattening and the one-sided outline; the evidence for each is
-in docs/METHOD.md after the ablation table.
+this pair shows it load bearing. Two steps within that bound are kept, MRI flattening and the one-sided outline, for the
+reasons given in docs/METHOD.md after the ablation table.

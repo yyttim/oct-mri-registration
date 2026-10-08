@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Write bench/BENCHMARK.md for Xiangrui's I58 brainstem pair from the bench outputs (formatting only, no computation).
+"""Write bench/BENCHMARK.md for the I58 brainstem pair from the bench outputs (formatting only, no computation).
 
     python bench/report.py --main RUN --ablate ABL [--logs RUN_logs] [-o bench/BENCHMARK.md] [--figures bench/figures]
-        [--store bench/results/xiangrui_I58]
+        [--store bench/results/I58]
 
 RUN: the CLI run (result.json; eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json).
-LOGS (optional): bench/run_xiangrui.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
+LOGS (optional): bench/run_i58.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
 to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the old output are kept:
-the '## Visual result' section before '## Main result', and the reading after the READING marker.
+the '## Visual result' section before '## Main result', and the reading after the READING marker. The figures of --figures
+are drawn locally and are not published.
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import argparse
 import json
 import math
 import re
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 DELETION_MM = 0.5            # a step whose removal moves the pose by <= 0.5 mm (and no metric beyond noise) is deleted
 STEP_OF = {"A0c": "per-plane hole filling", "A1": "MRI flattening", "A2": "OCT flattening", "A4": "the two-class maps",
@@ -31,6 +32,18 @@ def either(items):
 
 def load(path):
     return json.loads(Path(path).read_text()) if path and Path(path).exists() else {}
+
+
+def portable(o):
+    """o with every absolute path cut to its part from bench_runs/ on or, outside the runs, to its file name."""
+    if isinstance(o, dict):
+        return {k: portable(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [portable(v) for v in o]
+    if isinstance(o, str) and (PureWindowsPath(o).is_absolute() or o.startswith("/")):
+        parts = PureWindowsPath(o).parts                           # splits on / and on \
+        return "/".join(parts[parts.index("bench_runs"):]) if "bench_runs" in parts else parts[-1]
+    return o
 
 
 def num(x, nd=2):
@@ -166,7 +179,7 @@ def ablation_section(abl):
         tail += [(f"Deletion rule: a step goes when removing it moves the pose by at most {DELETION_MM} mm (mean over the "
                   "specimen-mask points; the §4 pose for steps of §1-4, the final pose for §5), changes no other metric beyond "
                   "noise, and no test outside this pair shows it load bearing. "
-                  + (f"Removing {either(small)} stays within {DELETION_MM} mm, and the evidence for keeping each is in "
+                  + (f"Removing {either(small)} stays within {DELETION_MM} mm, and the reason for keeping each is in "
                      "docs/METHOD.md after the ablation table. " if small else "")
                   + (f"Removing {either(large)} moves the pose further." if large else "")).strip(), ""]
     groups = [g for g in abl.get("removed_steps", []) if g.get("rows")]
@@ -200,16 +213,17 @@ def runtime_section(abl):
 
 
 def figures(run, out):
-    """The three figures bench/BENCHMARK.md shows, from the run's own qc images: out/fig_qc_xiangrui.png is RUN/qc.png
-    without the white margin, outline colours kept, and out/fig_qc_montage_xiangrui.png and out/fig_qc_deform_xiangrui.png are
-    RUN/qc_montage.png and RUN/qc_deform.png as they are. The ablation distances are in the table, which needs no picture."""
+    """The three figures bench/BENCHMARK.md describes, from the run's own qc images, drawn locally and not published:
+    out/fig_qc_I58.png is RUN/qc.png without the white margin, outline colours kept, and out/fig_qc_montage_I58.png and
+    out/fig_qc_deform_I58.png are RUN/qc_montage.png and RUN/qc_deform.png as they are. The ablation distances are in the
+    table, which needs no picture."""
     import shutil
     from PIL import Image, ImageOps
     out.mkdir(parents=True, exist_ok=True)
     qc = Image.open(run / "qc.png").convert("RGB")
     x0, y0, x1, y1 = ImageOps.invert(qc.convert("L")).getbbox()
-    qc.crop((max(x0 - 8, 0), max(y0 - 8, 0), min(x1 + 8, qc.width), min(y1 + 8, qc.height))).save(out / "fig_qc_xiangrui.png", optimize=True)
-    for src, dst in (("qc_montage.png", "fig_qc_montage_xiangrui.png"), ("qc_deform.png", "fig_qc_deform_xiangrui.png")):
+    qc.crop((max(x0 - 8, 0), max(y0 - 8, 0), min(x1 + 8, qc.width), min(y1 + 8, qc.height))).save(out / "fig_qc_I58.png", optimize=True)
+    for src, dst in (("qc_montage.png", "fig_qc_montage_I58.png"), ("qc_deform.png", "fig_qc_deform_I58.png")):
         if (run / src).exists():
             shutil.copyfile(run / src, out / dst)
 
@@ -220,20 +234,21 @@ def main():
     ap.add_argument("--ablate", type=Path, default=None)
     ap.add_argument("--logs", type=Path, default=None)
     ap.add_argument("-o", "--out", type=Path, default=Path("bench/BENCHMARK.md"))
-    ap.add_argument("--figures", type=Path, default=None, help="also write the qc figures BENCHMARK.md shows into this dir")
+    ap.add_argument("--figures", type=Path, default=None, help="also write the qc figures BENCHMARK.md describes into this dir")
     ap.add_argument("--store", type=Path, default=None,
                     help="also copy the run's result.json and eval.json and the ablations.json into this dir "
-                         "(bench/results/xiangrui_I58), so the numbers the document quotes travel with it")
+                         "(bench/results/I58), so the numbers the document quotes travel with it, with every absolute "
+                         "path cut to a file name or a bench_runs/ path")
     a = ap.parse_args()
     abl = load(a.ablate / "ablations.json") if a.ablate else {}
     phash = load(a.main / "result.json").get("params_hash") or abl.get("params_hash")
-    intro = ["# Benchmark: Xiangrui's I58 brainstem pair", "",
+    intro = ["# Benchmark: the I58 brainstem pair", "",
              "octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI; MRI crop 343x489x495 at "
              "0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters"
              + (f" (Params hash {phash})" if phash else "") + ". "
              "The pair has no labels, so every number here is label-free. "
-             "The numbers are read from the run's result.json and eval.json and from ablations.json (copies in bench/results/xiangrui_I58/). "
-             "Commands: `python bench/run_xiangrui.py` (see bench/README.md).", ""]
+             "The numbers are read from the run's result.json and eval.json and from ablations.json (copies in bench/results/I58/). "
+             "Commands: `python bench/run_i58.py` (see bench/README.md).", ""]
     old = a.out.read_text(encoding="utf-8") if a.out.exists() else ""
     visual = re.search(r"^## Visual result\n.*?(?=^## Main result)", old, re.S | re.M)       # hand-written, kept
     text = "\n".join(intro + ([visual.group(0).rstrip("\n"), ""] if visual else []) + main_section(a.main, a.logs)
@@ -247,11 +262,10 @@ def main():
         figures(a.main, a.figures)
         print(f"wrote the figures of {a.out.name} into {a.figures}")
     if a.store:
-        import shutil
         a.store.mkdir(parents=True, exist_ok=True)
         for src in [a.main / "result.json", a.main / "eval.json"] + ([a.ablate / "ablations.json"] if a.ablate else []):
-            if src.exists():
-                shutil.copyfile(src, a.store / src.name)
+            if src.exists():                             # the format of octreg.io.write_json, LF on every OS
+                (a.store / src.name).write_bytes(json.dumps(portable(load(src)), indent=1, allow_nan=False).encode("utf-8"))
                 print(f"stored {a.store / src.name}")
 
 

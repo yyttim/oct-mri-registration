@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""octreg on the DANDI:000026 Broca-area blocks (Costantini et al. 2023): the generality check of the method on cortex.
+"""octreg on the DANDI:000026 Broca-area blocks (Costantini et al. 2023, public CC-BY 4.0 data).
 
     python bench/dandi.py [SUBJ ...] [--steps crop register evaluate summary] [--device cuda] [--out DIR] [--tag TAG]
+
+This script built the MRI crops of six of the eight subjects through label headers that do not match the MRI (only sub-I46
+and sub-I55 were placed correctly), so the results of its runs are withdrawn until the crop step is fixed and the subjects
+are run again.
 
 Nine subjects have both an OCT block (OME-TIFF of the scattering coefficient, no orientation in its header, voxel spacing
 from the BIDS sidecar) and an ex-vivo MRI of the hemisphere it was cut from, with labels the registration never sees. Eight of
@@ -26,10 +30,10 @@ evaluate  A number the registration never sees, written to OUT/SUBJ/eval.json. T
           subject (random_separation["n"] of eval.json counts them). It also writes
           qc_labels.png, the registered OCT with the outlines of that label: where the pose is right they follow the bright
           and dark bands of the OCT. --tag reads OUT/SUBJ+TAG instead of OUT/SUBJ, for a variant run of the same subject such
-          as the `_allmeasured` diagnostic of docs/METHOD.md: the crop and the MRI stay the subject's own and the OCT mask is
-          the one that run was given.
-summary   One markdown row per subject and the same as JSON in bench/results/dandi/summary.json. It refuses to write unless
-          every subject has a run under OUT, so a partial run cannot overwrite the released table.
+          as one with the OCT given as its own mask (`_allmeasured`): the crop and the MRI stay the subject's own and the OCT
+          mask is the one that run was given.
+summary   One markdown row per subject and the same as JSON in OUT/summary.json. It refuses to write unless every subject
+          has a run under OUT.
 
 Visual inspection stays the evaluation (docs/METHOD.md): qc.png and qc_montage.png of every run are the primary evidence and
 the numbers here only support them.
@@ -63,8 +67,8 @@ MRI_FLIP = {"I38": 2, "I46": 2, "I48": 2, "I55": 2, "I57": 4, "I58": 3, "I61": 4
 def files(s):
     """The subject's OCT, MRI and Broca-area label.
 
-    The MRI is sub-<s>_ses-MRI_flip-<MRI_FLIP[s]>_VFA.nii.gz: one asset pinned per subject, the one every published run used
-    (bench/README.md lists them). It is not picked by a glob, so it does not depend on which assets a download happens to
+    The MRI is sub-<s>_ses-MRI_flip-<MRI_FLIP[s]>_VFA.nii.gz: one asset pinned per subject (bench/README.md lists them).
+    It is not picked by a glob, so it does not depend on which assets a download happens to
     contain, and not by flip angle, since the sidecars do not give one consistent choice (sub-I48 has no sidecar at all).
     Raises FileNotFoundError naming the missing path rather than failing inside a step."""
     d = DANDI / f"derivatives/EPIC/sub-{s}/ses-MRI/anat"
@@ -153,7 +157,7 @@ def evaluate(s, tag=""):
     random pose that lands too few labelled points inside the specimen mask is not scored, so random_separation["n"] is how
     many of the N_RANDOM poses the median and the max are over.
 
-    tag evaluates a variant run of the same subject, OUT/s+tag, such as the `_allmeasured` diagnostic of docs/METHOD.md: the
+    tag evaluates a variant run of the same subject, OUT/s+tag, such as one with the OCT given as its own mask: the
     crop and the MRI stay the subject's own, and the OCT mask is the one that run was given, so the read-out is taken over
     the specimen the run itself believed in."""
     import nibabel as nib
@@ -261,8 +265,8 @@ def run(s, device="cuda"):
 
 
 def summary():
-    """One markdown row per subject from the runs that exist, and the same as JSON in bench/results/dandi/summary.json. The
-    random column gives how many of the N_RANDOM poses could be scored (random_separation["n"]), not N_RANDOM."""
+    """One markdown row per subject from the runs that exist, and the same as JSON in OUT/summary.json. The random column
+    gives how many of the N_RANDOM poses could be scored (random_separation["n"]), not N_RANDOM."""
     rows = {}
     num = lambda x, n=3: "" if x is None else f"{x:.{n}f}"
     print("| subject | crop (mm) | block (mm) | crop fits | specimen mask of the measured OCT | S | S_class | S_outline | hand | NGF | scale per OCT axis | §6 "
@@ -297,8 +301,8 @@ def summary():
               f"| {p['handedness']:+d} | {num(p['NGF_start'], 4)} -> {num(p['NGF'], 4)} "
               f"| {' / '.join(f'{x:.3f}' for x in p['scale_per_oct_axis'])} | {deform} "
               f"| {num(v[1], 3) if v else ''} | {random if rnd else ''} |")
-    store = Path(__file__).resolve().parent / "results/dandi/summary.json"
-    if set(rows) != set(SUBJECTS):                     # a partial run must not overwrite the released table in the repository
+    store = OUT / "summary.json"
+    if set(rows) != set(SUBJECTS):                     # the summary covers every subject or is not written
         missing = ", ".join(sorted(set(SUBJECTS) - set(rows)))
         raise SystemExit(f"{store} not written: no run under {OUT} for {missing}. Give --out the root that holds them.")
     store.parent.mkdir(parents=True, exist_ok=True)

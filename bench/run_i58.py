@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""octreg on Xiangrui's I58 brainstem pair, from the two original files. Any OS, any machine.
+"""octreg on the I58 brainstem pair, from the two original files. Any OS, any machine.
 
-    python bench/run_xiangrui.py                                                  # register + evaluate
-    STEPS="ablate evaluate report" python bench/run_xiangrui.py                   # bash
-    $env:STEPS = "ablate evaluate report"; python bench/run_xiangrui.py           # PowerShell
+    python bench/run_i58.py                                                       # register + evaluate
+    STEPS="ablate evaluate report" python bench/run_i58.py                        # bash
+    $env:STEPS = "ablate evaluate report"; python bench/run_i58.py                # PowerShell
 
 Steps in order: register (python -m octreg register OCT MRI -o OUT), ablate (bench/ablate.py), evaluate (bench/evaluate.py)
-and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/xiangrui_I58). Overrides, all optional: STEPS, OUT, ABL,
-PREV, PREV_MAIN, DEVICE, CODE. The machine roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT) and CODE
-defaults to the repository of this file. The steps run with the interpreter that runs this file.
+and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58). Overrides, all optional: STEPS, OUT, ABL,
+PREV, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR) and
+CODE defaults to the repository of this file. The steps run with the interpreter that runs this file.
 
 Each step writes NAME.log, NAME.time (wall time and exit status; the peak memory of a run is in its own result.json)
 and, when nvidia-smi is on the PATH, NAME.gpu_mib into ${OUT}_logs, with a start and a done line
 per step in chain.log. The runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid while it runs and
 refuses to start while another registration job is running, since one GPU takes one at a time.
 
-OUT, ABL and PREV_MAIN default to the released run of 1.1: bench_runs/xiangrui_I58/rel8/main and rel8/ablate, compared with
+OUT, ABL and PREV_MAIN default to the released run of 1.1: bench_runs/I58/rel8/main and rel8/ablate, compared with
 rel7/main (release 1.0). A new run therefore needs a new OUT and a new ABL, not the defaults: register and ablate refuse a
 default directory that already holds a run, and the report step has no such guard, so it rewrites bench/BENCHMARK.md from
 whatever OUT and ABL name.
@@ -30,12 +30,12 @@ import sys
 import time
 from pathlib import Path
 
-from paths import BENCH_RUNS, MRI_I58, OCT_I58                        # bench/paths.py: the machine roots
+from paths import BENCH_RUNS, MRI_I58, OCT_I58                        # bench/paths.py: the run and data roots
 
 POSIX = os.name == "posix"
 ENV = os.environ.get
 CODE = Path(ENV("CODE") or Path(__file__).resolve().parents[1])
-BENCH = BENCH_RUNS / "xiangrui_I58"
+BENCH = BENCH_RUNS / "I58"
 OUT = Path(ENV("OUT") or BENCH / "rel8/main")                 # the released run of 1.1; a new run needs a new OUT
 ABL = Path(ENV("ABL") or BENCH / "rel8/ablate")               # and a new ABL
 PREV = ENV("PREV") or str(BENCH / "ablate/ablations.json")    # the first ablation run, which measured A3 and A7
@@ -116,13 +116,13 @@ def main():
         sys.stdout.reconfigure(errors="replace")
     for f in (OCT_I58, MRI_I58):            # before any mkdir, so that wrong roots create no directories, and with a plain
         if not f.is_file():                 # print, since say() needs the log directory
-            print(f"missing input {f} (roots: OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, see bench/paths.py)", flush=True)
+            print(f"missing input {f} (OCTREG_I58_DIR or OCTREG_DATA_ROOT, see bench/paths.py)", flush=True)
             return 1
     if not CODE.is_dir():
         print(f"no code copy at {CODE}", flush=True)
         return 1
     for s, var, d, f in (("register", "OUT", OUT, "result.json"), ("ablate", "ABL", ABL, "ablations.json")):
-        if s in STEPS and not ENV(var) and (d / f).is_file():      # never overwrite the (mirrored) server runs by default
+        if s in STEPS and not ENV(var) and (d / f).is_file():      # never overwrite the released runs by default
             print(f"{s}: the default {var} {d} already holds a run: set {var} to a new directory", flush=True)
             return 1
     LOGS.mkdir(parents=True, exist_ok=True)
@@ -152,7 +152,7 @@ def main():
                         "(run the ablate step first)")
             elif s == "report":
                 args = ["bench/report.py", "--main", OUT, "--ablate", ABL, "--logs", LOGS, "-o", "bench/BENCHMARK.md",
-                        "--figures", "bench/figures", "--store", "bench/results/xiangrui_I58"]
+                        "--figures", "bench/figures", "--store", "bench/results/I58"]
             else:
                 say(f"unknown step '{s}' (register | ablate | evaluate | report)")
                 return 1
