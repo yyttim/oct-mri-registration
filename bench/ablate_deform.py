@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -33,8 +34,11 @@ import torch
 from scipy import ndimage
 from scipy.spatial import cKDTree
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # bench/report.py
+
+from report import portable                                    # a path cut to its part from bench_runs/ on
 from octreg import deform as D
-from octreg import geometry as G, preprocess as pp
+from octreg import geometry as G, io, preprocess as pp
 from octreg.blockmatch import _on_grid
 from octreg.ngf import NGFGrid
 from octreg.params import Params
@@ -254,7 +258,7 @@ def main():
           f"{s1 - s0:.1f} mm", flush=True)
 
     out = Path(a.out)
-    res = {"run": str(a.run), "cache": str(a.cache), "params_hash": Params().hash(), "polarity": polarity,
+    res = {"run": portable(str(a.run)), "cache": portable(str(a.cache)), "params_hash": Params().hash(), "polarity": polarity,
            "axis": {"oct_axis": axis, "mri_axis": mri_axis, "direction_mri_world": d.tolist(), "extent_mm": s1 - s0,
                     "edges_mm": edges.tolist()}, "rows": {}}
     for name in names:
@@ -262,9 +266,9 @@ def main():
         print(f"[{time.time() - t0:.0f} s] {r['label']:32s} λ {fmt(r['lam'], '.2f'):>5s} strain {fmt(r['max_strain'], '.3f'):>5s} | "
               f"interior {r['interior_mm']:.3f} boundary {r['boundary_mm']:.3f} within {100 * r['within']:.0f} % | "
               f"F {r['F']:.4f} two-class {r['two_class_core']:.4f}", flush=True)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(res, indent=1))
-    out.with_suffix(".md").write_text(markdown(res), encoding="utf-8")
+        io.write_json(res, out)                                # LF on every OS, as bench/results/I58 stores it
+    with open(out.with_suffix(".md"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(markdown(res))
     print(f"wrote {out} and {out.with_suffix('.md')} ({time.time() - t0:.0f} s)", flush=True)
 
 

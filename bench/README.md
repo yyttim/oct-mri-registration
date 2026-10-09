@@ -6,7 +6,8 @@ metrics are label-free.
 
 The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/` and the data are read from
 `data/` of the repository, and both are in `.gitignore`. `OCTREG_PROJECT_ROOT` moves the runs to `<project root>/bench_runs`,
-`OCTREG_DATA_ROOT` moves the data root, which holds the I58 folder and the DANDI tree, and `OCTREG_I58_DIR` names the folder
+`OCTREG_DATA_ROOT` moves the data root, which holds the I58 folder and the DANDI tree (expected at
+`<data root>/costantini/dandi-000026`, see `bench/paths.py`), and `OCTREG_I58_DIR` names the folder
 that holds the two I58 input files (by default `<data root>/I58`). Nothing else here is machine-specific.
 
 | file | what it does |
@@ -16,6 +17,7 @@ that holds the two I58 input files (by default `<data root>/I58`). Nothing else 
 | `evaluate.py` | one run measured against the data itself: boundary agreement, OCT mask volume, raw-data frame check, and the pose distance to an earlier octreg run |
 | `ablate.py` | the preprocessing once, then the variants base and A0-A12, one JSON table |
 | `ablate_deform.py` | §6 from the cached base grids of `ngf_lam.py cache`: the ablation table of METHOD.md §6 plus rows that widen the reach of the local evidence (df_reach_mm, the interior search range and the edge window), every row scored by the same measurement, and the boundary residual along the sectioning axis |
+| `ngf_lam.py` | §5 alone from cached base grids: `cache` writes the §1 grids both volumes share, `sweep` refits §5 from the §4 pose of a run at several `lam` values or σ schedules (`--destripe` flat-fields the section stripes first) and scores each pose by the outline agreement of `evaluate.py`, `transforms` writes every pose of a sweep as a 4x4 text file for `octreg qc --T` |
 | `dandi.py` | the DANDI blocks: MRI crop, `octreg register`, the cortical-layer read-out and its figure, a markdown summary (results withdrawn, see below) |
 | `report.py` | writes `bench/BENCHMARK.md` from the outputs, and the qc figures it describes into `bench/figures/` |
 | `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
@@ -43,11 +45,12 @@ PowerShell sets the same variables with `$env:OUT = "...\myrun\main"`. To detach
 `register` is `python -m octreg register OCT MRI -o OUT` on the two original files, with default parameters. The other
 overrides are `PREV` (the `ablations.json` of the run that measured the removed steps A3 and A7, by default
 `bench_runs/I58/ablate/ablations.json`, the first ablation run), `PREV_MAIN` (an earlier run for the pose distance,
-by default `bench_runs/I58/rel8/main`, release 1.1), `DEVICE` (`cuda` or `cpu`) and `CODE` (the repository to run
-from, by default the one this file is in). `OUT` and `ABL` default to the released run, `v2/main` and `v2/ablate`, so a
-new run has to set both. Every step writes `NAME.log`, `NAME.time` (wall time and exit status, the peak memory of a run is in
-its own result.json) and `NAME.gpu_mib` (nvidia-smi samples, when nvidia-smi is on the PATH) into `${OUT}_logs`, and a start
-and a done line per step (and the last 5 log lines on failure) into `chain.log` there.
+by default `bench_runs/I58/rel7/main`, release 1.0, which the stored evaluation used), `DEVICE` (`cuda` or `cpu`) and
+`CODE` (the repository to run from, by default the one this file is in). `OUT` and `ABL` default to the released run,
+`v2/main` and `v2/ablate`, so a new run has to set both. Every step writes `NAME.log`, `NAME.time` (wall time and exit
+status, the peak memory of a run is in its own result.json) and `NAME.gpu_mib` (nvidia-smi samples, when nvidia-smi is on
+the PATH) into `${OUT}_logs`, and a start and a done line per step (and the last 5 log lines on failure) into `chain.log`
+there.
 
 Two rules. One registration job at a time: the runner refuses to start while another registration python is running. And
 `register` and `ablate` refuse to write into their default `OUT` and `ABL` once those hold a run, so a new run needs a new
@@ -57,11 +60,13 @@ without an override is the released run.
 `python bench/evaluate.py --selftest` checks the frame check, the boundary agreement, the pose distance and the mask volume on
 synthetic arrays in a few seconds, on the CPU and without any of the data.
 
-The released run is `bench_runs/I58/v2`. The report step copies its `result.json`, `eval.json` and `ablations.json`
+The released run is `bench_runs/I58/v2`, evaluated against `rel7/main` (release 1.0, 0.001 mm away at the block corners,
+with release 1.1 within 0.003 mm). The report step copies its `result.json`, `eval.json` and `ablations.json`
 into `bench/results/I58/` (`report.py --store`, with every absolute path cut to a file name or a `bench_runs/` path) and
 writes `BENCHMARK.md` and `bench/figures` from them, so the document and the numbers it quotes are one command and never
 drift apart. `deform_ablation.json` and `.md` there are the output of `bench/ablate_deform.py`, copied by hand with the two
-run paths cut as report.py cuts them.
+run paths cut as report.py cuts them. `ngf_lam/lam.json`, `sigmas.json` and `destripe.json` are the sweeps of
+`bench/ngf_lam.py sweep` that docs/METHOD.md §5 quotes, with the run and cache paths cut the same way.
 
 ## The DANDI:000026 blocks
 
@@ -86,9 +91,9 @@ sub-I55, `flip-3` for sub-I58 and sub-I62, `flip-4` for sub-I57 and sub-I61. The
 (sub-I48 has no sidecar, and sub-I58's pinned `flip-3` has FlipAngle 10 against 30 for its `flip-1`), so the map is explicit.
 
 - `crop`: the method assumes an MRI already cropped around the block, so the MRI is cut to the bounding box of the subject's own
-  Broca-area label plus 5 mm and written to `OUT/SUBJ/mri_crop.nii.gz`. That label says which part of the hemisphere the block
-  was taken from, which is what a user of the method knows. It is not the registration: it fixes neither the orientation nor the
-  position inside the crop.
+  Broca-area label plus 5 mm, with every side grown to at least the longest side of the OCT array, and written to
+  `OUT/SUBJ/mri_crop.nii.gz`. That label says which part of the hemisphere the block was taken from, which is what a user of
+  the method knows. It is not the registration: it fixes neither the orientation nor the position inside the crop.
 - `register`: `octreg register` on the block and the crop, the released entry point. An OME-TIFF carries no orientation, so
   its array frame must have the handedness of the specimen (README, Usage), and §1-6 run as for any other pair.
 - `evaluate`: a number the registration never sees, written to `OUT/SUBJ/eval.json`. The subject's cortical-layer label divides
@@ -157,7 +162,7 @@ the base specimen mask and over the 8 corners of the OCT array.
 | A6p, A6c | the penalty alone (lam 0, clamp kept) and the clamp alone (clamp 1.0, lam kept) |
 | A8 | the other handedness: the OCT world mirrored (z negated) before search and refinement |
 | A9 | no outline term: S = 2 S_class / 3 in the search (patched `search.combined`) and in the refinement (outline weight = the specimen mask, so S_outline = 0) |
-| A10 | two-sided outline of the previous release: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
+| A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
 | A11, A11b | simulated cut face (specimen mask removed beyond 70 % of its extent along OCT axis 1, data kept as embedding), with the method and with the two-sided outline |
 | A12 | no fine-structure refinement: the pose of §4 (every other variant ends with §5) |
 | A3, A7 | removed steps (the section-stripe flat field, and the rigid, similarity and affine ladder), rows copied from the first ablation run through `PREV`, see below |
@@ -178,11 +183,11 @@ The smooth deformation (§6) does not change the pose, so the driver does not ru
 are the residuals before and after the field in the run's own result.json, which report.py prints. The read-outs are the
 lattice spacing, the membrane weight (the smallest in [0.3, 30] that keeps the strain under the limit) and the strain it
 reaches, the interior matches and the boundary points of the fit, the held-out errors without and with the field, which gate
-the field, and the residuals of both kinds (block matches, surface-edge offsets) measured on the affine OCT and again on the
+the field, and the residuals of both kinds (interior matches, surface-edge offsets) measured on the affine OCT and again on the
 warped one. The ablations of §6 itself (one kind of evidence alone, the rim ridge in place of the edge, the support rule of
 1.1, no Huber re-weighting, other lattice spacings, strain limits and reaches) are tabulated in docs/METHOD.md. They are made
 by `bench/ablate_deform.py` from the base grids cached by `bench/ngf_lam.py cache`, at the affine of the released run of 1.1
-(which 2.0 reproduces to 0.003 mm at the block corners), and the table is `bench/results/I58/deform_ablation.md`. Since 1.1 a
+(which 2.0 reproduces within 0.003 mm at the block corners), and the table is `bench/results/I58/deform_ablation.md`. Since 1.1 a
 prep is checked against the Params fields that §1 reads (`prep_hash` in `prep.json`), so new Params of later stages leave it
 valid, and the preps of 1.0 are accepted.
 
@@ -196,5 +201,6 @@ makes `ablate.py` print a warning naming the variants it did find, so the rows c
 
 The deletion rule: a step whose removal moves the pose by at most 0.5 mm (mean over the specimen-mask points, at the pose after
 §4 for steps of §1-4 and at the final pose for §5) and changes no metric beyond noise is deleted before release, unless a test
-outside this pair shows it load bearing. Two steps within that bound are kept, MRI flattening and the one-sided outline, for the
-reasons given in docs/METHOD.md after the ablation table.
+outside this pair shows it load bearing. Three steps within that bound are kept: OCT flattening (A2, 0.15 mm) and per-plane
+hole filling (A0c, 0.22 mm), for the reasons given in docs/METHOD.md after the ablation table, and the scale clamp (A6c,
+0.00 mm), which is a guard rather than a parameter (docs/METHOD.md §4).
