@@ -6,13 +6,13 @@
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
 explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with the 3-D hole filling of the
 first release), two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4),
-align(..., polarity=+1 / -1) (A5), Params lam 0 and clamp 1 (A6), the OCT world mirrored so that the search and refinement see
-the other handedness (A8), no outline term (A9), the two-sided outline of the previous release (A10), or a simulated cut face
+align(..., polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6), the OCT world mirrored so that the search and refinement see
+the other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut face
 with the method and with the two-sided outline (A11, A11b), or no fine-structure refinement (A12, the pose of §4). Every other
 variant ends with §5 on its own best pose. 'base' is the method through this driver; its distance to the CLI run (--main) is
 the driver check. The OCT is streamed once, each OCT mask is computed once and the MRI is prepared once.
 
-The smooth deformation (§6) leaves the pose alone, so no variant runs it: "no §6" (A14) would be base with the identical
+The smooth deformation (§6) leaves the pose alone, so no variant runs it: "no §6" would be base with the identical
 pose, and its read-outs are the 'before' residuals in the run's own result.json, which bench/report.py prints.
 
 Removed steps (REMOVED) keep their rows from the ablation run that measured them (--previous, one ablations.json per group):
@@ -62,9 +62,9 @@ VARIANTS = {    # name: (what changes, the explicit change: mask source, solve()
     "A4": ("standardised intensity channels (z, -z) instead of two-class maps", {"features": "intensity"}),
     "A5+1": ("polarity forced +1", {"polarity": 1}),
     "A5-1": ("polarity forced -1", {"polarity": -1}),
-    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0, "clamp": 1.0}}),
+    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0}, "clamp": 1.0}),
     "A6p": ("no penalty, clamp kept: lam 0, clamp 0.15", {"params": {"lam": 0.0}}),
-    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"params": {"clamp": 1.0}}),
+    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"clamp": 1.0}),
     "A8": ("the other handedness: OCT world mirrored (z negated) before the search", {"mirror": True}),
     "A9": ("no outline term: S = 2 S_class / 3 in the search and the refinement", {"outline": False}),
     "A10": ("two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch", {"two_sided": True}),
@@ -159,13 +159,14 @@ def standardised(arr, mask, h, P):
 
 
 def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_class", polarity=0, mirror=False, outline=True,
-          two_sided=False, cut_axis=None, ngf=True):
+          two_sided=False, cut_axis=None, ngf=True, clamp=None):
     """Register steps 3-5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
+    clamp: the bound on log-scales and shears of §4-5 in place of refine.CLAMP (0.15).
     mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
     outline False: S = 2 S_class / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
     the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
     the specimen mask itself, on which the mask is constant, so S_outline is 0.
-    two_sided: the outline of the previous release, weight q in the search and the refinement (embedding over MRI tissue counts).
+    two_sided: the two-sided outline, weight q in the search and the refinement (embedding over MRI tissue counts).
     cut_axis: the specimen mask is removed beyond 70 % of its extent along that OCT axis, the OCT data there kept as embedding,
     as for a block cut out of a larger specimen whose MRI tissue continues beyond the cut.
     ngf False: the best pose of §4 without the fine-structure refinement (§5); otherwise §5 refines the best pose, as in register,
@@ -195,13 +196,19 @@ def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_cla
             S_outline = Rf.masked_ncc(s_[2:], self.w[None], self.q)
             return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
         Rf.BaseGrid.score = score_two_sided
+    clamp0 = Rf.CLAMP
+    if clamp is not None:
+        Rf.CLAMP = clamp
     try:
-        poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
+        try:
+            poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
+        finally:
+            S.combined, S.Searcher._outline, Rf.BaseGrid.score = combined, outline_map, score
+        if ngf:
+            T, info["ngf"] = refine_ngf((m["arr"], m["mask"], m["affine"]), (o["arr"], o["mask"], F @ o["affine"]), poses[0]["T"], P, device)
+            poses[0] = {**poses[0], "T_before_ngf": poses[0]["T"] @ F, "T": T, "NGF_start": info["ngf"]["F_start"], "NGF": info["ngf"]["F"]}
     finally:
-        S.combined, S.Searcher._outline, Rf.BaseGrid.score = combined, outline_map, score
-    if ngf:
-        T, info["ngf"] = refine_ngf((m["arr"], m["mask"], m["affine"]), (o["arr"], o["mask"], F @ o["affine"]), poses[0]["T"], P, device)
-        poses[0] = {**poses[0], "T_before_ngf": poses[0]["T"] @ F, "T": T, "NGF_start": info["ngf"]["F_start"], "NGF": info["ngf"]["F"]}
+        Rf.CLAMP = clamp0
     return [{**p, "T": p["T"] @ F} for p in poses], info
 
 

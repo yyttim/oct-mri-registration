@@ -6,15 +6,14 @@ smooth deformation on top.
    the two-class score.
 3. FFT orientation search inside the MRI crop.
 4. One affine refinement per search pose under a scale and shear prior.
-5. Fine-structure refinement of the best pose by normalised gradient fields, which also decides the handedness of an OCT
-   without an orientation header.
-6. A smooth displacement field on top of the affine, fitted to interior block matches and surface-edge offsets, its smoothness
-   chosen by held-out error under a strain limit. Not applied without a held-out gain.
+5. Fine-structure refinement of the best pose by normalised gradient fields.
+6. A smooth displacement field on top of the affine, fitted to interior block matches and surface-edge offsets, as flexible
+   as a strain limit allows. Not applied without a held-out gain.
 
 Method constants are in octreg.params.Params (numerical guards and fixed rule literals are documented where they are used).
 Python use: `from octreg.register import register, apply, qc`; command line: `octreg register`, `octreg apply`, `octreg qc`.
 """
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 from .params import Params  # noqa: E402
 

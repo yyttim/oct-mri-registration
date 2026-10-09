@@ -4,7 +4,7 @@ The stage itself runs on a synthetic specimen: smooth random structure inside an
 a zero background (the MRI); the OCT is an inverted, gamma-remapped copy on its own flipped grid with a bright rim as a layer
 below its surface, embedded in darker, textured agarose with bright parallel stripes across one OCT axis. The boundary
 evidence (the offset between the surface edges of the two volumes) measures a pure 0.5 mm shift and mostly drops the faces
-crossed by the stripes; boundary points without an interior match within df_support_mm are not used; smallest_lam finds the
+crossed by the stripes; smallest_lam finds the
 smallest membrane weight that keeps the strain limit; a known smooth displacement (a Gaussian bump of 1.0 mm and 8 mm width)
 is recovered; an aligned pair is left alone (status not_supported, zero field); a field written and read back reproduces the
 warped volume through geometry.resample_to."""
@@ -21,7 +21,7 @@ from octreg import blockmatch as bm, deform, geometry as G, io
 from octreg.params import Params
 
 H = 0.2                                                           # isotropic grid of the two evidence tests
-PARAMS = Params.from_dict({"df_range_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
+PARAMS = Params.from_dict({"df_reach_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
 #     a 19 mm specimen on a 0.3 mm grid: a search range of 5 voxels, smaller blocks than the default and the feature sigma in
 #     proportion; the rim layer of pair() reaches 1.8 mm below the surface and a block may lie 30 % outside the core, so the
 #     erosion is 2.4 mm (with 1.2 mm the rim pulls the outer matches 0.17 mm inwards)
@@ -163,50 +163,44 @@ def test_evidence_measures_a_shift_and_drops_striped_faces():
     assert len(W) > 100 and np.median(np.linalg.norm(D - shift, axis=1)) < 0.05, (len(W), np.median(np.linalg.norm(D - shift, axis=1)))
 
 
-def test_boundary_points_need_an_interior_match_nearby():
+def test_measure_collects_both_kinds():
     mri, oct_, T, *_ = pair(lambda y: bump(y, 1.0))
     ev = deform.Evidence(mri, PARAMS, "cpu")
     vol, inside = on_mri_grid(mri, oct_, T)
     P, n, delta = ev.boundary(vol)
     whole = ev.measure(vol, inside)
-    assert len(whole["W"]) > 100 and len(whole["P"]) > 0.9 * len(P) > 2000                 # matches all over the specimen
+    assert len(whole["W"]) > 100 and len(P) > 2000                                         # matches all over the specimen
+    assert all(np.array_equal(whole[k], a) for k, a in (("P", P), ("n", n), ("delta", delta)))   # every point with one edge
     x = torch.as_tensor(world(mri[0].shape, mri[2])[:, 0].reshape(mri[0].shape))
     half = ev.measure(vol, inside * (x < 0))                                               # the inside corresponds only where x < 0
-    near = cKDTree(half["W"]).query(P)[0] <= PARAMS.df_support_mm
-    assert len(half["W"]) >= 10 and half["W"][:, 0].max() < 0 and 0.1 < near.mean() < 0.6, (len(half["W"]), near.mean())
-    assert all(np.array_equal(half[k], a[near]) for k, a in (("P", P), ("n", n), ("delta", delta)))
-    assert half["P"][:, 0].max() < PARAMS.df_support_mm and P[:, 0].max() > 9
-    tight = deform.Evidence(mri, dataclasses.replace(PARAMS, df_support_mm=3.5), "cpu").measure(vol, inside)
-    assert 0 < len(tight["P"]) < 0.8 * len(whole["P"]) and cKDTree(tight["W"]).query(tight["P"])[0].max() <= 3.5
-    empty = ev.measure(vol, 0 * inside)                                                    # no interior match: no boundary point
-    assert not len(empty["W"]) and not len(empty["P"]) and not len(empty["delta"]) and empty["interior_mm"] is None
+    assert len(half["W"]) >= 10 and half["W"][:, 0].max() < 0 and len(half["P"]) == len(P)
+    empty = ev.measure(vol, 0 * inside)                                                    # no interior match: the edges are still read
+    assert not len(empty["W"]) and len(empty["P"]) == len(P) and empty["interior_mm"] is None
     for m in (whole, half, empty):                                                         # the read-outs: all boundary points
         assert m["boundary_mm"] == np.median(np.abs(delta)) and m["within"] == (np.abs(delta) < 0.3).mean()
     u, info = deform.smooth_deformation(mri, (oct_[0], oct_[1] & False, oct_[2]), T, PARAMS, "cpu")
-    assert info["status"] == "not_supported" and info["n_interior"] == info["n_boundary"] == 0 and not u.any()
+    assert info["status"] == "not_supported" and info["n_interior"] == 0 and not u.any()
 
 
 def test_smallest_lam_keeps_the_strain_limit():
     mri, oct_, T, *_ = pair(lambda y: bump(y, 1.0))
     ev, lat = deform.Evidence(mri, PARAMS, "cpu").measure(*on_mri_grid(mri, oct_, T)), lattice_of(mri)
     strain = lambda lam: lat.strain(deform.fit(lat, ev, lam, PARAMS.df_huber_mm))
-    assert strain(min(PARAMS.df_lams)) < PARAMS.df_max_strain                              # the bump strains by 0.08
-    assert deform.smallest_lam(lat, ev, PARAMS) == min(PARAMS.df_lams)
-    for limit in (0.05, 0.02):                                                             # a limit inside the range of the list
+    lo, hi = deform.LAM_RANGE
+    assert strain(lo) < PARAMS.df_max_strain                                               # the bump strains by 0.08
+    assert deform.smallest_lam(lat, ev, PARAMS) == lo
+    none = float(np.median(np.linalg.norm(ev["D"], axis=1)) + np.median(np.abs(ev["delta"])))
+    for limit in (0.05, 0.02):                                                             # a limit inside the range
         P = dataclasses.replace(PARAMS, df_max_strain=limit)
         lam = deform.smallest_lam(lat, ev, P)
-        assert min(P.df_lams) < lam < max(P.df_lams) and lam not in P.df_lams
-        assert strain(lam) < limit <= strain(lam / 1.2), (lam, strain(lam), strain(lam / 1.2))
-        none = float(np.median(np.linalg.norm(ev["D"], axis=1)) + np.median(np.abs(ev["delta"])))
-        best, table = deform.choose(lat, ev, none, P)
-        assert [r["lam"] for r in table] == sorted([lam, *(x for x in P.df_lams if x > lam)], reverse=True)
-        assert all(r["max_strain"] < limit and set(r) == {"lam", "interior_mm", "boundary_mm", "max_strain"} for r in table)
-        assert best[0] == min(table, key=lambda r: r["interior_mm"] + r["boundary_mm"])["lam"]
+        assert lo < lam < hi and strain(lam) < limit <= strain(lam / deform.LAM_TOL), (lam, strain(lam), strain(lam / deform.LAM_TOL))
+        best, score = deform.choose(lat, ev, none, P)
+        assert best is not None and best[0] == lam and best[1] == score and sum(score) < deform.GAIN * none
     P = dataclasses.replace(PARAMS, df_max_strain=1e-3)                                    # even the largest weight strains more
-    assert strain(max(P.df_lams)) > 1e-3 and deform.smallest_lam(lat, ev, P) is None
-    assert deform.choose(lat, ev, 1.0, P) == (None, [])
+    assert strain(hi) > 1e-3 and deform.smallest_lam(lat, ev, P) is None
+    assert deform.choose(lat, ev, 1.0, P) == (None, None)
     u, info = deform.smooth_deformation(mri, oct_, T, P, "cpu")
-    assert info["status"] == "not_supported" and info["candidates"] == [] and info["cv"]["none"] and not u.any()
+    assert info["status"] == "not_supported" and info["cv"]["field"] is None and info["cv"]["none"] and not u.any()
 
 
 def test_recovers_a_smooth_displacement():
@@ -214,10 +208,9 @@ def test_recovers_a_smooth_displacement():
     mri, oct_, T, *_ = pair(v)
     u, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
     assert info["status"] == "applied" and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
-    assert set(info) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "candidates", "residual", "field", "seconds"}
-    assert info["grid_mm"] == PARAMS.df_grid_mm and 1 <= len(info["candidates"]) <= len(PARAMS.df_lams) + 1
-    assert info["lam"] in [r["lam"] for r in info["candidates"]] and min(PARAMS.df_lams) <= info["lam"] <= max(PARAMS.df_lams)
-    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300 and sum(info["cv"]["chosen"]) < 0.2 * sum(info["cv"]["none"])
+    assert set(info) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "residual", "field", "seconds"}
+    assert info["grid_mm"] == PARAMS.df_grid_mm and deform.LAM_RANGE[0] <= info["lam"] <= deform.LAM_RANGE[1]
+    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300 and sum(info["cv"]["field"]) < 0.2 * sum(info["cv"]["none"])
     res = info["residual"]
     assert res["interior_mm"][0] > 0.5 and res["interior_mm"][1] < 0.1 * res["interior_mm"][0], res
     assert res["boundary_mm"][0] > 0.2 and res["boundary_mm"][1] < 0.4 * res["boundary_mm"][0], res
@@ -231,17 +224,18 @@ def test_recovers_a_smooth_displacement():
     assert abs(info["field"]["max_mm"] - np.linalg.norm(truth, axis=1).max()) < 0.1
 
 
-def test_aligned_pair_is_left_alone():
+def test_aligned_pair_is_left_alone(monkeypatch):
     mri, oct_, T, *_ = pair(lambda y: np.zeros_like(y))
     u, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
     assert info["status"] == "not_supported" and not u.any() and info["grid_mm"] is None and info["lam"] is None, info
-    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300 and 1 <= len(info["candidates"]) <= len(PARAMS.df_lams) + 1
-    assert all(r["interior_mm"] + r["boundary_mm"] >= PARAMS.df_gain * sum(info["cv"]["none"]) for r in info["candidates"])
-    assert info["cv"]["chosen"] is None and info["max_strain"] == 0 and info["field"]["max_mm"] == 0
+    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300
+    assert sum(info["cv"]["field"]) >= deform.GAIN * sum(info["cv"]["none"])        # the field was fitted and refused
+    assert info["max_strain"] == 0 and info["field"]["max_mm"] == 0
     assert all(a == b for a, b in info["residual"].values()) and info["residual"]["interior_mm"][0] < 0.05
     assert info["residual"]["boundary_mm"][0] < 0.1 and info["residual"]["boundary_within_0.3mm"][0] > 0.97
-    few, info = deform.smooth_deformation(mri, oct_, T, dataclasses.replace(PARAMS, df_min_boundary=10 ** 6), "cpu")
-    assert info["status"] == "not_supported" and not few.any() and info["candidates"] == [] and info["cv"]["none"] is None
+    monkeypatch.setattr(deform, "MIN_BOUNDARY", 10 ** 6)
+    few, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
+    assert info["status"] == "not_supported" and not few.any() and info["cv"] == {"none": None, "field": None}
 
 
 def test_field_file_and_resample(tmp_path):

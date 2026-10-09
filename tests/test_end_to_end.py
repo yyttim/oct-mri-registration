@@ -107,11 +107,11 @@ def test_register_and_apply(tmp_path, capsys):
     assert res["refine"]["n_poses"] == FAST["topk"] and res["search"]["n_orientations"] == FAST["n_rot"]
     d = res["deform"]                                          # §6: no 4.5 mm block fits the specimen, so no deformation
     assert d["status"] == "not_supported" and "deformation_not_supported" in res["flags"] and d["n_interior"] == 0 and "deform" in res["seconds"]
-    assert set(d) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "candidates", "residual", "field", "seconds"}
-    assert d["n_boundary"] == 0 and d["candidates"] == [] and d["lam"] is None      # no match nearby: no boundary point is used,
+    assert set(d) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "residual", "field", "seconds"}
+    assert d["n_boundary"] > 0 and d["cv"] == {"none": None, "field": None} and d["lam"] is None     # the edges are read, no field is fitted,
     assert d["residual"]["interior_mm"] == [None, None] and d["residual"]["boundary_mm"][0] > 0   # but the edges are read out
     assert d["residual"]["boundary_mm"][0] == d["residual"]["boundary_mm"][1]
-    assert "§6: not_supported (0 interior matches, 0 boundary points)" in capsys.readouterr().out
+    assert "§6: not_supported (0 interior matches, " in capsys.readouterr().out
     assert d["field"]["max_mm"] == 0 and not any((out / f).exists() for f in OUTPUTS_DEFORM)
     assert np.array_equal(nib.load(str(out / "oct_in_mri_affine.nii.gz")).get_fdata(), nib.load(str(out / "oct_in_mri.nii.gz")).get_fdata())
 
@@ -166,8 +166,7 @@ def test_outputs_with_a_field(tmp_path, monkeypatch):
         x = G.apply_affine(mri[2], np.indices(mri[0].shape).reshape(3, -1).T.astype(float)).T.reshape(3, *mri[0].shape)
         u = (0.3 * np.stack([np.sin(x[1] / 2), np.cos(x[2] / 2), np.sin(x[0] / 3)])).astype(np.float32)
         return u, {"status": "applied", "grid_mm": 5.0, "lam": 0.324, "max_strain": 0.1, "n_interior": 120, "n_boundary": 400,
-                   "cv": {"none": [0.3, 0.5], "chosen": [0.15, 0.25]},
-                   "candidates": [{"lam": 0.324, "interior_mm": 0.15, "boundary_mm": 0.25, "max_strain": 0.1}],
+                   "cv": {"none": [0.3, 0.5], "field": [0.15, 0.25]},
                    "residual": {"interior_mm": [0.3, 0.1], "boundary_mm": [0.5, 0.2], "boundary_within_0.3mm": [0.3, 0.6]},
                    "field": {"median_mm": 0.3, "p95_mm": 0.5, "max_mm": float(np.linalg.norm(u, axis=0).max())}, "seconds": 0.0}
 
@@ -214,22 +213,24 @@ def test_user_masks(tmp_path):
     assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4 and res["pose"]["polarity"] == -1
 
 
-def test_array_frame_handedness(tmp_path):
-    """An NPY stack has no orientation: both handednesses are tried and fine structure picks the mirrored one here."""
+def test_array_frame(tmp_path):
+    """An NPY stack has only an array frame, taken as given with the spacing from the command line. The stack here is written
+    so that its array frame is the header frame it came from up to a translation (the header negates all three axes, so all
+    three are flipped), and the same pose is found."""
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=0)
     img = nib.load(str(oct_path))
-    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0))       # numpy (z, y, x)
-    A_arr = np.diag([0.08, 0.08, 0.08, 1.0])
-    T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world, det < 0
+    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[::-1, ::-1, ::-1])   # numpy (z, y, x)
+    A_arr = np.diag([-0.08, -0.08, -0.08, 1.0])                                                  # NIfTI voxel -> array world
+    A_arr[:3, 3] = 0.08 * (np.array(img.shape) - 1)
+    T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world
     pts_arr = G.apply_affine(A_arr @ np.linalg.inv(img.affine), pts)
     (tmp_path / "params.json").write_text(json.dumps(FAST))
     out = tmp_path / "run"
     assert main(["register", str(tmp_path / "oct.npy"), str(mri_path), "-o", str(out), "--device", "cpu", "--params",
                  str(tmp_path / "params.json"), "--oct-spacing-um", "80,80,80"]) == 0
     res, T = json.loads((out / "result.json").read_text()), np.loadtxt(out / "T_oct2mri.txt")
-    assert np.linalg.det(T_arr[:3, :3]) < 0 and np.linalg.det(T[:3, :3]) < 0
-    assert res["pose"]["handedness"] == -1 and "mirrored_oct_frame" in res["flags"] and distance(T, T_arr, pts_arr) < 0.4
-    assert res["pose"]["NGF"] > res["pose"]["NGF_other_handedness"]
+    assert np.linalg.det(T_arr[:3, :3]) > 0 and np.linalg.det(T[:3, :3]) > 0
+    assert distance(T, T_arr, pts_arr) < 0.4 and "handedness" not in res["pose"]
     assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(mri_path), "-o",
                  str(tmp_path / "again.nii.gz")]) == 0
     np.testing.assert_allclose(nib.load(str(tmp_path / "again.nii.gz")).get_fdata(),

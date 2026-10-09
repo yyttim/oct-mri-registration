@@ -10,7 +10,6 @@ dist/
 *.nii
 *.nii.gz
 *.mgz
-*.m3z
 *.npy
 *.npz
 *.tif
@@ -20,6 +19,3 @@ dist/
 /data/
 # figures of unpublished data, drawn locally by the bench scripts
 bench/figures/*.png
-!bench/figures/fig_ablation.png
-docs/figures/*.png
-!docs/figures/fig_ablation.png

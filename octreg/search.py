@@ -1,8 +1,7 @@
 """Orientation search (docs/METHOD.md §3) on the search grid (Params.search_mm).
 
 For every rotation of a fixed uniform set the OCT template is correlated with the MRI crop over all translations by FFT
-(weighted NCC with a Padfield-style mask). Proper rotations only: for an OCT without an orientation header, register runs the
-search, the refinement and §5 once per handedness.
+(weighted NCC with a Padfield-style mask). Proper rotations only: the file frames fix the handedness.
 The score is the mean over three channel pairs. Two are the two-class maps: the OCT channels (p, 1 - p) with the specimen mask as
 weight against the MRI channels (p M, (1 - p) M); swapping the OCT classes gives exactly -S_class. The third is the specimen
 outline: the OCT specimen mask w against the MRI foreground M over the measured OCT voxels q, weighted by q (1 - (1 - w) E),

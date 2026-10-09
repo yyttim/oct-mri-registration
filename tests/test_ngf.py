@@ -1,6 +1,6 @@
 """§5 fine-structure refinement: world gradients of a ramp on a permuted, flipped grid; F is unchanged by inverting or rescaling
 the OCT contrast; a pose 1 mm and 3 degrees off is recovered on a synthetic pair whose OCT is a non-linear, inverted function of
-the MRI structure; and ngf_lam decides whether the fit takes the scale the fine structure asks for."""
+the MRI structure; and lam, the prior of §4, decides whether the fit takes the scale the fine structure asks for."""
 import numpy as np
 import torch
 from scipy import ndimage
@@ -93,8 +93,8 @@ def test_ngf_recovers_offset_pose():
 
 
 def test_ngf_separates_mirror_images():
-    """The handedness rule of §3 for array frames: refined from the true pose, and from the same pose in the mirrored OCT frame
-    (the mirror image of the block in the same place), the true handedness aligns more fine structure."""
+    """F separates mirror images: refined from the true pose and from the same pose in the mirrored OCT frame, the true frame
+    aligns more fine structure (the benchmark's A8)."""
     from octreg.register import MIRROR
     mri, (o, mo, A_O), T = pair(seed=2)
     P = Params.from_dict({"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6})
@@ -102,15 +102,15 @@ def test_ngf_separates_mirror_images():
     _, mirrored = ngf.refine_ngf(mri, (o, mo, MIRROR @ A_O), T, P, "cpu")
     assert true["F"] > 1.5 * mirrored["F"], (true["F"], mirrored["F"])
 
-def test_ngf_lam_decides_the_scale():
-    """§5 has its own prior weight. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
-    difference only the fine structure sees: with ngf_lam 0 the fit takes that scale, with a strong ngf_lam it keeps the size
-    it was given."""
+def test_prior_decides_the_scale():
+    """The prior of §4 is shared by §5. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
+    difference only the fine structure sees: with lam 0 the fit takes that scale, with a strong lam it keeps the size it was
+    given."""
     mri, oct_, T = pair(scale=(1.06, 1.0, 1.0))
     T0 = T.copy()
     T0[:3, :3] = Rotation.from_rotvec([0.2, -0.4, 0.3]).as_matrix()                   # the same pose without the scale
     c = box(oct_[2], oct_[0].shape)[0]
     base = {"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6, "ngf_iters": 80}
-    ls = lambda lam: decompose(ngf.refine_ngf(mri, oct_, T0, Params.from_dict({**base, "ngf_lam": lam}), "cpu")[0], c)[2][0]
+    ls = lambda lam: decompose(ngf.refine_ngf(mri, oct_, T0, Params.from_dict({**base, "lam": lam}), "cpu")[0], c)[2][0]
     free, held, true = ls(0.0), ls(50.0), np.log(1.06)
     assert free > held and abs(free - true) < abs(held - true), (free, held, true)

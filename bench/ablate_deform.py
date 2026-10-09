@@ -1,5 +1,4 @@
-"""§6 ablation from cached base grids (bench only; the package never reads this): the table of docs/METHOD.md §6, plus rows
-that widen the reach of the boundary evidence.
+"""§6 ablation from cached base grids (bench only; the package never reads this): the §6 ablation table of docs/METHOD.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
@@ -16,15 +15,15 @@ sectioning axis (estimated from the section stripes of the OCT), so the end of t
 
 The rows of METHOD.md that the package has no switch for are reproduced here: one kind of evidence only (the other kind's
 rows dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one
-prominent maximum of the intensity along the normal, not at its steepest fall; the MRI side keeps the edge), no support rule
-(every boundary point with one edge in both volumes is used) and no Huber re-weighting (a Huber threshold no residual
-reaches). The rest are Params overrides.
+prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), the
+support rule of 1.1 (boundary points only within 5 mm of an interior match) and no Huber re-weighting (a Huber threshold
+no residual reaches). The rest are Params overrides.
 """
 from __future__ import annotations
 
 import argparse
-import contextlib
 import json
+import sys
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -32,9 +31,13 @@ from pathlib import Path
 import numpy as np
 import torch
 from scipy import ndimage
+from scipy.spatial import cKDTree
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # bench/report.py
+
+from report import portable                                    # a path cut to its part from bench_runs/ on
 from octreg import deform as D
-from octreg import geometry as G, preprocess as pp
+from octreg import geometry as G, io, preprocess as pp
 from octreg.blockmatch import _on_grid
 from octreg.ngf import NGFGrid
 from octreg.params import Params
@@ -47,14 +50,14 @@ ROWS = {    # name: (label as in METHOD.md, change); change None = no field
     "interior_only": ("interior evidence only", {"evidence": "interior"}),
     "boundary_only": ("boundary evidence only", {"evidence": "boundary"}),
     "ridge": ("rim ridge instead of the edge", {"edge": "ridge"}),
-    "no_support": ("no support rule", {"support": False}),
+    "support": ("boundary points only within 5 mm of a match (the rule of 1.1)", {"support": 5.0}),
     "no_huber": ("no Huber re-weighting", {"params": {"df_huber_mm": 1e9}}),
     "lattice7": ("lattice 7 mm", {"params": {"df_grid_mm": 7.0}}),
     "lattice10": ("lattice 10 mm", {"params": {"df_grid_mm": 10.0}}),
     "strain10": ("strain limit 0.10", {"params": {"df_max_strain": 0.10}}),
     "strain20": ("strain limit 0.20", {"params": {"df_max_strain": 0.20}}),
     "reach20": ("reach 2.0 mm", {"params": {"df_reach_mm": 2.0}}),
-    "reach27": ("reach 2.7 mm, profile 3.0 mm", {"params": {"df_reach_mm": 2.7, "df_profile_mm": 3.0}}),
+    "reach27": ("reach 2.7 mm", {"params": {"df_reach_mm": 2.7}}),
 }
 CORE_MM = 1.5          # the two-class score is taken this far below both surfaces
 BIN_MM = 4.0           # bins of the boundary residual along the sectioning axis
@@ -65,7 +68,7 @@ def ridge_offsets(vol, affine, points, normals, params: Params):
     the rim), not its steepest fall: a local maximum of the smoothed profile more than df_edge_mad MADs above its median,
     within +-df_reach_mm. -> (used bool [M], positions [M] mm)."""
     P, h = params, float(np.linalg.norm(np.asarray(affine, float)[:3, 0]))
-    k = max(2, round(P.df_profile_mm / h))
+    k = max(2, round((P.df_reach_mm + D.PROFILE_EXTRA_MM) / h))
     t = np.arange(-k, k + 1) * h
     pts = torch.as_tensor(points[:, None, :] + normals[:, None, :] * t[None, :, None], dtype=torch.float32, device=vol.device)
     prof = G.sample_world(vol[None], affine, pts)[0].double().cpu().numpy()
@@ -93,35 +96,14 @@ def fit_evidence(mri, vol, inside, P, change, device):
             return ev.points[ok], ev.normals[ok], (pos - ev.edge_m[1])[ok]
         ev.boundary = boundary
     e = ev.measure(vol, inside)
-    if change.get("support") is False:
-        with torch.no_grad():
-            Pb, n, delta = ev.boundary(vol)
-        e.update(P=Pb, n=n, delta=delta)
+    if change.get("support"):                                 # the support rule of 1.1: a boundary point needs a match nearby
+        near = cKDTree(e["W"]).query(e["P"])[0] <= change["support"] if len(e["W"]) and len(e["P"]) else np.zeros(len(e["P"]), bool)
+        e.update(P=e["P"][near], n=e["n"][near], delta=e["delta"][near])
     if change.get("evidence") == "interior":
         e.update(P=np.zeros((0, 3)), n=np.zeros((0, 3)), delta=np.zeros(0))
     elif change.get("evidence") == "boundary":
         e.update(W=np.zeros((0, 3)), D=np.zeros((0, 3)))
     return e
-
-
-def held_out(lattice, ev, lam, huber_mm):
-    """deform.held_out, with a kind of evidence that the row leaves out scored 0 instead of the median of nothing."""
-    fb, fe, eb, ee = D.folds(ev["W"]), D.folds(ev["P"]), [], []
-    for k in range(D.FOLDS):
-        c = D.fit(lattice, ev, lam, huber_mm, (fb != k, fe != k)).T
-        eb.append(np.linalg.norm(ev["NW"][fb == k] @ c - ev["D"][fb == k], axis=1))
-        ee.append(np.abs(((ev["NP"][fe == k] @ c) * ev["n"][fe == k]).sum(1) - ev["delta"][fe == k]))
-    med = lambda x: float(np.median(np.concatenate(x))) if sum(len(a) for a in x) else 0.0
-    return med(eb), med(ee)
-
-
-@contextlib.contextmanager
-def one_kind():
-    keep, D.held_out = D.held_out, held_out
-    try:
-        yield
-    finally:
-        D.held_out = keep
 
 
 def stripe_axis(arr, mask):
@@ -185,16 +167,15 @@ def run_row(name, mri, src, scorer, lattice_for, device):
     lattice = lattice_for(P)
     kinds = change.get("evidence")
     row["n_interior"], row["n_boundary"] = len(ev["W"]), len(ev["P"])
-    enough = ((kinds == "boundary" or len(ev["W"]) >= P.df_min_interior)
-              and (kinds == "interior" or len(ev["P"]) >= P.df_min_boundary))
-    best, table = None, []
+    enough = ((kinds == "boundary" or len(ev["W"]) >= D.MIN_INTERIOR)
+              and (kinds == "interior" or len(ev["P"]) >= D.MIN_BOUNDARY))
+    best, score = None, None
     if enough:
         none = [float(np.median(np.linalg.norm(ev["D"], axis=1))) if len(ev["D"]) else 0.0,
                 float(np.median(np.abs(ev["delta"]))) if len(ev["delta"]) else 0.0]
-        with one_kind() if kinds else contextlib.nullcontext():
-            best, table = D.choose(lattice, ev, sum(none), P)
+        best, score = D.choose(lattice, ev, sum(none), P)
         row["cv_none"] = none
-    row["candidates"] = table
+    row["cv_field"] = score
     if best is None:
         row.update(status="not_supported", **scorer(src[0], src[1]), lam=None, max_strain=0.0,
                    field_mm={"median": 0.0, "max": 0.0})
@@ -204,7 +185,7 @@ def run_row(name, mri, src, scorer, lattice_for, device):
         with torch.no_grad():
             moved = D.warp(src, mri[2], field)
         mag = np.linalg.norm(field.cpu().numpy(), axis=0)[np.asarray(mri[1], bool)]
-        row.update(status="applied", lam=best[0], cv_chosen=best[1], max_strain=lattice.strain(c),
+        row.update(status="applied", lam=best[0], max_strain=lattice.strain(c),
                    field_mm={"median": float(np.median(mag)), "max": float(mag.max())}, **scorer(moved[0], moved[1]))
     row["seconds"] = time.time() - t0
     return row
@@ -215,13 +196,16 @@ def fmt(x, spec):
 
 
 def markdown(res):
-    lines = ["| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | F | two-class, core | field median / max (mm) |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | held-out interior / boundary (mm) | F | "
+             "two-class, core | field median / max (mm) |", "|---|---|---|---|---|---|---|---|---|---|"]
     for r in res["rows"].values():
         fm = r["field_mm"]
         field = "0" if not fm["max"] else f"{fm['median']:.2f} / {fm['max']:.2f}"
+        cv = r.get("cv_field")
+        cv = "" if cv is None else " / ".join(f"{x:.3f}" for x in cv)
         lines.append(f"| {r['label']} | {fmt(r['lam'], '.2f')} | {fmt(r['max_strain'], '.3f')} | {r['interior_mm']:.3f} | "
-                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {r['F']:.4f} | {r['two_class_core']:.4f} | {field} |")
+                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {cv} | {r['F']:.4f} | {r['two_class_core']:.4f} | "
+                     f"{field} |")
     e = res["axis"]["edges_mm"]
     lines += ["", f"Boundary residual (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from end 0 "
               f"({res['axis']['extent_mm']:.1f} mm in all; end 0 is the end at the start of MRI array axis "
@@ -273,7 +257,7 @@ def main():
           f"{s1 - s0:.1f} mm", flush=True)
 
     out = Path(a.out)
-    res = {"run": str(a.run), "cache": str(a.cache), "params_hash": Params().hash(), "polarity": polarity,
+    res = {"run": portable(str(a.run)), "cache": portable(str(a.cache)), "params_hash": Params().hash(), "polarity": polarity,
            "axis": {"oct_axis": axis, "mri_axis": mri_axis, "direction_mri_world": d.tolist(), "extent_mm": s1 - s0,
                     "edges_mm": edges.tolist()}, "rows": {}}
     for name in names:
@@ -281,9 +265,9 @@ def main():
         print(f"[{time.time() - t0:.0f} s] {r['label']:32s} λ {fmt(r['lam'], '.2f'):>5s} strain {fmt(r['max_strain'], '.3f'):>5s} | "
               f"interior {r['interior_mm']:.3f} boundary {r['boundary_mm']:.3f} within {100 * r['within']:.0f} % | "
               f"F {r['F']:.4f} two-class {r['two_class_core']:.4f}", flush=True)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(res, indent=1))
-    out.with_suffix(".md").write_text(markdown(res))
+        io.write_json(res, out)                                # LF on every OS, as bench/results/I58 stores it
+    with open(out.with_suffix(".md"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(markdown(res))
     print(f"wrote {out} and {out.with_suffix('.md')} ({time.time() - t0:.0f} s)", flush=True)
 
 

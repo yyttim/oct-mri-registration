@@ -9,7 +9,7 @@ it needs neither an intensity mapping nor the polarity.
 
 Matching. Both features live on the MRI base grid, so no tensor has to be transported. On a grid of blocks (edge df_block_mm,
 step df_step_mm, at least CORE_FRACTION inside the core: both masks eroded by df_erode_mm) the MRI block is searched in the OCT
-feature within +-df_range_mm by zero-mean normalised cross-correlation of the six channels. A match is confident when its peak
+feature within +-df_reach_mm by zero-mean normalised cross-correlation of the six channels. A match is confident when its peak
 stands df_z_min standard deviations above the mean of its score map and does not lie on the border of the range; the peak is
 refined by a parabola per axis.
 """

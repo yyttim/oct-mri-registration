@@ -1,30 +1,43 @@
 # Changelog
 
-## Unreleased
+## 2.0.0
 
-- §5 has its own prior weight `ngf_lam`, default 2.0, the value §4 uses, so §1-5 compute the same affine as 1.1.0 and the
-  released run reproduces to the digits docs/METHOD.md prints. Until now the fine refinement inherited §4's `lam` through
-  `refine.fit_adam` and the two could not be varied apart; `refine.fit_adam` now takes the weight as an argument, defaulting to
-  `params.lam`. §1-4 and §6 are untouched.
-- `bench/ngf_lam.py`: the §1 base grids cached once, then §5 alone from a run's §4 pose, once per weight, with the outline
-  agreement of `bench/evaluate.py` at every pose. The measurement on the brainstem pair is in docs/METHOD.md: the penalty is
-  load bearing in §5 as it is in §4, the clamp binds without it, and one weight cannot give the correction the shape the
-  interior asks for. The default stays at 2.0.
-- §5's prior splits into the size of the block and its shape, `ngf_lam` and `ngf_lam_shape`, equal at 2.0 by default, where
-  together they are the penalty of §4. The default Params hash is `ab058ece8f3093ba`.
-- `bench/ngf_lam.py` also sweeps the gradient scales, flat-fields the section stripes out of the OCT (`--destripe`) and
-  caches the volumes on a grid of its own (`--grid-mm`), so §5 can be run finer than §1-4. All three are measured in
-  docs/METHOD.md and none of them improves the pose.
-- tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
-  and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
+The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as
+1.1 (within 0.003 mm at the block corners, and 0.001 mm from release 1.0), §6 is simpler and fits the superior end of the
+block better, and 36 fields remain in Params (hash
+`da914d8ccc555207`).
+
+- §2 blurs the flattened volume as G(xM)/G(M) instead of a plain Gaussian (`preprocess.masked_blur`), so background and
+  masked-out gaps do not bleed into the tissue maps. On I58 the §4 pose moves 2.2 mm at the block corners (S 0.2855 to
+  0.2781, the first pose by search score wins instead of the third) and §5 ends on the same affine.
+- §6 uses every boundary point with one edge in both volumes. The support rule of 1.1, which counted a boundary point only
+  within 5 mm of an interior match, is gone with `df_support_mm`: it existed for torn tissue, and without it the field fits the
+  boundary better on I58 (0.104 to 0.089 mm, 74 to 80 % within 0.3 mm, and the first 4 mm at the superior end 0.39 to 0.22 mm).
+- §6 chooses its membrane weight by the strain limit alone: the smallest weight between 0.3 and 30 whose fit keeps the strain
+  below 0.15, found by bisection. The list of candidate weights and the comparison of their held-out scores are gone
+  (`df_lams`): on I58 the held-out score fell monotonically down to that weight in every variant, so the field is the same.
+  The held-out score now only gates the field (below 0.9 times the score without deformation), and that gain, the least evidence (100 matches,
+  300 boundary points) and the range of the weight are module constants (`df_gain`, `df_min_interior`, `df_min_boundary`
+  removed). result.json: `deform.cv` holds `none` and `field`, the candidates table is gone.
+- One reach for the local evidence of §6: `df_reach_mm` (1.35 mm) bounds the interior search range and the edge window, and a
+  boundary profile runs 0.75 mm beyond it (`df_range_mm` and `df_profile_mm` removed). The interior feature is described as
+  what it is, the normalised gradient of §5 at a finer scale.
+- §5 uses the prior of §4 (`lam`). `ngf_lam` and `ngf_lam_shape` are gone: the measurement that motivated them stays in
+  docs/METHOD.md, made with `bench/ngf_lam.py`, which runs §5 alone and now varies `lam`.
+- The clamp of §4-5 (0.15 on log-scales and shears) is a module constant and a guard, with its flag. The prior is the penalty.
+- §3-5 run once, in the file frames as given. The loop over both handednesses for files without an orientation header is gone,
+  with `pose.handedness`, `pose.NGF_other_handedness` and the flag `mirrored_oct_frame`: the frames fix the handedness, and an
+  array frame must have the handedness of the specimen as it must have its spacing.
+- bench: `ablate.py` sets the clamp of A6 and A6c by patching `refine.CLAMP`, `ablate_deform.py` scores the support rule of 1.1
+  as a row, and `ngf_lam.py` varies `lam`.
 - The figures of the I58 pair are no longer in the repository, since the data are unpublished. The bench scripts draw them
   locally.
 - The DANDI:000026 results are withdrawn until a re-run. `bench/dandi.py` built six of the eight MRI crops through label
   headers that do not match the MRI, and only sub-I46 and sub-I55 were placed correctly. Their table,
   `bench/results/dandi/summary.json`, is removed, and `bench/dandi.py --steps summary` now writes `summary.json` into its
   output root.
-- The documents no longer report counts or measurements from visual readings of the QC images. The numbers the code computes
-  are unchanged.
+- The documents no longer report counts or measurements from visual readings of the QC images, only the numbers the code
+  computes.
 - The I58 pair is named by its subject alone, and the bench files follow: the runner is `bench/run_i58.py`, the stored results
   are in `bench/results/I58/`, the figures are `fig_*_I58.png` and the default run directory is `bench_runs/I58`.
 - The bench paths default to the repository, runs under `bench_runs/` and data under `data/`, both ignored by git.
@@ -96,7 +109,7 @@ from docstrings.
 - The README figure shows the result as directly as it can be shown: per plane the MRI, the registered OCT, and those two
   panels cut into 8 mm squares and interleaved. The checkerboard is nothing but the two of them, on their own grey scales,
   neither inverted nor matched to each other nor masked, so every square can be checked against the panel it came from.
-  Nothing is drawn on the data and nothing in the figure is derived from either mask; the script lost a third of its lines
+  Nothing is drawn on the data and nothing in the figure is derived from either mask. The script lost a third of its lines
   and one of its inputs with the machinery that used to do all that.
 - The QC figures read better and nothing about the transforms changed. The MRI column of `qc.png`, `qc_montage.png` and
   `qc_deform.png` is now mapped by rank onto the grey scale of the OCT in the tissue both show, instead of being stretched
@@ -119,7 +132,7 @@ from docstrings.
 No change to the method or its results: same Params and hash, same `result.json` keys, same poses.
 
 - Windows portability. The transform files (`T_oct2mri.txt`, `T_mri2oct.txt`, `oct2mri.lta`, `oct2mri_itk.txt`) are written with
-  LF line ends on every OS. `peak_rss_gb` in `result.json` is filled on Windows too (the peak working set;
+  LF line ends on every OS. `peak_rss_gb` in `result.json` is filled on Windows too (the peak working set,
   `octreg.register.peak_rss_gb`). The benchmark reads its machine roots from `bench/paths.py`, and a Python runner of the I58 pair,
   now `bench/run_i58.py`, works on any OS next to the POSIX shell runner of this release.
 - `octreg/blockmatch.py`, at this release a diagnostic the method does not call. It measures a label-free residual displacement

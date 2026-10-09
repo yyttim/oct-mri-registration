@@ -7,7 +7,7 @@ at the specimen voxels (swapped for polarity -1) and the MRI channels sampled th
 specimen mask w and the MRI foreground M sampled through the pose at the measured OCT voxels q, weighted by q (1 - (1 - w) E),
 E = M inside the MRI grid and 1 outside: embedding over MRI tissue or outside the crop is left out (the MRI may hold tissue that
 is not in the block). L = 1 - S + lam (sum ls^2 + sum sh^2);
-after every Adam step (cosine schedule) |ls|, |sh| <= clamp (absolute).
+after every Adam step (cosine schedule) |ls|, |sh| <= CLAMP (absolute).
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from scipy.spatial.transform import Rotation
 from . import geometry as G
 from .params import Params
 from .search import EPS, box, to_torch
+
+CLAMP = 0.15               # |log_scale|, |shear| <= CLAMP after every step: a guard, never reached with the penalty (flag clamp_saturated)
 
 
 def compose(r, t, ls, sh, c):
@@ -85,18 +87,14 @@ class BaseGrid:
         return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
 
 
-def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params(), lam=None, lam_shape=None):
+def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params()):
     """Adam on L = 1 - objective(T)[0] + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4), over all twelve affine parameters
     (r, t, 3 log-scales, 3 shears), with a cosine schedule to zero at t_max and learning rates lr_scale x (lr_rot rad, lr_t mm,
-    lr_ls, lr_sh); |ls| and |sh| are clamped to params.clamp after every step. iters and t_max are separate because §4 stops at
+    lr_ls, lr_sh); |ls| and |sh| are clamped to CLAMP after every step. iters and t_max are separate because §4 stops at
     t_max, never scoring its last iterate, and §5 runs one iterate past it at learning rate 0.
     objective(T) -> a tuple of scalar tensors, the first of which is the score. -> (T numpy 4x4, *those values, L) of the
-    iterate with the lowest L. lam defaults to params.lam (§4); §5 passes params.ngf_lam. lam_shape, when it differs from
-    lam, weighs the log-scales about their mean separately from that mean: lam (3 mean^2) + lam_shape (sum (ls - mean)^2),
-    which is lam (sum ls^2) when the two are equal, the penalty of §4."""
+    iterate with the lowest L."""
     P, dev = params, grid.w.device
-    lam = P.lam if lam is None else float(lam)
-    lam_shape = lam if lam_shape is None else float(lam_shape)
     f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=dev, requires_grad=True)
     r, t, ls, sh = (f(x) for x in decompose(T0, grid.c))
     c = torch.tensor(np.asarray(grid.c, float), dtype=torch.float32, device=dev)
@@ -109,18 +107,16 @@ def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Param
         opt.zero_grad(set_to_none=True)
         T = compose(r, t, ls, sh, c)
         v = objective(T)
-        size = (ls.mean() ** 2) * 3.0
-        scale_term = lam * (ls ** 2).sum() if lam_shape == lam else lam * size + lam_shape * ((ls - ls.mean()) ** 2).sum()
-        L = 1.0 - v[0] + scale_term + lam * (sh ** 2).sum()
-        l, *s = torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
+        L = 1.0 - v[0] + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
+        l, *s =torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
         if l < best[0]:
             best = (l, T.detach().cpu().double().numpy(), *s)
         L.backward()
         opt.step()
         sched.step()
         with torch.no_grad():
-            ls.clamp_(-P.clamp, P.clamp)
-            sh.clamp_(-P.clamp, P.clamp)
+            ls.clamp_(-CLAMP, CLAMP)
+            sh.clamp_(-CLAMP, CLAMP)
     return (*best[1:], best[0])
 
 
