@@ -283,28 +283,30 @@ pose against the result. The cut-face row compares the two outlines on the same 
 
 | change | after §4 (mm) | final (mm) |
 |---|---|---|
-| intensity-threshold OCT mask instead of the texture mask | 42.0 | 42.9 |
-| no outline term | 41.7 | 40.9 |
+| intensity-threshold OCT mask instead of the texture mask | 41.9 | 42.9 |
+| no outline term | 42.1 | 44.0 |
 | polarity forced to +1 | 41.1 | 42.3 |
-| no scale prior (λ 0, clamp 1.0): S 0.501 at the §4 pose, final scales 0.51-0.57 | 38.7 | 35.7 |
-| the other handedness (OCT mirrored) | 29.5 | 30.4 |
-| of the scale prior, the clamp alone (λ 0, clamp kept): final scales 0.86-0.88, at the bound | 16.9 | 38.6 |
+| no scale prior (λ 0, clamp 1.0): S 0.530 at the §4 pose, final scales 0.40-0.58 | 40.1 | 38.4 |
+| the other handedness (OCT mirrored) | 29.8 | 30.5 |
+| of the scale prior, the clamp alone (λ 0, clamp kept): final scales 0.86-0.88, at the bound | 41.2 | 38.7 |
 | of the scale prior, the penalty alone (clamp 1.0, λ kept) | 0.00 | 0.00 |
-| no fine-structure refinement (§5) | 0 | 2.36 |
-| OCT flattening off | 2.41 | 0.00 |
-| holes filled in 3-D only | 2.19 | 0.17 |
-| standardised intensities instead of two-class maps | 0.81 | 0.00 |
-| two-sided outline (agarose over MRI tissue counted as a mismatch) | 0.23 | 0.00 |
-| MRI flattening off | 0.18 | 0.00 |
-| cut face simulated by removing the mask beyond 70 % of its extent along OCT axis 1: method / two-sided outline | 0.40 / 4.68 | 0.11 / 3.87 |
+| no fine-structure refinement (§5) | 0 | 3.75 |
+| OCT flattening off | 0.24 | 0.00 |
+| holes filled in 3-D only | 0.24 | 0.17 |
+| standardised intensities instead of two-class maps | 2.19 | 0.00 |
+| two-sided outline (agarose over MRI tissue counted as a mismatch) | 2.18 | 0.00 |
+| MRI flattening off | 3.68 | 0.00 |
+| cut face simulated by removing the mask beyond 70 % of its extent along OCT axis 1: method / two-sided outline | 4.04 / 2.55 | 0.11 / 0.11 |
 
 The first five turn the block over or misplace it, and §5, which only refines, does not bring it back. The two rows that
 split the scale prior show that all of it is the penalty: without the penalty the block collapses onto the clamp, at 0.86 to
-0.88 of its length, and without the clamp the pose does not move at all. §5 itself moves the result by 2.4 mm. The next five
-changes of the §4 pose lie within the reach of §5, which settles them, and those steps stay for the §4 pose they give.
+0.88 of its length, and without the clamp the pose does not move at all. §5 itself moves the result by 3.8 mm. The next
+five changes of the §4 pose lie within the reach of §5, which settles them, and with a simulated cut face both outlines
+end at the same pose.
 
 The prior of §5 was measured on its own. From the §4 pose of the released run, §5 was fitted at λ 2, 1, 0.5, 0.2 and 0 on
-cached base grids (`bench/ngf_lam.py`, which runs §5 alone, so the weight reaches nothing else), and every pose was scored by
+cached base grids (`bench/ngf_lam.py`, which runs §5 alone, so the weight reaches nothing else, with the sweeps stored under
+`bench/results/I58/ngf_lam/`), and every pose was scored by
 the outline agreement of `bench/evaluate.py`, which §5 does not read.
 
 | λ | F | scales per OCT axis | OCT to MRI rim (mm) | MRI to OCT rim (mm) |
@@ -313,51 +315,46 @@ the outline agreement of `bench/evaluate.py`, which §5 does not read.
 | 1.0 | 0.1080 | 0.955 / 0.952 / 0.972 | 0.986 | 1.495 |
 | 0.5 | 0.1113 | 0.942 / 0.932 / 0.965 | 0.911 | 1.387 |
 | 0.2 | 0.1140 | 0.932 / 0.899 / 0.964 | 0.878 | 1.289 |
-| 0 | 0.1181 | 0.861 / 0.861 / 0.901 | 1.123 | 1.373 |
+| 0 | 0.1181 | 0.861 / 0.861 / 0.907 | 1.122 | 1.375 |
 
 F rises as the weight falls, which it must, since F is what §5 maximises. The outline agreement, which it never sees, improves
 with it down to λ 0.2, by 0.24 mm forward and 0.39 mm reverse, and the gain is spread over the faces rather than taken on one
 of them: a0+ 1.34 to 1.06, a1+ 0.93 to 0.56, a1− 1.07 to 0.76, a2+ 2.28 to 2.01, a2− 2.40 to 2.04, with a0− flat at 0.77 to
 0.79.
-At λ 0 two log-scales sit on the clamp (0.8607 = exp(−0.15)) and the agreement breaks: a0+ falls to 0.80 mm while a0− rises to
-1.41 and a1+ to 1.29, opposite faces moving opposite ways. The penalty is therefore load bearing in §5 as it is in §4, and the
+At λ 0 two log-scales sit on the clamp (0.8607 = exp(−0.15)) and the agreement breaks: a0+ falls to 0.81 mm while a0− rises to
+1.41 and a1+ to 1.28, opposite faces moving opposite ways. The penalty is therefore load bearing in §5 as it is in §4, and the
 clamp binds as soon as it goes.
 
 What one weight cannot do is give the correction the shape the interior asks for. The local affine of the interior matches is
-anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points between its largest and smallest. Sorted the same
-way, λ 1 shrinks by 4.8, 4.5 and 2.8 % (spread 2.0) and λ 2 by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the
-same frame, so only the spread compares: lowering the weight scales the block down as a whole and does not reach the shape.
+anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points between its largest and smallest (measured while
+§6 was developed, at the affine of release 1.0). Sorted the same way, λ 1 shrinks by 4.8, 4.5 and 2.8 % (spread 2.0) and λ 2
+by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the same frame, so only the spread compares: lowering the weight
+scales the block down as a whole and does not reach the shape.
 
-Two further sweeps asked whether §5 can be made to reach that shape, and neither is part of the method. A penalty split into
-the size of the block, the mean of the log-scales, and its shape, their deviations from that mean, moves the fit the other way
-when the shape alone is relaxed: at 0.2 the third OCT axis grows to 1.011 and at 0 to 1.106, while the singular values of the
-interior are all above 1 in the other direction, and the outline buys less per millimetre of pose than the size weight did,
-0.09 mm of rim for 0.56 mm of pose against 0.13 for 0.62. A finer last pass costs instead of gains:
-with σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it is 1.135 / 1.696, against 1.120 / 1.677 at the
-method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of 0.6, 0.4, 0.3, 0.2 to 0.01 mm, so the last pass is
-what decides. 0.2 mm is below the base grid and at the spacing of the section stripes, the scale §5 smooths away by stopping at
-0.3. (F does not compare between schedules, each row reporting it at its own finest σ, but the outline does.)
-
-Neither the stripes nor the grid is what stops the finer passes. A per-section flat field along the array axis the stripes vary
-on, axis 0 here and 1.4 % of the mean, applied to the OCT before §5, is worth 0.006 mm of rim at the method's schedule and
-leaves the finer ones where they were (1.131 / 1.695 mm with σ 0.25 appended). And §5 on a 0.08 mm grid of its own, the
-resolution of the MRI, built by `bench/ngf_lam.py cache --grid-mm`, moves the pose 0.19 mm from the released one at the method's
-schedule and 0.33 mm at 0.3, 0.2, 0.15, with the outline on that grid 1.160 / 1.870 and 1.145 / 1.855 mm against 1.135 / 1.841
-at the released pose: the finer schedule recovers part of what the finer grid costs and neither reaches it. At 0.08 mm the MRI
-carries its own noise and the OCT its speckle, and the gradient directions are noisier, not sharper.
+A finer last pass costs instead of gains: with σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it is
+1.135 / 1.696, against 1.119 / 1.676 at the method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of
+0.6, 0.4, 0.3, 0.2 (rim 1.135 / 1.696 in both), so the last pass is what decides. 0.2 mm is below the base grid and at the
+spacing of the section stripes, the scale §5 smooths away by stopping at 0.3. (F does not compare between schedules, each row
+reporting it at its own finest σ, but the outline does.) Neither the stripes nor the grid is what stops the finer passes. A
+per-section flat field along the array axis the stripes vary on, applied to the OCT before §5, is worth 0.005 mm of rim at
+the method's schedule and leaves the finer one where it was (1.131 / 1.695 mm with σ 0.25 appended). And §5 on a 0.08 mm
+grid of its own, the resolution of the MRI, moved the pose by about 0.2 mm at the method's schedule and 0.3 mm at 0.3, 0.2,
+0.15 while the schedule was chosen, with the outline on that grid no better: at 0.08 mm the MRI carries its own noise and the
+OCT its speckle, and the gradient directions are noisier, not sharper.
 
 So the prior of §5 sits at a reasonable weight, its passes stop at a reasonable scale and the grid it runs on is fine enough.
-What the interior asks for is not an
-affine the prior is holding back, and the misfit that is left is where §6 fits it.
+What the interior asks for is not an affine the prior is holding back, and the misfit that is left is where §6 fits it.
 
-Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, and neither is kept on this
-pair's evidence. The one-sided outline (0.23 mm here) is what holds the block at a cut face: with one simulated, the two-sided
-version ends 3.9 mm off, in the last row of the table. MRI flattening (0.18 mm here) does nothing on this pair, whose MRI is a
-small crop with little bias. It was kept on evidence from a DANDI subject that is now withdrawn, so it stays until the re-run
-decides.
+Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, OCT flattening (0.15 mm over
+the specimen) and per-plane hole filling (0.22 mm), and both are kept for what they do rather than for this pose. Flattening
+is one rule for both volumes, and on the MRI side it moves the §4 pose by 1.9 mm (3.7 mm at the corners). Per-plane filling
+is what keeps the white matter of the block inside the specimen mask: uniform white matter has no texture and forms cavities
+in the mask that reach its surface, which a 3-D fill leaves open, so filled in 3-D only the mask loses 2.4 of its 19.2 cm³,
+and the evidence of §6 is read inside that mask. The one-sided outline moves the §4 pose by 2.2 mm on this pair, whose crop
+holds tissue below the block, and with a simulated cut face (the last row) both outlines end 0.11 mm from the result.
 
-On this pair the two-class maps are the weaker feature: |S_class| is 0.11 at the §4 pose and A4's standardised intensities
-reach 0.15, and the block is found by the outline.
+On this pair the two-class maps are the weaker feature: |S_class| is 0.10 at the §4 pose and A4's standardised intensities
+reach 0.14, and the block is found by the outline.
 
 ### Beyond the target data: DANDI:000026
 
