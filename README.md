@@ -19,12 +19,11 @@ Requires Python 3.9 or newer and PyTorch. A CUDA GPU is recommended for full-siz
 ```
 octreg register OCT MRI -o OUT
 octreg qc --run OUT --oct OCT --mri MRI [--T F] [-o PREFIX]
-
 octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--affine-only] [--oct-spacing-um Z,Y,X]
 ```
 
 `register` runs the registration. The OCT can be NIfTI, TIFF, OME-TIFF or NPY (`--oct-spacing-um Z,Y,X` when the file has no
-spacing), the MRI is NIfTI. The file frames fix the handedness: a NIfTI orientation header (sform or qform) must be correct,
+spacing) and the MRI is NIfTI. The file frames fix the handedness: a NIfTI orientation header (sform or qform) must be correct,
 and a TIFF or NPY stack (x, y, z = numpy axes 2, 1, 0) or a NIfTI file without one is taken in its array frame, which must then
 have the handedness of the specimen.
 `--oct-mask` and `--mri-mask` replace the automatic masks, `--params` reads parameter overrides from JSON, and `--device cpu`

@@ -10,7 +10,6 @@ dist/
 *.nii
 *.nii.gz
 *.mgz
-*.m3z
 *.npy
 *.npz
 *.tif

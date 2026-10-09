@@ -16,14 +16,14 @@ that holds the two I58 input files (by default `<data root>/I58`). Nothing else 
 | `paths.py` | the run and data roots and the input files derived from them |
 | `evaluate.py` | one run measured against the data itself: boundary agreement, OCT mask volume, raw-data frame check, and the pose distance to an earlier octreg run |
 | `ablate.py` | the preprocessing once, then the variants base and A0-A12, one JSON table |
-| `ablate_deform.py` | §6 from the cached base grids of `ngf_lam.py cache`: the ablation table of METHOD.md §6 plus rows that widen the reach of the local evidence (df_reach_mm, the interior search range and the edge window), every row scored by the same measurement, and the boundary residual along the sectioning axis |
+| `ablate_deform.py` | §6 from the cached base grids of `ngf_lam.py cache`: the §6 ablation table of docs/METHOD.md (its reach rows widen df_reach_mm, the interior search range and the edge window), every row scored by the same measurement, and the boundary residual along the sectioning axis |
 | `ngf_lam.py` | §5 alone from cached base grids: `cache` writes the §1 grids both volumes share, `sweep` refits §5 from the §4 pose of a run at several `lam` values or σ schedules (`--destripe` flat-fields the section stripes first) and scores each pose by the outline agreement of `evaluate.py`, `transforms` writes every pose of a sweep as a 4x4 text file for `octreg qc --T` |
 | `dandi.py` | the DANDI blocks: MRI crop, `octreg register`, the cortical-layer read-out and its figure, a markdown summary (results withdrawn, see below) |
 | `report.py` | writes `bench/BENCHMARK.md` from the outputs, and the qc figures it describes into `bench/figures/` |
 | `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
 | `fig_registration.py` | the registration figure: an MRI plane, the OCT placed on it by the run, and those two panels cut into 8 mm squares and interleaved |
 | `BENCHMARK.md` | the I58 report, written by `report.py`, which keeps its hand-written "Visual result" section and its closing reading |
-| `results/` | the JSON copied out of the run directories |
+| `results/` | the JSON and the §6 ablation table (`deform_ablation.md`) copied out of the run directories |
 | `figures/` | the figures of the I58 pair, which these scripts draw locally and which are not published |
 
 ## Running the I58 benchmark
@@ -66,7 +66,7 @@ into `bench/results/I58/` (`report.py --store`, with every absolute path cut to 
 writes `BENCHMARK.md` and `bench/figures` from them, so the document and the numbers it quotes are one command and never
 drift apart. `deform_ablation.json` and `.md` there are the output of `bench/ablate_deform.py`, copied by hand with the two
 run paths cut as report.py cuts them. `ngf_lam/lam.json`, `sigmas.json` and `destripe.json` are the sweeps of
-`bench/ngf_lam.py sweep` that docs/METHOD.md §5 quotes, with the run and cache paths cut the same way.
+`bench/ngf_lam.py sweep` that docs/METHOD.md quotes for the prior and the σ schedule of §5 (Evaluation, I58 brainstem pair), with the run and cache paths cut the same way.
 
 ## The DANDI:000026 blocks
 
@@ -159,7 +159,7 @@ the base specimen mask and over the 8 corners of the OCT array.
 | A4 | standardised intensity channels (z, -z) instead of two-class maps |
 | A5+1, A5-1 | polarity forced to +1 or -1 instead of the sign of the two-class score (`align(..., polarity=...)`) |
 | A6 | no scale prior: lambda 0 and clamp 1.0 instead of 2 and 0.15 |
-| A6p, A6c | the penalty alone (lam 0, clamp kept) and the clamp alone (clamp 1.0, lam kept) |
+| A6p, A6c | no penalty, clamp kept (lam 0, clamp 0.15) and no clamp, penalty kept (lam 2, clamp 1.0) |
 | A8 | the other handedness: the OCT world mirrored (z negated) before search and refinement |
 | A9 | no outline term: S = 2 S_class / 3 in the search (patched `search.combined`) and in the refinement (outline weight = the specimen mask, so S_outline = 0) |
 | A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
