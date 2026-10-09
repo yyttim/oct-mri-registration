@@ -19,8 +19,8 @@ crop      The method assumes an MRI already cropped around a region that contain
           goes to OUT/SUBJ/mri_crop.nii.gz. The label says which part of the hemisphere the block was taken from and how big
           the block is, which is what a user of the method knows. It is not the registration: it fixes neither the
           orientation nor the position inside the crop.
-register  octreg.register.register on the block and the crop, the same entry point as for any other pair. The OCT frame has no
-          orientation, so §3-5 run for both handednesses and the higher NGF F wins (docs/METHOD.md §5).
+register  octreg.register.register on the block and the crop, the same entry point as for any other pair. The OCT file carries
+          no orientation, so its array frame must have the handedness of the specimen (README).
 evaluate  A number the registration never sees, written to OUT/SUBJ/eval.json. The subject's cortical-layer label divides the
           cortex into layers. Its two ends, the classes with the lowest and the highest median MRI intensity, are brought into
           the OCT by the pose, and the two-class map of §2 is read there. The separation |AUC - 0.5| of the two sets of values
@@ -269,9 +269,9 @@ def summary():
     gives how many of the N_RANDOM poses could be scored (random_separation["n"]), not N_RANDOM."""
     rows = {}
     num = lambda x, n=3: "" if x is None else f"{x:.{n}f}"
-    print("| subject | crop (mm) | block (mm) | crop fits | specimen mask of the measured OCT | S | S_class | S_outline | hand | NGF | scale per OCT axis | §6 "
+    print("| subject | crop (mm) | block (mm) | crop fits | specimen mask of the measured OCT | S | S_class | S_outline | NGF | scale per OCT axis | §6 "
           "| layer separation | random |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for s in SUBJECTS:
         if not (OUT / s / "result.json").exists():
             continue
@@ -292,13 +292,13 @@ def summary():
         if d.get("lam") is not None:
             deform += f", lam {d['lam']:.2f}, field {d['field']['median_mm']:.2f} / {d['field']['max_mm']:.2f} mm"
         rows[s] = {"crop_mm": mm, "oct_array_cm3": arr_cm3, "oct_measured_cm3": meas, "specimen_mask": fo,
-                   "block_mm": e.get("block_mm"), "crop_fits_block": e.get("crop_fits_block"), "pose": {k: p.get(k) for k in ("S", "S_class", "S_outline", "L", "polarity", "handedness",
-                                                              "NGF_start", "NGF", "NGF_other_handedness", "scale_per_oct_axis")},
+                   "block_mm": e.get("block_mm"), "crop_fits_block": e.get("crop_fits_block"), "pose": {k: p.get(k) for k in ("S", "S_class", "S_outline", "L", "polarity",
+                                                              "NGF_start", "NGF", "scale_per_oct_axis")},
                    "flags": res["flags"], "deform": {k: d.get(k) for k in ("status", "n_interior", "n_boundary")},
                    "layer_separation": v[1] if v else None, "random_separation": rnd, "seconds": res["seconds"]["total"]}
         blk = ' x '.join(f'{x:.0f}' for x in e['block_mm']) if e.get('block_mm') else ''
         print(f"| {s} | {' x '.join(f'{x:.0f}' for x in sorted(mm, reverse=True))} | {blk} | {fits} | {mask} | {num(p['S'], 4)} | {num(p['S_class'], 4)} | {num(p['S_outline'], 4)} "
-              f"| {p.get('handedness', 1):+d} | {num(p['NGF_start'], 4)} -> {num(p['NGF'], 4)} "
+              f"| {num(p['NGF_start'], 4)} -> {num(p['NGF'], 4)} "
               f"| {' / '.join(f'{x:.3f}' for x in p['scale_per_oct_axis'])} | {deform} "
               f"| {num(v[1], 3) if v else ''} | {random if rnd else ''} |")
     store = OUT / "summary.json"

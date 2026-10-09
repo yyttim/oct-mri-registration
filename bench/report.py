@@ -65,7 +65,7 @@ def gpu_peak_gb(path):
 def rims(b):
     """Rim medians forward / reverse at the pose, then those of any other pose (the previous run) under the same masks."""
     pair = lambda r: f"{num(r[0])} / {num(r[1])}" if r else "n/a"
-    other = "".join(f"; {n} {pair(r)}" for n, r in (b or {}).get("rim_median_mm_of", {}).items())
+    other = "".join(f", {n} {pair(r)}" for n, r in (b or {}).get("rim_median_mm_of", {}).items())
     return f"{pair(b.get('rim_median_mm'))} mm{other}" if (b or {}).get("rim_median_mm") else "n/a"
 
 
@@ -80,15 +80,15 @@ def deform_rows(d):
         return []
     r, f, cv = d.get("residual", {}), d.get("field", {}), d.get("cv", {})
     model = f"control lattice {num(d.get('grid_mm'), 0)} mm, lambda {num(d.get('lam'), 2)}" if d.get("status") == "applied" else "no field"
-    return [("smooth deformation (§6): status; model; interior matches, supported boundary points used by the fit",
-             f"{d.get('status', 'n/a')}; {model}; {d.get('n_interior', 'n/a')}, {d.get('n_boundary', 'n/a')}"),
-            ("§6 held-out median error, interior + boundary: no deformation -> chosen lambda",
-             f"{arrow([cv['none'][0], cv['chosen'][0]], nd=3)} mm + {arrow([cv['none'][1], cv['chosen'][1]], nd=3)} mm"
-             if cv.get("none") and cv.get("chosen") else "n/a"),
-            ("§6 residuals affine -> deformed, measured again: interior matches; surface-edge offsets (within 0.3 mm)",
-             f"{arrow(r.get('interior_mm'))} mm; {arrow(r.get('boundary_mm'))} mm ({arrow(r.get('boundary_within_0.3mm'), 100, 0)} %)"),
-            ("§6 field over the MRI foreground, median / p95 / max; max strain",
-             f"{num(f.get('median_mm'))} / {num(f.get('p95_mm'))} / {num(f.get('max_mm'))} mm; {num(d.get('max_strain'))}")]
+    return [("smooth deformation (§6): status, model, interior matches and boundary points used by the fit",
+             f"{d.get('status', 'n/a')}, {model}, {d.get('n_interior', 'n/a')} and {d.get('n_boundary', 'n/a')}"),
+            ("§6 held-out median error, interior + boundary: no deformation -> the field",
+             f"{arrow([cv['none'][0], cv['field'][0]], nd=3)} mm + {arrow([cv['none'][1], cv['field'][1]], nd=3)} mm"
+             if cv.get("none") and cv.get("field") else "n/a"),
+            ("§6 residuals affine -> deformed, measured again: interior matches, surface-edge offsets (within 0.3 mm)",
+             f"{arrow(r.get('interior_mm'))} mm, {arrow(r.get('boundary_mm'))} mm ({arrow(r.get('boundary_within_0.3mm'), 100, 0)} %)"),
+            ("§6 field over the MRI foreground, median / p95 / max, and max strain",
+             f"{num(f.get('median_mm'))} / {num(f.get('p95_mm'))} / {num(f.get('max_mm'))} mm, {num(d.get('max_strain'))}")]
 
 
 def main_section(run, logs):
@@ -108,14 +108,14 @@ def main_section(run, logs):
     shift_max = max(shifts) if shifts else None
     pv = ev.get("pose_to_previous", {})
     rows = [
-        ("raw-data frame check (Spearman)", f"{num(fc.get('spearman_export'), 3)} at the pose; axis flips <= "
-                                            f"{num(fc.get('max_flip_spearman'), 3)}; 2 mm shifts <= {num(shift_max, 3)}; "
+        ("raw-data frame check (Spearman)", f"{num(fc.get('spearman_export'), 3)} at the pose, axis flips <= "
+                                            f"{num(fc.get('max_flip_spearman'), 3)}, 2 mm shifts <= {num(shift_max, 3)}, "
                                             f"{('pass' if fc['ok'] else 'fail') if fc else 'n/a'}"),
-        ("score S of the §4 pose = (2 polarity S_class + S_outline) / 3; S_class, S_outline; polarity",
-         f"{num(pose.get('S'), 4)}; {num(pose.get('S_class'), 4)}, {num(pose.get('S_outline'), 4)}; {pose.get('polarity', 'n/a')}"),
+        ("score S of the §4 pose = (2 polarity S_class + S_outline) / 3, with S_class, S_outline and the polarity",
+         f"{num(pose.get('S'), 4)}, {num(pose.get('S_class'), 4)}, {num(pose.get('S_outline'), 4)}, {pose.get('polarity', 'n/a')}"),
         ("search top-1 / top-2", f"{num(srch.get('top1'), 4)} / {num(srch.get('top2'), 4)}"),
-        ("fine-structure agreement F (§5), at the §4 pose -> refined; handedness",
-         f"{num(pose.get('NGF_start'), 4)} -> {num(pose.get('NGF'), 4)}; {pose.get('handedness', 'n/a')}"),
+        ("fine-structure agreement F (§5), at the §4 pose -> refined",
+         f"{num(pose.get('NGF_start'), 4)} -> {num(pose.get('NGF'), 4)}"),
         ("pose change of §5 (block-corner mean)", f"{num(pose.get('ngf_shift_mm'))} mm"),
         ("scale per OCT array axis", " / ".join(f"{v:.3f}" for v in pose["scale_per_oct_axis"]) if pose else "n/a"),
         *deform_rows(res.get("deform")),
@@ -127,7 +127,8 @@ def main_section(run, logs):
         ("OCT specimen mask", f"{num(mk.get('volume_cm3'))} cm3"),
         ("registration time in process, peak RAM, peak GPU memory allocated by torch",
          f"{num(sec['total'] / 60 if 'total' in sec else None, 1)} min, {num(res.get('peak_rss_gb'), 1)} GiB, "
-         f"{num(res.get('gpu_peak_gb'), 2)} GiB" + (f" (wall clock {num(wall / 60, 1)} min, nvidia-smi peak {num(gpu, 1)} GiB)" if wall else "")),
+         f"{num(res.get('gpu_peak_gb'), 2)} GiB" + (f" (wall clock {num(wall / 60, 1)} min, GPU memory in use on the device during the run, all processes, "
+                                                 f"{num(gpu, 1)} GiB)" if wall else "")),
         ("time per step (s)", steps or "n/a"),
     ]
     frame = ("passes" if fc["ok"] else "does not pass") if fc else "was not run"
@@ -177,7 +178,7 @@ def ablation_section(abl):
     large = [f"{STEP_OF[n]} ({n}, {num(V[n][key(n)]['mean_mm'])} mm)" for n in done if V[n][key(n)]["mean_mm"] > DELETION_MM]
     if done:
         tail += [(f"Deletion rule: a step goes when removing it moves the pose by at most {DELETION_MM} mm (mean over the "
-                  "specimen-mask points; the §4 pose for steps of §1-4, the final pose for §5), changes no other metric beyond "
+                  "specimen-mask points, the §4 pose for steps of §1-4 and the final pose for §5), changes no other metric beyond "
                   "noise, and no test outside this pair shows it load bearing. "
                   + (f"Removing {either(small)} stays within {DELETION_MM} mm, and the reason for keeping each is in "
                      "docs/METHOD.md after the ablation table. " if small else "")
@@ -189,8 +190,9 @@ def ablation_section(abl):
         pb = g["present_base_vs_previous_base"]
         tail += [g["note"], "", cols, rule]
         tail += [ablation_row(n, r) for n, r in g["rows"].items()]
+        rot = f", rotation {num(pb['rotation_deg'], 2)} deg" if pb.get("rotation_deg") is not None else ", the two bases differ in handedness"
         tail += ["", f"The present base lies {num(pb['mean_mm'])} mm (corners mean {num(pb['corners_mean_mm'])} mm, corners max "
-                 f"{num(pb['corners_max_mm'])} mm, rotation {num(pb['rotation_deg'], 2)} deg) from the base of that run. "
+                 f"{num(pb['corners_max_mm'])} mm{rot}) from the base of that run. "
                  f"Source: {Path(g['source']).parent.name}/{Path(g['source']).name}.", ""]
     return head + rows + tail
 
@@ -243,7 +245,7 @@ def main():
     abl = load(a.ablate / "ablations.json") if a.ablate else {}
     phash = load(a.main / "result.json").get("params_hash") or abl.get("params_hash")
     intro = ["# Benchmark: the I58 brainstem pair", "",
-             "octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI; MRI crop 343x489x495 at "
+             "octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at "
              "0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters"
              + (f" (Params hash {phash})" if phash else "") + ". "
              "The pair has no labels, so every number here is label-free. "

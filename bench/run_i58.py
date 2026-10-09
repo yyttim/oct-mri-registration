@@ -15,8 +15,8 @@ and, when nvidia-smi is on the PATH, NAME.gpu_mib into ${OUT}_logs, with a start
 per step in chain.log. The runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid while it runs and
 refuses to start while another registration job is running, since one GPU takes one at a time.
 
-OUT, ABL and PREV_MAIN default to the released run of 1.1: bench_runs/I58/rel8/main and rel8/ablate, compared with
-rel7/main (release 1.0). A new run therefore needs a new OUT and a new ABL, not the defaults: register and ablate refuse a
+OUT, ABL and PREV_MAIN default to the released run of 2.0: bench_runs/I58/v2/main and v2/ablate, compared with
+rel8/main (release 1.1). A new run therefore needs a new OUT and a new ABL, not the defaults: register and ablate refuse a
 default directory that already holds a run, and the report step has no such guard, so it rewrites bench/BENCHMARK.md from
 whatever OUT and ABL name.
 """
@@ -36,10 +36,10 @@ POSIX = os.name == "posix"
 ENV = os.environ.get
 CODE = Path(ENV("CODE") or Path(__file__).resolve().parents[1])
 BENCH = BENCH_RUNS / "I58"
-OUT = Path(ENV("OUT") or BENCH / "rel8/main")                 # the released run of 1.1; a new run needs a new OUT
-ABL = Path(ENV("ABL") or BENCH / "rel8/ablate")               # and a new ABL
+OUT = Path(ENV("OUT") or BENCH / "v2/main")                   # the released run of 2.0; a new run needs a new OUT
+ABL = Path(ENV("ABL") or BENCH / "v2/ablate")                 # and a new ABL
 PREV = ENV("PREV") or str(BENCH / "ablate/ablations.json")    # the first ablation run, which measured A3 and A7
-PREV_MAIN = Path(ENV("PREV_MAIN") or BENCH / "rel7/main")     # release 1.0, for the pose distance
+PREV_MAIN = Path(ENV("PREV_MAIN") or BENCH / "rel8/main")     # release 1.1, for the pose distance
 LOGS = Path(str(OUT).rstrip("/" + os.sep) + "_logs")
 STEPS = (ENV("STEPS") or "register evaluate").split()
 DEVICE = ENV("DEVICE") or "cuda"

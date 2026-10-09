@@ -1,6 +1,6 @@
 """§5 fine-structure refinement: world gradients of a ramp on a permuted, flipped grid; F is unchanged by inverting or rescaling
 the OCT contrast; a pose 1 mm and 3 degrees off is recovered on a synthetic pair whose OCT is a non-linear, inverted function of
-the MRI structure; and ngf_lam decides whether the fit takes the scale the fine structure asks for."""
+the MRI structure; and lam, the prior of §4, decides whether the fit takes the scale the fine structure asks for."""
 import numpy as np
 import torch
 from scipy import ndimage
@@ -93,8 +93,8 @@ def test_ngf_recovers_offset_pose():
 
 
 def test_ngf_separates_mirror_images():
-    """The handedness rule of §3 for array frames: refined from the true pose, and from the same pose in the mirrored OCT frame
-    (the mirror image of the block in the same place), the true handedness aligns more fine structure."""
+    """F separates mirror images: refined from the true pose and from the same pose in the mirrored OCT frame, the true frame
+    aligns more fine structure (the benchmark's A8)."""
     from octreg.register import MIRROR
     mri, (o, mo, A_O), T = pair(seed=2)
     P = Params.from_dict({"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6})

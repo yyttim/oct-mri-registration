@@ -193,7 +193,7 @@ def test_smallest_lam_keeps_the_strain_limit():
     for limit in (0.05, 0.02):                                                             # a limit inside the range
         P = dataclasses.replace(PARAMS, df_max_strain=limit)
         lam = deform.smallest_lam(lat, ev, P)
-        assert lo < lam < hi and strain(lam) < limit <= strain(lam / 1.2), (lam, strain(lam), strain(lam / 1.2))
+        assert lo < lam < hi and strain(lam) < limit <= strain(lam / deform.LAM_TOL), (lam, strain(lam), strain(lam / deform.LAM_TOL))
         best, score = deform.choose(lat, ev, none, P)
         assert best is not None and best[0] == lam and best[1] == score and sum(score) < deform.GAIN * none
     P = dataclasses.replace(PARAMS, df_max_strain=1e-3)                                    # even the largest weight strains more
