@@ -215,13 +215,16 @@ def fmt(x, spec):
 
 
 def markdown(res):
-    lines = ["| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | F | two-class, core | field median / max (mm) |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | held-out interior / boundary (mm) | F | "
+             "two-class, core | field median / max (mm) |", "|---|---|---|---|---|---|---|---|---|---|"]
     for r in res["rows"].values():
         fm = r["field_mm"]
         field = "0" if not fm["max"] else f"{fm['median']:.2f} / {fm['max']:.2f}"
+        cv = r.get("cv_field")
+        cv = "" if cv is None else " / ".join(f"{x:.3f}" for x in cv)
         lines.append(f"| {r['label']} | {fmt(r['lam'], '.2f')} | {fmt(r['max_strain'], '.3f')} | {r['interior_mm']:.3f} | "
-                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {r['F']:.4f} | {r['two_class_core']:.4f} | {field} |")
+                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {cv} | {r['F']:.4f} | {r['two_class_core']:.4f} | "
+                     f"{field} |")
     e = res["axis"]["edges_mm"]
     lines += ["", f"Boundary residual (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from end 0 "
               f"({res['axis']['extent_mm']:.1f} mm in all; end 0 is the end at the start of MRI array axis "
@@ -283,7 +286,7 @@ def main():
               f"F {r['F']:.4f} two-class {r['two_class_core']:.4f}", flush=True)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(res, indent=1))
-    out.with_suffix(".md").write_text(markdown(res))
+    out.with_suffix(".md").write_text(markdown(res), encoding="utf-8")
     print(f"wrote {out} and {out.with_suffix('.md')} ({time.time() - t0:.0f} s)", flush=True)
 
 

@@ -228,37 +228,46 @@ surface reads −0.77 mm on faces whose normal points along the sectioning axis,
 the faces across it, while the interior matches show no such pattern (against their normal component the ridge offsets follow
 δ = 0.88 × interior − 0.36 mm, median disagreement 0.44 mm). The edge rule gives −0.09, +0.60 and +0.12 mm on the same faces,
 six times as many usable points (20,550 against 3,393), a median |δ| of 0.30 instead of 0.58 mm and a median disagreement with
-the interior of 0.27 mm. With the ridge evidence the strain limit decided between two list weights whose strains were 0.143 and
-0.155, which is why the smallest weight is bisected. With the edge evidence the held-out error has a flat minimum near λ 0.1
-to 0.3 and the strain limit meets it there. The folds test interpolation, which is what the field is used for: folds with a
+the interior of 0.27 mm. With the ridge evidence the strain of the field crossed the limit between weights 1 and 3 (strains
+0.143 and 0.155), which is why the weight is bisected rather than taken from a short list. With the edge evidence the held-out
+score still improves a little past the strain limit (the strain 0.20 row of the ablation), so the limit sets λ and the
+held-out score only gates the field. The folds test interpolation, which is what the field is used for: folds with a
 buffer of 4.5 mm between training and held-out blocks (cells of 14 or 21 mm) predict nothing, since the field has a
 correlation length of a few millimetres.
 
 The elements of §6 were ablated one at a time on the base grids of the I58 benchmark, at the affine above, in a separate run
 of the stage, so its rows can sit one digit from the run's own numbers above. Each row is scored
-by the read-outs of the stage on the warped OCT and by two numbers the fit never sees: F of §5 at σ 0.3 mm, and the two-class
-score of §2 (polarity × S_class) over the core 1.5 mm below both surfaces.
+by the read-outs of the stage on the warped OCT, by the held-out score of its fit (without a field that score is the residual
+itself, 0.247 / 0.285 mm) and by two numbers the fit never sees: F of §5 at σ 0.3 mm, and the two-class score of §2
+(polarity × S_class) over the core 1.5 mm below both surfaces.
 
-| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | F | two-class, core | field median / max (mm) |
-|---|---|---|---|---|---|---|---|---|
-| no deformation | | | 0.250 | 0.285 | 51 % | 0.0781 | 0.0651 | 0 |
-| §6 | 0.51 | 0.148 | 0.121 | 0.105 | 74 % | 0.0811 | 0.0766 | 0.22 / 1.16 |
-| interior evidence only | 0.30 | 0.134 | 0.101 | 0.237 | 58 % | 0.0806 | 0.0614 | 0.21 / 1.02 |
-| boundary evidence only | 1.02 | 0.148 | 0.495 | 0.100 | 75 % | 0.0775 | 0.0851 | 0.40 / 1.30 |
-| rim ridge instead of the edge | 1.22 | 0.148 | 0.176 | 0.290 | 52 % | 0.0794 | 0.0683 | 0.26 / 0.98 |
-| no support rule | 0.82 | 0.148 | 0.124 | 0.089 | 80 % | 0.0824 | 0.0712 | 0.28 / 1.05 |
-| no Huber re-weighting | 0.92 | 0.148 | 0.136 | 0.117 | 72 % | 0.0808 | 0.0745 | 0.21 / 1.09 |
-| lattice 7 mm | 0.30 | 0.143 | 0.140 | 0.104 | 76 % | 0.0816 | 0.0704 | 0.28 / 1.25 |
-| lattice 10 mm | 0.30 | 0.123 | 0.161 | 0.111 | 75 % | 0.0812 | 0.0735 | 0.29 / 1.27 |
-| strain limit 0.10 | 1.57 | 0.099 | 0.151 | 0.125 | 71 % | 0.0804 | 0.0771 | 0.19 / 0.96 |
-| strain limit 0.20 | 0.30 | 0.194 | 0.112 | 0.099 | 75 % | 0.0814 | 0.0754 | 0.24 / 1.23 |
+| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | held-out interior / boundary (mm) | F | two-class, core | field median / max (mm) |
+|---|---|---|---|---|---|---|---|---|---|
+| no deformation | | | 0.249 | 0.285 | 51 % | | 0.1029 | 0.0578 | 0 |
+| §6 | 0.82 | 0.148 | 0.124 | 0.089 | 80 % | 0.155 / 0.114 | 0.1086 | 0.0641 | 0.28 / 1.05 |
+| interior evidence only | 0.30 | 0.134 | 0.101 | 0.237 | 58 % | 0.143 / | 0.1058 | 0.0536 | 0.21 / 1.02 |
+| boundary evidence only | 8.22 | 0.149 | 0.457 | 0.090 | 80 % | / 0.110 | 0.1052 | 0.0661 | 0.35 / 1.10 |
+| rim ridge instead of the edge | 0.98 | 0.148 | 0.140 | 0.224 | 63 % | 0.169 / 0.309 | 0.1064 | 0.0599 | 0.27 / 1.02 |
+| boundary points only within 5 mm of a match (the rule of 1.1) | 0.51 | 0.148 | 0.121 | 0.104 | 74 % | 0.155 / 0.093 | 0.1068 | 0.0682 | 0.22 / 1.16 |
+| no Huber re-weighting | 1.51 | 0.149 | 0.141 | 0.104 | 77 % | 0.169 / 0.130 | 0.1080 | 0.0624 | 0.25 / 0.96 |
+| lattice 7 mm | 0.79 | 0.148 | 0.140 | 0.094 | 79 % | 0.168 / 0.113 | 0.1086 | 0.0597 | 0.31 / 1.10 |
+| lattice 10 mm | 0.30 | 0.148 | 0.156 | 0.088 | 81 % | 0.179 / 0.106 | 0.1086 | 0.0628 | 0.33 / 1.24 |
+| strain limit 0.10 | 1.95 | 0.100 | 0.146 | 0.113 | 76 % | 0.169 / 0.144 | 0.1074 | 0.0646 | 0.24 / 0.87 |
+| strain limit 0.20 | 0.40 | 0.199 | 0.108 | 0.079 | 82 % | 0.146 / 0.101 | 0.1092 | 0.0638 | 0.31 / 1.25 |
+| reach 2.0 mm | 1.51 | 0.149 | 0.130 | 0.090 | 80 % | 0.212 / 0.145 | 0.1092 | 0.0595 | 0.29 / 1.57 |
+| reach 2.7 mm | 3.46 | 0.149 | 0.145 | 0.115 | 76 % | 0.304 / 0.192 | 0.1082 | 0.0577 | 0.28 / 1.59 |
 
-Each kind of evidence alone leaves the other kind where it was or makes it worse, so both stay. A field fitted to the ridge
-offsets does not move the edges at all (0.285 to 0.290 mm). The support rule costs a little on the boundary read-out and keeps
-the field out of regions without correspondence, the torn cerebellar folia and a bubble. Two parts of an earlier version had no
-effect and were deleted. A second and a third round of warping, measuring again and refitting left the residuals where they
-were, interior 0.111, 0.112 and 0.110 mm and boundary 0.099, 0.113 and 0.097 mm after one, two and three rounds, measured while
-the stage still had them. A search over lattice spacings of 10, 7 and 5 mm chose 5 mm, which the two lattice rows confirm.
+Each kind of evidence alone leaves the other kind where it was or makes it worse: the interior matches alone move the edges
+only a little (0.285 to 0.237 mm), and the edge offsets alone pull the interior further off than the affine left it (0.249 to
+0.457 mm). So both stay. A field fitted to the ridge offsets moves the edges part of the way (0.285 to 0.224 mm) and scores
+worse held out than no field at all. Release 1.1 used only the boundary points within 5 mm of an interior match: the rule
+withheld the edge evidence at end 0 of the block, where the OCT holds few matches, and left the edges there 0.39 mm off instead
+of 0.22 mm (measured per 4 mm along the sectioning axis), without a gain elsewhere, so 2.0 uses every boundary point. Huber re-weighting, the 5 mm lattice
+and the reach of 1.35 mm hold: the lattice rows fit less closely inside, and a longer reach admits wrong matches, with a worse
+held-out score at 2.0 mm and a much worse one at 2.7 mm. A strain limit of 0.20 fits a little closer on every read-out and
+scores a little better held out; the limit is a bound on plausible tissue strain rather than a fitted number, and 0.15 is kept.
+A second and a third round of warping, measuring again and refitting, tried while the stage still had them, left the residuals
+within 0.01 mm of where they were, so the stage runs once.
 
 Each ablation changes one element of the method (the §1 grids and masks are computed once per mask source, and the no-§5 row
 stops after §4). Pose changes are block-corner means, of the pose after §4 against the method's pose after §4 and of the final

@@ -108,10 +108,10 @@ def test_register_and_apply(tmp_path, capsys):
     d = res["deform"]                                          # §6: no 4.5 mm block fits the specimen, so no deformation
     assert d["status"] == "not_supported" and "deformation_not_supported" in res["flags"] and d["n_interior"] == 0 and "deform" in res["seconds"]
     assert set(d) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "residual", "field", "seconds"}
-    assert d["n_boundary"] == 0 and d["cv"] == {"none": None, "field": None} and d["lam"] is None   # no match nearby: no boundary point is used,
+    assert d["n_boundary"] > 0 and d["cv"] == {"none": None, "field": None} and d["lam"] is None     # the edges are read, no field is fitted,
     assert d["residual"]["interior_mm"] == [None, None] and d["residual"]["boundary_mm"][0] > 0   # but the edges are read out
     assert d["residual"]["boundary_mm"][0] == d["residual"]["boundary_mm"][1]
-    assert "§6: not_supported (0 interior matches, 0 boundary points)" in capsys.readouterr().out
+    assert "§6: not_supported (0 interior matches, " in capsys.readouterr().out
     assert d["field"]["max_mm"] == 0 and not any((out / f).exists() for f in OUTPUTS_DEFORM)
     assert np.array_equal(nib.load(str(out / "oct_in_mri_affine.nii.gz")).get_fdata(), nib.load(str(out / "oct_in_mri.nii.gz")).get_fdata())
 
@@ -215,13 +215,13 @@ def test_user_masks(tmp_path):
 
 def test_array_frame(tmp_path):
     """An NPY stack has only an array frame, taken as given with the spacing from the command line. The stack here is written
-    so that its array frame has the handedness of the header frame it came from (one axis flipped), and the same pose is found."""
+    so that its array frame is the header frame it came from up to a translation (the header negates all three axes, so all
+    three are flipped), and the same pose is found."""
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=0)
     img = nib.load(str(oct_path))
-    nx = img.shape[0]
-    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[:, :, ::-1])   # numpy (z, y, x), x flipped
-    A_arr = np.diag([-0.08, 0.08, 0.08, 1.0])                                                    # NIfTI voxel -> array world
-    A_arr[0, 3] = 0.08 * (nx - 1)
+    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[::-1, ::-1, ::-1])   # numpy (z, y, x)
+    A_arr = np.diag([-0.08, -0.08, -0.08, 1.0])                                                  # NIfTI voxel -> array world
+    A_arr[:3, 3] = 0.08 * (np.array(img.shape) - 1)
     T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world
     pts_arr = G.apply_affine(A_arr @ np.linalg.inv(img.affine), pts)
     (tmp_path / "params.json").write_text(json.dumps(FAST))
