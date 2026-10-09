@@ -23,9 +23,9 @@ octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--affine-only]
 ```
 
 `register` runs the registration. The OCT can be NIfTI, TIFF, OME-TIFF or NPY (`--oct-spacing-um Z,Y,X` when the file has no
-spacing), the MRI is NIfTI. When both files carry an orientation header (NIfTI sform or qform), it fixes the handedness and must
-be correct; a TIFF or NPY stack (x, y, z = numpy axes 2, 1, 0) or a NIfTI file without one has none, so both handednesses are
-tried and the one whose fine structure matches the MRI is kept (flag `mirrored_oct_frame` when it is the mirrored one).
+spacing), the MRI is NIfTI. The file frames fix the handedness: a NIfTI orientation header (sform or qform) must be correct,
+and a TIFF or NPY stack (x, y, z = numpy axes 2, 1, 0) or a NIfTI file without one is taken in its array frame, which must then
+have the handedness of the specimen.
 `--oct-mask` and `--mri-mask` replace the automatic masks, `--params` reads parameter overrides from JSON, and `--device cpu`
 runs without a GPU. `qc` renders the QC images of the affine again, for the run's transform or another one given with `--T`.
 `apply` resamples an OCT-frame volume onto the grid of an MRI-frame `--reference`, through the affine and, when the run wrote
@@ -45,7 +45,7 @@ OCT-frame file when it is a TIFF or NPY that no longer sits where the run read i
 | `mri_in_oct.nii.gz` | MRI on a 0.15 mm grid in the OCT frame, through the affine |
 | `qc.png`, `qc_montage.png` | visual QC of the affine, four columns: OCT, MRI through the transform, a checkerboard of the two, and the OCT with the MRI foreground (red) and specimen mask (cyan) outlines. In every plane the MRI boundary should follow the edge of the OCT specimen and the OCT should lie on the same MRI anatomy |
 | `qc_deform.png` | only with a deformation: MRI, OCT through the affine, OCT through affine and deformation, and the field magnitude, on three planes with the MRI outline |
-| `result.json` | scores, fine-structure agreement, handedness, contrast polarity, scales, deformation read-outs, flags, runtime |
+| `result.json` | scores, fine-structure agreement, contrast polarity, scales, deformation read-outs, flags, runtime |
 
 ## Method
 
@@ -57,10 +57,9 @@ OCT-frame file when it is a TIFF or NPY that no longer sits where the run read i
 4. **Prior-bounded affine refinement.** A 12-parameter affine fit of the best poses under a scale and shear prior.
 5. **Fine-structure refinement.** The best pose is refined on the gradient orientations inside both scans (normalised gradient
    fields), which follow fibre bundles and vessels and need no intensity mapping.
-6. **Smooth deformation.** A small displacement field on top of the affine, fitted to block matches of the interior structure
-   and to the offset between the surface edges of the two scans along the MRI boundary normals. Its smoothness is chosen by
-   held-out error under a strain limit, and without a held-out gain, or with no weight that keeps the limit, no field is
-   applied. The affine stays the primary result.
+6. **Smooth deformation.** A small displacement field on top of the affine, fitted to block matches of the same gradient
+   orientations and to the offset between the surface edges of the two scans along the MRI boundary normals, as flexible as a
+   strain limit allows. Without a held-out gain over the affine no field is applied. The affine stays the primary result.
 
 The method assumes an OCT block embedded in scatterer-doped agarose and an MRI cropped around it. It was developed and
 benchmarked on the I58 brainstem pair, which is unpublished, so the figures of that pair are drawn locally by the bench scripts

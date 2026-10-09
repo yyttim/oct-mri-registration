@@ -73,8 +73,8 @@ Each of the 24 poses is refined on the base grid with its polarity fixed:
 
 with rotation vector r, shears h, log-scales ℓ and c the OCT box centre; Adam, 200 iterations, cosine schedule, each ℓ_i and h_i
 clamped to ±0.15. The lowest L wins. All of the prior is the penalty, which is needed because S alone rewards distorting the
-block; the clamp is a bound that has never been reached on I58, and a run that reaches it says so with the flag `clamp_saturated`
-rather than returning a distorted block quietly. The two are ablated apart below.
+block. The clamp is a guard, not a parameter: with the penalty it has never been reached, and a run that reaches it says so
+with the flag `clamp_saturated` rather than returning a distorted block quietly. The two are ablated apart below.
 
 Refining more than the best pose of §3 is not optional: on I58 the winner is the third of the 24 by search score
 (`search_rank` 2 in result.json), so a run that refined one pose would have returned a different answer. It is also where the
@@ -93,18 +93,16 @@ median |g| over the MRI points used and over the OCT specimen mask. Both masks a
     F(T) = Σ_x w(T⁻¹x) (n_O(x) · n_M(x))² / Σ_x w(T⁻¹x),   g_O(x) = A⁻ᵀ g_OCT(T⁻¹x),
 
 A the linear part of T. A squared cosine needs neither an intensity mapping nor the polarity. L = 1 − F + λ (Σ ℓ_i² + Σ h_i²) is
-minimised as in §4 from the §4 pose, λ the weight `ngf_lam` of §5 (2.0, the value §4 uses), with learning rates a fifth of those of §4, one pass of 150 iterations at each of σ = 0.6,
-0.4 and 0.3 mm, at which section stripes a few tenths of a millimetre apart are smoothed away. §5 refines and does not search: F
-alone does not find the block (among the 24 poses of §4 on I58, one 41 mm away reaches a higher F after refinement than the
-result), and it can lower S, whose outline and tissue classes are coarse.
+minimised as in §4 from the §4 pose, under the same prior (λ = 2), with learning rates a fifth of those of §4, one pass of 150
+iterations at each of σ = 0.6, 0.4 and 0.3 mm, at which section stripes a few tenths of a millimetre apart are smoothed away.
+§5 refines and does not search: F alone does not find the block (among the 24 poses of §4 on I58, one 41 mm away reaches a
+higher F after refinement than the result), and it can lower S, whose outline and tissue classes are coarse.
 
-Handedness. Two physical specimens are never mirror images, so an orientation header on both files fixes the handedness and §3
-searches proper rotations only; the score of §2 cannot tell mirror images apart on a nearly symmetric block (on I58 the best
-mirrored pose has the lower L and ends far from the result, A8 below). A TIFF or NPY stack, or a NIfTI file without sform and qform,
-has only an array frame, whose handedness depends on how the stack was written. Then §3-5 run once for each handedness, which
-doubles their time, the pose with the higher F wins, and a mirrored array frame is flagged: fine internal structure does not
-match in a mirror image, while outline and tissue classes still can (on I58 F is 0.103 for the true handedness and 0.078 for the
-mirrored one).
+Handedness. Two physical specimens are never mirror images, so the file frames fix the handedness and §3 searches proper
+rotations only; the score of §2 cannot tell mirror images apart on a nearly symmetric block (on I58 the best mirrored pose has
+the lower L and ends 30 mm from the result, A8 below). A NIfTI header gives the frame. A TIFF or NPY stack, or a NIfTI file
+without sform and qform, is taken in its array frame, which must therefore have the handedness of the physical specimen, as
+its spacing must be right.
 
 ## 6. Smooth deformation
 
@@ -118,16 +116,20 @@ the MRI point x sits at x + u(x) in the affinely registered OCT, so the register
 its specimen mask are resampled onto the MRI base grid through T (mask kept above 0.99), and two kinds of label-free local
 evidence are measured on that volume.
 
-Interior. Blocks of the MRI (4.5 mm, every 1.5 mm, at least 70 % of the block inside both masks eroded by 0.6 mm) are
-searched in the OCT within ±1.35 mm
-by zero-mean normalised cross-correlation of a contrast-free structure feature, the trace-free tensor n nᵀ of the normalised
-gradient n of §5 (σ 0.24 mm, `octreg.blockmatch`). A match counts when its peak stands 4 standard deviations above its score map
-and off the border of the range. Matches longer than 1.35 mm are dropped, the search range being per axis. Each match gives a
-displacement vector at its block centre.
+Both kinds reach 1.35 mm, the one reach of the stage: the interior search range and the largest distance of a surface edge
+from the MRI surface.
+
+Interior. Blocks of the MRI (4.5 mm, every 1.5 mm, at least 70 % of the block inside both masks eroded by 0.6 mm) are searched
+in the OCT within ±1.35 mm by zero-mean normalised cross-correlation of the same normalised gradient n as §5, at σ 0.24 mm,
+compared through the trace-free part of n nᵀ (six channels, `octreg.blockmatch`): the Frobenius product of two of them is
+(n · n′)² up to a constant, so a block score is the local counterpart of F, and it needs neither an intensity mapping nor the
+polarity. A match counts when its peak stands 4 standard deviations above its score map and off the border of the range.
+Matches longer than 1.35 mm are dropped, the search range being per axis. Each match gives a displacement vector at its block
+centre.
 
 Boundary. The surface of the MRI foreground is sampled at up to 50,000 of its outermost voxels, with outward normals from the
-gradient of the signed distance to the surface (smoothed, σ 2.5 voxels). Along each normal the intensity is read from −2.1 to
-+2.1 mm in base-grid steps and differentiated with a Gaussian of σ 1 sample. The surface edge of a volume is the steepest fall
+gradient of the signed distance to the surface (smoothed, σ 2.5 voxels). Along each normal the intensity is read over the reach
+and 0.75 mm beyond it, from −2.1 to +2.1 mm, in base-grid steps and differentiated with a Gaussian of σ 1 sample. The surface edge of a volume is the steepest fall
 of its intensity going outwards, which assumes that in both volumes the tissue at the surface is brighter than what surrounds
 it. A prominent fall is a local maximum of the fall more than 5 MADs above the median of the fall along the profile and within
 ±1.35 mm, and its position gets a parabolic sub-sample correction. The edge is found by this one rule in the MRI and in
@@ -142,35 +144,30 @@ The edge is used and not the bright rim of the OCT, because the rim is a layer b
 surface by half the thickness of the layer, which differs from face to face, so a rule that takes the ridge for the surface
 reads an offset where there is none.
 
-Support. A boundary point is used only when an interior match lies within 5 mm of it. Where the inside of the two volumes does
-not correspond, at torn or missing tissue or at a bubble, an edge nearby is not evidence of a deformation. The field there stays
-at what its neighbourhood supports, and the affine is left as it is.
-
 Model. Displacements c on a regular control lattice of 5 mm spacing over the bounding box of the MRI grid, trilinear in between,
 are fitted by regularised least squares: three rows per interior match, one row n · u = δ per boundary point with the weight
 √(3N / M) for N matches and M points, so that both kinds of evidence carry the same total weight, a membrane penalty λ on the
 first differences of c along the lattice axes, and a small ridge on c. The system is solved four times, re-weighted by Huber's
 rule at 0.3 mm on both kinds of residual.
 
-Model choice. Only λ is chosen. Both kinds of evidence are split into four spatial folds (cells of 7 mm), the field is fitted
-without one fold and tested on it, and the score of a λ is the held-out median interior error plus the held-out median boundary
-error. The field has to stay plausible for fixed tissue, so the strain of the fit to all the evidence, the largest first
-difference of c divided by the spacing, must stay below 0.15. The strain falls as λ grows. The smallest λ between 0.3 and 30
-that keeps the limit is found by bisection in log λ, to a factor of 1.05. The candidates are this λ and the weights of the list
-30, 10, 3, 1, 0.3 above it, and the candidate with the lowest score is chosen. A list alone would make the choice jump between
-two of its weights. With the bisected weight it moves continuously with the evidence.
+Model choice. Only λ is chosen, and the strain limit chooses it. The field has to stay plausible for fixed tissue, so its
+strain, the largest first difference of c divided by the spacing, must stay below 0.15; the strain falls as λ grows, and λ is
+the smallest weight between 0.3 and 30 whose fit keeps the limit, found by bisection in log λ to a factor of 1.05: the most
+flexible field the limit allows. The field is then accepted only when it predicts evidence it was not fitted to. Both kinds of
+evidence are split into four spatial folds (cells of 7 mm), the field is fitted without one fold and tested on it, and the
+held-out median interior error plus the held-out median boundary error must fall below 0.9 times the same score of no
+deformation. A field is also refused with fewer than 100 interior matches or 300 boundary points, and when no weight up to 30
+keeps the strain limit. Then the run is flagged `deformation_not_supported`, no field is written and oct_in_mri.nii.gz is the
+affine overlay. While this stage was developed the held-out score was also compared across a list of weights above the
+strain-limited one; on I58 it fell monotonically down to that weight in every variant tried, so the list is gone and the limit
+decides. The evidence is measured once and the field is fitted once. Both kinds of evidence are then measured again on the
+warped OCT, the interior over every confident match before the length drop and the boundary over every point with one edge,
+and these residuals are the read-outs of the stage.
 
-A field is applied only when the best candidate scores below 0.9 times the score of no deformation and at least 100 interior
-matches and 300 supported boundary points exist. A run is also left alone when no weight up to 30 keeps the strain limit, so
-that there is no candidate at all. Otherwise the run is flagged `deformation_not_supported`, no field is written and
-oct_in_mri.nii.gz is the affine overlay. The evidence is measured once and the field is fitted once. Both kinds of evidence
-are then measured again on the warped OCT, the interior over every confident match before the length drop and the boundary over
-every point with one edge, and these residuals are the read-outs of the stage.
-
-The field is small by construction. Both kinds of evidence are searched within 1.35 mm, the smoothness is the one that
-predicts evidence it has not seen, and the strain limit bounds the model that can be chosen. result.json holds, under `deform`,
-the lattice spacing and the chosen λ, the table of candidates, the held-out errors, the residuals of both kinds measured before
-and after, the field magnitude over the MRI foreground and the largest strain. oct2mri_warp.nii.gz holds u as a NIfTI vector
+The field is small by construction. Both kinds of evidence are searched within 1.35 mm, the strain limit bounds the model and
+the held-out gain gates it. result.json holds, under `deform`, the lattice spacing and λ, the held-out errors without and with
+the field, the residuals of both kinds measured before and after, the field magnitude over the MRI foreground and the largest
+strain. oct2mri_warp.nii.gz holds u as a NIfTI vector
 image on the MRI base grid, with components along the NIfTI world axes (ITK and ANTs expect the first two negated).
 oct_in_mri.nii.gz is resampled through T and u, oct_in_mri_affine.nii.gz through T alone, and qc_deform.png shows the MRI, both
 overlays and the field magnitude on three planes, each with the outline of the MRI foreground. qc.png and qc_montage.png keep
@@ -212,16 +209,18 @@ After §5, misfits remain on I58 between the OCT surface and the MRI tissue boun
 of the sectioning axis, and the interior fine structure asks for an OCT that is smaller by 4, 2 and 0 % along three
 axes. No affine removes both. The interior signal is not an artefact of the rim: matches at least 5 mm below the surface give
 the same local affine as shallow ones (singular values 1.043, 1.018, 1.004 against 1.033, 1.015, 1.005), also with the masks
-eroded by 1.5 mm. In the full run §6 found 502 interior matches and 8,402 supported boundary points and chose λ 0.51. The
-held-out median errors fell from 0.247 to 0.155 mm (interior) and from 0.249 to 0.093 mm (boundary). The re-measured residuals
-fell from 0.249 to 0.121 mm (interior) and from 0.285 to 0.104 mm (boundary, with 74 % of the offsets within 0.3 mm, from 51 %).
-Over the MRI foreground the field has a median of 0.22 mm and a maximum of 1.16 mm, its largest strain is 0.148, and the stage
-took 23 s. The affine of the run is that of release 1.0 to 0.003 mm at the block corners, the float noise between two runs,
-since §1-5 did not change.
+eroded by 1.5 mm. In the full run §6 found 502 interior matches and 18,040 boundary points and took λ 0.82 at strain 0.148.
+The held-out median errors fell from 0.247 to 0.155 mm (interior) and from 0.285 to 0.114 mm (boundary). The re-measured
+residuals fell from 0.249 to 0.124 mm (interior) and from 0.285 to 0.089 mm (boundary, with 80 % of the offsets within 0.3 mm,
+from 51 %). Over the MRI foreground the field has a median of 0.28 mm and a maximum of 1.05 mm. It is largest at the superior
+end of the block, where the affine leaves the OCT surface 0.5 to 1 mm outside the MRI boundary and the field puts it on it;
+measured per 4 mm along the sectioning axis, the boundary residual at that end falls from 0.82 to 0.22 mm, and over the rest of
+the block from 0.10 to 0.40 mm down to 0.04 to 0.19 mm. The affine of the run is that of release 1.1 to 0.003 mm at the block
+corners, the float noise between two runs, since §1-5 compute the same affine.
 
 Detached cerebellar parts that moved by more than the 1.35 mm reach, folia, a lobule and whole torn flaps, stay where the
-affine puts them. The stage does not chase them, and no part of the method is built for
-them: in a checkerboard of this specimen the brainstem continues across the tiles and the torn cerebellum breaks.
+affine puts them: no evidence reaches them, and no part of the method is built for them. In a checkerboard of this specimen the
+brainstem continues across the tiles and the torn cerebellum breaks.
 
 The boundary evidence of §6 is the surface edge because of what the rim does on this specimen. The OCT intensity along the MRI
 boundary normals peaks 0.3 mm inside the MRI boundary and falls to half exactly at it. Taking the ridge of the rim for the
@@ -287,11 +286,11 @@ split the scale prior show that all of it is the penalty: without the penalty th
 0.88 of its length, and without the clamp the pose does not move at all. §5 itself moves the result by 2.4 mm. The next five
 changes of the §4 pose lie within the reach of §5, which settles them; those steps stay for the §4 pose they give.
 
-The prior of §5 was measured on its own, which `ngf_lam` makes possible: until it was separated, §5 inherited the weight of §4
-through `refine.fit_adam`. From the §4 pose of the released run, §5 was fitted at λ 2, 1, 0.5, 0.2 and 0 on cached base grids
-(`bench/ngf_lam.py`), and every pose was scored by the outline agreement of `bench/evaluate.py`, which §5 does not read.
+The prior of §5 was measured on its own. From the §4 pose of the released run, §5 was fitted at λ 2, 1, 0.5, 0.2 and 0 on
+cached base grids (`bench/ngf_lam.py`, which runs §5 alone, so the weight reaches nothing else), and every pose was scored by
+the outline agreement of `bench/evaluate.py`, which §5 does not read.
 
-| `ngf_lam` | F | scales per OCT axis | OCT to MRI rim (mm) | MRI to OCT rim (mm) |
+| λ | F | scales per OCT axis | OCT to MRI rim (mm) | MRI to OCT rim (mm) |
 |---|---|---|---|---|
 | 2.0 (the method) | 0.1026 | 0.977 / 0.974 / 0.985 | 1.119 | 1.676 |
 | 1.0 | 0.1080 | 0.955 / 0.952 / 0.972 | 0.986 | 1.495 |
@@ -312,11 +311,11 @@ anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points betw
 way, λ 1 shrinks by 4.8, 4.5 and 2.8 % (spread 2.0) and λ 2 by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the
 same frame, so only the spread compares: lowering the weight scales the block down as a whole and does not reach the shape.
 
-Two further sweeps ask whether §5 can be made to reach that shape. The penalty splits into the size of the block, the mean of
-the log-scales, and its shape, their deviations from that mean (`ngf_lam_shape`); the two weights at one value are the penalty
-of §4. Relaxing the shape alone moves the fit the other way: at 0.2 the third OCT axis grows to 1.011 and at 0 to 1.106, while
-the singular values of the interior are all above 1 in the other direction, and the outline buys less per millimetre of pose
-than the size weight did, 0.09 mm of rim for 0.56 mm of pose against 0.13 for 0.62. A finer last pass costs instead of gains:
+Two further sweeps asked whether §5 can be made to reach that shape, and neither is part of the method. A penalty split into
+the size of the block, the mean of the log-scales, and its shape, their deviations from that mean, moves the fit the other way
+when the shape alone is relaxed: at 0.2 the third OCT axis grows to 1.011 and at 0 to 1.106, while the singular values of the
+interior are all above 1 in the other direction, and the outline buys less per millimetre of pose than the size weight did,
+0.09 mm of rim for 0.56 mm of pose against 0.13 for 0.62. A finer last pass costs instead of gains:
 with σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it is 1.135 / 1.696, against 1.120 / 1.677 at the
 method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of 0.6, 0.4, 0.3, 0.2 to 0.01 mm, so the last pass is
 what decides. 0.2 mm is below the base grid and at the spacing of the section stripes, the scale §5 smooths away by stopping at
@@ -357,26 +356,30 @@ alone.
 
 ## Parameters
 
-The tunable constants are fields of `octreg.params.Params` (override with `--params`); the brainstem pair used the defaults. A
-stage also holds a few constants of its own, at the top of its module: they set how a step is computed rather than what a
-dataset needs, they do not enter the Params hash, and their values are in the text of the section that uses them.
+The constants of the method are fields of `octreg.params.Params` (override with `--params`); the brainstem pair used the
+defaults, and the hash of the defaults is `da914d8ccc555207`. The first eleven rows state what the method assumes about the
+data, the scales of the embedding artefacts, of the intensity bias, of the fine structure and of the deformation, and the
+weight of the scale prior; the rest set how a step is computed. A stage also holds guards and fixed rules at the top of its
+module, outside Params: the clamp of ±0.15 on log-scales and shears in §4-5, and in §6 the range 0.3 to 30 of λ, the 10 %
+held-out gain, the least evidence of 100 matches and 300 boundary points, and the 0.75 mm a boundary profile runs beyond the
+reach.
 
 | parameter | default | role |
 |---|---|---|
+| `texture_bandpass_mm`, `texture_window_mm` | 0.08, 0.36 mm | §1: smoothing before, and window of, the directional coefficient of variation |
+| `texture_smooth_mm`, `texture_close_mm` | 1.2, 0.48 mm | §1: smoothing of log F (set on the brainstem pair), closing radius |
+| `flatten_sigma_mm` | 10 mm | §2: scale of the local foreground mean that flattens the intensities |
+| `lam` | 2.0 | §4-5: weight λ of the scale and shear prior |
+| `ngf_sigmas_mm`, `ngf_erode_mm` | 0.6, 0.4, 0.3 mm; 0.8 mm | §5: gradient scales of the passes, erosion of both masks |
+| `df_sigma_mm`, `df_block_mm` | 0.24, 4.5 mm | §6: gradient scale of the structure feature, edge of the matched blocks |
+| `df_reach_mm` | 1.35 mm | §6: the reach of the local evidence, search range of the matches and largest distance of a surface edge from the MRI surface |
+| `df_erode_mm` | 0.6 mm | §6: erosion of both masks that keeps the blocks inside |
+| `df_grid_mm`, `df_max_strain` | 5 mm, 0.15 | §6: spacing of the control lattice, the strain limit |
 | `search_mm`, `base_mm`, `fine_mm` | 0.6, 0.15, 0.04 mm | search grid, base grid, OCT grid of the specimen mask |
 | `valley_ratio`, `min_component` | 0.5, 0.01 | MRI histogram valley / smaller peak; smallest MRI foreground component kept, as a fraction of the foreground |
-| `texture_bandpass_mm`, `texture_window_mm` | 0.08, 0.36 mm | smoothing before, and window of, the directional coefficient of variation |
-| `texture_grid_mm`, `texture_smooth_mm`, `texture_close_mm` | 0.16, 1.2, 0.48 mm | texture blocks, smoothing of log F (set on the brainstem pair), closing radius |
-| `flatten_sigma_mm`, `sigmoid_std` | 10 mm, 0.25 | flattening scale; sigmoid width in foreground standard deviations |
+| `texture_grid_mm`, `sigmoid_std` | 0.16 mm, 0.25 | texture blocks; sigmoid width in foreground standard deviations |
 | `n_rot`, `seed`, `topk` | 8000, 0, 24 | rotations, rotation set seed, poses refined |
 | `nms_mm`, `nms_deg` | 3 mm, 10° | poses closer in both count as one |
-| `iters`, `lam`, `clamp` | 200, 2.0, 0.15 | Adam iterations, prior weight λ, bound on log-scales and shears |
-| `lr_rot`, `lr_t`, `lr_ls`, `lr_sh` | 0.02 rad, 0.3 mm, 0.01, 0.01 | Adam learning rates (§5: a fifth of these) |
-| `ngf_sigmas_mm`, `ngf_erode_mm`, `ngf_iters`, `ngf_lam` | 0.6, 0.4, 0.3 mm; 0.8 mm; 150; 2.0 | gradient scales of the §5 passes, mask erosion, Adam iterations per pass, prior weight λ of §5 (§4 uses `lam`) |
-| `df_sigma_mm`, `df_block_mm`, `df_step_mm` | 0.24, 4.5, 1.5 mm | §6: Gaussian σ of the gradients of the structure feature, edge of the matched blocks, grid step of the block centres |
-| `df_z_min`, `df_erode_mm` | 4, 0.6 mm | §6: standard deviations above the mean of its score map a match needs, erosion of both masks that keeps the blocks inside |
-| `df_range_mm`, `df_reach_mm`, `df_profile_mm` | 1.35, 1.35, 2.1 mm | §6: search range of the interior matches, largest distance of a surface edge from the MRI foreground surface, half length of a boundary profile |
-| `df_edge_mad`, `df_support_mm` | 5, 5 mm | §6: prominence of a fall in MADs above the median of the profile derivative, largest distance from a boundary point to an interior match |
-| `df_huber_mm`, `df_grid_mm` | 0.3, 5 mm | §6: Huber threshold of both residuals, spacing of the control lattice |
-| `df_lams`, `df_max_strain` | 30, 10, 3, 1, 0.3; 0.15 | §6: list of membrane weights λ, to which the smallest λ that keeps the strain limit is added; the strain limit |
-| `df_gain`, `df_min_interior`, `df_min_boundary` | 0.9, 100, 300 | §6: held-out score needed relative to no deformation, least interior matches and supported boundary points for a field |
+| `iters`, `lr_rot`, `lr_t`, `lr_ls`, `lr_sh` | 200; 0.02 rad, 0.3 mm, 0.01, 0.01 | §4: Adam iterations and learning rates (§5: `ngf_iters` 150 per pass, a fifth of the rates) |
+| `df_step_mm`, `df_z_min` | 1.5 mm, 4 | §6: grid step of the block centres, standard deviations above the mean of its score map a match needs |
+| `df_edge_mad`, `df_huber_mm` | 5, 0.3 mm | §6: prominence of a fall in MADs above the median of the profile derivative, Huber threshold of both residuals |

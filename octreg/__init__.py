@@ -13,7 +13,7 @@ smooth deformation on top.
 Method constants are in octreg.params.Params (numerical guards and fixed rule literals are documented where they are used).
 Python use: `from octreg.register import register, apply, qc`; command line: `octreg register`, `octreg apply`, `octreg qc`.
 """
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 from .params import Params  # noqa: E402
 

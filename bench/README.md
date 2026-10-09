@@ -175,9 +175,9 @@ The smooth deformation (§6) does not change the pose, so the driver runs it for
 `variants/base/result.json` and in the base row of `ablations.json`, without the field). "No §6" (A14) is base with the
 identical pose, so it is not a variant of its own: its read-outs are the residuals before the deformation, which the base row
 holds next to those after it, and `report.py` prints both. The read-outs are the lattice spacing and the chosen membrane weight,
-the interior matches and the supported boundary points of the fit, the held-out errors, and the residuals of both kinds (block
+the interior matches and the boundary points of the fit, the held-out errors, and the residuals of both kinds (block
 matches, surface-edge offsets) measured on the affine OCT and again on the warped one. The ablations of §6 itself (one kind of
-evidence alone, the rim ridge in place of the edge, no support rule, no Huber re-weighting, other lattice spacings and strain
+evidence alone, the rim ridge in place of the edge, the support rule of 1.1, no Huber re-weighting, other lattice spacings and strain
 limits) are tabulated in docs/METHOD.md. They were run on the cached base grids of `ABL/prep` at the pose of release 1.0,
 with development scripts that are not part of this repository. Since 1.1 a prep is checked against the Params fields that §1 reads
 (`prep_hash` in `prep.json`), so new Params of later stages leave it valid, and the preps of 1.0 are accepted.

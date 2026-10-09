@@ -1,22 +1,32 @@
 # Changelog
 
-## Unreleased
+## 2.0.0
 
-- §5 has its own prior weight `ngf_lam`, default 2.0, the value §4 uses, so §1-5 compute the same affine as 1.1.0 and the
-  released run reproduces to the digits docs/METHOD.md prints. Until now the fine refinement inherited §4's `lam` through
-  `refine.fit_adam` and the two could not be varied apart; `refine.fit_adam` now takes the weight as an argument, defaulting to
-  `params.lam`. §1-4 and §6 are untouched.
-- `bench/ngf_lam.py`: the §1 base grids cached once, then §5 alone from a run's §4 pose, once per weight, with the outline
-  agreement of `bench/evaluate.py` at every pose. The measurement on the brainstem pair is in docs/METHOD.md: the penalty is
-  load bearing in §5 as it is in §4, the clamp binds without it, and one weight cannot give the correction the shape the
-  interior asks for. The default stays at 2.0.
-- §5's prior splits into the size of the block and its shape, `ngf_lam` and `ngf_lam_shape`, equal at 2.0 by default, where
-  together they are the penalty of §4. The default Params hash is `ab058ece8f3093ba`.
-- `bench/ngf_lam.py` also sweeps the gradient scales, flat-fields the section stripes out of the OCT (`--destripe`) and
-  caches the volumes on a grid of its own (`--grid-mm`), so §5 can be run finer than §1-4. All three are measured in
-  docs/METHOD.md and none of them improves the pose.
-- tests: the synthetic pair of `tests/test_ngf.py` takes an optional scale, and a new test builds it 6 % longer along one axis
-  and checks that `ngf_lam` 0 takes that scale while a strong weight refuses it.
+The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as
+1.1 (to 0.003 mm at the block corners), §6 is simpler and fits the block end better, and 36 fields remain in Params (hash
+`da914d8ccc555207`).
+
+- §6 uses every boundary point with one edge in both volumes. The support rule of 1.1, which counted a boundary point only
+  within 5 mm of an interior match, is gone with `df_support_mm`: it existed for torn tissue, and without it the field fits the
+  boundary better on I58 (0.104 to 0.089 mm, 74 to 80 % within 0.3 mm; the first 4 mm of the block end 0.39 to 0.22 mm) with
+  no visible distortion where the two fields differ.
+- §6 chooses its membrane weight by the strain limit alone: the smallest weight between 0.3 and 30 whose fit keeps the strain
+  below 0.15, found by bisection. The list of candidate weights and the comparison of their held-out scores are gone
+  (`df_lams`): on I58 the held-out score fell monotonically down to that weight in every variant, so the field is the same.
+  The held-out score now only gates the field (below 0.9 x no deformation), and that gain, the least evidence (100 matches,
+  300 boundary points) and the range of the weight are module constants (`df_gain`, `df_min_interior`, `df_min_boundary`
+  removed). result.json: `deform.cv` holds `none` and `field`, the candidates table is gone.
+- One reach for the local evidence of §6: `df_reach_mm` (1.35 mm) bounds the interior search range and the edge window, and a
+  boundary profile runs 0.75 mm beyond it (`df_range_mm` and `df_profile_mm` removed). The interior feature is described as
+  what it is, the normalised gradient of §5 at a finer scale.
+- §5 uses the prior of §4 (`lam`). `ngf_lam` and `ngf_lam_shape` are gone: the measurement that motivated them stays in
+  docs/METHOD.md, made with `bench/ngf_lam.py`, which runs §5 alone and now varies `lam`.
+- The clamp of §4-5 (0.15 on log-scales and shears) is a module constant and a guard, with its flag; the prior is the penalty.
+- §3-5 run once, in the file frames as given. The loop over both handednesses for files without an orientation header is gone,
+  with `pose.handedness`, `pose.NGF_other_handedness` and the flag `mirrored_oct_frame`: the frames fix the handedness, and an
+  array frame must have the handedness of the specimen as it must have its spacing.
+- bench: `ablate.py` sets the clamp of A6 and A6c by patching `refine.CLAMP`; `ablate_deform.py` scores the support rule of 1.1
+  as a row; `ngf_lam.py` varies `lam`.
 - The figures of the I58 pair are no longer in the repository, since the data are unpublished. The bench scripts draw them
   locally.
 - The DANDI:000026 results are withdrawn until a re-run. `bench/dandi.py` built six of the eight MRI crops through label
