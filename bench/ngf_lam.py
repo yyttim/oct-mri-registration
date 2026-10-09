@@ -25,6 +25,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))      # bench/evaluate.py and bench/paths.py
 
 import evaluate
+from report import portable                                    # bench/report.py: a path cut to its part from bench_runs/ on
 from octreg import geometry as G, io, ngf, preprocess as pp, register
 from octreg.params import Params
 from octreg.refine import decompose
@@ -142,8 +143,8 @@ def do_sweep(args):
         print(f"{key} {label:>16}: F {info['F_start']:.4f} -> {info['F']:.4f}  scales "
               f"{', '.join(f'{s:.4f}' for s in row['scales'])}  moved {row['corners_vs_affine_mean_mm']:.2f} mm from §4, "
               f"{row['corners_vs_run_mean_mm']:.2f} mm from the run{rim}  ({row['seconds']:.0f} s)", flush=True)
-    if args.out:
-        Path(args.out).write_text(json.dumps({"run": str(args.run), "cache": str(args.cache), "rows": rows}, indent=1))
+    if args.out:                                              # LF on every OS, the paths cut as bench/results/I58 stores them
+        io.write_json({"run": portable(str(args.run)), "cache": portable(str(args.cache)), "rows": rows}, args.out)
         print(f"wrote {args.out}")
 
 

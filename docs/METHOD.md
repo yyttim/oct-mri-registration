@@ -77,9 +77,9 @@ clamped to ±0.15. The lowest L wins. All of the prior is the penalty, which is 
 block. The clamp is a guard, not a parameter: with the penalty it has never been reached, and a run that reaches it says so
 with the flag `clamp_saturated` rather than returning a distorted block quietly. The two are ablated apart below.
 
-All 24 poses are refined because the search score does not settle the order: on I58 the winner after §4 was the third of
-the 24 by search score with the maps of releases 1.0 and 1.1 and is the first with the maps of 2.0 (`search_rank` in result.json),
-and both runs end at the same affine. The refinement is also where the time goes, 345 s of the run's 685 s against 33 s for
+All 24 poses are refined because the search score does not settle the order. On I58 the winner after §4 is the first of
+the 24 by search score (`search_rank` in result.json), but with the maps of releases 1.0 and 1.1, which end at the same
+affine as 2.0, it was the third. The refinement is also where the time goes, 345 s of the run's 685 s against 33 s for
 the search.
 
 ## 5. Fine-structure refinement
@@ -97,12 +97,12 @@ median |g| over the MRI points used and over the OCT specimen mask. Both masks a
 A the linear part of T. A squared cosine needs neither an intensity mapping nor the polarity. L = 1 − F + λ (Σ ℓ_i² + Σ h_i²) is
 minimised as in §4 from the §4 pose, under the same prior (λ = 2), with learning rates a fifth of those of §4, one pass of 150
 iterations at each of σ = 0.6, 0.4 and 0.3 mm, at which section stripes a few tenths of a millimetre apart are smoothed away.
-§5 refines and does not search: F alone does not find the block (among the 24 poses of §4 on I58, one 41 mm away reaches a
-higher F after refinement than the result), and it can lower S, whose outline and tissue classes are coarse.
+§5 refines and does not search: F alone does not find the block (among the 24 poses of §4 on I58 with the maps of release 1.0, one 41 mm away
+reached a higher F after refinement than the result), and it can lower S, whose outline and tissue classes are coarse.
 
 Handedness. Two physical specimens are never mirror images, so the file frames fix the handedness and §3 searches proper
 rotations only. The score of §2 cannot tell mirror images apart on a nearly symmetric block (on I58 the best mirrored pose has
-the lower L and ends 30 mm from the result, A8 below). A NIfTI header gives the frame. A TIFF or NPY stack, or a NIfTI file
+the lower L and ends 30 mm from the result, the mirrored row of the ablation table below). A NIfTI header gives the frame. A TIFF or NPY stack, or a NIfTI file
 without sform and qform, is taken in its array frame, which must therefore have the handedness of the physical specimen, as
 its spacing must be right.
 
@@ -165,8 +165,7 @@ held-out median interior error plus the held-out median boundary error must fall
 deformation. A field is also refused with fewer than 100 interior matches or 300 boundary points, and when no weight up to 30
 keeps the strain limit. Then the run is flagged `deformation_not_supported`, no field is written and oct_in_mri.nii.gz is the
 affine overlay. While this stage was developed the held-out score was also compared across a list of weights above the
-strain-limited one. On the 1.1 run of I58 it fell monotonically down to that weight in every variant tried, so the list is gone and the limit
-decides. The evidence is measured once and the field is fitted once. Both kinds of evidence are then measured again on the
+strain-limited one. On the 1.1 run of I58 it fell monotonically down to that weight in every variant tried, so the limit decides. The evidence is measured once and the field is fitted once. Both kinds of evidence are then measured again on the
 warped OCT, the interior over every confident match before the length drop and the boundary over every point with one edge,
 and these residuals are the read-outs of the stage.
 
@@ -182,27 +181,27 @@ direction stays affine.
 
 ## Evaluation
 
-A registration is judged by looking at it, because label-free numbers can prefer a wrong pose. In every plane of qc_montage.png
-(four planes per OCT axis, each shown as OCT, MRI through the transform on the grey scale of the OCT, a checkerboard of the two
-wherever either map reaches, and the OCT with both outlines) the MRI boundary must follow the edge of the OCT specimen, the OCT
-specimen must lie on the same anatomy in the MRI, internal structures must continue across the checkerboard, folded pieces, and
-cut faces that the MRI also shows, must correspond and lie on the same side (where the block was cut out of a larger specimen,
-the MRI tissue continues beyond the OCT cut face), and the contrast must be consistently inverted or not. Other candidate
+A registration is judged by looking at it, because label-free numbers can prefer a wrong pose. qc_montage.png shows four
+planes per OCT axis, each as the OCT, the MRI through the transform on the grey scale of the OCT, a checkerboard of the two
+wherever either map reaches, and the OCT with both outlines. In every plane the MRI boundary must follow the edge of the OCT
+specimen, the OCT specimen must lie on the same anatomy in the MRI, and internal structures must continue across the
+checkerboard. Folded pieces, and cut faces that the MRI also shows, must correspond and lie on the same side (where the block
+was cut out of a larger specimen, the MRI tissue continues beyond the OCT cut face). The contrast must be consistently
+inverted or not. Other candidate
 transforms can be rendered with `octreg qc --T` and compared side by side.
 
 qc.png shows the same four panels on one plane per OCT array axis through the specimen centroid.
 
 The region the checkerboard is drawn over covers everything either the specimen mask or the MRI foreground reaches, and
-leaves out only what both call background, where the two cannot disagree. Drawing it over the intersection instead was tried
-and refused: inside that region the two maps agree by construction, so the visible disagreement is 0.000 at 0, 2 and 5 mm of
-imposed error, and the worse the pose, the more the panel hides.
+leaves out only what both call background, where the two cannot disagree. Inside the intersection of the two maps they agree by construction, so a checkerboard drawn only there shows no
+disagreement at any imposed error, and the worse the pose, the more such a panel hides.
 
 ### I58 brainstem pair
 
-On the two original files (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, 5.2 GiB
-of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows), of which §6 is 20 s. §1-4 give S 0.2781 (S_class
+On the two original files (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, of which §6 is 20 s, with
+5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). §1-4 give S 0.2781 (S_class
 −0.1020, S_outline 0.6302) and polarity −1. §5 raises F from 0.089 to 0.103 and moves the block by 3.8 mm at its corners
-(2.0 mm over the specimen, 8.8°), with scales 0.977 / 0.974 / 0.985. At the §5 pose S is lower (0.244, S_class −0.055). Raw
+(2.0 mm over the specimen, 8.8°), with scales 0.977 / 0.974 / 0.985. At the §5 pose S is lower (0.244, S_class −0.055, measured on the run's base grids with the score of §2). Raw
 20 µm OCT values mapped through the header and the transform correlate with the affine overlay (oct_in_mri_affine.nii.gz) at
 Spearman 0.991, against at most 0.266 with any OCT axis flipped.
 
@@ -214,14 +213,14 @@ After §5, misfits remain on I58 between the OCT surface and the MRI tissue boun
 of the sectioning axis, and the interior fine structure asks for an OCT that is smaller by 4, 2 and 0 % along three
 axes. No affine removes both. The interior signal is not an artefact of the rim: matches at least 5 mm below the surface give
 the same local affine as shallow ones (singular values 1.043, 1.018, 1.004 against 1.033, 1.015, 1.005), also with the masks
-eroded by 1.5 mm (measured while §6 was developed, at the affine of release 1.0, which 2.0 reproduces to 0.001 mm). In the full run §6 found 502 interior matches and 18,041 boundary points and took λ 0.82 at strain 0.148.
+eroded by 1.5 mm (measured while §6 was developed, at the affine of release 1.0). In the full run §6 found 502 interior matches and 18,041 boundary points and took λ 0.82 at strain 0.148.
 The held-out median errors fell from 0.247 to 0.155 mm (interior) and from 0.285 to 0.114 mm (boundary). The re-measured
 residuals fell from 0.250 to 0.124 mm (interior) and from 0.285 to 0.089 mm (boundary, with 80 % of the offsets within 0.3 mm,
-from 51 %). Over the MRI foreground the field has a median of 0.28 mm and a maximum of 1.05 mm. It is largest at the superior
-end of the block, where the affine leaves the OCT surface 0.5 to 1 mm outside the MRI boundary and the field puts it on it.
-Measured per 4 mm along the sectioning axis, the boundary residual at that end falls from 0.81 to 0.22 mm, and over the rest of
-the block from 0.10 to 0.65 mm down to 0.04 to 0.19 mm. The affine of the run is that of release 1.0 to 0.001 mm and of
-release 1.1 to 0.003 mm at the block corners, the float noise between runs, since §1-5 compute the same affine.
+from 51 %). Over the MRI foreground the field has a median of 0.28 mm and a maximum of 1.05 mm. It is largest at the superior end of
+the block. Measured per 4 mm along the sectioning axis in the ablation run below, the boundary residual there falls from
+0.81 to 0.22 mm in the first 4 mm and from 0.65 to 0.19 mm in the next, and over the rest of the block from 0.10 to 0.40 mm
+down to 0.04 to 0.13 mm. The affine of the run is that of release 1.0 to 0.001 mm at the block corners, and that of release
+1.1 within 0.003 mm, the float noise between runs, since §1-5 compute the same affine.
 
 Detached cerebellar parts that moved by more than the 1.35 mm reach, folia, a lobule and whole torn flaps, stay where the
 affine puts them: no evidence reaches them, and no part of the method is built for them. In a checkerboard of this specimen the
@@ -234,15 +233,15 @@ surface reads −0.77 mm on faces whose normal points along the sectioning axis,
 the faces across it, while the interior matches show no such pattern (against their normal component the ridge offsets follow
 δ = 0.88 × interior − 0.36 mm, median disagreement 0.44 mm). The edge rule gives −0.09, +0.60 and +0.12 mm on the same faces
 and a median disagreement with the interior of 0.27 mm, and in the ablation below it yields eight times as many usable points
-(18,040 against 2,270) with a median |δ| of 0.29 instead of 0.56 mm. With the ridge evidence the strain of the field crossed the limit between weights 1 and 3 (strains
-0.143 and 0.155), which is why the weight is bisected rather than taken from a short list. With the edge evidence the held-out
+(18,040 against 2,270) with a median |δ| of 0.29 instead of 0.56 mm. With the ridge evidence, in the same development runs, the strain of the field crossed the limit between weights 1 and 3
+(strains 0.143 and 0.155), which is why the weight is found by bisection. With the edge evidence the held-out
 score still improves a little past the strain limit (the strain 0.20 row of the ablation), so the limit sets λ and the
 held-out score only gates the field. The folds test interpolation, which is what the field is used for: folds with a
-buffer of 4.5 mm between training and held-out blocks (cells of 14 or 21 mm) predict nothing, since the field has a
-correlation length of a few millimetres.
+buffer of 4.5 mm between training and held-out blocks (cells of 14 or 21 mm) predicted nothing in those runs, since the field
+has a correlation length of a few millimetres.
 
-The elements of §6 were ablated one at a time on the base grids of the I58 benchmark, at the affine of release 1.1 (0.003 mm
-from the one above), in a separate run of the stage, so its rows can sit one digit from the run's own numbers above. Each row is scored
+The elements of §6 were ablated one at a time on the base grids of the I58 benchmark, at the affine of release 1.1 (within 0.003 mm
+of the one above), in a separate run of the stage, so its rows can differ in the last digit from the run's own numbers above. Each row is scored
 by the read-outs of the stage on the warped OCT, by the held-out score of its fit (without a field that score is the residual
 itself, 0.247 / 0.285 mm) and by two numbers the fit never sees: F of §5 at σ 0.3 mm, and the two-class score of §2
 (polarity × S_class) over the core 1.5 mm below both surfaces. The held-out score is taken on the evidence a row was fitted
@@ -268,11 +267,11 @@ Each kind of evidence alone leaves the other kind where it was or makes it worse
 only a little (0.285 to 0.237 mm), and the edge offsets alone pull the interior further off than the affine left it (0.249 to
 0.457 mm). So both stay. A field fitted to the ridge offsets moves the edges part of the way (0.285 to 0.224 mm) and fits the
 interior less closely (0.140 against 0.124 mm). Release 1.1 used only the boundary points within 5 mm of an interior match: the rule
-withheld the edge evidence at end 0 of the block, where the OCT holds few matches, and left the edges there 0.39 mm off instead
+withheld the edge evidence at the superior end of the block, where the OCT holds few matches, and left the edges there 0.39 mm off instead
 of 0.22 mm (measured per 4 mm along the sectioning axis), without a gain elsewhere, so 2.0 uses every boundary point. Huber re-weighting, the 5 mm lattice
-and the reach of 1.35 mm hold: the lattice rows fit less closely inside, and a longer reach admits wrong matches: at 2.0 mm the
-residuals are the same (0.130 / 0.090 mm) while the field grows (max 1.57 against 1.05 mm), and at 2.7 mm every residual is
-worse (0.145 / 0.115 mm). A strain limit of 0.20 fits a little closer on every residual and scores a little better held out.
+and the reach of 1.35 mm hold. Without the re-weighting and on the coarser lattices the fit is less close inside, and a longer
+reach admits wrong matches: at 2.0 mm the residuals hardly move (0.130 / 0.090 mm) while the field grows (max 1.57 against
+1.05 mm), and at 2.7 mm every residual is worse (0.145 / 0.115 mm). A strain limit of 0.20 fits a little closer on every residual and scores a little better held out.
 The limit is a bound on plausible tissue strain rather than a fitted number, and 0.15 is kept. A second and a third round of
 warping, measuring again and refitting, tried while the stage was developed, left the residuals within 0.015 mm of where they
 were, so the stage runs once.
@@ -304,10 +303,21 @@ split the scale prior show that all of it is the penalty: without the penalty th
 five changes of the §4 pose lie within the reach of §5, which settles them, and with a simulated cut face both outlines
 end at the same pose.
 
+Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, OCT flattening (0.15 mm
+over the specimen) and per-plane hole filling (0.22 mm), and both are kept for what they do rather than for this pose.
+Flattening is one rule for both volumes, and on the MRI side it moves the §4 pose by 1.9 mm (3.7 mm at the corners).
+Per-plane filling is what keeps the white matter of the block inside the specimen mask: uniform white matter has no
+texture and forms cavities in the mask that reach its surface, which a 3-D fill leaves open, so filled in 3-D only the
+mask loses 2.4 of its 19.2 cm³, and the evidence of §6 is read inside that mask. The one-sided outline moves the §4 pose
+by 1.0 mm over the specimen (2.2 mm at the corners) on this pair, whose crop holds tissue below the block, and with a
+simulated cut face (the last row) both outlines end 0.11 mm from the result.
+
+On this pair the two-class maps are the weaker feature: |S_class| is 0.10 at the §4 pose and the standardised intensities of the
+ablation table reach 0.14, and the block is found by the outline.
+
 The prior of §5 was measured on its own. From the §4 pose of the released run, §5 was fitted at λ 2, 1, 0.5, 0.2 and 0 on
-cached base grids (`bench/ngf_lam.py`, which runs §5 alone, so the weight reaches nothing else, with the sweeps stored under
-`bench/results/I58/ngf_lam/`), and every pose was scored by
-the outline agreement of `bench/evaluate.py`, which §5 does not read.
+cached base grids with `bench/ngf_lam.py`, which runs §5 alone, so the weight reaches nothing else. Every pose was scored by
+the outline agreement of `bench/evaluate.py`, which §5 does not read. The sweeps are stored under `bench/results/I58/ngf_lam/`.
 
 | λ | F | scales per OCT axis | OCT to MRI rim (mm) | MRI to OCT rim (mm) |
 |---|---|---|---|---|
@@ -331,10 +341,10 @@ anisotropic, singular values 1.043, 1.018 and 1.004, a spread of 3.9 points betw
 by 2.6, 2.3 and 1.5 % (spread 1.1). The two sets are not in the same frame, so only the spread compares: lowering the weight
 scales the block down as a whole and does not reach the shape.
 
-A finer last pass costs instead of gains: with σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it is
-1.135 / 1.696, against 1.119 / 1.676 at the method's 0.6, 0.4, 0.3, and the schedule 0.45, 0.3, 0.2 lands on the pose of
-0.6, 0.4, 0.3, 0.2 (rim 1.135 / 1.696 in both), so the last pass is what decides. 0.2 mm is below the base grid and at the
-spacing of the section stripes, the scale §5 smooths away by stopping at 0.3. (F does not compare between schedules, each row
+A finer last pass costs instead of gains. With σ 0.25 appended to the schedule the rim is 1.134 / 1.696 mm and with 0.2 it
+is 1.135 / 1.696, against 1.119 / 1.676 at the method's 0.6, 0.4, 0.3. The schedule 0.45, 0.3, 0.2 lands on the pose of 0.6,
+0.4, 0.3, 0.2 (rim 1.135 / 1.696 in both), so the last pass is what decides. 0.2 mm is barely above the 0.15 mm base grid and
+at the spacing of the section stripes, the scale §5 smooths away by stopping at 0.3. (F does not compare between schedules, each row
 reporting it at its own finest σ, but the outline does.) Neither the stripes nor the grid is what stops the finer passes. A
 per-section flat field along the array axis the stripes vary on, applied to the OCT before §5, is worth 0.005 mm of rim at
 the method's schedule and leaves the finer one where it was (1.131 / 1.695 mm with σ 0.25 appended). And §5 on a 0.08 mm
@@ -342,19 +352,8 @@ grid of its own, the resolution of the MRI, moved the pose by about 0.2 mm at th
 0.15 while the schedule was chosen, with the outline on that grid no better: at 0.08 mm the MRI carries its own noise and the
 OCT its speckle, and the gradient directions are noisier, not sharper.
 
-So the prior of §5 sits at a reasonable weight, its passes stop at a reasonable scale and the grid it runs on is fine enough.
-What the interior asks for is not an affine the prior is holding back, and the misfit that is left is where §6 fits it.
-
-Two of the five move that pose by less than the 0.5 mm at which the benchmark deletes a step, OCT flattening (0.15 mm over
-the specimen) and per-plane hole filling (0.22 mm), and both are kept for what they do rather than for this pose. Flattening
-is one rule for both volumes, and on the MRI side it moves the §4 pose by 1.9 mm (3.7 mm at the corners). Per-plane filling
-is what keeps the white matter of the block inside the specimen mask: uniform white matter has no texture and forms cavities
-in the mask that reach its surface, which a 3-D fill leaves open, so filled in 3-D only the mask loses 2.4 of its 19.2 cm³,
-and the evidence of §6 is read inside that mask. The one-sided outline moves the §4 pose by 2.2 mm on this pair, whose crop
-holds tissue below the block, and with a simulated cut face (the last row) both outlines end 0.11 mm from the result.
-
-On this pair the two-class maps are the weaker feature: |S_class| is 0.10 at the §4 pose and A4's standardised intensities
-reach 0.14, and the block is found by the outline.
+So the weight of the prior of §5, the scale its passes stop at and the grid it runs on are each where they should be. What
+the interior asks for is not an affine the prior is holding back, and the misfit that is left is what §6 fits.
 
 ### Beyond the target data: DANDI:000026
 

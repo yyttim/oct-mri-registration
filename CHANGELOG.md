@@ -3,7 +3,8 @@
 ## 2.0.0
 
 The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as
-1.1 (to 0.003 mm at the block corners, and to 0.001 mm of release 1.0), §6 is simpler and fits the block end better, and 36 fields remain in Params (hash
+1.1 (within 0.003 mm at the block corners, and 0.001 mm from release 1.0), §6 is simpler and fits the superior end of the
+block better, and 36 fields remain in Params (hash
 `da914d8ccc555207`).
 
 - §2 blurs the flattened volume as G(xM)/G(M) instead of a plain Gaussian (`preprocess.masked_blur`), so background and
@@ -11,12 +12,11 @@ The method of 1.1, with its machinery reduced to what the evidence on the I58 pa
   0.2781, the first pose by search score wins instead of the third) and §5 ends on the same affine.
 - §6 uses every boundary point with one edge in both volumes. The support rule of 1.1, which counted a boundary point only
   within 5 mm of an interior match, is gone with `df_support_mm`: it existed for torn tissue, and without it the field fits the
-  boundary better on I58 (0.104 to 0.089 mm, 74 to 80 % within 0.3 mm, and the first 4 mm of the block end 0.39 to 0.22 mm) with
-  no visible distortion where the two fields differ.
+  boundary better on I58 (0.104 to 0.089 mm, 74 to 80 % within 0.3 mm, and the first 4 mm at the superior end 0.39 to 0.22 mm).
 - §6 chooses its membrane weight by the strain limit alone: the smallest weight between 0.3 and 30 whose fit keeps the strain
   below 0.15, found by bisection. The list of candidate weights and the comparison of their held-out scores are gone
   (`df_lams`): on I58 the held-out score fell monotonically down to that weight in every variant, so the field is the same.
-  The held-out score now only gates the field (below 0.9 x no deformation), and that gain, the least evidence (100 matches,
+  The held-out score now only gates the field (below 0.9 times the score without deformation), and that gain, the least evidence (100 matches,
   300 boundary points) and the range of the weight are module constants (`df_gain`, `df_min_interior`, `df_min_boundary`
   removed). result.json: `deform.cv` holds `none` and `field`, the candidates table is gone.
 - One reach for the local evidence of §6: `df_reach_mm` (1.35 mm) bounds the interior search range and the edge window, and a
@@ -36,8 +36,8 @@ The method of 1.1, with its machinery reduced to what the evidence on the I58 pa
   headers that do not match the MRI, and only sub-I46 and sub-I55 were placed correctly. Their table,
   `bench/results/dandi/summary.json`, is removed, and `bench/dandi.py --steps summary` now writes `summary.json` into its
   output root.
-- The documents no longer report counts or measurements from visual readings of the QC images. The numbers the code computes
-  are unchanged.
+- The documents no longer report counts or measurements from visual readings of the QC images, only the numbers the code
+  computes.
 - The I58 pair is named by its subject alone, and the bench files follow: the runner is `bench/run_i58.py`, the stored results
   are in `bench/results/I58/`, the figures are `fig_*_I58.png` and the default run directory is `bench_runs/I58`.
 - The bench paths default to the repository, runs under `bench_runs/` and data under `data/`, both ignored by git.

@@ -1,6 +1,6 @@
 {
- "run": "D:/Projects/oct-mri-registration/bench_runs/I58/v2/main",
- "cache": "D:/Projects/oct-mri-registration/bench_runs/xiangrui_I58/pr6/cache.npz",
+ "run": "bench_runs/I58/v2/main",
+ "cache": "bench_runs/I58/pr6/cache.npz",
  "rows": [
   {
    "lam": 2.0,
