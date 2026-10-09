@@ -21,10 +21,10 @@ from . import __version__, geometry as G, io, preprocess as pp
 from .deform import smooth_deformation
 from .ngf import refine_ngf
 from .params import Params
-from .refine import decompose, refine
+from .refine import CLAMP, decompose, refine
 from .search import box, search
 
-MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])       # the other handedness of an OCT frame: world z negated
+MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])       # an OCT world mirrored (z negated): the benchmark's handedness ablation, not the method
 
 OUTPUTS = ("T_oct2mri.txt", "T_mri2oct.txt", "oct2mri.lta", "oct2mri_itk.txt", "oct_in_mri.nii.gz", "oct_in_mri_affine.nii.gz",
            "mri_in_oct.nii.gz", "qc.png", "qc_montage.png", "result.json")
@@ -97,38 +97,32 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     u, w = pp.oct_channels(pp.two_class(oct_h, mask_o, h, P), mask_o)
     v = pp.mri_channels(pp.two_class(mri_h, mask_m, h, P), mask_m)
     lap("two_class")
-    # §3-5: search and affine refinement, then fine-structure refinement of the best pose. Orientation headers on both files fix
-    # the handedness; otherwise (TIFF, NPY, NIfTI without sform/qform) both are tried and the pose with the higher F wins
-    hands = {}
-    for hand, F in ((1, np.eye(4)), (-1, MIRROR))[:1 if vo.frame == vm.frame == "header" else 2]:
-        poses, info = align((u, w, valid_o, F @ A_o), (v, mask_m, A_m), P, device)
-        T5, info["ngf"] = refine_ngf((mri_h, mask_m, A_m), (oct_h, mask_o, F @ A_o), poses[0]["T"], P, device)
-        hands[hand] = (poses[0], T5, F, info)
+    # §3-5: search and affine refinement, then fine-structure refinement of the best pose, in the file frames as given (proper
+    # rotations only: the frames fix the handedness)
+    poses, info = align((u, w, valid_o, A_o), (v, mask_m, A_m), P, device)
+    T, info["ngf"] = refine_ngf((mri_h, mask_m, A_m), (oct_h, mask_o, A_o), poses[0]["T"], P, device)
+    best = poses[0]
     lap("search_refine_ngf")
-    hand = max(hands, key=lambda k: hands[k][3]["ngf"]["F"])
-    best, T5, F, info = hands[hand]
-    T = T5 @ F
     io.write_transform_txt(T, out / "T_oct2mri.txt")            # the affine, the primary result: written before §6 runs
     io.write_transform_txt(np.linalg.inv(T), out / "T_mri2oct.txt")
     io.write_lta(T, vo, vm, out / "oct2mri.lta")
     io.write_itk(T, vo, vm, out / "oct2mri_itk.txt")
-    # §6: smooth deformation on top of the affine, in the MRI world (where the handedness does not appear)
+    # §6: smooth deformation on top of the affine, in the MRI world
     field, info["deform"] = smooth_deformation((mri_h, mask_m, A_m), (oct_h, mask_o, A_o), T, P, device)
     applied = info["deform"]["status"] == "applied"
     lap("deform")
 
-    _, _, ls, sh = decompose(T5, box(F @ A_o, oct_h.shape)[0])
+    _, _, ls, sh = decompose(T, box(A_o, oct_h.shape)[0])
     pose = {k: best[k] for k in ("S", "S_class", "S_outline", "L", "polarity", "search_rank")}
     corners = G.apply_affine(vo.affine, np.array([[i, j, k] for i in (0, vo.shape[0] - 1) for j in (0, vo.shape[1] - 1)
                                                   for k in (0, vo.shape[2] - 1)], float))
-    shift = float(np.linalg.norm(G.apply_affine(T, corners) - G.apply_affine(best["T"] @ F, corners), axis=1).mean())
-    pose.update(handedness=hand, T_before_ngf=best["T"] @ F, NGF_start=info["ngf"]["F_start"], NGF=info["ngf"]["F"], ngf_shift_mm=shift,
-                NGF_other_handedness=hands[-hand][3]["ngf"]["F"] if -hand in hands else None, log_scales=ls.tolist(),
-                shears=sh.tolist(), scale_per_oct_axis=np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist())
+    shift = float(np.linalg.norm(G.apply_affine(T, corners) - G.apply_affine(best["T"], corners), axis=1).mean())
+    pose.update(T_before_ngf=best["T"], NGF_start=info["ngf"]["F_start"], NGF=info["ngf"]["F"], ngf_shift_mm=shift,
+                log_scales=ls.tolist(), shears=sh.tolist(),
+                scale_per_oct_axis=np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist())
     flags = ["mri_foreground_no_valley"] * (fg_m.get("status") == "no_valley")
     flags += ["nondefault_params"] * (P != Params())
-    flags += ["clamp_saturated"] * bool(np.abs([*best["log_scales"], *best["shears"], *ls, *sh]).max() >= P.clamp * (1 - 1e-3))
-    flags += ["mirrored_oct_frame"] * (hand == -1)
+    flags += ["clamp_saturated"] * bool(np.abs([*best["log_scales"], *best["shears"], *ls, *sh]).max() >= CLAMP * (1 - 1e-3))
     flags += ["deformation_not_supported"] * (not applied)
     inputs = {"oct": {**vars(vo), "path": _abs(vo.path)}, "mri": {**vars(vm), "path": _abs(vm.path)},
               "oct_spacing_um": oct_spacing_um, "oct_mask": oct_mask, "mri_mask": mri_mask, "device": str(device)}

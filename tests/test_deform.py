@@ -21,7 +21,7 @@ from octreg import blockmatch as bm, deform, geometry as G, io
 from octreg.params import Params
 
 H = 0.2                                                           # isotropic grid of the two evidence tests
-PARAMS = Params.from_dict({"df_range_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
+PARAMS = Params.from_dict({"df_reach_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
 #     a 19 mm specimen on a 0.3 mm grid: a search range of 5 voxels, smaller blocks than the default and the feature sigma in
 #     proportion; the rim layer of pair() reaches 1.8 mm below the surface and a block may lie 30 % outside the core, so the
 #     erosion is 2.4 mm (with 1.2 mm the rim pulls the outer matches 0.17 mm inwards)
@@ -195,7 +195,7 @@ def test_smallest_lam_keeps_the_strain_limit():
         lam = deform.smallest_lam(lat, ev, P)
         assert lo < lam < hi and strain(lam) < limit <= strain(lam / 1.2), (lam, strain(lam), strain(lam / 1.2))
         best, score = deform.choose(lat, ev, none, P)
-        assert best is not None and best[0] == lam and best[1] == score and sum(score) < P.df_gain * none
+        assert best is not None and best[0] == lam and best[1] == score and sum(score) < deform.GAIN * none
     P = dataclasses.replace(PARAMS, df_max_strain=1e-3)                                    # even the largest weight strains more
     assert strain(hi) > 1e-3 and deform.smallest_lam(lat, ev, P) is None
     assert deform.choose(lat, ev, 1.0, P) == (None, None)
@@ -224,16 +224,17 @@ def test_recovers_a_smooth_displacement():
     assert abs(info["field"]["max_mm"] - np.linalg.norm(truth, axis=1).max()) < 0.1
 
 
-def test_aligned_pair_is_left_alone():
+def test_aligned_pair_is_left_alone(monkeypatch):
     mri, oct_, T, *_ = pair(lambda y: np.zeros_like(y))
     u, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
     assert info["status"] == "not_supported" and not u.any() and info["grid_mm"] is None and info["lam"] is None, info
     assert info["n_interior"] >= 100 and info["n_boundary"] >= 300
-    assert sum(info["cv"]["field"]) >= PARAMS.df_gain * sum(info["cv"]["none"])        # the field was fitted and refused
+    assert sum(info["cv"]["field"]) >= deform.GAIN * sum(info["cv"]["none"])        # the field was fitted and refused
     assert info["max_strain"] == 0 and info["field"]["max_mm"] == 0
     assert all(a == b for a, b in info["residual"].values()) and info["residual"]["interior_mm"][0] < 0.05
     assert info["residual"]["boundary_mm"][0] < 0.1 and info["residual"]["boundary_within_0.3mm"][0] > 0.97
-    few, info = deform.smooth_deformation(mri, oct_, T, dataclasses.replace(PARAMS, df_min_boundary=10 ** 6), "cpu")
+    monkeypatch.setattr(deform, "MIN_BOUNDARY", 10 ** 6)
+    few, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
     assert info["status"] == "not_supported" and not few.any() and info["cv"] == {"none": None, "field": None}
 
 

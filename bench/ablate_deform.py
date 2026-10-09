@@ -32,6 +32,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from scipy import ndimage
+from scipy.spatial import cKDTree
 
 from octreg import deform as D
 from octreg import geometry as G, preprocess as pp
@@ -47,13 +48,14 @@ ROWS = {    # name: (label as in METHOD.md, change); change None = no field
     "interior_only": ("interior evidence only", {"evidence": "interior"}),
     "boundary_only": ("boundary evidence only", {"evidence": "boundary"}),
     "ridge": ("rim ridge instead of the edge", {"edge": "ridge"}),
+    "support": ("boundary points only within 5 mm of a match (the rule of 1.1)", {"support": 5.0}),
     "no_huber": ("no Huber re-weighting", {"params": {"df_huber_mm": 1e9}}),
     "lattice7": ("lattice 7 mm", {"params": {"df_grid_mm": 7.0}}),
     "lattice10": ("lattice 10 mm", {"params": {"df_grid_mm": 10.0}}),
     "strain10": ("strain limit 0.10", {"params": {"df_max_strain": 0.10}}),
     "strain20": ("strain limit 0.20", {"params": {"df_max_strain": 0.20}}),
     "reach20": ("reach 2.0 mm", {"params": {"df_reach_mm": 2.0}}),
-    "reach27": ("reach 2.7 mm, profile 3.0 mm", {"params": {"df_reach_mm": 2.7, "df_profile_mm": 3.0}}),
+    "reach27": ("reach 2.7 mm", {"params": {"df_reach_mm": 2.7}}),
 }
 CORE_MM = 1.5          # the two-class score is taken this far below both surfaces
 BIN_MM = 4.0           # bins of the boundary residual along the sectioning axis
@@ -64,7 +66,7 @@ def ridge_offsets(vol, affine, points, normals, params: Params):
     the rim), not its steepest fall: a local maximum of the smoothed profile more than df_edge_mad MADs above its median,
     within +-df_reach_mm. -> (used bool [M], positions [M] mm)."""
     P, h = params, float(np.linalg.norm(np.asarray(affine, float)[:3, 0]))
-    k = max(2, round(P.df_profile_mm / h))
+    k = max(2, round((P.df_reach_mm + D.PROFILE_EXTRA_MM) / h))
     t = np.arange(-k, k + 1) * h
     pts = torch.as_tensor(points[:, None, :] + normals[:, None, :] * t[None, :, None], dtype=torch.float32, device=vol.device)
     prof = G.sample_world(vol[None], affine, pts)[0].double().cpu().numpy()
@@ -92,6 +94,9 @@ def fit_evidence(mri, vol, inside, P, change, device):
             return ev.points[ok], ev.normals[ok], (pos - ev.edge_m[1])[ok]
         ev.boundary = boundary
     e = ev.measure(vol, inside)
+    if change.get("support"):                                 # the support rule of 1.1: a boundary point needs a match nearby
+        near = cKDTree(e["W"]).query(e["P"])[0] <= change["support"] if len(e["W"]) and len(e["P"]) else np.zeros(len(e["P"]), bool)
+        e.update(P=e["P"][near], n=e["n"][near], delta=e["delta"][near])
     if change.get("evidence") == "interior":
         e.update(P=np.zeros((0, 3)), n=np.zeros((0, 3)), delta=np.zeros(0))
     elif change.get("evidence") == "boundary":
@@ -180,8 +185,8 @@ def run_row(name, mri, src, scorer, lattice_for, device):
     lattice = lattice_for(P)
     kinds = change.get("evidence")
     row["n_interior"], row["n_boundary"] = len(ev["W"]), len(ev["P"])
-    enough = ((kinds == "boundary" or len(ev["W"]) >= P.df_min_interior)
-              and (kinds == "interior" or len(ev["P"]) >= P.df_min_boundary))
+    enough = ((kinds == "boundary" or len(ev["W"]) >= D.MIN_INTERIOR)
+              and (kinds == "interior" or len(ev["P"]) >= D.MIN_BOUNDARY))
     best, score = None, None
     if enough:
         none = [float(np.median(np.linalg.norm(ev["D"], axis=1))) if len(ev["D"]) else 0.0,

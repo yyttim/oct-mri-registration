@@ -9,7 +9,7 @@ Everything runs on the MRI base grid, onto which the OCT and its specimen mask a
 Evidence, measured on that volume:
   interior  block matches of the contrast-free structure feature of the two volumes, over the blocks with at least 70 % of
             their volume inside both masks eroded by Params.df_erode_mm (octreg.blockmatch): centres W [N, 3] and
-            displacements D [N, 3] (mm, world); matches longer than the search range df_range_mm are dropped, the range
+            displacements D [N, 3] (mm, world); matches longer than the search range df_reach_mm are dropped, the range
             being per axis.
   boundary  points of the MRI foreground surface (surface) with outward unit normals, and the offset between the surface edges
             of the two volumes along each normal (edge_offsets: the steepest fall of the intensity going outwards, found in the
@@ -26,8 +26,9 @@ Model choice (choose): the field has to stay plausible for fixed tissue, so its 
 stays below Params.df_max_strain, and lam is the smallest weight in LAM_RANGE whose fit keeps that limit (smallest_lam,
 bisection in log lam), the most flexible field the limit allows. The field is accepted only when it predicts evidence it was
 not fitted to: over FOLDS spatial folds (cells of FOLD_MM) the held-out median interior error plus the held-out median boundary
-error (held_out) must fall below Params.df_gain x the same score of no deformation. Without that gain, when no weight in
-LAM_RANGE keeps the strain limit, or with too little evidence, there is no deformation (status 'not_supported', zero field).
+error (held_out) must fall below GAIN x the same score of no deformation. Without that gain, when no weight in LAM_RANGE
+keeps the strain limit, or with fewer than MIN_INTERIOR matches or MIN_BOUNDARY boundary points, there is no deformation
+(status 'not_supported', zero field).
 The evidence is measured once and the field fitted once; both kinds are measured again on the warped OCT for the read-outs.
 """
 from __future__ import annotations
@@ -56,6 +57,9 @@ RIDGE = 1e-2               # ridge row RIDGE * c: keeps lattice nodes without ev
 HUBER_ROUNDS = 4
 LAM_RANGE = (0.3, 30.0)    # the membrane weight is searched between these
 LAM_TOL = 1.05             # the smallest weight that keeps the strain limit is found to this factor
+GAIN = 0.9                 # the held-out score of the field must fall below this x the score of no deformation
+MIN_INTERIOR, MIN_BOUNDARY = 100, 300      # least matches and boundary points for a field
+PROFILE_EXTRA_MM = 0.75    # a boundary profile runs this far beyond the reach on each side
 
 
 def surface(mask, affine):
@@ -79,14 +83,14 @@ def surface(mask, affine):
 
 def edge_offsets(vol, affine, points, normals, params: Params = Params(), measured=MEASURED):
     """Position of the surface edge of vol (torch [D, H, W] on the grid `affine`; 0 = not measured) along each normal: the
-    profile from -df_profile_mm to +df_profile_mm in grid steps (trilinear) and its derivative by a Gaussian of PROFILE_SIGMA
+    profile from -(df_reach_mm + PROFILE_EXTRA_MM) to +(df_reach_mm + PROFILE_EXTRA_MM) in grid steps (trilinear) and its derivative by a Gaussian of PROFILE_SIGMA
     samples; a prominent fall is a local maximum of the fall going outwards more than df_edge_mad MADs above the median of
     the fall along the profile, within +-df_reach_mm; a point is used when at least `measured` of its profile is > 0 and it has exactly one
     prominent fall, whose position gets a parabolic sub-sample correction. -> (used bool [M], positions [M] mm, 0 where not used)."""
     P, h = params, float(np.linalg.norm(np.asarray(affine, float)[:3, 0]))
     if not len(points):
         return np.zeros(0, bool), np.zeros(0)
-    k = max(2, round(P.df_profile_mm / h))
+    k = max(2, round((P.df_reach_mm + PROFILE_EXTRA_MM) / h))
     t = np.arange(-k, k + 1) * h
     pts = torch.as_tensor(points[:, None, :] + normals[:, None, :] * t[None, :, None], dtype=torch.float32, device=vol.device)
     prof = G.sample_world(vol[None], affine, pts)[0].double().cpu().numpy()
@@ -124,7 +128,7 @@ class Evidence:
         P = self.P
         feat_o = structure_feature(vol, inside, self.h, P.df_sigma_mm, self.device)
         c, d, *_ = match(self.feat_m, feat_o, self.core_m * _erode(inside, self.erode), self.h, block_mm=P.df_block_mm,
-                         step_mm=P.df_step_mm, range_mm=P.df_range_mm, z_min=P.df_z_min)
+                         step_mm=P.df_step_mm, range_mm=P.df_reach_mm, z_min=P.df_z_min)
         return G.apply_affine(self.A, c), d @ self.A[:3, :3].T
 
     def boundary(self, vol):
@@ -135,15 +139,15 @@ class Evidence:
         return self.points[ok], self.normals[ok], (edge - self.edge_m[1])[ok]
 
     def measure(self, vol, inside):
-        """-> dict: W, D (matches up to df_range_mm), P, n, delta (the boundary points with one edge in both volumes), and the
-        read-outs interior_mm (median |D| of all confident matches, taken before the df_range_mm filter, so over slightly more
+        """-> dict: W, D (matches up to df_reach_mm), P, n, delta (the boundary points with one edge in both volumes), and the
+        read-outs interior_mm (median |D| of all confident matches, taken before the df_reach_mm filter, so over slightly more
         matches than the fit uses), boundary_mm (median |delta|) and within (fraction of |delta| < 0.3 mm) over the boundary
         points; None without evidence."""
         with torch.no_grad():
             W, D = self.interior(vol, inside)
             Pb, n, delta = self.boundary(vol)
         length, off = np.linalg.norm(D, axis=1), np.abs(delta)
-        W, D = W[length <= self.P.df_range_mm], D[length <= self.P.df_range_mm]      # the range is per axis
+        W, D = W[length <= self.P.df_reach_mm], D[length <= self.P.df_reach_mm]      # the range is per axis
         return {"W": W, "D": D, "P": Pb, "n": n, "delta": delta,
                 "interior_mm": float(np.median(length)) if len(length) else None,
                 "boundary_mm": float(np.median(off)) if len(off) else None,
@@ -245,7 +249,7 @@ def smallest_lam(lattice: Lattice, ev, params: Params = Params()):
 
 
 def choose(lattice: Lattice, ev, none, params: Params = Params()):
-    """Model choice (module docstring): lam = smallest_lam, accepted when its held-out score falls below df_gain x `none`, the
+    """Model choice (module docstring): lam = smallest_lam, accepted when its held-out score falls below GAIN x `none`, the
     score of no deformation (the sum of the two medians the caller reports as cv['none']).
     -> (lam, [b, e] held out) when the field is accepted, else None; and the held-out score [b, e] of lam, or None when no
     weight keeps the strain limit."""
@@ -255,7 +259,7 @@ def choose(lattice: Lattice, ev, none, params: Params = Params()):
     if lam is None:
         return None, None
     b, d = held_out(lattice, e, lam, P.df_huber_mm)
-    return ((lam, [b, d]) if b + d < P.df_gain * none else None), [b, d]
+    return ((lam, [b, d]) if b + d < GAIN * none else None), [b, d]
 
 
 def warp(src, affine, field):
@@ -277,8 +281,8 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     MRI world, the final affine.
     -> (field float32 numpy [3, D, H, W] on the MRI base grid, mm along the MRI world axes, zero when not supported; info).
     info: status 'applied' | 'not_supported' (too little evidence, no weight in LAM_RANGE keeping df_max_strain, or no held-out
-    gain over df_gain); grid_mm, lam (None when not supported); max_strain of the field; n_interior, n_boundary (the evidence of
-    the fit: matches up to df_range_mm, boundary points with one edge in both volumes); cv {'none': [b, e], 'field': [b, e]}: held-out median
+    gain over GAIN); grid_mm, lam (None when not supported); max_strain of the field; n_interior, n_boundary (the evidence of
+    the fit: matches up to df_reach_mm, boundary points with one edge in both volumes); cv {'none': [b, e], 'field': [b, e]}: held-out median
     interior and boundary error (mm) without a field and with the field of the chosen weight (None where not computed);
     residual {'interior_mm', 'boundary_mm', 'boundary_within_0.3mm': [before, after]}: median length of all confident matches,
     median |offset| and fraction of offsets below 0.3 mm over all boundary points, measured on the affine OCT and again on the
@@ -297,7 +301,7 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     info = {"status": "not_supported", "grid_mm": None, "lam": None, "max_strain": 0.0, "n_interior": len(ev["W"]),
             "n_boundary": len(ev["P"]), "cv": {"none": None, "field": None}}
     best, field = None, torch.zeros((3, *shape), dtype=torch.float32, device=device)
-    if len(ev["W"]) >= P.df_min_interior and len(ev["P"]) >= P.df_min_boundary:
+    if len(ev["W"]) >= MIN_INTERIOR and len(ev["P"]) >= MIN_BOUNDARY:
         info["cv"]["none"] = [float(np.median(np.linalg.norm(ev["D"], axis=1))), float(np.median(np.abs(ev["delta"])))]
         best, info["cv"]["field"] = choose(lattice, ev, sum(info["cv"]["none"]), P)
     if best is not None:

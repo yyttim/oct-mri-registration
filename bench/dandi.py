@@ -261,7 +261,7 @@ def run(s, device="cuda"):
     """octreg register on the block and the crop -> OUT/s (the standard outputs and result.json)."""
     f, out, t0 = files(s), OUT / s, time.time()
     res = register(f["oct"], out / "mri_crop.nii.gz", out, oct_spacing_um=spacing_um(s), device=device)
-    print(f"{s}: {time.time() - t0:.0f} s, {json.dumps({k: res['pose'][k] for k in ('S', 'handedness', 'NGF')})}", flush=True)
+    print(f"{s}: {time.time() - t0:.0f} s, {json.dumps({k: res['pose'][k] for k in ('S', 'NGF')})}", flush=True)
 
 
 def summary():
@@ -292,13 +292,13 @@ def summary():
         if d.get("lam") is not None:
             deform += f", lam {d['lam']:.2f}, field {d['field']['median_mm']:.2f} / {d['field']['max_mm']:.2f} mm"
         rows[s] = {"crop_mm": mm, "oct_array_cm3": arr_cm3, "oct_measured_cm3": meas, "specimen_mask": fo,
-                   "block_mm": e.get("block_mm"), "crop_fits_block": e.get("crop_fits_block"), "pose": {k: p[k] for k in ("S", "S_class", "S_outline", "L", "polarity", "handedness",
+                   "block_mm": e.get("block_mm"), "crop_fits_block": e.get("crop_fits_block"), "pose": {k: p.get(k) for k in ("S", "S_class", "S_outline", "L", "polarity", "handedness",
                                                               "NGF_start", "NGF", "NGF_other_handedness", "scale_per_oct_axis")},
                    "flags": res["flags"], "deform": {k: d.get(k) for k in ("status", "n_interior", "n_boundary")},
                    "layer_separation": v[1] if v else None, "random_separation": rnd, "seconds": res["seconds"]["total"]}
         blk = ' x '.join(f'{x:.0f}' for x in e['block_mm']) if e.get('block_mm') else ''
         print(f"| {s} | {' x '.join(f'{x:.0f}' for x in sorted(mm, reverse=True))} | {blk} | {fits} | {mask} | {num(p['S'], 4)} | {num(p['S_class'], 4)} | {num(p['S_outline'], 4)} "
-              f"| {p['handedness']:+d} | {num(p['NGF_start'], 4)} -> {num(p['NGF'], 4)} "
+              f"| {p.get('handedness', 1):+d} | {num(p['NGF_start'], 4)} -> {num(p['NGF'], 4)} "
               f"| {' / '.join(f'{x:.3f}' for x in p['scale_per_oct_axis'])} | {deform} "
               f"| {num(v[1], 3) if v else ''} | {random if rnd else ''} |")
     store = OUT / "summary.json"

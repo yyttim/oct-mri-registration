@@ -7,7 +7,7 @@ g = grad(G_s(I m) / G_s(m)), so the mask edge adds no gradient; g is taken to wo
 points x (every second interior MRI voxel along each axis), with the OCT interior weight w,
     F(T) = sum_x w(T^-1 x) (n_O(x) . n_M(x))^2 / sum_x w(T^-1 x),   g_O(x) = A^-T g_OCT(T^-1 x) (A the linear part of T),
 and L = 1 - F + lam (sum ls^2 + sum sh^2), the prior of §4, is minimised with Adam from the §4 pose, one pass per sigma in
-ngf_sigmas_mm (coarse to fine), learning rates a fifth of those of §4, |ls|, |sh| <= clamp; each pass keeps its lowest-L
+ngf_sigmas_mm (coarse to fine), learning rates a fifth of those of §4, |ls|, |sh| <= refine.CLAMP; each pass keeps its lowest-L
 iterate.
 """
 from __future__ import annotations

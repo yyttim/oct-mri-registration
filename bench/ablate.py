@@ -62,9 +62,9 @@ VARIANTS = {    # name: (what changes, the explicit change: mask source, solve()
     "A4": ("standardised intensity channels (z, -z) instead of two-class maps", {"features": "intensity"}),
     "A5+1": ("polarity forced +1", {"polarity": 1}),
     "A5-1": ("polarity forced -1", {"polarity": -1}),
-    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0, "clamp": 1.0}}),
+    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0}, "clamp": 1.0}),
     "A6p": ("no penalty, clamp kept: lam 0, clamp 0.15", {"params": {"lam": 0.0}}),
-    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"params": {"clamp": 1.0}}),
+    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"clamp": 1.0}),
     "A8": ("the other handedness: OCT world mirrored (z negated) before the search", {"mirror": True}),
     "A9": ("no outline term: S = 2 S_class / 3 in the search and the refinement", {"outline": False}),
     "A10": ("two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch", {"two_sided": True}),
@@ -159,8 +159,9 @@ def standardised(arr, mask, h, P):
 
 
 def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_class", polarity=0, mirror=False, outline=True,
-          two_sided=False, cut_axis=None, ngf=True):
+          two_sided=False, cut_axis=None, ngf=True, clamp=None):
     """Register steps 3-5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
+    clamp: the bound on log-scales and shears of §4-5 in place of refine.CLAMP (0.15).
     mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
     outline False: S = 2 S_class / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
     the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
@@ -195,13 +196,19 @@ def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_cla
             S_outline = Rf.masked_ncc(s_[2:], self.w[None], self.q)
             return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
         Rf.BaseGrid.score = score_two_sided
+    clamp0 = Rf.CLAMP
+    if clamp is not None:
+        Rf.CLAMP = clamp
     try:
-        poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
+        try:
+            poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
+        finally:
+            S.combined, S.Searcher._outline, Rf.BaseGrid.score = combined, outline_map, score
+        if ngf:
+            T, info["ngf"] = refine_ngf((m["arr"], m["mask"], m["affine"]), (o["arr"], o["mask"], F @ o["affine"]), poses[0]["T"], P, device)
+            poses[0] = {**poses[0], "T_before_ngf": poses[0]["T"] @ F, "T": T, "NGF_start": info["ngf"]["F_start"], "NGF": info["ngf"]["F"]}
     finally:
-        S.combined, S.Searcher._outline, Rf.BaseGrid.score = combined, outline_map, score
-    if ngf:
-        T, info["ngf"] = refine_ngf((m["arr"], m["mask"], m["affine"]), (o["arr"], o["mask"], F @ o["affine"]), poses[0]["T"], P, device)
-        poses[0] = {**poses[0], "T_before_ngf": poses[0]["T"] @ F, "T": T, "NGF_start": info["ngf"]["F_start"], "NGF": info["ngf"]["F"]}
+        Rf.CLAMP = clamp0
     return [{**p, "T": p["T"] @ F} for p in poses], info
 
 

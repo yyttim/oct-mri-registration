@@ -213,22 +213,24 @@ def test_user_masks(tmp_path):
     assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4 and res["pose"]["polarity"] == -1
 
 
-def test_array_frame_handedness(tmp_path):
-    """An NPY stack has no orientation: both handednesses are tried and fine structure picks the mirrored one here."""
+def test_array_frame(tmp_path):
+    """An NPY stack has only an array frame, taken as given with the spacing from the command line. The stack here is written
+    so that its array frame has the handedness of the header frame it came from (one axis flipped), and the same pose is found."""
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=0)
     img = nib.load(str(oct_path))
-    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0))       # numpy (z, y, x)
-    A_arr = np.diag([0.08, 0.08, 0.08, 1.0])
-    T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world, det < 0
+    nx = img.shape[0]
+    np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[:, :, ::-1])   # numpy (z, y, x), x flipped
+    A_arr = np.diag([-0.08, 0.08, 0.08, 1.0])                                                    # NIfTI voxel -> array world
+    A_arr[0, 3] = 0.08 * (nx - 1)
+    T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world
     pts_arr = G.apply_affine(A_arr @ np.linalg.inv(img.affine), pts)
     (tmp_path / "params.json").write_text(json.dumps(FAST))
     out = tmp_path / "run"
     assert main(["register", str(tmp_path / "oct.npy"), str(mri_path), "-o", str(out), "--device", "cpu", "--params",
                  str(tmp_path / "params.json"), "--oct-spacing-um", "80,80,80"]) == 0
     res, T = json.loads((out / "result.json").read_text()), np.loadtxt(out / "T_oct2mri.txt")
-    assert np.linalg.det(T_arr[:3, :3]) < 0 and np.linalg.det(T[:3, :3]) < 0
-    assert res["pose"]["handedness"] == -1 and "mirrored_oct_frame" in res["flags"] and distance(T, T_arr, pts_arr) < 0.4
-    assert res["pose"]["NGF"] > res["pose"]["NGF_other_handedness"]
+    assert np.linalg.det(T_arr[:3, :3]) > 0 and np.linalg.det(T[:3, :3]) > 0
+    assert distance(T, T_arr, pts_arr) < 0.4 and "handedness" not in res["pose"]
     assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(mri_path), "-o",
                  str(tmp_path / "again.nii.gz")]) == 0
     np.testing.assert_allclose(nib.load(str(tmp_path / "again.nii.gz")).get_fdata(),

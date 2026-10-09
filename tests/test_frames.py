@@ -55,30 +55,27 @@ def stack(vol):
 # ---------------------------------------------------------------------------------------------------------------- params
 def test_params_defaults_dict_and_hash():
     p = Params()
-    assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam, p.clamp) == (0.6, 0.15, 0.04, 8000, 24, 200, 2.0, 0.15)
+    assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam) == (0.6, 0.15, 0.04, 8000, 24, 200, 2.0)
     num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
     assert all(num(v) or (isinstance(v, tuple) and v and all(isinstance(x, float) for x in v)) for v in p.to_dict().values())  # constants
     assert Params.from_dict({"ngf_sigmas_mm": [0.5, 1]}).ngf_sigmas_mm == (0.5, 1.0)
     q = Params.from_dict(json.loads(json.dumps(dataclasses.replace(p, topk=12, lam=0.0).to_dict())))
     assert q == dataclasses.replace(p, topk=12, lam=0.0) and q.hash() != p.hash() and len(p.hash()) == 16
-    assert Params.from_dict({"lam": 1, "clamp": 1}) == dataclasses.replace(p, lam=1.0, clamp=1.0)
+    assert Params.from_dict({"lam": 1}) == dataclasses.replace(p, lam=1.0)
     for bad in ({"rho": 0.8}, {"topk": 12.5}, {"topk": True}, {"polarity": "+1"}, {"destripe": False}, {"levels": [0.6, 0.15]},
                 {"fine_mm": 0.2}, {"search_mm": 0.1}, {"search_mm": 0.55}, {"ngf_sigmas_mm": []}, {"ngf_sigmas_mm": [0.3, -0.1]},
                 {"ngf_sigmas_mm": 0.3}, {"ngf_iters": 0}, {"ngf_erode_mm": 0.0}, {"ngf_lam": 1.0}, {"df_lams": [3.0, 1.0]}):
         with pytest.raises(ValueError):
             Params.from_dict(bad)
-    assert p.hash() == "e0fb6738fccb16e7"                                              # 2.0; 1.1: 892a1f3b4fd6f7ed
+    assert p.hash() == "da914d8ccc555207"                                              # 2.0; 1.1: 892a1f3b4fd6f7ed
     assert {k for k in p.to_dict() if k.startswith("df_")} == {                       # §6: the two kinds of evidence, one
-        "df_sigma_mm", "df_block_mm", "df_step_mm", "df_range_mm", "df_z_min", "df_erode_mm",                # lattice, one fit
-        "df_reach_mm", "df_profile_mm", "df_edge_mad", "df_huber_mm", "df_grid_mm",
-        "df_max_strain", "df_gain", "df_min_interior", "df_min_boundary"}
-    assert (p.df_sigma_mm, p.df_block_mm, p.df_step_mm, p.df_range_mm, p.df_z_min, p.df_erode_mm) == (0.24, 4.5, 1.5, 1.35, 4.0, 0.6)
+        "df_sigma_mm", "df_block_mm", "df_step_mm", "df_reach_mm", "df_z_min", "df_erode_mm",                # lattice, one fit
+        "df_edge_mad", "df_huber_mm", "df_grid_mm", "df_max_strain"}
+    assert (p.df_sigma_mm, p.df_block_mm, p.df_step_mm, p.df_reach_mm, p.df_z_min, p.df_erode_mm) == (0.24, 4.5, 1.5, 1.35, 4.0, 0.6)
     assert (p.df_grid_mm, p.df_edge_mad, p.df_max_strain) == (5.0, 5.0, 0.15)
     assert Params.from_dict({"df_grid_mm": 7, "df_max_strain": 0.1}) == dataclasses.replace(p, df_grid_mm=7.0, df_max_strain=0.1)
     for bad, message in (({"df_grids_mm": [10.0, 7.0, 5.0]}, "unknown key"), ({"df_rounds": 2}, "unknown key"),
                          ({"df_ridge_mad": 5.0}, "unknown key"), ({"df_grid_mm": [5.0]}, "not a float"),
-                         ({"df_reach_mm": 3.0}, "df_reach_mm <= df_profile_mm"),
-                         ({"df_min_interior": 0}, "df_min_interior"),
                          *(({k: v}, "df_ lengths") for k, v in (("df_sigma_mm", 0.0), ("df_block_mm", -1.0), ("df_step_mm", -0.5),
                                                                 ("df_z_min", 0.0), ("df_erode_mm", 0.0), ("df_grid_mm", 0.0),
                                                                 ("df_edge_mad", 0.0)))):

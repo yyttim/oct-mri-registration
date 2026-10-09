@@ -7,7 +7,7 @@ at the specimen voxels (swapped for polarity -1) and the MRI channels sampled th
 specimen mask w and the MRI foreground M sampled through the pose at the measured OCT voxels q, weighted by q (1 - (1 - w) E),
 E = M inside the MRI grid and 1 outside: embedding over MRI tissue or outside the crop is left out (the MRI may hold tissue that
 is not in the block). L = 1 - S + lam (sum ls^2 + sum sh^2);
-after every Adam step (cosine schedule) |ls|, |sh| <= clamp (absolute).
+after every Adam step (cosine schedule) |ls|, |sh| <= CLAMP (absolute).
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from scipy.spatial.transform import Rotation
 from . import geometry as G
 from .params import Params
 from .search import EPS, box, to_torch
+
+CLAMP = 0.15               # |log_scale|, |shear| <= CLAMP after every step: a guard, never reached with the penalty (flag clamp_saturated)
 
 
 def compose(r, t, ls, sh, c):
@@ -88,7 +90,7 @@ class BaseGrid:
 def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params()):
     """Adam on L = 1 - objective(T)[0] + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4), over all twelve affine parameters
     (r, t, 3 log-scales, 3 shears), with a cosine schedule to zero at t_max and learning rates lr_scale x (lr_rot rad, lr_t mm,
-    lr_ls, lr_sh); |ls| and |sh| are clamped to params.clamp after every step. iters and t_max are separate because §4 stops at
+    lr_ls, lr_sh); |ls| and |sh| are clamped to CLAMP after every step. iters and t_max are separate because §4 stops at
     t_max, never scoring its last iterate, and §5 runs one iterate past it at learning rate 0.
     objective(T) -> a tuple of scalar tensors, the first of which is the score. -> (T numpy 4x4, *those values, L) of the
     iterate with the lowest L."""
@@ -113,8 +115,8 @@ def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Param
         opt.step()
         sched.step()
         with torch.no_grad():
-            ls.clamp_(-P.clamp, P.clamp)
-            sh.clamp_(-P.clamp, P.clamp)
+            ls.clamp_(-CLAMP, CLAMP)
+            sh.clamp_(-CLAMP, CLAMP)
     return (*best[1:], best[0])
 
 
