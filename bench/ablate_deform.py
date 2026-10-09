@@ -1,5 +1,4 @@
-"""§6 ablation from cached base grids (bench only; the package never reads this): the table of docs/METHOD.md §6, plus rows
-that widen the reach of the local evidence (df_reach_mm, the interior search range and the edge window).
+"""§6 ablation from cached base grids (bench only; the package never reads this): the §6 ablation table of docs/METHOD.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
