@@ -53,7 +53,6 @@ class Params:
     df_reach_mm: float = 1.35                 # a surface edge counts within this distance of the MRI foreground surface
     df_profile_mm: float = 2.1                # half length of the intensity profile along a boundary normal
     df_edge_mad: float = 5.0                  # a prominent fall: this many MADs above the median of the fall along the profile
-    df_support_mm: float = 5.0                # a boundary point is used when an interior match lies within this distance
     df_huber_mm: float = 0.3                  # Huber threshold of both residual types
     df_grid_mm: float = 5.0                   # spacing of the control lattice
     df_max_strain: float = 0.15               # largest first difference of the lattice / spacing must stay below this
@@ -70,7 +69,7 @@ class Params:
         if not (self.ngf_erode_mm > 0 and self.ngf_iters >= 1):
             raise ValueError("Params: need ngf_erode_mm > 0 and ngf_iters >= 1")
         if not (min(self.df_sigma_mm, self.df_block_mm, self.df_step_mm, self.df_range_mm, self.df_z_min, self.df_erode_mm,
-                    self.df_huber_mm, self.df_max_strain, self.df_gain, self.df_support_mm, self.df_edge_mad, self.df_grid_mm) > 0
+                    self.df_huber_mm, self.df_max_strain, self.df_gain, self.df_edge_mad, self.df_grid_mm) > 0
                 and 0 < self.df_reach_mm <= self.df_profile_mm and min(self.df_min_interior, self.df_min_boundary) >= 1):
             raise ValueError("Params: all df_ lengths, df_z_min, df_max_strain and df_gain must be positive, "
                              "0 < df_reach_mm <= df_profile_mm, and df_min_interior, df_min_boundary >= 1")

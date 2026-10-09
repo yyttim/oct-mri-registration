@@ -47,7 +47,6 @@ ROWS = {    # name: (label as in METHOD.md, change); change None = no field
     "interior_only": ("interior evidence only", {"evidence": "interior"}),
     "boundary_only": ("boundary evidence only", {"evidence": "boundary"}),
     "ridge": ("rim ridge instead of the edge", {"edge": "ridge"}),
-    "no_support": ("no support rule", {"support": False}),
     "no_huber": ("no Huber re-weighting", {"params": {"df_huber_mm": 1e9}}),
     "lattice7": ("lattice 7 mm", {"params": {"df_grid_mm": 7.0}}),
     "lattice10": ("lattice 10 mm", {"params": {"df_grid_mm": 10.0}}),
@@ -93,10 +92,6 @@ def fit_evidence(mri, vol, inside, P, change, device):
             return ev.points[ok], ev.normals[ok], (pos - ev.edge_m[1])[ok]
         ev.boundary = boundary
     e = ev.measure(vol, inside)
-    if change.get("support") is False:
-        with torch.no_grad():
-            Pb, n, delta = ev.boundary(vol)
-        e.update(P=Pb, n=n, delta=delta)
     if change.get("evidence") == "interior":
         e.update(P=np.zeros((0, 3)), n=np.zeros((0, 3)), delta=np.zeros(0))
     elif change.get("evidence") == "boundary":

@@ -17,9 +17,7 @@ Evidence, measured on that volume:
             [M, 3], offsets delta [M] (mm; > 0: the OCT surface lies outside the MRI surface). The edge, not the bright rim of
             the OCT: the rim is a layer below the surface, its ridge lies inside the surface by half its thickness. Only
             profiles with exactly one prominent fall are used, so faces crossed by section stripes drop out without any
-            knowledge of the sectioning axis. And only points with an interior match within Params.df_support_mm: where the
-            inside of the two volumes does not correspond (torn or missing tissue, a bubble), an edge nearby is not evidence of
-            a deformation, and the field stays at what its neighbourhood supports.
+            knowledge of the sectioning axis.
 Model (Lattice, fit): displacements c on a regular control lattice of spacing Params.df_grid_mm over the bounding box of the MRI
 grid, trilinear in between. Regularised least squares: rows N(W) c = D, rows n . (N(P) c) = delta weighted by sqrt(3 N / M) so
 that both kinds carry the same total weight, a membrane penalty lam (first differences of c along the lattice axes)^2, a ridge
@@ -40,7 +38,6 @@ import numpy as np
 import torch
 from scipy import ndimage, sparse
 from scipy.sparse.linalg import splu
-from scipy.spatial import cKDTree
 
 from . import geometry as G
 from .blockmatch import SLAB, _erode, _on_grid, match, structure_feature
@@ -138,17 +135,16 @@ class Evidence:
         return self.points[ok], self.normals[ok], (edge - self.edge_m[1])[ok]
 
     def measure(self, vol, inside):
-        """-> dict: W, D (matches up to df_range_mm), P, n, delta (the supported boundary points: those with one of these
-        matches within df_support_mm), and the read-outs interior_mm (median |D| of all confident matches, taken before the
-        df_range_mm filter, so over slightly more matches than the fit uses), boundary_mm (median |delta|) and within (fraction
-        of |delta| < 0.3 mm) over all boundary points with one edge; None without evidence."""
+        """-> dict: W, D (matches up to df_range_mm), P, n, delta (the boundary points with one edge in both volumes), and the
+        read-outs interior_mm (median |D| of all confident matches, taken before the df_range_mm filter, so over slightly more
+        matches than the fit uses), boundary_mm (median |delta|) and within (fraction of |delta| < 0.3 mm) over the boundary
+        points; None without evidence."""
         with torch.no_grad():
             W, D = self.interior(vol, inside)
             Pb, n, delta = self.boundary(vol)
         length, off = np.linalg.norm(D, axis=1), np.abs(delta)
         W, D = W[length <= self.P.df_range_mm], D[length <= self.P.df_range_mm]      # the range is per axis
-        near = cKDTree(W).query(Pb)[0] <= self.P.df_support_mm if len(W) and len(Pb) else np.zeros(len(Pb), bool)
-        return {"W": W, "D": D, "P": Pb[near], "n": n[near], "delta": delta[near],
+        return {"W": W, "D": D, "P": Pb, "n": n, "delta": delta,
                 "interior_mm": float(np.median(length)) if len(length) else None,
                 "boundary_mm": float(np.median(off)) if len(off) else None,
                 "within": float((off < 0.3).mean()) if len(off) else None}
@@ -282,7 +278,7 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     -> (field float32 numpy [3, D, H, W] on the MRI base grid, mm along the MRI world axes, zero when not supported; info).
     info: status 'applied' | 'not_supported' (too little evidence, no weight in LAM_RANGE keeping df_max_strain, or no held-out
     gain over df_gain); grid_mm, lam (None when not supported); max_strain of the field; n_interior, n_boundary (the evidence of
-    the fit: matches up to df_range_mm, supported boundary points); cv {'none': [b, e], 'field': [b, e]}: held-out median
+    the fit: matches up to df_range_mm, boundary points with one edge in both volumes); cv {'none': [b, e], 'field': [b, e]}: held-out median
     interior and boundary error (mm) without a field and with the field of the chosen weight (None where not computed);
     residual {'interior_mm', 'boundary_mm', 'boundary_within_0.3mm': [before, after]}: median length of all confident matches,
     median |offset| and fraction of offsets below 0.3 mm over all boundary points, measured on the affine OCT and again on the

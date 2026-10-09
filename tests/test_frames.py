@@ -67,13 +67,13 @@ def test_params_defaults_dict_and_hash():
                 {"ngf_sigmas_mm": 0.3}, {"ngf_iters": 0}, {"ngf_erode_mm": 0.0}, {"ngf_lam": 1.0}, {"df_lams": [3.0, 1.0]}):
         with pytest.raises(ValueError):
             Params.from_dict(bad)
-    assert p.hash() == "e3433ca2abf0bc1c"                                              # 2.0; 1.1: 892a1f3b4fd6f7ed
+    assert p.hash() == "e0fb6738fccb16e7"                                              # 2.0; 1.1: 892a1f3b4fd6f7ed
     assert {k for k in p.to_dict() if k.startswith("df_")} == {                       # §6: the two kinds of evidence, one
         "df_sigma_mm", "df_block_mm", "df_step_mm", "df_range_mm", "df_z_min", "df_erode_mm",                # lattice, one fit
-        "df_reach_mm", "df_profile_mm", "df_edge_mad", "df_support_mm", "df_huber_mm", "df_grid_mm",
+        "df_reach_mm", "df_profile_mm", "df_edge_mad", "df_huber_mm", "df_grid_mm",
         "df_max_strain", "df_gain", "df_min_interior", "df_min_boundary"}
     assert (p.df_sigma_mm, p.df_block_mm, p.df_step_mm, p.df_range_mm, p.df_z_min, p.df_erode_mm) == (0.24, 4.5, 1.5, 1.35, 4.0, 0.6)
-    assert (p.df_grid_mm, p.df_support_mm, p.df_edge_mad, p.df_max_strain) == (5.0, 5.0, 5.0, 0.15)
+    assert (p.df_grid_mm, p.df_edge_mad, p.df_max_strain) == (5.0, 5.0, 0.15)
     assert Params.from_dict({"df_grid_mm": 7, "df_max_strain": 0.1}) == dataclasses.replace(p, df_grid_mm=7.0, df_max_strain=0.1)
     for bad, message in (({"df_grids_mm": [10.0, 7.0, 5.0]}, "unknown key"), ({"df_rounds": 2}, "unknown key"),
                          ({"df_ridge_mad": 5.0}, "unknown key"), ({"df_grid_mm": [5.0]}, "not a float"),
@@ -81,7 +81,7 @@ def test_params_defaults_dict_and_hash():
                          ({"df_min_interior": 0}, "df_min_interior"),
                          *(({k: v}, "df_ lengths") for k, v in (("df_sigma_mm", 0.0), ("df_block_mm", -1.0), ("df_step_mm", -0.5),
                                                                 ("df_z_min", 0.0), ("df_erode_mm", 0.0), ("df_grid_mm", 0.0),
-                                                                ("df_support_mm", -1.0), ("df_edge_mad", 0.0)))):
+                                                                ("df_edge_mad", 0.0)))):
         with pytest.raises(ValueError, match=message):
             Params.from_dict(bad)
     env = dict(os.environ, PYTHONHASHSEED="4242", PYTHONPATH=str(ROOT))

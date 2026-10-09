@@ -4,7 +4,7 @@ The stage itself runs on a synthetic specimen: smooth random structure inside an
 a zero background (the MRI); the OCT is an inverted, gamma-remapped copy on its own flipped grid with a bright rim as a layer
 below its surface, embedded in darker, textured agarose with bright parallel stripes across one OCT axis. The boundary
 evidence (the offset between the surface edges of the two volumes) measures a pure 0.5 mm shift and mostly drops the faces
-crossed by the stripes; boundary points without an interior match within df_support_mm are not used; smallest_lam finds the
+crossed by the stripes; smallest_lam finds the
 smallest membrane weight that keeps the strain limit; a known smooth displacement (a Gaussian bump of 1.0 mm and 8 mm width)
 is recovered; an aligned pair is left alone (status not_supported, zero field); a field written and read back reproduces the
 warped volume through geometry.resample_to."""
@@ -163,27 +163,23 @@ def test_evidence_measures_a_shift_and_drops_striped_faces():
     assert len(W) > 100 and np.median(np.linalg.norm(D - shift, axis=1)) < 0.05, (len(W), np.median(np.linalg.norm(D - shift, axis=1)))
 
 
-def test_boundary_points_need_an_interior_match_nearby():
+def test_measure_collects_both_kinds():
     mri, oct_, T, *_ = pair(lambda y: bump(y, 1.0))
     ev = deform.Evidence(mri, PARAMS, "cpu")
     vol, inside = on_mri_grid(mri, oct_, T)
     P, n, delta = ev.boundary(vol)
     whole = ev.measure(vol, inside)
-    assert len(whole["W"]) > 100 and len(whole["P"]) > 0.9 * len(P) > 2000                 # matches all over the specimen
+    assert len(whole["W"]) > 100 and len(P) > 2000                                         # matches all over the specimen
+    assert all(np.array_equal(whole[k], a) for k, a in (("P", P), ("n", n), ("delta", delta)))   # every point with one edge
     x = torch.as_tensor(world(mri[0].shape, mri[2])[:, 0].reshape(mri[0].shape))
     half = ev.measure(vol, inside * (x < 0))                                               # the inside corresponds only where x < 0
-    near = cKDTree(half["W"]).query(P)[0] <= PARAMS.df_support_mm
-    assert len(half["W"]) >= 10 and half["W"][:, 0].max() < 0 and 0.1 < near.mean() < 0.6, (len(half["W"]), near.mean())
-    assert all(np.array_equal(half[k], a[near]) for k, a in (("P", P), ("n", n), ("delta", delta)))
-    assert half["P"][:, 0].max() < PARAMS.df_support_mm and P[:, 0].max() > 9
-    tight = deform.Evidence(mri, dataclasses.replace(PARAMS, df_support_mm=3.5), "cpu").measure(vol, inside)
-    assert 0 < len(tight["P"]) < 0.8 * len(whole["P"]) and cKDTree(tight["W"]).query(tight["P"])[0].max() <= 3.5
-    empty = ev.measure(vol, 0 * inside)                                                    # no interior match: no boundary point
-    assert not len(empty["W"]) and not len(empty["P"]) and not len(empty["delta"]) and empty["interior_mm"] is None
+    assert len(half["W"]) >= 10 and half["W"][:, 0].max() < 0 and len(half["P"]) == len(P)
+    empty = ev.measure(vol, 0 * inside)                                                    # no interior match: the edges are still read
+    assert not len(empty["W"]) and len(empty["P"]) == len(P) and empty["interior_mm"] is None
     for m in (whole, half, empty):                                                         # the read-outs: all boundary points
         assert m["boundary_mm"] == np.median(np.abs(delta)) and m["within"] == (np.abs(delta) < 0.3).mean()
     u, info = deform.smooth_deformation(mri, (oct_[0], oct_[1] & False, oct_[2]), T, PARAMS, "cpu")
-    assert info["status"] == "not_supported" and info["n_interior"] == info["n_boundary"] == 0 and not u.any()
+    assert info["status"] == "not_supported" and info["n_interior"] == 0 and not u.any()
 
 
 def test_smallest_lam_keeps_the_strain_limit():
