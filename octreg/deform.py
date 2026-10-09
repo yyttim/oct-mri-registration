@@ -1,5 +1,5 @@
 """§6 Smooth deformation: a small displacement field on top of the affine of §1-5, fitted to two kinds of label-free local
-evidence, with its smoothness chosen by held-out error (docs/METHOD.md §6).
+evidence, with its smoothness set by a strain limit and gated by held-out error (docs/METHOD.md §6).
 
 Convention. The field u is in mm along the MRI world axes and is defined at MRI points x: the OCT content that belongs at x sits
 at x + u(x) in the affinely registered OCT, so warped_OCT(x) = OCT_affine(x + u(x)) = OCT(T^-1 (x + u(x))), T the affine (OCT
@@ -86,7 +86,8 @@ def edge_offsets(vol, affine, points, normals, params: Params = Params(), measur
     profile from -(df_reach_mm + PROFILE_EXTRA_MM) to +(df_reach_mm + PROFILE_EXTRA_MM) in grid steps (trilinear) and its derivative by a Gaussian of PROFILE_SIGMA
     samples; a prominent fall is a local maximum of the fall going outwards more than df_edge_mad MADs above the median of
     the fall along the profile, within +-df_reach_mm; a point is used when at least `measured` of its profile is > 0 and it has exactly one
-    prominent fall, whose position gets a parabolic sub-sample correction. -> (used bool [M], positions [M] mm, 0 where not used)."""
+    prominent fall, whose position gets a parabolic sub-sample correction (the sampled peak lies within the reach, the correction
+    can add up to half a step). -> (used bool [M], positions [M] mm, 0 where not used)."""
     P, h = params, float(np.linalg.norm(np.asarray(affine, float)[:3, 0]))
     if not len(points):
         return np.zeros(0, bool), np.zeros(0)
@@ -173,7 +174,7 @@ class Lattice:
         self.penalty = sparse.block_diag([Dm.T @ Dm] * 3, format="csr")
 
     def basis(self, X):
-        """Trilinear weights of the nodes at world points X [N, 3] -> sparse [N, K]."""
+        """Trilinear weights of the nodes at world points X [N, 3] inside the lattice box -> sparse [N, K]."""
         q = (np.asarray(X, float).reshape(-1, 3) - self.lo) / self.spacing
         i0 = np.clip(np.floor(q).astype(int), 0, self.n - 2)
         f, r = q - i0, np.arange(len(q))
@@ -229,7 +230,8 @@ def held_out(lattice: Lattice, ev, lam, huber_mm):
         c = fit(lattice, ev, lam, huber_mm, (fb != k, fe != k)).T
         eb.append(np.linalg.norm(ev["NW"][fb == k] @ c - ev["D"][fb == k], axis=1))
         ee.append(np.abs(((ev["NP"][fe == k] @ c) * ev["n"][fe == k]).sum(1) - ev["delta"][fe == k]))
-    return float(np.median(np.concatenate(eb))), float(np.median(np.concatenate(ee)))
+    med = lambda x: float(np.median(np.concatenate(x))) if sum(map(len, x)) else 0.0     # a kind of evidence can be absent
+    return med(eb), med(ee)
 
 
 def smallest_lam(lattice: Lattice, ev, params: Params = Params()):

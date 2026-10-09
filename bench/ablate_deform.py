@@ -1,5 +1,5 @@
 """§6 ablation from cached base grids (bench only; the package never reads this): the table of docs/METHOD.md §6, plus rows
-that widen the reach of the boundary evidence.
+that widen the reach of the local evidence (df_reach_mm, the interior search range and the edge window).
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
@@ -16,14 +16,13 @@ sectioning axis (estimated from the section stripes of the OCT), so the end of t
 
 The rows of METHOD.md that the package has no switch for are reproduced here: one kind of evidence only (the other kind's
 rows dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one
-prominent maximum of the intensity along the normal, not at its steepest fall; the MRI side keeps the edge), no support rule
-(every boundary point with one edge in both volumes is used) and no Huber re-weighting (a Huber threshold no residual
-reaches). The rest are Params overrides.
+prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), the
+support rule of 1.1 (boundary points only within 5 mm of an interior match) and no Huber re-weighting (a Huber threshold
+no residual reaches). The rest are Params overrides.
 """
 from __future__ import annotations
 
 import argparse
-import contextlib
 import json
 import time
 from dataclasses import replace
@@ -104,26 +103,6 @@ def fit_evidence(mri, vol, inside, P, change, device):
     return e
 
 
-def held_out(lattice, ev, lam, huber_mm):
-    """deform.held_out, with a kind of evidence that the row leaves out scored 0 instead of the median of nothing."""
-    fb, fe, eb, ee = D.folds(ev["W"]), D.folds(ev["P"]), [], []
-    for k in range(D.FOLDS):
-        c = D.fit(lattice, ev, lam, huber_mm, (fb != k, fe != k)).T
-        eb.append(np.linalg.norm(ev["NW"][fb == k] @ c - ev["D"][fb == k], axis=1))
-        ee.append(np.abs(((ev["NP"][fe == k] @ c) * ev["n"][fe == k]).sum(1) - ev["delta"][fe == k]))
-    med = lambda x: float(np.median(np.concatenate(x))) if sum(len(a) for a in x) else 0.0
-    return med(eb), med(ee)
-
-
-@contextlib.contextmanager
-def one_kind():
-    keep, D.held_out = D.held_out, held_out
-    try:
-        yield
-    finally:
-        D.held_out = keep
-
-
 def stripe_axis(arr, mask):
     """OCT array axis of the section stripes: the plane-mean intensity is a sawtooth along it."""
     scores = []
@@ -191,8 +170,7 @@ def run_row(name, mri, src, scorer, lattice_for, device):
     if enough:
         none = [float(np.median(np.linalg.norm(ev["D"], axis=1))) if len(ev["D"]) else 0.0,
                 float(np.median(np.abs(ev["delta"]))) if len(ev["delta"]) else 0.0]
-        with one_kind() if kinds else contextlib.nullcontext():
-            best, score = D.choose(lattice, ev, sum(none), P)
+        best, score = D.choose(lattice, ev, sum(none), P)
         row["cv_none"] = none
     row["cv_field"] = score
     if best is None:
@@ -204,7 +182,7 @@ def run_row(name, mri, src, scorer, lattice_for, device):
         with torch.no_grad():
             moved = D.warp(src, mri[2], field)
         mag = np.linalg.norm(field.cpu().numpy(), axis=0)[np.asarray(mri[1], bool)]
-        row.update(status="applied", lam=best[0], cv_chosen=best[1], max_strain=lattice.strain(c),
+        row.update(status="applied", lam=best[0], max_strain=lattice.strain(c),
                    field_mm={"median": float(np.median(mag)), "max": float(mag.max())}, **scorer(moved[0], moved[1]))
     row["seconds"] = time.time() - t0
     return row

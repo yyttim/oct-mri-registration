@@ -6,7 +6,7 @@
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
 explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with the 3-D hole filling of the
 first release), two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4),
-align(..., polarity=+1 / -1) (A5), Params lam 0 and clamp 1 (A6), the OCT world mirrored so that the search and refinement see
+align(..., polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6), the OCT world mirrored so that the search and refinement see
 the other handedness (A8), no outline term (A9), the two-sided outline of the previous release (A10), or a simulated cut face
 with the method and with the two-sided outline (A11, A11b), or no fine-structure refinement (A12, the pose of §4). Every other
 variant ends with §5 on its own best pose. 'base' is the method through this driver; its distance to the CLI run (--main) is

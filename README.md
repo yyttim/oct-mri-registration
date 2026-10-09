@@ -12,7 +12,7 @@ one, each volume resampled into the other's frame, and QC images.
 pip install -e .
 ```
 
-Requires Python 3.9 or newer and PyTorch; a CUDA GPU is recommended for full-size volumes.
+Requires Python 3.9 or newer and PyTorch. A CUDA GPU is recommended for full-size volumes.
 
 ## Usage
 
@@ -51,7 +51,7 @@ OCT-frame file when it is a TIFF or NPY that no longer sits where the run read i
 
 1. **Specimen mask from isotropic texture.** Agarose artefacts vary along one array axis, tissue texture along all three.
 2. **One score for structure and outline.** Both scans become bright/dark tissue maps, compared together with the specimen
-   outline (OCT tissue must lie on MRI tissue; the MRI may hold tissue beyond the block); the sign of the structure term gives
+   outline (OCT tissue must lie on MRI tissue, while the MRI may hold tissue beyond the block). The sign of the structure term gives
    the contrast polarity.
 3. **Orientation search in the crop.** FFT search over 8,000 rotations and all translations inside the MRI crop.
 4. **Prior-bounded affine refinement.** A 12-parameter affine fit of the best poses under a scale and shear prior.
