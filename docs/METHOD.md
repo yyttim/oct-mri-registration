@@ -76,9 +76,10 @@ clamped to ±0.15. The lowest L wins. All of the prior is the penalty, which is 
 block. The clamp is a guard, not a parameter: with the penalty it has never been reached, and a run that reaches it says so
 with the flag `clamp_saturated` rather than returning a distorted block quietly. The two are ablated apart below.
 
-Refining more than the best pose of §3 is not optional: on I58 the winner is the third of the 24 by search score
-(`search_rank` 2 in result.json), so a run that refined one pose would have returned a different answer. It is also where the
-time goes, 349 s of the run's 724 s against 35 s for the search.
+All 24 poses are refined because the search score does not settle the order: on I58 the winner after §4 was the third of
+the 24 by search score with the maps of release 1.0 and is the first with the maps of 2.0 (`search_rank` in result.json),
+and both runs end at the same affine. The refinement is also where the time goes, 345 s of the run's 685 s against 33 s for
+the search.
 
 ## 5. Fine-structure refinement
 
@@ -193,13 +194,12 @@ imposed error, and the worse the pose, the more the panel hides.
 
 ### I58 brainstem pair
 
-On the two original files (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 12 min 4 s, 5.2 GiB of
-RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows), of which §6 is 23 s. §1-4 give S 0.2855 (S_class −0.1144,
-S_outline 0.6277) and polarity −1; §5
-raises F from 0.088 to 0.103 and moves the block by 2.4 mm at its corners (1.5 mm over the specimen, 5.3°), with scales 0.977 /
-0.974 / 0.985. At the §5 pose S is lower (0.251, S_class −0.067). Raw 20 µm OCT values mapped through the header and the
-transform correlate with the affine overlay (oct_in_mri_affine.nii.gz) at Spearman 0.990, against at most 0.256 with any OCT
-axis flipped.
+On the two original files (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, 5.2 GiB
+of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows), of which §6 is 20 s. §1-4 give S 0.2781 (S_class
+−0.1020, S_outline 0.6302) and polarity −1; §5 raises F from 0.089 to 0.103 and moves the block by 3.8 mm at its corners
+(2.0 mm over the specimen, 8.8°), with scales 0.977 / 0.974 / 0.985. At the §5 pose S is lower (0.244, S_class −0.055). Raw
+20 µm OCT values mapped through the header and the transform correlate with the affine overlay (oct_in_mri_affine.nii.gz) at
+Spearman 0.991, against at most 0.266 with any OCT axis flipped.
 
 The figures of this pair are drawn locally by the bench scripts and are not published. bench/fig_registration.py shows the
 result on three MRI planes, read from the original files: the MRI, the registered OCT, and those two panels cut into 8 mm
@@ -215,8 +215,8 @@ residuals fell from 0.249 to 0.124 mm (interior) and from 0.285 to 0.089 mm (bou
 from 51 %). Over the MRI foreground the field has a median of 0.28 mm and a maximum of 1.05 mm. It is largest at the superior
 end of the block, where the affine leaves the OCT surface 0.5 to 1 mm outside the MRI boundary and the field puts it on it;
 measured per 4 mm along the sectioning axis, the boundary residual at that end falls from 0.82 to 0.22 mm, and over the rest of
-the block from 0.10 to 0.40 mm down to 0.04 to 0.19 mm. The affine of the run is that of release 1.1 to 0.003 mm at the block
-corners, the float noise between two runs, since §1-5 compute the same affine.
+the block from 0.10 to 0.40 mm down to 0.04 to 0.19 mm. The affine of the run is that of releases 1.0 and 1.1 to 0.001 mm at the
+block corners, the float noise between two runs, since §1-5 compute the same affine.
 
 Detached cerebellar parts that moved by more than the 1.35 mm reach, folia, a lobule and whole torn flaps, stay where the
 affine puts them: no evidence reaches them, and no part of the method is built for them. In a checkerboard of this specimen the

@@ -3,7 +3,7 @@
 ## 2.0.0
 
 The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as
-1.1 (to 0.003 mm at the block corners), §6 is simpler and fits the block end better, and 36 fields remain in Params (hash
+1.1 (to 0.001 mm at the block corners), §6 is simpler and fits the block end better, and 36 fields remain in Params (hash
 `da914d8ccc555207`).
 
 - §6 uses every boundary point with one edge in both volumes. The support rule of 1.1, which counted a boundary point only
