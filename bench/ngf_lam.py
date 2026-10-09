@@ -9,7 +9,8 @@ Two steps, so the sweep costs minutes instead of a full run:
 mask and the OCT header affine the boundary read-out needs.
 `sweep` starts every fit from the §4 pose of RUN (result.json, pose.T_before_ngf) and reports, per weight, F of §5, the
 scales and shears of the fitted pose, how far it lands from the run's own §5 pose and from §4, and the outline agreement
-of bench/evaluate.py at that pose, which §5 never sees. Default Params otherwise, so only ngf_lam moves.
+of bench/evaluate.py at that pose, which §5 never sees. Default Params otherwise, so only the varied field moves (lam
+reaches §5 alone here, since §4 is not run).
 """
 from __future__ import annotations
 
@@ -118,18 +119,17 @@ def do_sweep(args):
     elif not args.no_boundary:
         print("cache has no oct_valid: rebuild it for the boundary read-out", flush=True)
     rows = []
-    key = {"lam": "ngf_lam", "shape": "ngf_lam_shape", "sigmas": "ngf_sigmas_mm"}[args.vary]
+    key = {"lam": "lam", "sigmas": "ngf_sigmas_mm"}[args.vary]
     if args.vary == "sigmas":
         settings = [(s, {"ngf_sigmas_mm": [float(x) for x in s.split(",")]}) for s in args.sigmas.split("|")]
     else:
-        settings = [(f"{v:g}", {key: v} if args.vary == "lam" else {"ngf_lam": args.ngf_lam, key: v})
-                    for v in (float(x) for x in args.lams.split(","))]
+        settings = [(f"{v:g}", {key: v}) for v in (float(x) for x in args.lams.split(","))]
     for label, over in settings:
         P = Params.from_dict(over)
         t = time.time()
         T, info = ngf.refine_ngf(mri, oct_, T0, P, args.device)
         _, _, ls, sh = decompose(T, c)
-        row = {"ngf_lam": P.ngf_lam, "ngf_lam_shape": P.ngf_lam_shape, "ngf_sigmas_mm": list(P.ngf_sigmas_mm),
+        row = {"lam": P.lam, "ngf_sigmas_mm": list(P.ngf_sigmas_mm),
                "varied": key, "value": label, "F_start": info["F_start"], "F": info["F"], "L": info["L"],
                "scales": np.exp(ls).tolist(), "shears": sh.tolist(),
                "corners_vs_run_mean_mm": distance(T, T_run, pts)[0], "corners_vs_run_max_mm": distance(T, T_run, pts)[1],
@@ -152,7 +152,7 @@ def do_transforms(args):
     out = Path(args.out or Path(args.sweep).parent)
     out.mkdir(parents=True, exist_ok=True)
     for r in d["rows"]:
-        f = out / f"T_{r.get('varied', 'ngf_lam')}_{str(r.get('value', r['ngf_lam'])).replace(',', '-')}.txt"
+        f = out / f"T_{r.get('varied', 'lam')}_{str(r.get('value', r['lam'])).replace(',', '-')}.txt"
         np.savetxt(f, np.asarray(r["T"], float), fmt="%.17g")
         print(f"wrote {f}")
 
@@ -165,14 +165,13 @@ def main():
     c.add_argument("--mri", required=True)
     c.add_argument("-o", "--out", required=True)
     c.add_argument("--grid-mm", type=float, default=0.15, help="isotropic grid of the cached volumes (default: Params.base_mm)")
-    s = sub.add_parser("sweep", help="§5 from the §4 pose of a run, once per ngf_lam")
+    s = sub.add_parser("sweep", help="§5 from the §4 pose of a run, once per prior weight")
     s.add_argument("--cache", required=True)
     s.add_argument("--run", required=True, help="an octreg run directory (result.json)")
     s.add_argument("--lams", default="2,1,0.5,0.2,0")
-    s.add_argument("--vary", choices=("lam", "shape", "sigmas"), default="lam", help="what the sweep varies")
+    s.add_argument("--vary", choices=("lam", "sigmas"), default="lam", help="what the sweep varies")
     s.add_argument("--sigmas", default="0.6,0.4,0.3|0.6,0.4,0.3,0.25|0.6,0.4,0.3,0.2|0.45,0.3,0.2",
                    help="--vary sigmas: schedules of ngf_sigmas_mm, one per |")
-    s.add_argument("--ngf-lam", type=float, default=2.0, help="the size weight held fixed while --vary shape")
     s.add_argument("--device", default="cpu")
     s.add_argument("--destripe", action="store_true", help="flat-field the section stripes out of the OCT before §5")
     s.add_argument("--no-boundary", action="store_true", help="skip the outline read-out of bench/evaluate.py")

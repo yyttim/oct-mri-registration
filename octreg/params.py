@@ -42,9 +42,7 @@ class Params:
     # fine-structure refinement (§5)
     ngf_sigmas_mm: tuple = (0.6, 0.4, 0.3)    # Gaussian sigma of the gradients, one pass each, coarse to fine
     ngf_erode_mm: float = 0.8                 # both masks eroded by this, so the outlines are left out
-    ngf_iters: int = 150                      # Adam iterations per pass
-    ngf_lam: float = 2.0                      # §5 prior on the size of the block (mean log-scale) and on the shears (§4 uses lam)
-    ngf_lam_shape: float = 2.0                # §5 prior on the shape (log-scales about their mean); = ngf_lam is §4's penalty
+    ngf_iters: int = 150                      # Adam iterations per pass (the prior of §4, lam and clamp, is shared)
     # smooth deformation (§6)
     df_sigma_mm: float = 0.24                 # Gaussian sigma of the gradients of the structure feature
     df_block_mm: float = 4.5                  # edge of the matched blocks
@@ -58,7 +56,6 @@ class Params:
     df_support_mm: float = 5.0                # a boundary point is used when an interior match lies within this distance
     df_huber_mm: float = 0.3                  # Huber threshold of both residual types
     df_grid_mm: float = 5.0                   # spacing of the control lattice
-    df_lams: tuple = (30.0, 10.0, 3.0, 1.0, 0.3)   # candidate membrane weights
     df_max_strain: float = 0.15               # largest first difference of the lattice / spacing must stay below this
     df_gain: float = 0.9                      # the held-out score must fall below df_gain x that of no deformation
     df_min_interior: int = 100                # fewer interior matches: no deformation
@@ -70,10 +67,8 @@ class Params:
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm, search_mm an integer multiple of base_mm")
         if not (self.ngf_sigmas_mm and all(isinstance(x, float) and 0 < x < float("inf") for x in self.ngf_sigmas_mm)):
             raise ValueError("Params: ngf_sigmas_mm must be a non-empty tuple of positive finite floats")
-        if not (self.ngf_erode_mm > 0 and self.ngf_iters >= 1 and min(self.ngf_lam, self.ngf_lam_shape) >= 0):
-            raise ValueError("Params: need ngf_erode_mm > 0, ngf_iters >= 1 and ngf_lam, ngf_lam_shape >= 0")
-        if not (self.df_lams and all(isinstance(x, float) and 0 < x < float("inf") for x in self.df_lams)):
-            raise ValueError("Params: df_lams must be a non-empty tuple of positive finite floats")
+        if not (self.ngf_erode_mm > 0 and self.ngf_iters >= 1):
+            raise ValueError("Params: need ngf_erode_mm > 0 and ngf_iters >= 1")
         if not (min(self.df_sigma_mm, self.df_block_mm, self.df_step_mm, self.df_range_mm, self.df_z_min, self.df_erode_mm,
                     self.df_huber_mm, self.df_max_strain, self.df_gain, self.df_support_mm, self.df_edge_mad, self.df_grid_mm) > 0
                 and 0 < self.df_reach_mm <= self.df_profile_mm and min(self.df_min_interior, self.df_min_boundary) >= 1):

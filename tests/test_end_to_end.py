@@ -107,8 +107,8 @@ def test_register_and_apply(tmp_path, capsys):
     assert res["refine"]["n_poses"] == FAST["topk"] and res["search"]["n_orientations"] == FAST["n_rot"]
     d = res["deform"]                                          # §6: no 4.5 mm block fits the specimen, so no deformation
     assert d["status"] == "not_supported" and "deformation_not_supported" in res["flags"] and d["n_interior"] == 0 and "deform" in res["seconds"]
-    assert set(d) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "candidates", "residual", "field", "seconds"}
-    assert d["n_boundary"] == 0 and d["candidates"] == [] and d["lam"] is None      # no match nearby: no boundary point is used,
+    assert set(d) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "residual", "field", "seconds"}
+    assert d["n_boundary"] == 0 and d["cv"] == {"none": None, "field": None} and d["lam"] is None   # no match nearby: no boundary point is used,
     assert d["residual"]["interior_mm"] == [None, None] and d["residual"]["boundary_mm"][0] > 0   # but the edges are read out
     assert d["residual"]["boundary_mm"][0] == d["residual"]["boundary_mm"][1]
     assert "§6: not_supported (0 interior matches, 0 boundary points)" in capsys.readouterr().out
@@ -166,8 +166,7 @@ def test_outputs_with_a_field(tmp_path, monkeypatch):
         x = G.apply_affine(mri[2], np.indices(mri[0].shape).reshape(3, -1).T.astype(float)).T.reshape(3, *mri[0].shape)
         u = (0.3 * np.stack([np.sin(x[1] / 2), np.cos(x[2] / 2), np.sin(x[0] / 3)])).astype(np.float32)
         return u, {"status": "applied", "grid_mm": 5.0, "lam": 0.324, "max_strain": 0.1, "n_interior": 120, "n_boundary": 400,
-                   "cv": {"none": [0.3, 0.5], "chosen": [0.15, 0.25]},
-                   "candidates": [{"lam": 0.324, "interior_mm": 0.15, "boundary_mm": 0.25, "max_strain": 0.1}],
+                   "cv": {"none": [0.3, 0.5], "field": [0.15, 0.25]},
                    "residual": {"interior_mm": [0.3, 0.1], "boundary_mm": [0.5, 0.2], "boundary_within_0.3mm": [0.3, 0.6]},
                    "field": {"median_mm": 0.3, "p95_mm": 0.5, "max_mm": float(np.linalg.norm(u, axis=0).max())}, "seconds": 0.0}
 

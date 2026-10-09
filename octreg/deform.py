@@ -24,13 +24,12 @@ Model (Lattice, fit): displacements c on a regular control lattice of spacing Pa
 grid, trilinear in between. Regularised least squares: rows N(W) c = D, rows n . (N(P) c) = delta weighted by sqrt(3 N / M) so
 that both kinds carry the same total weight, a membrane penalty lam (first differences of c along the lattice axes)^2, a ridge
 row RIDGE c, and HUBER_ROUNDS solutions re-weighted by the Huber rule (Params.df_huber_mm) on both residual types.
-Model choice (choose): lam by the held-out error over FOLDS spatial folds (cells of FOLD_MM), score = held-out median interior
-error + held-out median boundary error. The field has to stay plausible for fixed tissue: its strain (largest first difference
-of c / spacing) stays below Params.df_max_strain. The candidates are the weights of Params.df_lams whose full fit does, and the
-smallest weight that does (smallest_lam, bisection), so the choice moves continuously with the evidence instead of jumping
-between two weights of the list. Without a candidate below Params.df_gain x the score of no deformation, with no candidate at
-all (even the largest weight of df_lams strains Params.df_max_strain or more), or with too little evidence, there is no
-deformation (status 'not_supported', zero field).
+Model choice (choose): the field has to stay plausible for fixed tissue, so its strain (largest first difference of c / spacing)
+stays below Params.df_max_strain, and lam is the smallest weight in LAM_RANGE whose fit keeps that limit (smallest_lam,
+bisection in log lam), the most flexible field the limit allows. The field is accepted only when it predicts evidence it was
+not fitted to: over FOLDS spatial folds (cells of FOLD_MM) the held-out median interior error plus the held-out median boundary
+error (held_out) must fall below Params.df_gain x the same score of no deformation. Without that gain, when no weight in
+LAM_RANGE keeps the strain limit, or with too little evidence, there is no deformation (status 'not_supported', zero field).
 The evidence is measured once and the field fitted once; both kinds are measured again on the warped OCT for the read-outs.
 """
 from __future__ import annotations
@@ -58,6 +57,7 @@ FOLD_MM, FOLDS = 7.0, 4    # spatial folds: cells of FOLD_MM, fold = (cell index
 FOLD_KEY = (1, 3, 5)
 RIDGE = 1e-2               # ridge row RIDGE * c: keeps lattice nodes without evidence determined
 HUBER_ROUNDS = 4
+LAM_RANGE = (0.3, 30.0)    # the membrane weight is searched between these
 LAM_TOL = 1.05             # the smallest weight that keeps the strain limit is found to this factor
 
 
@@ -233,12 +233,11 @@ def held_out(lattice: Lattice, ev, lam, huber_mm):
 
 
 def smallest_lam(lattice: Lattice, ev, params: Params = Params()):
-    """The smallest membrane weight between the smallest and the largest of df_lams whose full fit strains less than
-    df_max_strain (the strain falls as the weight grows: bisection in log lam down to a factor LAM_TOL); None when even the
-    largest weight strains more."""
+    """The smallest membrane weight in LAM_RANGE whose full fit strains less than df_max_strain (the strain falls as the weight
+    grows: bisection in log lam down to a factor LAM_TOL); None when even the largest weight strains more."""
     P = params
     ok = lambda lam: lattice.strain(fit(lattice, ev, lam, P.df_huber_mm)) < P.df_max_strain
-    lo, hi = min(P.df_lams), max(P.df_lams)
+    lo, hi = LAM_RANGE
     if ok(lo):
         return lo
     if not ok(hi):
@@ -250,19 +249,17 @@ def smallest_lam(lattice: Lattice, ev, params: Params = Params()):
 
 
 def choose(lattice: Lattice, ev, none, params: Params = Params()):
-    """Model choice by held-out error over the weights of df_lams that keep the strain limit and the smallest weight that does
-    (module docstring). `none` is the score of no deformation, the sum of the two medians the caller reports as cv['none'].
-    -> (lam, [b, e] held out) of the best candidate, or None when none beats df_gain x `none`; and the table of all
-    candidates."""
-    P, best, table = params, None, []
+    """Model choice (module docstring): lam = smallest_lam, accepted when its held-out score falls below df_gain x `none`, the
+    score of no deformation (the sum of the two medians the caller reports as cv['none']).
+    -> (lam, [b, e] held out) when the field is accepted, else None; and the held-out score [b, e] of lam, or None when no
+    weight keeps the strain limit."""
+    P = params
     e = {**ev, "NW": lattice.basis(ev["W"]), "NP": lattice.basis(ev["P"])}
-    lam0 = smallest_lam(lattice, e, P)
-    for lam in sorted({lam0, *(x for x in P.df_lams if x > lam0)}, reverse=True) if lam0 is not None else ():
-        b, d = held_out(lattice, e, lam, P.df_huber_mm)
-        table.append({"lam": lam, "interior_mm": b, "boundary_mm": d, "max_strain": lattice.strain(fit(lattice, e, lam, P.df_huber_mm))})
-        if b + d < P.df_gain * none and (best is None or b + d < sum(best[1])):
-            best = (lam, [b, d])
-    return best, table
+    lam = smallest_lam(lattice, e, P)
+    if lam is None:
+        return None, None
+    b, d = held_out(lattice, e, lam, P.df_huber_mm)
+    return ((lam, [b, d]) if b + d < P.df_gain * none else None), [b, d]
 
 
 def warp(src, affine, field):
@@ -283,14 +280,14 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     oct = (arr, specimen mask, affine): the raw intensities and masks on the isotropic base grids (numpy); T: 4x4 OCT world ->
     MRI world, the final affine.
     -> (field float32 numpy [3, D, H, W] on the MRI base grid, mm along the MRI world axes, zero when not supported; info).
-    info: status 'applied' | 'not_supported' (too little evidence, every weight of df_lams straining df_max_strain or more, or
-    no held-out gain over df_gain); grid_mm, lam (None when not supported); max_strain of the field; n_interior,
-    n_boundary (the evidence of the fit: matches up to df_range_mm, supported boundary points); cv {'none': [b, e], 'chosen':
-    [b, e]}: held-out median interior and boundary error (mm) without a field and of the chosen weight; candidates (the table
-    of the model choice); residual {'interior_mm', 'boundary_mm', 'boundary_within_0.3mm': [before, after]}: median length of
-    all confident matches, median |offset| and fraction of offsets below 0.3 mm over all boundary points, measured on the affine
-    OCT and again on the warped one (after = before when not supported; None without evidence); field {'median_mm', 'p95_mm',
-    'max_mm'} over the MRI foreground; seconds."""
+    info: status 'applied' | 'not_supported' (too little evidence, no weight in LAM_RANGE keeping df_max_strain, or no held-out
+    gain over df_gain); grid_mm, lam (None when not supported); max_strain of the field; n_interior, n_boundary (the evidence of
+    the fit: matches up to df_range_mm, supported boundary points); cv {'none': [b, e], 'field': [b, e]}: held-out median
+    interior and boundary error (mm) without a field and with the field of the chosen weight (None where not computed);
+    residual {'interior_mm', 'boundary_mm', 'boundary_within_0.3mm': [before, after]}: median length of all confident matches,
+    median |offset| and fraction of offsets below 0.3 mm over all boundary points, measured on the affine OCT and again on the
+    warped one (after = before when not supported; None without evidence); field {'median_mm', 'p95_mm', 'max_mm'} over the
+    MRI foreground; seconds."""
     P, t0, T = params, time.time(), np.asarray(T, float)
     (m_arr, m_mask, A_m), (o_arr, o_mask, A_o) = mri, oct
     A_m, shape = np.asarray(A_m, float), tuple(np.shape(m_arr))
@@ -302,16 +299,15 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
                                             for k in (0, shape[2] - 1)], float))
     lattice = Lattice(corners.min(0), corners.max(0), P.df_grid_mm)
     info = {"status": "not_supported", "grid_mm": None, "lam": None, "max_strain": 0.0, "n_interior": len(ev["W"]),
-            "n_boundary": len(ev["P"]), "cv": {"none": None, "chosen": None}, "candidates": []}
+            "n_boundary": len(ev["P"]), "cv": {"none": None, "field": None}}
     best, field = None, torch.zeros((3, *shape), dtype=torch.float32, device=device)
     if len(ev["W"]) >= P.df_min_interior and len(ev["P"]) >= P.df_min_boundary:
         info["cv"]["none"] = [float(np.median(np.linalg.norm(ev["D"], axis=1))), float(np.median(np.abs(ev["delta"])))]
-        best, info["candidates"] = choose(lattice, ev, sum(info["cv"]["none"]), P)
+        best, info["cv"]["field"] = choose(lattice, ev, sum(info["cv"]["none"]), P)
     if best is not None:
         c = fit(lattice, ev, best[0], P.df_huber_mm)
         field = lattice.on_grid(c, shape, A_m, device)
         info.update(status="applied", grid_mm=P.df_grid_mm, lam=best[0], max_strain=lattice.strain(c))
-        info["cv"]["chosen"] = best[1]
         with torch.no_grad():
             moved = warp(src, A_m, field)
             last = evidence.measure(moved[0], (moved[1] > INSIDE).to(torch.float32))

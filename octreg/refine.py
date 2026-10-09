@@ -85,18 +85,14 @@ class BaseGrid:
         return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
 
 
-def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params(), lam=None, lam_shape=None):
+def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params()):
     """Adam on L = 1 - objective(T)[0] + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4), over all twelve affine parameters
     (r, t, 3 log-scales, 3 shears), with a cosine schedule to zero at t_max and learning rates lr_scale x (lr_rot rad, lr_t mm,
     lr_ls, lr_sh); |ls| and |sh| are clamped to params.clamp after every step. iters and t_max are separate because §4 stops at
     t_max, never scoring its last iterate, and §5 runs one iterate past it at learning rate 0.
     objective(T) -> a tuple of scalar tensors, the first of which is the score. -> (T numpy 4x4, *those values, L) of the
-    iterate with the lowest L. lam defaults to params.lam (§4); §5 passes params.ngf_lam. lam_shape, when it differs from
-    lam, weighs the log-scales about their mean separately from that mean: lam (3 mean^2) + lam_shape (sum (ls - mean)^2),
-    which is lam (sum ls^2) when the two are equal, the penalty of §4."""
+    iterate with the lowest L."""
     P, dev = params, grid.w.device
-    lam = P.lam if lam is None else float(lam)
-    lam_shape = lam if lam_shape is None else float(lam_shape)
     f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=dev, requires_grad=True)
     r, t, ls, sh = (f(x) for x in decompose(T0, grid.c))
     c = torch.tensor(np.asarray(grid.c, float), dtype=torch.float32, device=dev)
@@ -109,10 +105,8 @@ def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Param
         opt.zero_grad(set_to_none=True)
         T = compose(r, t, ls, sh, c)
         v = objective(T)
-        size = (ls.mean() ** 2) * 3.0
-        scale_term = lam * (ls ** 2).sum() if lam_shape == lam else lam * size + lam_shape * ((ls - ls.mean()) ** 2).sum()
-        L = 1.0 - v[0] + scale_term + lam * (sh ** 2).sum()
-        l, *s = torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
+        L = 1.0 - v[0] + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
+        l, *s =torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
         if l < best[0]:
             best = (l, T.detach().cpu().double().numpy(), *s)
         L.backward()

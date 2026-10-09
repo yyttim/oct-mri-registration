@@ -102,15 +102,15 @@ def test_ngf_separates_mirror_images():
     _, mirrored = ngf.refine_ngf(mri, (o, mo, MIRROR @ A_O), T, P, "cpu")
     assert true["F"] > 1.5 * mirrored["F"], (true["F"], mirrored["F"])
 
-def test_ngf_lam_decides_the_scale():
-    """§5 has its own prior weight. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
-    difference only the fine structure sees: with ngf_lam 0 the fit takes that scale, with a strong ngf_lam it keeps the size
-    it was given."""
+def test_prior_decides_the_scale():
+    """The prior of §4 is shared by §5. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
+    difference only the fine structure sees: with lam 0 the fit takes that scale, with a strong lam it keeps the size it was
+    given."""
     mri, oct_, T = pair(scale=(1.06, 1.0, 1.0))
     T0 = T.copy()
     T0[:3, :3] = Rotation.from_rotvec([0.2, -0.4, 0.3]).as_matrix()                   # the same pose without the scale
     c = box(oct_[2], oct_[0].shape)[0]
     base = {"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6, "ngf_iters": 80}
-    ls = lambda lam: decompose(ngf.refine_ngf(mri, oct_, T0, Params.from_dict({**base, "ngf_lam": lam}), "cpu")[0], c)[2][0]
+    ls = lambda lam: decompose(ngf.refine_ngf(mri, oct_, T0, Params.from_dict({**base, "lam": lam}), "cpu")[0], c)[2][0]
     free, held, true = ls(0.0), ls(50.0), np.log(1.06)
     assert free > held and abs(free - true) < abs(held - true), (free, held, true)

@@ -187,14 +187,14 @@ def run_row(name, mri, src, scorer, lattice_for, device):
     row["n_interior"], row["n_boundary"] = len(ev["W"]), len(ev["P"])
     enough = ((kinds == "boundary" or len(ev["W"]) >= P.df_min_interior)
               and (kinds == "interior" or len(ev["P"]) >= P.df_min_boundary))
-    best, table = None, []
+    best, score = None, None
     if enough:
         none = [float(np.median(np.linalg.norm(ev["D"], axis=1))) if len(ev["D"]) else 0.0,
                 float(np.median(np.abs(ev["delta"]))) if len(ev["delta"]) else 0.0]
         with one_kind() if kinds else contextlib.nullcontext():
-            best, table = D.choose(lattice, ev, sum(none), P)
+            best, score = D.choose(lattice, ev, sum(none), P)
         row["cv_none"] = none
-    row["candidates"] = table
+    row["cv_field"] = score
     if best is None:
         row.update(status="not_supported", **scorer(src[0], src[1]), lam=None, max_strain=0.0,
                    field_mm={"median": 0.0, "max": 0.0})
