@@ -1,0 +1,252 @@
+{
+ "pair": "I58 brainstem",
+ "params_hash": "da914d8ccc555207",
+ "image_centre_start": [
+  [
+   1.0,
+   0.0,
+   0.0,
+   -13.64852182567119
+  ],
+  [
+   0.0,
+   1.0,
+   0.0,
+   -20.854812674224384
+  ],
+  [
+   0.0,
+   0.0,
+   1.0,
+   7.0768203772604465
+  ],
+  [
+   0.0,
+   0.0,
+   0.0,
+   1.0
+  ]
+ ],
+ "starts": {
+  "header": {
+   "axis": null,
+   "degrees": 0,
+   "start_to_base": {
+    "mean_mm": 2.4393226361602016,
+    "max_mm": 4.477809685383799,
+    "corners_mean_mm": 4.858352768953029,
+    "corners_max_mm": 6.271521754376875,
+    "rotation_deg": 11.112882486623423,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.0,
+    "max_mm": 0.0,
+    "corners_mean_mm": 0.0,
+    "corners_max_mm": 0.0,
+    "rotation_deg": 0.0,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 0.0009354364196007578,
+    "max_mm": 0.002266644189966307,
+    "corners_mean_mm": 0.0019811489138533466,
+    "corners_max_mm": 0.0024616811726782825,
+    "rotation_deg": 0.0037471628323997768,
+    "same_handedness": true
+   }
+  },
+  "axis0_90": {
+   "axis": 0,
+   "degrees": 90,
+   "start_to_base": {
+    "mean_mm": 15.280302891269416,
+    "max_mm": 33.70408778316531,
+    "corners_mean_mm": 33.63327588993037,
+    "corners_max_mm": 35.76473493016342,
+    "rotation_deg": 83.01689945450343,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.000430684114918775,
+    "max_mm": 0.00108049500756862,
+    "corners_mean_mm": 0.0009751443769079533,
+    "corners_max_mm": 0.0014091888656049107,
+    "rotation_deg": 0.001895045186160642,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 14.335850402572248,
+    "max_mm": 32.2998603229126,
+    "corners_mean_mm": 31.61348341533202,
+    "corners_max_mm": 39.60177545425276,
+    "rotation_deg": 77.93123902683982,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 420.2307298183441,
+    "no_search": 37.86726355552673
+   }
+  },
+  "axis0_180": {
+   "axis": 0,
+   "degrees": 180,
+   "start_to_base": {
+    "mean_mm": 22.85566351260476,
+    "max_mm": 48.98131902404554,
+    "corners_mean_mm": 50.643763038523836,
+    "corners_max_mm": 53.463966718426136,
+    "rotation_deg": 172.6905393765342,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.0011581244584248757,
+    "max_mm": 0.0026199705771460893,
+    "corners_mean_mm": 0.0021583412943195933,
+    "corners_max_mm": 0.003020835612558449,
+    "rotation_deg": 0.005159858572616783,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 22.24565460243163,
+    "max_mm": 49.65961989511172,
+    "corners_mean_mm": 48.93497781731675,
+    "corners_max_mm": 55.88567830025282,
+    "rotation_deg": 154.78612981989136,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 403.03418731689453,
+    "no_search": 36.93976950645447
+   }
+  },
+  "axis1_90": {
+   "axis": 1,
+   "degrees": 90,
+   "start_to_base": {
+    "mean_mm": 14.39587998761481,
+    "max_mm": 30.93306116422357,
+    "corners_mean_mm": 29.295810158351507,
+    "corners_max_mm": 32.880026937330165,
+    "rotation_deg": 86.3240260287148,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.0006163150271757307,
+    "max_mm": 0.0015763636131190025,
+    "corners_mean_mm": 0.0013735006632689304,
+    "corners_max_mm": 0.0018000824196319249,
+    "rotation_deg": 0.0030483650584745723,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 17.358933715516258,
+    "max_mm": 37.31858818634613,
+    "corners_mean_mm": 36.21243327629911,
+    "corners_max_mm": 42.8520509326081,
+    "rotation_deg": 115.16582689827005,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 401.91867089271545,
+    "no_search": 36.93117952346802
+   }
+  },
+  "axis1_180": {
+   "axis": 1,
+   "degrees": 180,
+   "start_to_base": {
+    "mean_mm": 20.417430080698555,
+    "max_mm": 42.130853800060386,
+    "corners_mean_mm": 42.76069000951141,
+    "corners_max_mm": 46.29746613015474,
+    "rotation_deg": 175.84426972435276,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.00032425708050160077,
+    "max_mm": 0.00098426980872201,
+    "corners_mean_mm": 0.0006946061673447773,
+    "corners_max_mm": 0.001213008900866502,
+    "rotation_deg": 0.00165161005790974,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 20.144976567633346,
+    "max_mm": 42.3659348980132,
+    "corners_mean_mm": 42.272074159297944,
+    "corners_max_mm": 46.878565334704966,
+    "rotation_deg": 163.36811629191578,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 404.7791771888733,
+    "no_search": 39.82560348510742
+   }
+  },
+  "axis2_90": {
+   "axis": 2,
+   "degrees": 90,
+   "start_to_base": {
+    "mean_mm": 15.16592043476181,
+    "max_mm": 37.0895010109056,
+    "corners_mean_mm": 36.90349025744703,
+    "corners_max_mm": 38.81971547115965,
+    "rotation_deg": 97.5409195466535,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.0008494820541193206,
+    "max_mm": 0.0019731644717247967,
+    "corners_mean_mm": 0.0017037969929063353,
+    "corners_max_mm": 0.0020901042184386593,
+    "rotation_deg": 0.004355001706882677,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 17.460088043264708,
+    "max_mm": 41.248552296842,
+    "corners_mean_mm": 41.0612079719761,
+    "corners_max_mm": 44.1343079876436,
+    "rotation_deg": 113.53148560592626,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 409.8588104248047,
+    "no_search": 38.695422649383545
+   }
+  },
+  "axis2_180": {
+   "axis": 2,
+   "degrees": 180,
+   "start_to_base": {
+    "mean_mm": 20.176541945708237,
+    "max_mm": 48.68953823479268,
+    "corners_mean_mm": 48.92032841938739,
+    "corners_max_mm": 51.86481770876216,
+    "rotation_deg": 172.75008491938323,
+    "same_handedness": true
+   },
+   "method_to_base": {
+    "mean_mm": 0.001004126327628053,
+    "max_mm": 0.002816983042508133,
+    "corners_mean_mm": 0.0022496753456398844,
+    "corners_max_mm": 0.002978113410235088,
+    "rotation_deg": 0.005003044071549081,
+    "same_handedness": true
+   },
+   "no_search_to_base": {
+    "mean_mm": 21.310170062150434,
+    "max_mm": 48.96133062271854,
+    "corners_mean_mm": 49.01884963075477,
+    "corners_max_mm": 55.11483268600283,
+    "rotation_deg": 169.84876490338326,
+    "same_handedness": true
+   },
+   "seconds": {
+    "method": 411.15955781936646,
+    "no_search": 38.30633902549744
+   }
+  }
+ }
+}

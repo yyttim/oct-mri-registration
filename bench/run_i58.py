@@ -5,10 +5,11 @@
     STEPS="ablate evaluate report" python bench/run_i58.py                        # bash
     $env:STEPS = "ablate evaluate report"; python bench/run_i58.py                # PowerShell
 
-Steps in order: register (python -m octreg register OCT MRI -o OUT), ablate (bench/ablate.py), evaluate (bench/evaluate.py)
-and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58). Overrides, all optional:
-STEPS, OUT, ABL, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT,
-OCTREG_I58_DIR) and CODE defaults to the repository of this file. The steps run with the interpreter that runs this file.
+Steps in order: register (python -m octreg register OCT MRI -o OUT), ablate (bench/ablate.py --starts), evaluate
+(bench/evaluate.py) and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58).
+Overrides, all optional: STEPS, OUT, ABL, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT,
+OCTREG_DATA_ROOT, OCTREG_I58_DIR) and CODE defaults to the repository of this file. The steps run with the interpreter that runs
+this file.
 
 OUT and ABL default to bench_runs/I58/octreg and bench_runs/I58/octreg_ablate. PREV_MAIN has no default. When it names a second
 octreg run, the evaluate step also measures the pose distance to it (bench/evaluate.py --previous).
@@ -137,7 +138,7 @@ def main():
             if s == "register":
                 args = ["-m", "octreg", "register", OCT_I58, MRI_I58, "-o", OUT, "--device", DEVICE]
             elif s == "ablate":
-                args = ["bench/ablate.py", "--out", ABL]
+                args = ["bench/ablate.py", "--out", ABL, "--starts"]
                 args += ["--main", OUT] if (OUT / "T_oct2mri.txt").is_file() else []
                 args += ["--device", DEVICE]
             elif s == "evaluate":

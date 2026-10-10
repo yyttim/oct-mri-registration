@@ -13,6 +13,8 @@ drawn locally and not published:
         "best pose of the other handedness"
 """
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -20,7 +22,8 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from PIL import Image
 
-from octreg.register import QC_CELL_IN, QC_DPI, QC_HEAD_IN
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the package of this repository
+from octreg.register import QC_CELL_IN, QC_DPI, QC_HEAD_IN  # noqa: E402
 
 GAP, HEAD, SEP, LABEL_W = 8, 64, 14, 34          # pixels
 

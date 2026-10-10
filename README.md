@@ -148,7 +148,14 @@ reaches octreg's affine (0.3 mm over the specimen mask and 1 degree). No deforma
 intact tissue visibly better than §6. ANTs SyN with a field-of-view mask scores closer on the read-outs, with stronger local
 compression and a run of 48 min against 20 s ([bench/baselines/BASELINES.md](bench/baselines/BASELINES.md)).
 
-The evaluation and the ablations are in [docs/METHOD.md](docs/METHOD.md) and [bench/BENCHMARK.md](bench/BENCHMARK.md).
+In the ablations one element of the method is removed or replaced at a time. With an intensity threshold in place of the texture
+mask, or without the outline term, the two-class term or the scale and shear penalty, the block ends on a wrong pose, and
+without §5 it stays about 2 mm off. Without the orientation search, §4 and §5 started from the image centres reach octreg's
+affine, since the header orientation of this pair is only 11° from it, but from the OCT turned by 90° or 180° the block is found
+again only with the search. Each kind of local evidence of §6 alone leaves the misfit of the other kind
+([docs/METHOD.md](docs/METHOD.md#ablations)). The evaluation is in [docs/METHOD.md](docs/METHOD.md#evaluation). The full tables
+are in [bench/BENCHMARK.md](bench/BENCHMARK.md), and those of §6 in
+[bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
 
 ## Reproducing the benchmark
 

@@ -18,6 +18,7 @@ RUN: octreg register output (result.json). MASK: the run's OCT specimen mask on 
 """
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -28,7 +29,8 @@ import numpy as np
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 from scipy import ndimage
 
-from octreg import geometry as G, io
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the package of this repository
+from octreg import geometry as G, io  # noqa: E402
 
 TILE_MM = 8.0              # checkerboard square: wide enough that one square holds a structure to follow across its edge
 

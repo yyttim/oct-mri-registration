@@ -31,7 +31,7 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `paths.py` | the run and data roots and the two input files |
 | `evaluate.py` | measures one run against the data: raw-data frame check, outline agreement, OCT specimen mask volume, and on request the pose distance to a second run |
 | `ablate.py` | preprocesses the pair once and runs base and the variants of the table below, written as one JSON table |
-| `ablate_deform.py` | the §6 ablation table of docs/METHOD.md from the cached base grids of `ngf_lam.py cache`, every row scored by the same measurement |
+| `ablate_deform.py` | the ablations of §6 from the cached base grids of `ngf_lam.py cache`, every row scored by the same measurement, and on request the fields of chosen rows as run directories |
 | `ngf_lam.py` | §5 alone on cached base grids: `cache` writes the §1 grids, `sweep` refits §5 at several λ values or σ schedules, `transforms` writes every pose of a sweep as a 4x4 text file for `octreg qc --T` |
 | `report.py` | writes `bench/BENCHMARK.md` from the run outputs, and on request the qc figures and the stored results |
 | `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
@@ -39,7 +39,7 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `BENCHMARK.md` | the I58 report, written by `report.py` around two hand-written sections |
 | `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
 | `results/I58/` | the stored results of the benchmark (below) |
-| `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md and BASELINES.md |
+| `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md, docs/METHOD.md and BASELINES.md |
 | `figures/` | the default place for the qc figures of `report.py --figures`, not tracked by git |
 
 ## Running the I58 benchmark
@@ -56,7 +56,8 @@ STEPS="ablate evaluate report" python bench/run_i58.py      # the ablations, the
 PowerShell sets the same variables with `$env:STEPS = "register evaluate"`. The steps are:
 
 - `register`: `python -m octreg register OCT MRI -o OUT` on the two original files, with default parameters.
-- `ablate`: `bench/ablate.py --out ABL`, which also compares its base with the run in `OUT`.
+- `ablate`: `bench/ablate.py --out ABL --starts`, which also runs the start test (below) and compares its base with the run in
+  `OUT`.
 - `evaluate`: `bench/evaluate.py OUT`, with the masks of `ABL/prep/texture` once the ablate step has written them.
 - `report`: `bench/report.py`, which rewrites `bench/BENCHMARK.md`, `bench/figures` and `bench/results/I58` from `OUT`
   and `ABL`.
@@ -86,6 +87,15 @@ python bench/ngf_lam.py sweep --cache CACHE --run RUN -o OUT.json             # 
 python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json             # writes OUT.json and OUT.md
 ```
 
+The ablation figures of docs/METHOD.md come from `ablate.py --starts` and `ablate_deform.py --save-fields` written into
+one directory, which `figures.py --ablation` reads:
+
+```bash
+python bench/ablate.py --out ABL --main OUT --starts
+python bench/ablate_deform.py --cache CACHE --run OUT -o ABL/deform_ablation.json --save-fields ABL/deform
+python bench/figures.py --octreg-run OUT --ablation ABL
+```
+
 ## Stored results
 
 `bench/results/I58/` holds the stored outputs of the benchmark, which the documents quote. Absolute paths in these files
@@ -94,14 +104,13 @@ are cut to a file name or a path under `bench_runs/`.
 | file | content |
 |---|---|
 | `result.json`, `eval.json` | the output of `octreg register` and of `bench/evaluate.py` for the benchmark run |
-| `ablations.json` | the ablation table of `bench/ablate.py` |
+| `ablations.json`, `starts.json` | the ablation table and the start test of `bench/ablate.py` |
 | `deform_ablation.json`, `.md` | the §6 ablation table of `bench/ablate_deform.py` |
 | `baselines/` | the summaries of the comparison with standard registration tools |
 
-The report step writes `result.json`, `eval.json` and `ablations.json` with `report.py --store` in the same command that
-writes `BENCHMARK.md`, so the document and the stored numbers agree. `deform_ablation.json` and `.md` are the output of
-`bench/ablate_deform.py`. The §6 ablation table was computed at the affine of a run whose pose lies within
-0.003 mm of the benchmark run at the block corners.
+The report step writes `result.json`, `eval.json`, `ablations.json` and `starts.json` with `report.py --store` in the same
+command that writes `BENCHMARK.md`, so the document and the stored numbers agree. `deform_ablation.json` and `.md` are the output of
+`bench/ablate_deform.py`, computed at the affine of the benchmark run.
 
 ## What is measured
 
@@ -144,14 +153,21 @@ points of the base specimen mask and over the 8 corners of the OCT array.
 | A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
 | A11, A11b | simulated cut face (specimen mask removed beyond 70 % of its extent along OCT axis 1, data kept as embedding), with the method and with the two-sided outline |
 | A12 | no fine-structure refinement: the pose of §4 (every other variant ends with §5) |
+| A13 | no two-class term: S = S_outline / 3 in the search and the refinement, polarity +1 |
+| A14 | no orientation search: §4 from the image-centre start (header orientation, centres of the two image boxes aligned) at both polarities, then §5 |
+
+`--starts` adds the start test: the OCT world turned by 90 and 180 degrees about each of its array axes, through the centre
+of its image box, with the method and A14 run from each turned start (`ABL/starts/`, `ABL/starts.json`).
 
 `Params` holds method constants only, and the method has no ablation switches. Each variant is one explicit change made in
 `ablate.py` around the package functions the method itself uses: an argument of `register.fine_mask`,
 `preprocess.two_class` or `register.align`, a Params override (`lam` 0 in A6 and A6p), or `refine.CLAMP` patched for the
 variant (clamp 1.0 in A6 and A6c). The clamp is a module constant, not a Params field, so `ablate.py` sets it around the
 call and restores it. A0 takes its OCT mask from `preprocess.foreground`, A4 builds its channels in `ablate.py`, and A0c,
-A9 and A10 temporarily replace `preprocess._fill_planes` (with the 3-D `ndimage.binary_fill_holes`), `search.combined` and
-the outline of the search and of the refinement.
+A9, A10 and A13 temporarily replace `preprocess._fill_planes` (with the 3-D `ndimage.binary_fill_holes`), `search.combined`
+and the outline or the score of the search and of the refinement. A14 calls `refine.refine` from the image-centre start in
+place of `register.align`, so it runs no search. The turned starts run the method and A14 with the OCT affine turned, as A8
+does with its mirror.
 
 The OCT is streamed once, and each OCT mask source (texture, texture3d, intensity) is computed once and cached under
 `ABL/prep/`. A prep is checked against the Params fields that §1 reads (`prep_hash` in `prep.json`), so it stays valid
@@ -162,4 +178,4 @@ on a rerun unless `--force` is given.
 
 The smooth deformation (§6) does not change the affine, so `ablate.py` does not run it. Its read-outs are in the run's
 result.json, which `report.py` prints in the Main result of `BENCHMARK.md`. `bench/ablate_deform.py` ablates the elements
-of §6, and docs/METHOD.md and `bench/results/I58/deform_ablation.md` give the table.
+of §6, and `bench/results/I58/deform_ablation.md` gives the table.

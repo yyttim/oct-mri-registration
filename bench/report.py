@@ -4,7 +4,8 @@
     python bench/report.py --main RUN --ablate ABL [--logs RUN_logs] [-o bench/BENCHMARK.md] [--figures bench/figures]
         [--store bench/results/I58]
 
-RUN: the CLI run (result.json, and eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json).
+RUN: the CLI run (result.json, and eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json, and
+starts.json when ablate.py ran with --starts).
 LOGS (optional): bench/run_i58.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
 to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the existing file are
 kept: the '## Visual result' section before '## Main result', and the reading after the READING marker. The figures of
@@ -142,7 +143,7 @@ def ablation_section(abl):
         return ["## Ablations", "", "Not run yet (bench/ablate.py).", ""]
     V = abl["variants"]
     cols = ("| variant | change | §4 pose change: mean / corners mean (mm) | final pose change: mean / corners mean / corners max (mm) "
-            "| S | L | polarity | scale | rim fwd / rev (mm) | OCT mask cm3 | time (s) |")
+            "| S (§4 pose) | L (§4 pose) | polarity | scale | rim fwd / rev (mm) | OCT mask cm3 | time (s) |")
     rule = "|---|---|---|---|---|---|---|---|---|---|---|"
     head = ["## Ablations", "",
             "Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). "
@@ -158,6 +159,24 @@ def ablation_section(abl):
         tail += [f"Base, run through bench/ablate.py, lies {num(dc['base_vs_main']['mean_mm'])} mm (corners max "
                  f"{num(dc['base_vs_main']['corners_max_mm'])} mm) from the CLI run of the Main result.", ""]
     return head + rows + tail
+
+
+def starts_section(st):
+    """The start test of bench/ablate.py --starts: the method and the variant without the orientation search, run from turned
+    starts."""
+    if not st:
+        return []
+    out = ["## Start test", "",
+           "The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre of its image box, and the "
+           "method and A14 (no orientation search) run from the image-centre start and from each turned start. Each cell gives "
+           "the mean displacement from the base pose over the points of the base specimen mask, and the angle of the rotation "
+           "between the two poses.", "",
+           "| start | start pose to base: mm / deg | method to base: mm / deg | A14 to base: mm / deg |", "|---|---|---|---|"]
+    f = lambda d: f"{num(d.get('mean_mm'))} / {num(d.get('rotation_deg'), 1)}" if d else "n/a"
+    for name, r in st["starts"].items():
+        label = "image centres, header orientation" if r["axis"] is None else f"{r['degrees']} deg about OCT array axis {r['axis']}"
+        out.append(f"| {label} | {f(r.get('start_to_base'))} | {f(r.get('method_to_base'))} | {f(r.get('no_search_to_base'))} |")
+    return out + [""]
 
 
 def runtime_section(abl):
@@ -201,23 +220,25 @@ def main():
     ap.add_argument("-o", "--out", type=Path, default=Path("bench/BENCHMARK.md"))
     ap.add_argument("--figures", type=Path, default=None, help="also write three qc figures of the run into this dir")
     ap.add_argument("--store", type=Path, default=None,
-                    help="also copy the run's result.json and eval.json and the ablations.json into this dir "
+                    help="also copy the run's result.json and eval.json and the ablations.json and starts.json into this dir "
                          "(bench/results/I58), so the numbers the document quotes travel with it, with every absolute "
                          "path cut to a file name or a bench_runs/ path")
     a = ap.parse_args()
     abl = load(a.ablate / "ablations.json") if a.ablate else {}
+    st = load(a.ablate / "starts.json") if a.ablate and (a.ablate / "starts.json").exists() else {}
     phash = load(a.main / "result.json").get("params_hash") or abl.get("params_hash")
     intro = ["# Benchmark: the I58 brainstem pair", "",
              "octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at "
              "0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters"
              + (f" (Params hash {phash})" if phash else "") + ". "
              "The pair has no labels, so every number here is label-free. "
-             "The numbers are read from the run's result.json and eval.json and from ablations.json (copies in bench/results/I58/). "
+             "The numbers are read from the run's result.json and eval.json and from ablations.json"
+             + (" and starts.json" if st else "") + " (copies in bench/results/I58/). "
              "Commands: `python bench/run_i58.py` (see bench/README.md).", ""]
     old = a.out.read_text(encoding="utf-8") if a.out.exists() else ""
     visual = re.search(r"^## Visual result\n.*?(?=^## Main result)", old, re.S | re.M)       # hand-written, kept
     text = "\n".join(intro + ([visual.group(0).rstrip("\n"), ""] if visual else []) + main_section(a.main, a.logs)
-                     + ablation_section(abl) + runtime_section(abl))
+                     + ablation_section(abl) + starts_section(st) + runtime_section(abl))
     if READING in old:                                   # the hand-written reading at the end survives a rewrite
         text += "\n" + READING + old.split(READING, 1)[1]
     a.out.parent.mkdir(parents=True, exist_ok=True)
@@ -228,7 +249,8 @@ def main():
         print(f"wrote the figures of {a.out.name} into {a.figures}")
     if a.store:
         a.store.mkdir(parents=True, exist_ok=True)
-        for src in [a.main / "result.json", a.main / "eval.json"] + ([a.ablate / "ablations.json"] if a.ablate else []):
+        for src in [a.main / "result.json", a.main / "eval.json"] + ([a.ablate / "ablations.json", a.ablate / "starts.json"]
+                                                                       if a.ablate else []):
             if src.exists():                             # the format of octreg.io.write_json, LF on every OS
                 (a.store / src.name).write_bytes(json.dumps(portable(load(src)), indent=1, allow_nan=False).encode("utf-8"))
                 print(f"stored {a.store / src.name}")

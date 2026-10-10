@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))      # bench/evaluate.py and bench/paths.py
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the package of this repository
 
 import evaluate
 from report import portable                                    # bench/report.py: absolute paths without the machine prefix
