@@ -143,19 +143,72 @@ outside its cut faces. The grey around the specimen is the agarose, and the hori
 planes are the sections. Sagittal planes have anterior on the right, and coronal and axial planes show the subject's right on
 the left.
 
-Of eight standard registration tools run with their documented settings, only NiftyReg reg_aladin started from the image centres
-reaches octreg's affine (0.3 mm over the specimen mask and 1 degree). No deformable tool started from that affine fits the
-intact tissue visibly better than §6. ANTs SyN with a field-of-view mask scores closer on the read-outs, with stronger local
-compression and a run of 48 min against 20 s ([bench/baselines/BASELINES.md](bench/baselines/BASELINES.md)).
+### Comparison with standard tools
 
-In the ablations one element of the method is removed or replaced at a time. With an intensity threshold in place of the texture
-mask, or without the outline term, the two-class term or the scale and shear penalty, the block ends on a wrong pose, and
-without §5 it stays about 2 mm off. Without the orientation search, §4 and §5 started from the image centres reach octreg's
-affine, since the header orientation of this pair is only 11° from it, but from the OCT turned by 90° or 180° the block is found
-again only with the search. Each kind of local evidence of §6 alone leaves the misfit of the other kind
-([docs/METHOD.md](docs/METHOD.md#ablations)). The evaluation is in [docs/METHOD.md](docs/METHOD.md#evaluation). The full tables
-are in [bench/BENCHMARK.md](bench/BENCHMARK.md), and those of §6 in
-[bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
+Eight standard registration tools ran on the same two files with the settings their documentation gives, from each of their
+standard starts, and each is shown with its best setting. In the affine stage only NiftyReg reg_aladin started from the image
+centres reaches octreg's affine. The others stay near the start or change the size of the block. Distances are the mean
+displacement over the specimen mask from octreg's affine, with the rotation angle.
+
+| method | result | from octreg's affine |
+|---|---|---|
+| image centres aligned (the start) | | 2.4 mm, 11.1° |
+| NiftyReg reg_aladin | as octreg's | 0.3 mm, 1.0° |
+| greedy, elastix, mri_robust_register | near the start | 2.4 to 3.0 mm, 10.6° to 11.7° |
+| ANTs | enlarged | 2.9 mm, 6.6° |
+| mri_coreg, FLIRT | shrunk | 4.1 to 4.9 mm, 6.0° to 16.6° |
+| SynthMorph | fails | 28 mm, 38° |
+
+| image centres aligned (the start) | octreg | NiftyReg reg_aladin | FLIRT |
+|---|---|---|---|
+| <img src="docs/figures/affine/start.png" width="175" alt="image centres aligned"> | <img src="docs/figures/affine/octreg.png" width="175" alt="octreg"> | <img src="docs/figures/affine/reg_aladin.png" width="175" alt="NiftyReg reg_aladin"> | <img src="docs/figures/affine/flirt.png" width="175" alt="FLIRT"> |
+
+In the deformable stage every tool starts from octreg's affine. No tool fits the intact tissue visibly better than §6. ANTs SyN
+with a field-of-view (FOV) mask scores closer on octreg's read-outs, with stronger local compression. Without the mask, the
+default of its script, SyN scores closer still by pulling the cut faces of the OCT into MRI tissue the block does not contain.
+greedy, ConvexAdam and elastix fit the interior matches less closely than §6, and NiftyReg reg_f3d distorts the block. The
+read-outs are medians on the warped OCT, and the Jacobian minimum is the strongest local compression of the field.
+
+| method | interior matches (mm) | surface-edge offsets (mm) | Jacobian min | on the overlays |
+|---|---|---|---|---|
+| no deformation (octreg's affine) | 0.250 | 0.285 | 1 | |
+| octreg, §6 | 0.124 | 0.089 | 0.94 | no artefact |
+| ANTs SyN, CC, FOV mask | 0.063 | 0.027 | 0.34 | as octreg's |
+| ANTs SyN, CC, script default | 0.049 | 0.024 | 0.03 | cut faces pulled into MRI tissue, sections bent |
+
+| octreg, §6 | ANTs SyN, FOV mask | ANTs SyN, script default | NiftyReg reg_f3d |
+|---|---|---|---|
+| <img src="docs/figures/deformable/octreg.png" width="175" alt="octreg, §6"> | <img src="docs/figures/deformable/syn_fov.png" width="175" alt="ANTs SyN, FOV mask"> | <img src="docs/figures/deformable/syn_default.png" width="175" alt="ANTs SyN, script default"> | <img src="docs/figures/deformable/reg_f3d.png" width="175" alt="NiftyReg reg_f3d"> |
+
+The affine panels show the axial plane of the figure above and the deformable panels its sagittal plane, with the MRI tissue
+boundary in red. [bench/baselines/BASELINES.md](bench/baselines/BASELINES.md) gives every tool, its settings and its panels.
+
+### Ablations
+
+Each variant removes or replaces one element of the method and keeps the rest. The texture mask, the outline term, the two-class
+term and the scale and shear penalty each decide the pose, and §5 closes the last millimetres. From the header orientation of
+this pair, 11° from octreg's affine, §4 and §5 find the pose without the orientation search, but from the OCT turned by 90° or
+180° about any of its axes only the search finds it.
+
+| variant | result | from octreg's affine |
+|---|---|---|
+| intensity-threshold mask instead of the texture mask (§1) | turned over | 23.9 mm, 158° |
+| no outline term (§2) | turned over | 23.4 mm, 176° |
+| the outline alone, no two-class term (§2) | turned | 5.8 mm, 23.0° |
+| no scale and shear penalty (§4) | turned over and shrunk | 17.3 mm, 141° |
+| no fine-structure refinement (§5) | close, not on the boundary | 2.0 mm, 8.8° |
+| no orientation search (§3), from the image centres | as octreg's | 0.00 mm |
+| no orientation search, from the OCT turned by 90° or 180° | far off | 14 to 22 mm, 78° to 170° |
+| octreg, from the OCT turned by 90° or 180° | as octreg's | less than 0.002 mm |
+
+| intensity-threshold mask | the outline alone | no scale and shear penalty | turned 90°, no orientation search |
+|---|---|---|---|
+| <img src="docs/figures/ablation/intensity_mask.png" width="175" alt="intensity-threshold mask"> | <img src="docs/figures/ablation/outline_only.png" width="175" alt="the outline alone"> | <img src="docs/figures/ablation/no_penalty.png" width="175" alt="no scale and shear penalty"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> |
+
+The panels show the sagittal plane of the figure above. §6 needs both kinds of local evidence: the interior matches alone leave
+the surface off at the superior end, and the surface-edge offsets alone pull the interior matches further off.
+[docs/METHOD.md](docs/METHOD.md#ablations) shows every variant, the start test and the §6 variants, and the full tables are in
+[bench/BENCHMARK.md](bench/BENCHMARK.md) and [bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
 
 ## Reproducing the benchmark
 
