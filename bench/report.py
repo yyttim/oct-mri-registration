@@ -4,11 +4,11 @@
     python bench/report.py --main RUN --ablate ABL [--logs RUN_logs] [-o bench/BENCHMARK.md] [--figures bench/figures]
         [--store bench/results/I58]
 
-RUN: the CLI run (result.json; eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json).
+RUN: the CLI run (result.json, and eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json).
 LOGS (optional): bench/run_i58.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
-to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the old output are kept:
-the '## Visual result' section before '## Main result', and the reading after the READING marker. The figures of --figures
-are drawn locally and are not published.
+to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the existing file are
+kept: the '## Visual result' section before '## Main result', and the reading after the READING marker. The I58 data are
+unpublished, so the figures of --figures are not in the repository.
 """
 from __future__ import annotations
 
@@ -18,20 +18,11 @@ import math
 import re
 from pathlib import Path, PureWindowsPath
 
-DELETION_MM = 0.5            # a step whose removal moves the pose by <= 0.5 mm (and no metric beyond noise) is deleted
-STEP_OF = {"A0c": "per-plane hole filling", "A1": "MRI flattening", "A2": "OCT flattening", "A4": "the two-class maps",
-           "A6": "the scale prior", "A6c": "the scale clamp", "A9": "the outline term", "A10": "the one-sided outline",
-           "A12": "the fine-structure refinement"}
 READING = "<!-- reading: written by hand below this line; bench/report.py keeps it when it rewrites the file -->"
 
 
-def either(items):
-    """'a', 'a or b', 'a, b or c'."""
-    return " or ".join([", ".join(items[:-1]), items[-1]] if len(items) > 1 else items)
-
-
 def load(path):
-    return json.loads(Path(path).read_text()) if path and Path(path).exists() else {}
+    return json.loads(Path(path).read_text(encoding="utf-8")) if path and Path(path).exists() else {}
 
 
 def portable(o):
@@ -52,21 +43,20 @@ def num(x, nd=2):
 
 def wall_seconds(path):
     """Wall-clock seconds from a GNU time -v report, or None."""
-    t = Path(path).read_text() if path and Path(path).exists() else ""
+    t = Path(path).read_text(encoding="utf-8") if path and Path(path).exists() else ""
     wall = re.search(r"Elapsed \(wall clock\) time.*?: ([\d:.]+)", t)
     return sum(float(p) * 60 ** i for i, p in enumerate(reversed(wall.group(1).split(":")))) if wall else None
 
 
 def gpu_peak_gb(path):
-    vals = [float(v) for v in Path(path).read_text().split()] if path and Path(path).exists() else []
+    vals = [float(v) for v in Path(path).read_text(encoding="utf-8").split()] if path and Path(path).exists() else []
     return max(vals) / 1024 if vals else None
 
 
 def rims(b):
-    """Rim medians forward / reverse at the pose, then those of any other pose (the previous run) under the same masks."""
-    pair = lambda r: f"{num(r[0])} / {num(r[1])}" if r else "n/a"
-    other = "".join(f", {n} {pair(r)}" for n, r in (b or {}).get("rim_median_mm_of", {}).items())
-    return f"{pair(b.get('rim_median_mm'))} mm{other}" if (b or {}).get("rim_median_mm") else "n/a"
+    """Rim medians forward / reverse at the pose."""
+    r = (b or {}).get("rim_median_mm")
+    return f"{num(r[0])} / {num(r[1])} mm" if r else "n/a"
 
 
 def arrow(pair, scale=1.0, nd=2):
@@ -79,10 +69,10 @@ def deform_rows(d):
     if not d:
         return []
     r, f, cv = d.get("residual", {}), d.get("field", {}), d.get("cv", {})
-    model = f"control lattice {num(d.get('grid_mm'), 0)} mm, lambda {num(d.get('lam'), 2)}" if d.get("status") == "applied" else "no field"
-    return [("smooth deformation (§6): status, model, interior matches and boundary points used by the fit",
+    model = f"control lattice {num(d.get('grid_mm'), 0)} mm, λ {num(d.get('lam'), 2)}" if d.get("status") == "applied" else "no field"
+    return [("smooth deformation (§6): status, model, interior matches and surface-edge offsets used by the fit",
              f"{d.get('status', 'n/a')}, {model}, {d.get('n_interior', 'n/a')} and {d.get('n_boundary', 'n/a')}"),
-            ("§6 held-out median error, interior + boundary: no deformation -> the field",
+            ("§6 held-out median error, interior matches + surface-edge offsets: no deformation -> the field",
              f"{arrow([cv['none'][0], cv['field'][0]], nd=3)} mm + {arrow([cv['none'][1], cv['field'][1]], nd=3)} mm"
              if cv.get("none") and cv.get("field") else "n/a"),
             ("§6 residuals affine -> deformed, measured again: interior matches, surface-edge offsets (within 0.3 mm)",
@@ -106,7 +96,6 @@ def main_section(run, logs):
                       for k, v in sec.items() if k != "total")
     shifts = [v["spearman"] for k, v in fc.get("variants", {}).items() if k.startswith("shift") and v["spearman"] is not None]
     shift_max = max(shifts) if shifts else None
-    pv = ev.get("pose_to_previous", {})
     rows = [
         ("raw-data frame check (Spearman)", f"{num(fc.get('spearman_export'), 3)} at the pose, axis flips <= "
                                             f"{num(fc.get('max_flip_spearman'), 3)}, 2 mm shifts <= {num(shift_max, 3)}, "
@@ -120,10 +109,7 @@ def main_section(run, logs):
         ("scale per OCT array axis", " / ".join(f"{v:.3f}" for v in pose["scale_per_oct_axis"]) if pose else "n/a"),
         *deform_rows(res.get("deform")),
         ("flags", "n/a" if "flags" not in res else ", ".join(res["flags"]) or "none"),
-        ("pose vs the previous run, mean / corners mean / corners max"
-         + (f" (the mean is over {pv['points']})" if pv.get("points") else ""),
-         f"{num(pv.get('mean_mm'))} / {num(pv.get('corners_mean_mm'))} / {num(pv.get('corners_max_mm'))} mm" if pv else "n/a"),
-        ("rim boundary agreement forward / reverse, method masks", rims(b)),
+        ("rim outline agreement forward / reverse, method masks", rims(b)),
         ("OCT specimen mask", f"{num(mk.get('volume_cm3'))} cm3"),
         ("registration time in process, peak RAM, peak GPU memory allocated by torch",
          f"{num(sec['total'] / 60 if 'total' in sec else None, 1)} min, {num(res.get('peak_rss_gb'), 1)} GiB, "
@@ -138,7 +124,7 @@ def main_section(run, logs):
 
 
 def ablation_row(n, r):
-    """One row of the ablation table. Every read-out is optional, so a table written by another release still prints."""
+    """One row of the ablation table. Every read-out is optional, so a partial table still prints."""
     vol = num((r.get("mask") or {}).get("volume_cm3"))
     if "error" in r:
         return f"| {n} | {r['change']} | failed: {r['error']} | | | | | | | {vol} | {num(r.get('seconds'), 0)} |"
@@ -160,47 +146,24 @@ def ablation_section(abl):
     rule = "|---|---|---|---|---|---|---|---|---|---|---|"
     head = ["## Ablations", "",
             "Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). "
-            "Pose change is against base (the method through the same driver), as the mean over the points of the base specimen "
-            "mask and the mean and max over the 8 corners of the OCT array. The boundary agreement uses the base masks for every "
-            "variant, so it reflects the pose only. The smooth deformation (§6) leaves the pose alone, so no variant runs it: "
-            "'no §6' would be base with the identical pose, and its read-outs are the 'before' residuals in the Main result "
-            "table above.", "",
+            "Pose change is against base, the method run through bench/ablate.py, as the mean over the points of the base specimen "
+            "mask and the mean and max over the 8 corners of the OCT array. The outline agreement uses the base masks for every "
+            "variant, so it reflects the pose only. The smooth deformation (§6) does not change the affine, so no variant runs it. "
+            "Its read-outs are in the Main result above.", "",
             cols, rule]
     rows = [ablation_row(n, r) for n, r in V.items()]
     tail = [""]
     dc = abl.get("driver_check")
     if dc:
-        tail += [f"Driver check: base through bench/ablate.py lies {num(dc['base_vs_main']['mean_mm'])} mm (corners max "
-                 f"{num(dc['base_vs_main']['corners_max_mm'])} mm) from the CLI run.", ""]
-    done = [n for n in STEP_OF if n in V and "error" not in V[n]]
-    key = lambda n: "pose_to_base" if n == "A12" else "pose_to_base_s4"            # steps of §1-4 act through the §4 pose
-    small = [f"{STEP_OF[n]} ({n}, {num(V[n][key(n)]['mean_mm'])} mm)" for n in done if V[n][key(n)]["mean_mm"] <= DELETION_MM]
-    large = [f"{STEP_OF[n]} ({n}, {num(V[n][key(n)]['mean_mm'])} mm)" for n in done if V[n][key(n)]["mean_mm"] > DELETION_MM]
-    if done:
-        tail += [(f"Deletion rule: a step goes when removing it moves the pose by at most {DELETION_MM} mm (mean over the "
-                  "specimen-mask points, the §4 pose for steps of §1-4 and the final pose for §5), changes no other metric beyond "
-                  "noise, and no test outside this pair shows it load bearing. "
-                  + (f"Removing {either(small)} stays within {DELETION_MM} mm, and the reason for keeping each is in "
-                     "docs/METHOD.md after the ablation table. " if small else "")
-                  + (f"Removing {either(large)} moves the pose further." if large else "")).strip(), ""]
-    groups = [g for g in abl.get("removed_steps", []) if g.get("rows")]
-    if groups:
-        tail += ["### Removed steps", ""]
-    for g in groups:
-        pb = g["present_base_vs_previous_base"]
-        tail += [g["note"], "", cols, rule]
-        tail += [ablation_row(n, r) for n, r in g["rows"].items()]
-        rot = f", rotation {num(pb['rotation_deg'], 2)} deg" if pb.get("rotation_deg") is not None else ", the two bases differ in handedness"
-        tail += ["", f"The present base lies {num(pb['mean_mm'])} mm (corners mean {num(pb['corners_mean_mm'])} mm, corners max "
-                 f"{num(pb['corners_max_mm'])} mm{rot}) from the base of that run. "
-                 f"Source: {Path(g['source']).parent.name}/{Path(g['source']).name}.", ""]
+        tail += [f"Base, run through bench/ablate.py, lies {num(dc['base_vs_main']['mean_mm'])} mm (corners max "
+                 f"{num(dc['base_vs_main']['corners_max_mm'])} mm) from the CLI run of the Main result.", ""]
     return head + rows + tail
 
 
 def runtime_section(abl):
     if not abl:
         return []
-    out = ["## Runtime and memory of the ablation driver", "",
+    out = ["## Runtime and memory of bench/ablate.py", "",
            "| step | seconds | peak RAM (GiB) |", "|---|---|---|"]
     grid = next((p["grid"] for p in abl["prep"].values() if "grid" in p), None)
     if grid:
@@ -215,7 +178,7 @@ def runtime_section(abl):
 
 
 def figures(run, out):
-    """The three figures bench/BENCHMARK.md describes, from the run's own qc images, drawn locally and not published:
+    """Three figures of the I58 report from the run's own qc images, kept out of the repository (the data are unpublished):
     out/fig_qc_I58.png is RUN/qc.png without the white margin, outline colours kept, and out/fig_qc_montage_I58.png and
     out/fig_qc_deform_I58.png are RUN/qc_montage.png and RUN/qc_deform.png as they are. The ablation distances are in the
     table, which needs no picture."""
@@ -236,7 +199,7 @@ def main():
     ap.add_argument("--ablate", type=Path, default=None)
     ap.add_argument("--logs", type=Path, default=None)
     ap.add_argument("-o", "--out", type=Path, default=Path("bench/BENCHMARK.md"))
-    ap.add_argument("--figures", type=Path, default=None, help="also write the qc figures BENCHMARK.md describes into this dir")
+    ap.add_argument("--figures", type=Path, default=None, help="also write three qc figures of the run into this dir")
     ap.add_argument("--store", type=Path, default=None,
                     help="also copy the run's result.json and eval.json and the ablations.json into this dir "
                          "(bench/results/I58), so the numbers the document quotes travel with it, with every absolute "

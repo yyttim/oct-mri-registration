@@ -1,20 +1,20 @@
-"""Transform-file conventions of the baseline tools -> one common object:
+"""Transform-file conventions of the baseline tools, converted to one common object:
 a 4x4 matrix T that maps MOVING-image world coordinates to FIXED-image world coordinates,
 both in NIfTI RAS mm (nibabel's img.affine convention).
 
 Sources for each convention (quoted in the function docstrings):
-  ITK/ANTs  : itkMatrixOffsetTransformBase.hxx ComputeOffset(): offset = t + c - M c; GetFixedParameters() = center;
-              ITK is LPS (Slicer coordinate-systems page); ANTs wiki "forward warps ... transform points from fixed to
-              moving space"; lta_convert: "--initk ... ITK transform (inverse LPS2LPS)", inverse = target->source.
-  elastix   : same ITK affine (TransformParameters = 9 matrix entries then translation; CenterOfRotationPoint in world mm).
-  NiftyReg  : reg_aladin/reg_f3d usage "(Affine*Reference=Floating)"; lta_convert "--inniftyreg ... (inverse RAS2RAS)".
-  FSL FLIRT : FLIRT FAQ: scaled-mm coordinates, x -> N-1-x when det(sform) > 0; fslpy fsl.transform.flirt:
+  ITK/ANTs  : itkMatrixOffsetTransformBase.hxx ComputeOffset(): offset = t + c - M c, GetFixedParameters() = center.
+              ITK is LPS (Slicer coordinate-systems page). ANTs wiki: "forward warps ... transform points from fixed to
+              moving space". lta_convert: "--initk ... ITK transform (inverse LPS2LPS)", inverse = target->source.
+  elastix   : same ITK affine (TransformParameters = 9 matrix entries then translation, CenterOfRotationPoint in world mm).
+  NiftyReg  : reg_aladin/reg_f3d usage "(Affine*Reference=Floating)". lta_convert "--inniftyreg ... (inverse RAS2RAS)".
+  FSL FLIRT : FLIRT FAQ: scaled-mm coordinates, x -> N-1-x when det(sform) > 0. fslpy fsl.transform.flirt:
               src voxels -> src scaled voxels -> ref scaled voxels (the FLIRT matrix) -> ref voxels -> ref world.
-  FreeSurfer: mri_robust_register "--lta ... transform from mov to dst", "--vox2vox ... (default is RAS2RAS)";
+  FreeSurfer: mri_robust_register "--lta ... transform from mov to dst", "--vox2vox ... (default is RAS2RAS)".
               include/transform.h: LINEAR_VOX_TO_VOX 0, LINEAR_RAS_TO_RAS 1.
   greedy    : reference docs: matrix "maps voxels in fixed image space to voxels in moving image space" via ras().
 
-Usage (CLI helpers):  python convert_affines.py scale-header in.nii.gz out.nii.gz 10
+Command line:  python convert_affines.py scale-header in.nii.gz out.nii.gz 10
 """
 import re
 import sys
@@ -35,7 +35,7 @@ def _homog(M, t):
 # ----------------------------------------------------------------------------------------------- ITK / ANTs / elastix
 def itk_affine_fixed2moving_lps(params, center):
     """ITK MatrixOffsetTransformBase: y = M x + offset with offset = t + c - M c  (ComputeOffset in the .hxx).
-    params = 9 matrix entries row-major then 3 translations; center = FixedParameters.  Maps fixed -> moving, LPS mm."""
+    params = 9 matrix entries row-major then 3 translations, center = FixedParameters.  Maps fixed -> moving, LPS mm."""
     p = np.asarray(params, float)
     M = p[:9].reshape(3, 3)
     t = p[9:12]
@@ -61,7 +61,7 @@ def ants_mat_to_mov2fix_ras(path):
 
 def _euler3d_matrix(rx, ry, rz, compute_zyx=False):
     """itk::Euler3DTransform::ComputeMatrix: Rz*Ry*Rx if ComputeZYX else Rz*Rx*Ry (ITK default ComputeZYX = false).
-    Verify numerically with transformix (see verify_against_transformix) before trusting a rigid-stage parse."""
+    Check numerically with transformix (verify_against_transformix) before relying on a rigid-stage parse."""
     cx, sx, cy, sy, cz, sz = np.cos(rx), np.sin(rx), np.cos(ry), np.sin(ry), np.cos(rz), np.sin(rz)
     Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
     Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
@@ -129,8 +129,8 @@ def greedy_mat_to_mov2fix_ras(path):
 
 # ----------------------------------------------------------------------------------------------- FSL FLIRT
 def fsl_scaled_voxel_matrix(img):
-    """voxel index -> FSL scaled-voxel (mm) coordinates: scale by pixdim; if det(voxel->mm) > 0 flip x -> N-1-x first
-    (FLIRT FAQ 'What is the format of the matrix used by FLIRT'; fslpy 'fsl' coordinate system)."""
+    """voxel index -> FSL scaled-voxel (mm) coordinates: flip x -> N-1-x when det(voxel->mm) > 0, then scale by pixdim
+    (FLIRT FAQ 'What is the format of the matrix used by FLIRT', fslpy 'fsl' coordinate system)."""
     pix = np.asarray(img.header.get_zooms()[:3], float)
     S = np.diag([pix[0], pix[1], pix[2], 1.0])
     if np.linalg.det(img.affine[:3, :3]) > 0:
@@ -153,7 +153,7 @@ def flirt_mat_to_mov2fix_world(mat_path, src_img, ref_img):
 # ----------------------------------------------------------------------------------------------- FreeSurfer LTA
 def lta_to_mov2fix_ras(path, src_img=None, dst_img=None):
     """LTA: 'type = 1' LINEAR_RAS_TO_RAS maps src (mov) RAS -> dst RAS directly.  'type = 0' VOX2VOX needs the two
-    vox2ras matrices (pass the images; or first run lta_convert --inlta x.lta --outlta x_ras.lta, default RAS2RAS)."""
+    vox2ras matrices (pass the images, or first run lta_convert --inlta x.lta --outlta x_ras.lta, default RAS2RAS)."""
     txt = open(path).read()
     t = int(re.search(r'^\s*type\s*=\s*(\d+)', txt, re.M).group(1))
     m = re.search(r'^\s*1 4 4\s*\n((?:.*\n){4})', txt, re.M)
@@ -165,10 +165,10 @@ def lta_to_mov2fix_ras(path, src_img=None, dst_img=None):
     raise ValueError("unsupported LTA type %d (convert with lta_convert --outlta)" % t)
 
 
-# ----------------------------------------------------------------------------------------------- header scaling trick
+# ----------------------------------------------------------------------------------------------- header scaling
 def scale_header(img, s):
-    """Multiply the voxel->world map by s about the world origin (A' = S A, S = diag(s,s,s,1)); voxel data unchanged.
-    Used for tools whose internal scales are in mm (FLIRT 8/4/2/1 mm schedule, SynthMorph 1-mm 256-voxel space)."""
+    """Multiply the voxel->world map by s about the world origin (A' = S A, S = diag(s,s,s,1)), voxel data unchanged.
+    For tools whose internal scales are in mm (FLIRT's 8/4/2/1 mm schedule, SynthMorph's 1-mm 256-voxel space)."""
     S = np.diag([s, s, s, 1.0])
     A = S @ img.affine
     out = nib.Nifti1Image(np.asanyarray(img.dataobj), A, img.header)
@@ -179,15 +179,15 @@ def scale_header(img, s):
 
 
 def unscale_world_transform(T_scaled, s):
-    """If both headers were scaled by S and T' maps scaled moving world -> scaled fixed world, then
-    T = S^-1 T' S maps the original worlds (my derivation; check: T maps x to S^-1 T' S x)."""
+    """If both headers were scaled by S and T' maps scaled moving world -> scaled fixed world, then T' = S T S^-1,
+    so T = S^-1 T' S maps the original worlds."""
     S = np.diag([s, s, s, 1.0])
     return np.linalg.inv(S) @ T_scaled @ S
 
 
 # ----------------------------------------------------------------------------------------------- apply for QC
 def resample_moving_to_fixed(moving_img, fixed_img, T_mov2fix_world, order=1, slab=32):
-    """Resample moving onto the fixed grid with T (moving world -> fixed world); linear interpolation, 0 outside."""
+    """Resample moving onto the fixed grid with T (moving world -> fixed world), linear interpolation, 0 outside."""
     from scipy.ndimage import map_coordinates
     mov = np.asanyarray(moving_img.dataobj).astype(np.float32)
     fix2movvox = np.linalg.inv(moving_img.affine) @ np.linalg.inv(T_mov2fix_world) @ fixed_img.affine

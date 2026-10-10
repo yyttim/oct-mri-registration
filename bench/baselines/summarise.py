@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Markdown tables of the baseline comparison from the summary JSON files (bench only).
+"""Markdown tables of the baseline comparison from the summary JSON files (bench only, not part of the package).
 
     python bench/baselines/summarise.py [--affine SUMMARY.json] [--deform SUMMARY.json] [--out DIR] [--notes NOTES.json]
 
 Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summary files next to
-them. NOTES.json, optional, maps a run name to a short description that goes into the table (variant, what happened).
+them. NOTES.json, optional, maps a run name to a short description for the note column (the variant and its outcome).
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def affine_table(rows, notes):
 
 def deform_table(rows, notes):
     order = sorted(rows.values(), key=lambda r: (r["tool"] != "none", r["tool"] != "octreg", r["tool"], r["variant"]))
-    head = ("| tool | variant | wall s | interior (mm) | boundary (mm) | within 0.3 mm | F | two-class, core | "
+    head = ("| tool | variant | wall s | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | F | two-class, core | "
             "field median / p95 / max (mm) | Jacobian min | folded voxels | SD log J | note |")
     out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in order:

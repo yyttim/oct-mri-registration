@@ -16,7 +16,6 @@ REPO = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = Path(os.environ.get("OCTREG_PROJECT_ROOT") or REPO)
 DATA_ROOT = Path(os.environ.get("OCTREG_DATA_ROOT") or REPO / "data")
 BENCH_RUNS = PROJECT_ROOT / "bench_runs"
-DANDI = DATA_ROOT / "costantini/dandi-000026"
 I58_DIR = Path(os.environ.get("OCTREG_I58_DIR") or DATA_ROOT / "I58")
 OCT_I58 = I58_DIR / "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz"
 MRI_I58 = I58_DIR / "I58_brainstem_MRI_cropped_to_OCT.nii.gz"

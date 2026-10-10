@@ -103,13 +103,13 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
     (section stripes, tile seams) leave it quiet along at least one array axis while tissue texture varies along all three.
     Measured voxels m = fine > 0; band-pass b = G(fine m) / G(m) (Gaussian sigma texture_bandpass_mm); per array axis the
     running coefficient of variation of b over texture_window_mm (weights m; counted where >= half the window is measured);
-    F = minimum over the axes, mean over the measured voxels of blocks of ~texture_grid_mm (blocks >= half measured);
-    log F smoothed over those blocks (normalised Gaussian of sigma texture_smooth_mm: single local estimates are too noisy
+    C = minimum over the axes, mean over the measured voxels of blocks of ~texture_grid_mm (blocks >= half measured);
+    log C smoothed over those blocks (normalised Gaussian of sigma texture_smooth_mm: single local estimates are too noisy
     to classify), two-class Otsu threshold; closing (ball texture_close_mm), largest component, holes filled in every array
     plane (_fill_planes: uniform tissue such as white matter has little texture, the specimen is solid); linear interpolation to
     the fine grid > 0.5, and m. Chunked along axis 0 (equal to the whole-volume result, ~one fine float32 array of temporaries).
     fine: [D, H, W] OCT intensities; voxel_mm: spacing (mm).
-    -> (bool [D, H, W], {threshold (F units), volume_cm3, n_components (before the largest-component rule)})."""
+    -> (bool [D, H, W], {threshold (C units), volume_cm3, n_components (before the largest-component rule)})."""
     P, D = params, fine.shape[0]
     sig = P.texture_bandpass_mm / voxel_mm
     win = int(round(P.texture_window_mm / voxel_mm)) // 2 * 2 + 1

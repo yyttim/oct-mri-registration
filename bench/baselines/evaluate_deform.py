@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Evaluate deformable baseline runs against octreg's §6 on the same read-outs (bench only).
+"""Score deformable baseline runs on the same read-outs as octreg's §6 (bench only, not part of the package).
 
     python bench/baselines/evaluate_deform.py RUN [RUN ...] [--octreg-run DIR] [--cache CACHE.npz] [--shots] [--device cuda]
                                               [--summary OUT.json] [--force]
 
 Every RUN holds octreg's affine (T_oct2mri.txt), the tool's field converted to octreg's convention (oct2mri_warp.nii.gz) and
-check_field.json ok (bench/baselines/rundir.py). The octreg run itself and "no deformation" are scored the same way as rows.
-  1. octreg apply: the 20 um OCT through affine + field onto the MRI grid -> RUN/oct_in_mri.nii.gz (one resampler for all).
-  2. The §6 read-outs of bench/ablate_deform.py on the warped OCT on the 0.15 mm base grid: interior-match and surface-edge
-     residuals, the share of edge offsets within 0.3 mm, F of §5 at sigma 0.3 mm, the two-class score over the core, and the
-     boundary residual per 4 mm along the sectioning axis. These are octreg's own measurements, label-free but ours.
+a check_field.json that is ok (bench/baselines/rundir.py). The octreg run (--octreg-run, default
+OCTREG_PROJECT_ROOT/bench_runs/I58/octreg) and "no deformation" are scored the same way and added as rows. --cache (default
+OCTREG_PROJECT_ROOT/bench_runs/I58/cache.npz) holds the base grids written by bench/ngf_lam.py cache.
+  1. octreg apply: the 20 um OCT through affine and field onto the MRI grid -> RUN/oct_in_mri.nii.gz (one resampler for all).
+  2. The §6 read-outs of bench/ablate_deform.py on the warped OCT on the 0.15 mm base grid: the interior-match residuals and
+     surface-edge offsets, the share of surface-edge offsets within 0.3 mm, F of §5 at sigma 0.3 mm, the two-class score over
+     the core, and the surface-edge offsets per 4 mm along the sectioning axis. These are octreg's own label-free measurements,
+     not ground truth.
   3. Field statistics over the MRI foreground: |u| median / p95 / max, the Jacobian determinant of x + u(x) (min, fraction
      <= 0, standard deviation of log J).
-  4. with --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>.
+  4. With --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>.
 """
 from __future__ import annotations
 
@@ -64,11 +67,12 @@ def field_stats(field, A_f, fg_mask, A_m):
     fg = G.resample_to(fg_mask.astype(np.uint8), A_m, mag.shape, A_f, np.eye(4), order=0) > 0
     h = np.linalg.norm(A_f[:3, :3], axis=0)
     J = np.zeros(mag.shape + (3, 3), np.float32)
-    for i in range(3):                                   # d u_i / d x_j in world mm, the grid axes taken along the world axes
+    for i in range(3):                                   # d u_i / d s_j, s_j the distance in mm along grid axis j
         g = np.gradient(field[i], *h)
         for j in range(3):
             J[..., i, j] = g[j]
-    # the field components follow the world axes, the grid axes may be permuted or flipped: express the derivative in world
+    # the field components follow the world axes, while the grid axes may be permuted or flipped, so the derivative is
+    # expressed in world coordinates
     R = A_f[:3, :3] / h                                  # voxel step -> world direction (orthonormal for an axis-aligned grid)
     Jw = J @ np.linalg.inv(R)[None, None, None]           # d u / d x_world
     det = np.linalg.det(np.eye(3)[None, None, None] + Jw)
@@ -82,8 +86,8 @@ def field_stats(field, A_f, fg_mask, A_m):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("runs", nargs="*", type=Path)
-    ap.add_argument("--octreg-run", type=Path, default=ROOT / "bench_runs" / "I58" / "v2" / "main")
-    ap.add_argument("--cache", type=Path, default=ROOT / "bench_runs" / "I58" / "pr6" / "cache.npz")
+    ap.add_argument("--octreg-run", type=Path, default=ROOT / "bench_runs" / "I58" / "octreg")
+    ap.add_argument("--cache", type=Path, default=ROOT / "bench_runs" / "I58" / "cache.npz")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--shots", action="store_true")
     ap.add_argument("--force", action="store_true")
@@ -151,7 +155,7 @@ def main():
         rows[name] = row
         (r / "eval_deform.json").write_text(json.dumps(row, indent=1), encoding="utf-8")
         a.summary.write_text(json.dumps(rows, indent=1), encoding="utf-8")
-        print(f"{name}: interior {row['interior_mm']:.3f} boundary {row['boundary_mm']:.3f} within {100 * row['within']:.0f} % "
+        print(f"{name}: interior matches {row['interior_mm']:.3f} surface-edge offsets {row['boundary_mm']:.3f} within {100 * row['within']:.0f} % "
               f"F {row['F']:.4f} field median/max {row['field_median_mm']:.2f}/{row['field_max_mm']:.2f} mm "
               f"jac min {row['jac_min']:.2f} folding {100 * row['jac_folding_fraction']:.2f} %", flush=True)
     print(f"{len(rows)} rows in {a.summary} [{time.time() - t0:.0f} s]")

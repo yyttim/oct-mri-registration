@@ -59,8 +59,7 @@ def test_recovery(rot_index):
 
 
 def test_recovery_block_cut_from_larger_specimen():
-    """The MRI holds tissue beyond a cut face of the block, which lies under OCT embedding: recovered to < 0.1 mm (counting that
-    embedding as a mismatch gives 0.16 mm and an outline score of 0.26)."""
+    """The MRI holds tissue beyond a cut face of the block, which lies under OCT embedding: recovered to < 0.1 mm."""
     mri, oct, T_true, pts = phantom(5, cut=24)
     assert ((oct[1] == 0) & (G.sample_world(torch.as_tensor(mri[1][None]), mri[2], torch.as_tensor(G.apply_affine(
         T_true, G.apply_affine(oct[3], np.indices(oct[1].shape).reshape(3, -1).T.astype(float))), dtype=torch.float32))[0]

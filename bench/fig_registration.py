@@ -6,8 +6,8 @@ OCT specimen centre, three panels each. For the I58 pair it is drawn locally and
     registered OCT   the OCT through the run's transform and its smooth field, on the same plane and its own grey scale.
     checkerboard     the two panels beside it, cut into TILE_MM squares and interleaved. It is nothing else: the same two
                      arrays on the same two grey scales, not inverted, not matched to each other, not masked. So a structure
-                     runs on across a square edge where the two agree and steps where they do not, and the reader can check
-                     any square against the panel it came from.
+                     runs on across a square edge where the two agree and steps where they do not, and any square can be
+                     checked against the panel it came from.
 
 The OCT is box-averaged to the MRI voxel size before it is sampled.
 
