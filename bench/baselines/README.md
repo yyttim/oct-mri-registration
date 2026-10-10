@@ -49,5 +49,5 @@ run (`cmd.sh`, `log.txt`, `notes.md`) stay in the run directories, which hold im
 | `composites.py`, `zooms.py` | side-by-side panels per section and 2x zooms of the superior end for the visual comparison |
 | `summarise.py` | the full tables `affine.md` and `deform.md` from the summary JSON |
 
-The stored results (summary JSON and tables) are in `bench/results/I58/baselines/`. The I58 pair is unpublished, so its
-images are not in the repository.
+The stored results (summary JSON and tables) are in `bench/results/I58/baselines/`, and the figures of BASELINES.md in
+`docs/figures/` (`bench/figures.py`).

@@ -27,6 +27,20 @@ clock on a machine shared with other jobs and only indicative.
 | FLIRT, normmi | default search, FOV weight | shrunk, rotated | 0.86 / 0.81 / 0.78 | 4.9 mm, 6.0° | 74 min |
 | SynthMorph | as documented | fails (out of domain) | | 28 mm, 38° | 1 min |
 
+| MRI | image centres aligned (start) | octreg, §1 to §5 | NiftyReg reg_aladin |
+|---|---|---|---|
+| <img src="../../docs/figures/affine/mri.png" width="196" alt="MRI"> | <img src="../../docs/figures/affine/start.png" width="196" alt="image centres aligned (start)"> | <img src="../../docs/figures/affine/octreg.png" width="196" alt="octreg, §1 to §5"> | <img src="../../docs/figures/affine/reg_aladin.png" width="196" alt="NiftyReg reg_aladin"> |
+| **greedy** | **elastix** | **mri_robust_register** | **ANTs** |
+| <img src="../../docs/figures/affine/greedy.png" width="196" alt="greedy"> | <img src="../../docs/figures/affine/elastix.png" width="196" alt="elastix"> | <img src="../../docs/figures/affine/mri_robust_register.png" width="196" alt="mri_robust_register"> | <img src="../../docs/figures/affine/ants.png" width="196" alt="ANTs"> |
+| **mri_coreg** | **FLIRT** | **SynthMorph** |  |
+| <img src="../../docs/figures/affine/mri_coreg.png" width="196" alt="mri_coreg"> | <img src="../../docs/figures/affine/flirt.png" width="196" alt="FLIRT"> | <img src="../../docs/figures/affine/synthmorph.png" width="196" alt="SynthMorph"> |  |
+
+The axial plane of the README figure (z = 22.7 mm) for each tool at its setting in the table, in freeview, with the boundary
+of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI voxel, 27.4 mm from right to left and 39.6 mm
+from posterior to anterior. octreg and reg_aladin put the specimen on the boundary. greedy, elastix and mri_robust_register
+stay near the start, ANTs enlarges the block, mri_coreg and FLIRT shrink it, and SynthMorph moves it almost entirely out of
+this plane.
+
 The header orientation of this pair is 11 degrees from the true pose, and the image centres put the block within a few
 millimetres of it. From there greedy, elastix and mri_robust_register stay within about a degree of their start. ANTs,
 mri_coreg and FLIRT change the size of the block by 10 to 30 % along some axis. The three global searches (antsAI, FLIRT
@@ -60,14 +74,29 @@ field statistics are over the MRI foreground, and the last column is what the ov
 The residuals are medians. The superior 4 mm column is taken at the end of the block where the affine leaves the largest
 misfit. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for reg_f3d).
 
+| MRI | no deformation (octreg's affine) | octreg, §6 |
+|---|---|---|
+| <img src="../../docs/figures/deformable/mri.png" width="270" alt="MRI"> | <img src="../../docs/figures/deformable/affine.png" width="270" alt="no deformation (octreg's affine)"> | <img src="../../docs/figures/deformable/octreg.png" width="270" alt="octreg, §6"> |
+| **ANTs SyN, CC, FOV mask** | **ANTs SyN, CC, script default** | **greedy, WNCC** |
+| <img src="../../docs/figures/deformable/syn_fov.png" width="270" alt="ANTs SyN, CC, FOV mask"> | <img src="../../docs/figures/deformable/syn_default.png" width="270" alt="ANTs SyN, CC, script default"> | <img src="../../docs/figures/deformable/greedy.png" width="270" alt="greedy, WNCC"> |
+| **ConvexAdam** | **elastix B-spline** | **NiftyReg reg_f3d** |
+| <img src="../../docs/figures/deformable/convexadam.png" width="270" alt="ConvexAdam"> | <img src="../../docs/figures/deformable/elastix.png" width="270" alt="elastix B-spline"> | <img src="../../docs/figures/deformable/reg_f3d.png" width="270" alt="NiftyReg reg_f3d"> |
+
+The superior end of the block on the sagittal plane through the largest displacement of §6 (x = 4.26 mm), in freeview, for
+each tool at its setting in the table, with the boundary of the MRI tissue in red. Each panel is 34.6 mm from posterior to
+anterior and 14.6 mm high, up to the top of the crop, at two pixels per MRI voxel, and the sections run horizontally. octreg's
+affine, where every tool starts, leaves the anterior surface of the OCT (right) outside the boundary. §6, SyN with the FOV
+mask and greedy bring it onto the boundary. Without the mask SyN pulls the OCT up into the MRI tissue beyond the cut face (top
+left) and bends the sections. ConvexAdam lifts the cut face, elastix leaves the anterior surface where the affine put it, and
+reg_f3d bends the sections into fans.
+
 On the overlays no tool fits the intact tissue visibly better than §6. The fields that keep the block shape look the same as
-octreg's by eye, also in the zooms of the superior end (0.05 mm per pixel). The read-outs resolve finer differences, and
-they are not biased towards octreg. SyN with CC and the FOV mask fits both kinds of evidence closer than §6 (interior
-matches 0.063 against 0.124 mm, surface-edge offsets 0.027 against 0.089 mm). Its field has the same median size and
-stronger local compression (Jacobian down to 0.34 against 0.94), and the run takes about 150 times as long. Without the
-mask, which is the default of the official script, SyN reaches still lower residuals by pulling the straight cut faces of
-the OCT out into MRI tissue the block does not contain. Those residuals do not mean a better registration. greedy and
-ConvexAdam close the surface-edge offsets but improve the interior matches only a little (0.18 and 0.22 against 0.25 mm
-without a field). elastix leaves the surface-edge offsets near the affine and the interior matches worse, and reg_f3d
-distorts the block in every standard form. The full tables with every variant are `bench/results/I58/baselines/affine.md`
-and `deform.md`.
+octreg's by eye, also in zooms of the superior end. The read-outs resolve finer differences, and they are not biased towards
+octreg. SyN with CC and the FOV mask fits both kinds of evidence closer than §6 (interior matches 0.063 against 0.124 mm,
+surface-edge offsets 0.027 against 0.089 mm). Its field has the same median size and stronger local compression (Jacobian down
+to 0.34 against 0.94), and the run takes about 150 times as long. Without the mask, which is the default of the official script,
+SyN reaches still lower residuals by pulling the straight cut faces of the OCT out into MRI tissue the block does not contain.
+Those residuals do not mean a better registration. greedy and ConvexAdam close the surface-edge offsets but improve the interior
+matches only a little (0.18 and 0.22 against 0.25 mm without a field). elastix leaves the surface-edge offsets near the affine
+and the interior matches worse, and reg_f3d distorts the block in every standard form. The full tables with every variant are
+`bench/results/I58/baselines/affine.md` and `deform.md`.

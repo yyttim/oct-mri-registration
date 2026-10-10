@@ -17,5 +17,5 @@ dist/
 # run outputs and the data root of the bench scripts
 /bench_runs/
 /data/
-# figures of unpublished data, drawn locally by the bench scripts
+# qc figures written by bench/report.py --figures
 bench/figures/*.png
