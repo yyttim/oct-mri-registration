@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `bench/baselines/`: a comparison with eight standard registration tools on the I58 pair (affine stage) and five
+  deformable tools started from octreg's affine, each with its documented settings, with the scripts that run the evaluation
+  and the tables in `bench/results/I58/baselines/`. octreg's method and results are unchanged.
+
 ## 2.0.0
 
 The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as

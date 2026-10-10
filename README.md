@@ -68,4 +68,5 @@ and are not in the repository. Results on the cortex blocks of DANDI:000026 (pub
 are not embedded, are withdrawn until a re-run: `bench/dandi.py` built six of the eight MRI crops through label headers that
 do not match the MRI.
 
-Details, evaluation and parameters: [docs/METHOD.md](docs/METHOD.md).
+Details, evaluation and parameters: [docs/METHOD.md](docs/METHOD.md). A comparison with standard registration tools on the
+I58 pair: [bench/baselines/BASELINES.md](bench/baselines/BASELINES.md).
