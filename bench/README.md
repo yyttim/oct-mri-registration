@@ -23,6 +23,7 @@ that holds the two I58 input files (by default `<data root>/I58`). Nothing else 
 | `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
 | `fig_registration.py` | the registration figure: an MRI plane, the OCT placed on it by the run, and those two panels cut into 8 mm squares and interleaved |
 | `BENCHMARK.md` | the I58 report, written by `report.py`, which keeps its hand-written "Visual result" section and its closing reading |
+| `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
 | `results/` | the JSON and the §6 ablation table (`deform_ablation.md`) copied out of the run directories |
 | `figures/` | the figures of the I58 pair, which these scripts draw locally and which are not published |
 
