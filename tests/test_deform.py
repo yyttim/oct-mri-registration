@@ -24,7 +24,7 @@ H = 0.2                                                           # isotropic gr
 PARAMS = Params.from_dict({"df_reach_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
 #     a 19 mm specimen on a 0.3 mm grid: a search range of 5 voxels, smaller blocks than the default and the feature sigma in
 #     proportion; the rim layer of pair() reaches 1.8 mm below the surface and a block may lie 30 % outside the core, so the
-#     erosion is 2.4 mm (with 1.2 mm the rim pulls the outer matches 0.17 mm inwards)
+#     erosion is 2.4 mm
 
 
 def structure(shape, rng):

@@ -6,19 +6,20 @@
     $env:STEPS = "ablate evaluate report"; python bench/run_i58.py                # PowerShell
 
 Steps in order: register (python -m octreg register OCT MRI -o OUT), ablate (bench/ablate.py), evaluate (bench/evaluate.py)
-and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58). Overrides, all optional: STEPS, OUT, ABL,
-PREV, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR) and
-CODE defaults to the repository of this file. The steps run with the interpreter that runs this file.
+and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58). Overrides, all optional:
+STEPS, OUT, ABL, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT,
+OCTREG_I58_DIR) and CODE defaults to the repository of this file. The steps run with the interpreter that runs this file.
 
-Each step writes NAME.log, NAME.time (wall time and exit status; the peak memory of a run is in its own result.json)
+OUT and ABL default to bench_runs/I58/octreg and bench_runs/I58/octreg_ablate. PREV_MAIN has no default. When it names a second
+octreg run, the evaluate step also measures the pose distance to it (bench/evaluate.py --previous).
+
+Each step writes NAME.log, NAME.time (wall time and exit status, the peak memory of a run is in its own result.json)
 and, when nvidia-smi is on the PATH, NAME.gpu_mib into ${OUT}_logs, with a start and a done line
 per step in chain.log. The runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid while it runs and
 refuses to start while another registration job is running, since one GPU takes one at a time.
 
-OUT and ABL default to the released run of 2.0, bench_runs/I58/v2/main and v2/ablate, and PREV_MAIN to the previous run
-the stored evaluation used, rel7/main (release 1.0). A new run therefore needs a new OUT and a new ABL, not the defaults:
-register and ablate refuse a default directory that already holds a run, and the report step has no such guard, so it
-rewrites bench/BENCHMARK.md from whatever OUT and ABL name.
+register and ablate refuse a default OUT or ABL that already holds a run, so a second run needs a new OUT and a new ABL.
+The report step has no such guard. It rewrites bench/BENCHMARK.md from whatever OUT and ABL name.
 """
 from __future__ import annotations
 
@@ -36,15 +37,14 @@ POSIX = os.name == "posix"
 ENV = os.environ.get
 CODE = Path(ENV("CODE") or Path(__file__).resolve().parents[1])
 BENCH = BENCH_RUNS / "I58"
-OUT = Path(ENV("OUT") or BENCH / "v2/main")                   # the released run of 2.0; a new run needs a new OUT
-ABL = Path(ENV("ABL") or BENCH / "v2/ablate")                 # and a new ABL
-PREV = ENV("PREV") or str(BENCH / "ablate/ablations.json")    # the first ablation run, which measured A3 and A7
-PREV_MAIN = Path(ENV("PREV_MAIN") or BENCH / "rel7/main")     # release 1.0, the previous run the stored evaluation used
+OUT = Path(ENV("OUT") or BENCH / "octreg")
+ABL = Path(ENV("ABL") or BENCH / "octreg_ablate")
+PREV_MAIN = Path(ENV("PREV_MAIN")) if ENV("PREV_MAIN") else None    # a second run for the pose distance, only when set
 LOGS = Path(str(OUT).rstrip("/" + os.sep) + "_logs")
 STEPS = (ENV("STEPS") or "register evaluate").split()
 DEVICE = ENV("DEVICE") or "cuda"
 KILL = LOGS / "runner.pid"                    # the running chain, so a second one refuses to start
-BUSY = re.compile(r'(^|/)python[0-9.]*(\.exe)?"? .*(-m octreg|bench/(ablate|dandi|evaluate)\.py)',
+BUSY = re.compile(r'(^|/)python[0-9.]*(\.exe)?"? .*(-m octreg|bench/(ablate|evaluate)\.py)',
                   0 if POSIX else re.I)
 
 
@@ -122,13 +122,13 @@ def main():
         print(f"no code copy at {CODE}", flush=True)
         return 1
     for s, var, d, f in (("register", "OUT", OUT, "result.json"), ("ablate", "ABL", ABL, "ablations.json")):
-        if s in STEPS and not ENV(var) and (d / f).is_file():      # never overwrite the released runs by default
+        if s in STEPS and not ENV(var) and (d / f).is_file():      # never overwrite a run by default
             print(f"{s}: the default {var} {d} already holds a run: set {var} to a new directory", flush=True)
             return 1
     LOGS.mkdir(parents=True, exist_ok=True)
     busy = sum(bool(BUSY.search(line)) for line in command_lines())
     if busy:
-        say(f"another registration python is running ({busy}): not starting")
+        say(f"another python -m octreg, bench/ablate.py or bench/evaluate.py process is running ({busy}): not starting")
         return 1
     KILL.parent.mkdir(parents=True, exist_ok=True)
     KILL.write_text(f"{os.getpgid(0) if POSIX else os.getpid()}\n")
@@ -139,16 +139,17 @@ def main():
             elif s == "ablate":
                 args = ["bench/ablate.py", "--out", ABL]
                 args += ["--main", OUT] if (OUT / "T_oct2mri.txt").is_file() else []
-                for f in PREV.split():
-                    args += ["--previous", f] if Path(f).is_file() else []
                 args += ["--device", DEVICE]
             elif s == "evaluate":
                 args = ["bench/evaluate.py", OUT]
-                args += ["--previous", PREV_MAIN] if (PREV_MAIN / "T_oct2mri.txt").is_file() else []
+                if PREV_MAIN and (PREV_MAIN / "T_oct2mri.txt").is_file():
+                    args += ["--previous", PREV_MAIN]
+                elif PREV_MAIN:
+                    say(f"evaluate: PREV_MAIN {PREV_MAIN} holds no T_oct2mri.txt, so no pose distance")
                 if (ABL / "prep/texture/oct_mask.nii.gz").is_file():
                     args += ["--masks", ABL / "prep/texture"]
                 else:
-                    say(f"evaluate: no {ABL / 'prep/texture'} yet, so no mask volume and no boundary agreement "
+                    say(f"evaluate: no {ABL / 'prep/texture'} yet, so no mask volume and no outline agreement "
                         "(run the ablate step first)")
             elif s == "report":
                 args = ["bench/report.py", "--main", OUT, "--ablate", ABL, "--logs", LOGS, "-o", "bench/BENCHMARK.md",

@@ -1,11 +1,11 @@
-| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | held-out interior / boundary (mm) | F | two-class, core | field median / max (mm) |
+| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | held-out interior matches / surface-edge offsets (mm) | F | two-class, core | field median / max (mm) |
 |---|---|---|---|---|---|---|---|---|---|
 | no deformation |  |  | 0.249 | 0.285 | 51 % |  | 0.1029 | 0.0578 | 0 |
 | §6 | 0.82 | 0.148 | 0.124 | 0.089 | 80 % | 0.155 / 0.114 | 0.1086 | 0.0641 | 0.28 / 1.05 |
-| interior evidence only | 0.30 | 0.134 | 0.101 | 0.237 | 58 % | 0.143 / 0.000 | 0.1058 | 0.0536 | 0.21 / 1.02 |
-| boundary evidence only | 8.22 | 0.149 | 0.457 | 0.090 | 80 % | 0.000 / 0.110 | 0.1052 | 0.0661 | 0.35 / 1.10 |
+| interior evidence only | 0.30 | 0.134 | 0.101 | 0.237 | 58 % | 0.143 / | 0.1058 | 0.0536 | 0.21 / 1.02 |
+| boundary evidence only | 8.22 | 0.149 | 0.457 | 0.090 | 80 % | / 0.110 | 0.1052 | 0.0661 | 0.35 / 1.10 |
 | rim ridge instead of the edge | 0.98 | 0.148 | 0.140 | 0.224 | 63 % | 0.169 / 0.309 | 0.1064 | 0.0599 | 0.27 / 1.02 |
-| boundary points only within 5 mm of a match (the rule of 1.1) | 0.51 | 0.148 | 0.121 | 0.104 | 74 % | 0.155 / 0.093 | 0.1068 | 0.0682 | 0.22 / 1.16 |
+| boundary points only within 5 mm of an interior match | 0.51 | 0.148 | 0.121 | 0.104 | 74 % | 0.155 / 0.093 | 0.1068 | 0.0682 | 0.22 / 1.16 |
 | no Huber re-weighting | 1.51 | 0.149 | 0.141 | 0.104 | 77 % | 0.169 / 0.130 | 0.1080 | 0.0624 | 0.25 / 0.96 |
 | lattice 7 mm | 0.79 | 0.148 | 0.140 | 0.094 | 79 % | 0.168 / 0.113 | 0.1086 | 0.0597 | 0.31 / 1.10 |
 | lattice 10 mm | 0.30 | 0.148 | 0.156 | 0.088 | 81 % | 0.179 / 0.106 | 0.1086 | 0.0628 | 0.33 / 1.24 |
@@ -14,7 +14,7 @@
 | reach 2.0 mm | 1.51 | 0.149 | 0.130 | 0.090 | 80 % | 0.212 / 0.145 | 0.1092 | 0.0595 | 0.29 / 1.57 |
 | reach 2.7 mm | 3.46 | 0.149 | 0.145 | 0.115 | 76 % | 0.304 / 0.192 | 0.1082 | 0.0577 | 0.28 / 1.59 |
 
-Boundary residual (median |offset|, mm) per 4 mm along the sectioning axis, from end 0 (31.3 mm in all; end 0 is the end at the start of MRI array axis 1):
+Surface-edge offsets (median |offset|, mm) per 4 mm along the sectioning axis, from end 0, the end at the start of MRI array axis 1 (31.3 mm in all):
 
 | variant | 0-4 | 4-8 | 8-12 | 12-16 | 16-20 | 20-24 | 24-28 | 28-32 |
 |---|---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@ Boundary residual (median |offset|, mm) per 4 mm along the sectioning axis, from
 | interior evidence only | 0.792 | 0.549 | 0.227 | 0.274 | 0.211 | 0.102 | 0.141 | 0.123 |
 | boundary evidence only | 0.196 | 0.191 | 0.102 | 0.148 | 0.121 | 0.043 | 0.062 | 0.060 |
 | rim ridge instead of the edge | 0.389 | 0.382 | 0.210 | 0.183 | 0.182 | 0.144 | 0.182 | 0.223 |
-| boundary points only within 5 mm of a match (the rule of 1.1) | 0.386 | 0.260 | 0.090 | 0.169 | 0.155 | 0.043 | 0.060 | 0.083 |
+| boundary points only within 5 mm of an interior match | 0.386 | 0.260 | 0.090 | 0.169 | 0.155 | 0.043 | 0.060 | 0.083 |
 | no Huber re-weighting | 0.280 | 0.239 | 0.096 | 0.145 | 0.127 | 0.051 | 0.070 | 0.065 |
 | lattice 7 mm | 0.216 | 0.193 | 0.077 | 0.146 | 0.119 | 0.048 | 0.059 | 0.058 |
 | lattice 10 mm | 0.181 | 0.175 | 0.078 | 0.132 | 0.122 | 0.048 | 0.049 | 0.054 |

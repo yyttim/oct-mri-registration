@@ -1,23 +1,23 @@
-"""§6 ablation from cached base grids (bench only; the package never reads this): the §6 ablation table of docs/METHOD.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
+"""§6 ablation from cached base grids (bench only, the package never reads this): the §6 ablation table of docs/METHOD.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
 
 Every row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity), changing one element of the stage, and
 every row is scored the same way, so the rows compare like for like:
-  - the stage's read-outs (interior and boundary residual, fraction of boundary offsets within 0.3 mm) measured on the warped
-    OCT by the evidence of the default Params, whatever evidence the row was fitted to;
+  - the stage's read-outs (interior-match residuals and surface-edge offsets, fraction of surface-edge offsets within 0.3 mm) measured on the warped
+    OCT by the evidence of the default Params, whatever evidence the row was fitted to,
   - two numbers the fit never sees: F of §5 at sigma 0.3 mm (NGFGrid.F, the warped OCT against the MRI on the MRI base grid),
     and the two-class score of §2 (polarity x S_class) over the core 1.5 mm below both surfaces.
-The read-outs of the rows that change the evidence are still in-sample for the default evidence they overlap with; F and the
-two-class score are not. Nothing is excluded along the block: the boundary residual is also reported per 4 mm along the
+The read-outs of the rows that change the evidence are still in-sample for the default evidence they overlap with. F and the
+two-class score are not. Nothing is excluded along the block: the surface-edge offsets are also reported per 4 mm along the
 sectioning axis (estimated from the section stripes of the OCT), so the end of the block with the torn folia stays in.
 
-The rows of METHOD.md that the package has no switch for are reproduced here: one kind of evidence only (the other kind's
-rows dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one
-prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), the
-support rule of 1.1 (boundary points only within 5 mm of an interior match) and no Huber re-weighting (a Huber threshold
-no residual reaches). The rest are Params overrides.
+The rows that the package has no switch for are implemented here: one kind of evidence only (the other kind's rows
+dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one
+prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), boundary
+points only within 5 mm of an interior match, and no Huber re-weighting (a Huber threshold no residual reaches). The rest
+are Params overrides.
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ ROWS = {    # name: (label as in METHOD.md, change); change None = no field
     "interior_only": ("interior evidence only", {"evidence": "interior"}),
     "boundary_only": ("boundary evidence only", {"evidence": "boundary"}),
     "ridge": ("rim ridge instead of the edge", {"edge": "ridge"}),
-    "support": ("boundary points only within 5 mm of a match (the rule of 1.1)", {"support": 5.0}),
+    "support": ("boundary points only within 5 mm of an interior match", {"support": 5.0}),
     "no_huber": ("no Huber re-weighting", {"params": {"df_huber_mm": 1e9}}),
     "lattice7": ("lattice 7 mm", {"params": {"df_grid_mm": 7.0}}),
     "lattice10": ("lattice 10 mm", {"params": {"df_grid_mm": 10.0}}),
@@ -60,7 +60,7 @@ ROWS = {    # name: (label as in METHOD.md, change); change None = no field
     "reach27": ("reach 2.7 mm", {"params": {"df_reach_mm": 2.7}}),
 }
 CORE_MM = 1.5          # the two-class score is taken this far below both surfaces
-BIN_MM = 4.0           # bins of the boundary residual along the sectioning axis
+BIN_MM = 4.0           # bins of the surface-edge offsets along the sectioning axis
 
 
 def ridge_offsets(vol, affine, points, normals, params: Params):
@@ -96,7 +96,7 @@ def fit_evidence(mri, vol, inside, P, change, device):
             return ev.points[ok], ev.normals[ok], (pos - ev.edge_m[1])[ok]
         ev.boundary = boundary
     e = ev.measure(vol, inside)
-    if change.get("support"):                                 # the support rule of 1.1: a boundary point needs a match nearby
+    if change.get("support"):                                 # a boundary point needs an interior match within this distance
         near = cKDTree(e["W"]).query(e["P"])[0] <= change["support"] if len(e["W"]) and len(e["P"]) else np.zeros(len(e["P"]), bool)
         e.update(P=e["P"][near], n=e["n"][near], delta=e["delta"][near])
     if change.get("evidence") == "interior":
@@ -196,20 +196,20 @@ def fmt(x, spec):
 
 
 def markdown(res):
-    lines = ["| variant | λ | strain | interior (mm) | boundary (mm) | within 0.3 mm | held-out interior / boundary (mm) | F | "
-             "two-class, core | field median / max (mm) |", "|---|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | "
+             "held-out interior matches / surface-edge offsets (mm) | F | two-class, core | field median / max (mm) |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for r in res["rows"].values():
         fm = r["field_mm"]
         field = "0" if not fm["max"] else f"{fm['median']:.2f} / {fm['max']:.2f}"
-        cv = r.get("cv_field")
-        cv = "" if cv is None else " / ".join(f"{x:.3f}" for x in cv)
+        cv, used = r.get("cv_field"), (r.get("n_interior") != 0, r.get("n_boundary") != 0)
+        cv = "" if cv is None else " / ".join(f"{x:.3f}" if u else "" for x, u in zip(cv, used)).strip()   # no evidence: empty
         lines.append(f"| {r['label']} | {fmt(r['lam'], '.2f')} | {fmt(r['max_strain'], '.3f')} | {r['interior_mm']:.3f} | "
                      f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {cv} | {r['F']:.4f} | {r['two_class_core']:.4f} | "
                      f"{field} |")
     e = res["axis"]["edges_mm"]
-    lines += ["", f"Boundary residual (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from end 0 "
-              f"({res['axis']['extent_mm']:.1f} mm in all; end 0 is the end at the start of MRI array axis "
-              f"{res['axis']['mri_axis']}):", "",
+    lines += ["", f"Surface-edge offsets (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from end 0, the end at "
+              f"the start of MRI array axis {res['axis']['mri_axis']} ({res['axis']['extent_mm']:.1f} mm in all):", "",
               "| variant | " + " | ".join(f"{a:.0f}-{b:.0f}" for a, b in zip(e[:-1], e[1:])) + " |",
               "|---|" + "---|" * (len(e) - 1)]
     for r in res["rows"].values():
@@ -232,7 +232,7 @@ def main():
     z = np.load(a.cache)
     mri = (z["mri_arr"], z["mri_mask"], z["mri_affine"])
     o_arr, o_mask, A_o = z["oct_arr"], z["oct_mask"], z["oct_affine"]
-    res_run = json.loads((Path(a.run) / "result.json").read_text())
+    res_run = json.loads((Path(a.run) / "result.json").read_text(encoding="utf-8"))
     T, polarity = np.asarray(res_run["T_oct2mri"], float), int(res_run["pose"]["polarity"])
     A_m, shape = np.asarray(mri[2], float), tuple(mri[0].shape)
     with torch.no_grad():

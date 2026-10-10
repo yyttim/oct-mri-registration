@@ -130,7 +130,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
               "pose": pose, "flags": flags,
               "foreground": {"oct": fg_o, "mri": {"source": "histogram", **fg_m}}, **info}
     io.write_json(result, out / "result.json")                  # before the overlays, so a failing overlay loses no result
-    for f in OUTPUTS_DEFORM:                                    # of an earlier run into the same directory
+    for f in OUTPUTS_DEFORM:                                    # §6 files another run left in this directory
         (out / f).unlink(missing_ok=True)
     io.save_nifti(G.resample_to(*overlay, vm.shape, vm.affine, np.linalg.inv(T)), vm.affine, out / "oct_in_mri_affine.nii.gz")
     if applied:
@@ -307,10 +307,10 @@ def qc_figures(prefix, oct_grid, mri_grid, T, polarity, oct_file_affine, label="
     wherever the specimen mask or the MRI foreground reaches. The only voxels it leaves out are those both maps call
     background, where by definition the two cannot disagree, so the support cannot hide a misplacement: it grows, not shrinks,
     as the pose gets worse, and tissue in the tiles of one volume against nothing in the tiles of the other stays visible.
-    Rows are titled by the plane
-    position (mm from the first voxel of the OCT file along that axis) and are QC_CELL_IN inches high at QC_DPI; the lower
-    remaining OCT axis runs to the right, the higher one up; scale bar in the first column. oct_grid = (oct_h, mask, affine)
-    on the base grid; mri_grid = (mri_h, foreground, affine); T: OCT world -> MRI world; oct_file_affine: of the OCT file.
+    Rows are titled by the plane position (mm from the first voxel of the OCT file along that axis) and are QC_CELL_IN inches
+    high at QC_DPI; the lower remaining OCT axis runs to the right, the higher one up; scale bar in the first column.
+    oct_grid = (oct_h, mask, affine) on the base grid; mri_grid = (mri_h, foreground, affine); T: OCT world -> MRI world;
+    oct_file_affine: of the OCT file.
     -> (prefix.png, prefix_montage.png) Paths."""
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure

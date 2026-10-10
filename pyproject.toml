@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "octreg"
 dynamic = ["version"]
-description = "Label-free registration of serial-sectioning OCT blocks to ex-vivo MRI: an affine and a small smooth deformation"
+description = "Label-free registration of serial-sectioning OCT blocks to ex-vivo MRI without initial alignment: an affine and a small smooth deformation"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Yuntian Yang" }]
@@ -14,6 +14,10 @@ dependencies = ["torch>=1.11", "numpy>=1.20", "scipy>=1.6", "scikit-image>=0.19"
 
 [project.optional-dependencies]
 test = ["pytest", "SimpleITK"]
+
+[project.urls]
+Homepage = "https://github.com/yyttim/oct-mri-registration"
+Repository = "https://github.com/yyttim/oct-mri-registration"
 
 [project.scripts]
 octreg = "octreg.cli:main"

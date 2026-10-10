@@ -238,8 +238,8 @@ def test_array_frame(tmp_path):
 
 
 def test_apply_moved_npy_with_spacing(tmp_path):
-    """`octreg apply` replays a run whose OCT is an NPY stack from another path: the spacing recorded in result.json no longer
-    applies to the file, so the run is refused until --oct-spacing-um gives it, and then the result is the same."""
+    """`octreg apply` replays a run whose OCT is an NPY stack from another path: the spacing recorded in result.json belongs to
+    the original path, so the run is refused until --oct-spacing-um gives it, and then the result is the same."""
     oct_path, mri_path = pair(tmp_path)[:2]
     stack = np.asarray(nib.load(str(oct_path)).dataobj, np.float32).transpose(2, 1, 0)       # numpy (z, y, x)
     np.save(tmp_path / "oct.npy", stack)

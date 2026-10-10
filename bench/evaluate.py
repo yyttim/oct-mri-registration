@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Label-free evaluation of an octreg run on the I58 brainstem pair (bench only; the method never sees any of this).
+"""Label-free evaluation of an octreg run on the I58 brainstem pair (bench only, the method never sees any of this).
 
-    python bench/evaluate.py RUN [--masks DIR] [--previous OLD_RUN] [--no-frame-check] [-o RUN/eval.json]
+    python bench/evaluate.py RUN [--masks DIR] [--previous OTHER] [--no-frame-check] [-o RUN/eval.json]
     python bench/evaluate.py --selftest                     # synthetic, CPU, a few seconds
 
 Everything here comes from the two input files of bench/paths.py (OCT_I58, MRI_I58), the run directory RUN and, for the
 comparison read-outs, a second octreg run directory. T = RUN/T_oct2mri.txt maps the OCT header world to the MRI header world
 (mm). DIR is a prep directory of bench/ablate.py, which holds the masks the method itself built: oct_mask.nii.gz (OCT specimen),
-oct_valid.nii.gz (non-zero OCT data) and mri_mask.nii.gz (MRI foreground). Without --masks there is no mask and no boundary
-read-out.
+oct_valid.nii.gz (non-zero OCT data) and mri_mask.nii.gz (MRI foreground). Without --masks there is no mask and no outline
+agreement.
 
 mask              Volume of the run's own OCT specimen mask (DIR/oct_mask.nii.gz) in cm3.
 boundary          Outline agreement of that mask and the MRI foreground, in both directions. OCT mask boundary voxels (at least
                   3 voxels from the grid faces, on valid OCT data) go through T to their distance to the MRI foreground
                   boundary, and MRI boundary voxels go through inv(T) to their distance to the OCT mask boundary. Points within
                   1 mm of the MRI grid faces are dropped. Medians per outward-normal class along the raw OCT array axes. 'rim'
-                  leaves out the deep end a0+, which has no specimen rim. With --previous, the rim medians of OLD_RUN under the
+                  leaves out the deep end a0+, which has no specimen rim. With --previous, the rim medians of OTHER under the
                   same masks as well, which compares two octreg runs on the same footing.
-pose_to_previous  Distance between T and OLD_RUN/T_oct2mri.txt (--previous). Mean and max displacement over the points of the
-                  run's own OCT specimen mask, or, without --masks, over the 8 corners of the OCT array plus a uniform sample of
-                  its grid. The same at the 8 corners on their own, and the rotation angle of inv(T_previous) @ T.
-frame_check       Random voxels of the affine overlay (RUN/oct_in_mri_affine.nii.gz, or oct_in_mri.nii.gz of a run before 1.1,
-                  which had no deformation) go through inv(T) and inv(A_hdr) to raw OCT voxels, whose 20 um values (box^3 mean)
+pose_to_previous  Distance between T and T_other = OTHER/T_oct2mri.txt (--previous). Mean and max displacement over the points
+                  of the run's own OCT specimen mask, or, without --masks, over the 8 corners of the OCT array plus a uniform
+                  sample of its grid. The same at the 8 corners on their own, and the rotation angle of inv(T_other) @ T.
+frame_check       Random voxels of the affine overlay (RUN/oct_in_mri_affine.nii.gz, or RUN/oct_in_mri.nii.gz when the run has no
+                  affine overlay) go through inv(T) and inv(A_hdr) to raw OCT voxels, whose 20 um values (box^3 mean)
                   are streamed from the .nii.gz. Spearman against the exported values. Controls: T composed with a flip of each
                   raw OCT axis about the block centre, and 2 mm shifts along each MRI world axis. ok iff rho >= 0.9 and every
                   flip gives rho <= 0.3.
@@ -226,7 +226,7 @@ def frame_check(T, oct_in_mri, oct_path=OCT, n=40_000, box=7, seed=0):
 
 
 def outline(bnd, T, others):
-    """Boundary agreement at T plus the rim medians of the other poses {name: T} under the same masks."""
+    """Outline agreement at T plus the rim medians of the other poses {name: T} under the same masks."""
     return {**bnd(T), "rim_median_mm_of": {n: bnd(T2)["rim_median_mm"] for n, T2 in others.items()}}
 
 
@@ -254,13 +254,13 @@ def evaluate(run, masks=None, frame=True, previous=None):
         out["pose_to_previous"] = {"run": str(previous), "points": pts_of, "n_points": int(len(pts)),
                                    **pose(T, others["previous"], pts, corners(shape, A_hdr))}
     if frame:
-        affine_overlay = run / "oct_in_mri_affine.nii.gz"       # since 1.1 oct_in_mri.nii.gz also goes through the field of §6
+        affine_overlay = run / "oct_in_mri_affine.nii.gz"       # oct_in_mri.nii.gz goes through the field of §6 when one is applied
         out["frame_check"] = frame_check(T, affine_overlay if affine_overlay.exists() else run / "oct_in_mri.nii.gz", OCT)
     return out
 
 
 def selftest():
-    """Synthetic check of the frame check, the boundary agreement, the pose distance and the mask volume."""
+    """Synthetic check of the frame check, the outline agreement, the pose distance and the mask volume."""
     rng = np.random.default_rng(1)
     shape, sp = (40, 48, 36), 0.125                      # binary-exact spacings: NIfTI affines are float32
     V = (ndimage.gaussian_filter(rng.random(shape), 2.0) + 0.1).astype(np.float32)
@@ -288,7 +288,7 @@ def selftest():
         nib.save(nib.Nifti1Image(overlay.reshape(48, 48, 48), A_m), str(tmp / "oct_in_mri.nii.gz"))
         fc = frame_check(T, tmp / "oct_in_mri.nii.gz", tmp / "oct.nii.gz", n=5000, box=3)
         assert fc["ok"] and fc["spearman_export"] > 0.999, fc
-        # boundary agreement of an ellipsoid and its exact image through T: ~0 at T, about the shift under a 1 mm shift
+        # outline agreement of an ellipsoid and its exact image through T: ~0 at T, about the shift under a 1 mm shift
         g = np.indices(shape).transpose(1, 2, 3, 0) - (np.array(shape) - 1) / 2.0
         ell = ((g / [12, 14, 10]) ** 2).sum(-1) <= 1
         mm = np.zeros(len(Pm), bool)
@@ -313,7 +313,7 @@ def selftest():
         # mask volume: the ellipsoid against 4/3 pi abc voxels
         assert abs(volume_cm3(ell, A_hdr) / (4 / 3 * np.pi * 12 * 14 * 10 * sp ** 3 / 1000) - 1) < 0.02
     print(json.dumps({"selftest": "ok", "frame_check": {k: fc[k] for k in ("spearman_export", "max_flip_spearman")},
-                      "boundary_rim_median_mm": {"at_T": b0["rim_median_mm"], "shift_1mm": b1["rim_median_mm"]},
+                      "outline_rim_median_mm": {"at_T": b0["rim_median_mm"], "shift_1mm": b1["rim_median_mm"]},
                       "mask_volume_cm3": volume_cm3(ell, A_hdr)}, indent=1))
 
 
@@ -321,7 +321,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run", nargs="?", type=Path)
     ap.add_argument("--masks", type=Path, default=None, help="dir with oct_mask / oct_valid / mri_mask .nii.gz (default: RUN)")
-    ap.add_argument("--previous", type=Path, default=None, help="an earlier run dir (T_oct2mri.txt) to measure this one against")
+    ap.add_argument("--previous", type=Path, default=None, help="another run dir (T_oct2mri.txt) to measure this one against")
     ap.add_argument("--no-frame-check", action="store_true")
     ap.add_argument("-o", "--out", type=Path, default=None, help="default RUN/eval.json")
     ap.add_argument("--selftest", action="store_true")

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""The shared inputs of the baseline comparison (bench only).
+"""The shared inputs of the baseline comparison (bench only, not part of the package).
 
     python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN --masks PREP_DIR -o DIR
 
 Writes into DIR: oct_0.08mm.nii.gz and oct_0.15mm.nii.gz (the OCT box-averaged to isotropic grids, original world header),
-mri_0.08mm.nii.gz (the crop as given) and mri_0.15mm.nii.gz, the field-of-view masks oct_fov_*.nii.gz (voxels > 0), the
-deformable-stage moving images oct_affine_0.08mm.nii.gz / oct_affine_0.15mm.nii.gz (the 20 um OCT through the affine of
-OCTREG_RUN onto the MRI grids) with oct_affine_fov_0.08mm.nii.gz, and copies of the method's masks from PREP_DIR
-(oct_mask, oct_valid, mri_mask of bench/ablate.py's prep) for the evaluation.
+mri_0.08mm.nii.gz (the crop as given) and mri_0.15mm.nii.gz, the field-of-view (FOV) masks oct_fov_*.nii.gz (voxels > 0),
+the moving images of the deformable stage oct_affine_0.08mm.nii.gz and oct_affine_0.15mm.nii.gz (the 20 um OCT through the
+affine of OCTREG_RUN onto the MRI grids) with oct_affine_fov_0.08mm.nii.gz, and, for the evaluation, copies of octreg's
+masks from PREP_DIR (oct_mask, oct_valid and mri_mask of the bench/ablate.py preprocessing).
 """
 from __future__ import annotations
 

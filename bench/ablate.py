@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
 """Ablations of octreg on the I58 brainstem pair.
 
-    python bench/ablate.py --out ABL [--main RUN] [--previous OLD/ablations.json ...] [--only A1,A4] [--device cuda] [--force]
+    python bench/ablate.py --out ABL [--main RUN] [--only A1,A4] [--device cuda] [--force]
 
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
-explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with the 3-D hole filling of the
-first release), two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4),
+explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only),
+two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4),
 align(..., polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6), the OCT world mirrored so that the search and refinement see
 the other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut face
 with the method and with the two-sided outline (A11, A11b), or no fine-structure refinement (A12, the pose of §4). Every other
-variant ends with §5 on its own best pose. 'base' is the method through this driver; its distance to the CLI run (--main) is
-the driver check. The OCT is streamed once, each OCT mask is computed once and the MRI is prepared once.
+variant ends with §5 on its own best pose. 'base' is the method run through this script. Its pose distance to an
+`octreg register` run of the same pair (--main) is stored as a consistency check. The OCT is streamed once, each OCT mask is
+computed once and the MRI is prepared once.
 
-The smooth deformation (§6) leaves the pose alone, so no variant runs it: "no §6" would be base with the identical
-pose, and its read-outs are the 'before' residuals in the run's own result.json, which bench/report.py prints.
-
-Removed steps (REMOVED) keep their rows from the ablation run that measured them (--previous, one ablations.json per group):
-the section-stripe flat field (A3) and the rigid -> similarity -> affine ladder (A7) from the first run. Each was measured
-against the base of its run, which still had the step, and the pose change from that base to the present base is reported
-next to them.
+The smooth deformation (§6) does not change the affine, so no variant runs it. Its read-outs are in the run's own
+result.json, which bench/report.py prints.
 
 Every variant keeps the pose of §4 (T_before_ngf) as well as the final pose, and the table reports the change of both against
-the base: steps of §1-4 act through the §4 pose, which §5 then refines within a few degrees and millimetres.
+the base: steps of §1 to §4 act through the §4 pose, which §5 then refines within a few degrees and millimetres.
 
-Metrics: pose to base, boundary agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
+Metrics: pose to base, outline agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
 volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
-array. The geometry helpers come from bench/evaluate.py, which is self-contained; like it, this driver reads the two input
+array. The geometry helpers come from bench/evaluate.py, which is self-contained. Like it, this script reads the two input
 files of bench/paths.py and its own runs, and nothing else.
 
 OUT/prep/<mask>/  oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
@@ -62,9 +58,9 @@ VARIANTS = {    # name: (what changes, the explicit change: mask source, solve()
     "A4": ("standardised intensity channels (z, -z) instead of two-class maps", {"features": "intensity"}),
     "A5+1": ("polarity forced +1", {"polarity": 1}),
     "A5-1": ("polarity forced -1", {"polarity": -1}),
-    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0}, "clamp": 1.0}),
-    "A6p": ("no penalty, clamp kept: lam 0, clamp 0.15", {"params": {"lam": 0.0}}),
-    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"clamp": 1.0}),
+    "A6": ("no scale prior: λ 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0}, "clamp": 1.0}),
+    "A6p": ("no penalty, clamp kept: λ 0, clamp 0.15", {"params": {"lam": 0.0}}),
+    "A6c": ("no clamp, penalty kept: λ 2, clamp 1.0", {"clamp": 1.0}),
     "A8": ("the other handedness: OCT world mirrored (z negated) before the search", {"mirror": True}),
     "A9": ("no outline term: S = 2 S_class / 3 in the search and the refinement", {"outline": False}),
     "A10": ("two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch", {"two_sided": True}),
@@ -73,21 +69,14 @@ VARIANTS = {    # name: (what changes, the explicit change: mask source, solve()
     "A11b": ("the same cut face with the two-sided outline", {"cut_axis": 1, "two_sided": True}),
     "A12": ("no fine-structure refinement (§5): the pose of §4", {"ngf": False}),
 }
-REMOVED = [    # groups of removed steps, each measured in one earlier ablation run
-    {"step": {"A3": "section-stripe flat field", "A7": "rigid -> similarity -> affine ladder"},
-     "note": "Copied from the first ablation run, whose base still had the section-stripe flat field and the ladder (and the "
-             "earlier score, two-class maps under an overlap gate), so pose changes in these rows are against that base. Removing "
-             "either step moved the pose by less than the 0.5 mm deletion threshold and both were deleted."},
-]
 
 
 PREP_FIELDS = ("base_mm", "fine_mm", "valley_ratio", "min_component", "texture_bandpass_mm", "texture_window_mm", "texture_grid_mm",
                "texture_smooth_mm", "texture_close_mm")            # the Params the preprocessing (§1) reads
-LEGACY_PREP = {"7d01b8a167a83631": "dd680d967e5a2e3a"}           # Params hash of octreg 1.0 -> the prep hash of its §1 fields
 
 
 def prep_hash(P):
-    """16 hex characters for the Params fields the preprocessing reads: a prep stays valid when only later stages gain fields."""
+    """16 hex characters for the Params fields the preprocessing reads: a prep stays valid when only fields of §2 to §6 differ."""
     d = P.to_dict()
     return hashlib.sha256(json.dumps({k: d[k] for k in PREP_FIELDS}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
 
@@ -101,8 +90,8 @@ def prepare(out, sources):
     P, root = Params(), out / "prep"
     h, mdir = P.base_mm, root / "mri"
     for d in [mdir] + [root / s for s in sources]:
-        old = json.loads((d / "prep.json").read_text()) if (d / "prep.json").exists() else None
-        if old is not None and old.get("prep_hash", LEGACY_PREP.get(old.get("params_hash"))) != prep_hash(P):
+        old = json.loads((d / "prep.json").read_text(encoding="utf-8")) if (d / "prep.json").exists() else None
+        if old is not None and old.get("prep_hash") != prep_hash(P):
             raise ValueError(f"{d} was prepared with other §1 Params: delete {root} to prepare again")
     if not (mdir / "mri_h.npz").exists():
         t0 = time.time()
@@ -126,7 +115,7 @@ def prepare(out, sources):
         t1 = time.time()
         if s == "texture":                                                     # the method
             m, info = fine_mask(fine, A_f, P)
-        elif s == "texture3d":                                                 # A0c: the 3-D hole filling of the first release
+        elif s == "texture3d":                                                 # A0c: holes filled in 3-D only
             fill_planes, pp._fill_planes = pp._fill_planes, ndimage.binary_fill_holes
             try:
                 m, info = fine_mask(fine, A_f, P)
@@ -160,8 +149,8 @@ def standardised(arr, mask, h, P):
 
 def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_class", polarity=0, mirror=False, outline=True,
           two_sided=False, cut_axis=None, ngf=True, clamp=None):
-    """Register steps 3-5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
-    clamp: the bound on log-scales and shears of §4-5 in place of refine.CLAMP (0.15).
+    """§3 to §5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
+    clamp: the bound on log-scales and shears of §4 and §5 in place of refine.CLAMP (0.15).
     mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
     outline False: S = 2 S_class / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
     the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
@@ -217,7 +206,7 @@ def run_variant(name, out, device, force):
     d, src = out / "variants" / name, mask_source(name)
     P = Params.from_dict(spec.get("params", {}))
     kw = {k: v for k, v in spec.items() if k not in ("mask", "params")}
-    old = json.loads((d / "result.json").read_text()) if (d / "result.json").exists() else {}
+    old = json.loads((d / "result.json").read_text(encoding="utf-8")) if (d / "result.json").exists() else {}
     if not force and "error" not in old and old.get("params_hash") == P.hash() and old.get("spec") == spec:
         return old
     d.mkdir(parents=True, exist_ok=True)
@@ -235,7 +224,7 @@ def run_variant(name, out, device, force):
             raise
         io.write_json({**head, "error": f"{type(e).__name__}: {e}", "seconds": time.time() - t0}, d / "result.json")
         print(f"{name}: failed: {e}", flush=True)
-        return json.loads((d / "result.json").read_text())
+        return json.loads((d / "result.json").read_text(encoding="utf-8"))
     keys = ("S", "S_class", "S_outline", "L", "polarity", "log_scales", "shears", "search_rank")
     best = poses[0]
     r = {**head, "T": best["T"], "T_before_ngf": best.get("T_before_ngf", best["T"]),
@@ -248,15 +237,13 @@ def run_variant(name, out, device, force):
     if cuda:
         torch.cuda.empty_cache()
     print(f"{name}: S {best['S']:.4f} polarity {best['polarity']} in {r['seconds']:.0f} s", flush=True)
-    return json.loads((d / "result.json").read_text())
+    return json.loads((d / "result.json").read_text(encoding="utf-8"))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--main", type=Path, default=None, help="CLI run dir (T_oct2mri.txt) for the driver check")
-    ap.add_argument("--previous", type=Path, nargs="*", action="extend", default=[],
-                    help="ablations.json of the runs that measured the removed steps (repeatable)")
+    ap.add_argument("--main", type=Path, default=None, help="`octreg register` run dir (T_oct2mri.txt) to compare base with")
     ap.add_argument("--only", default=None, help=f"comma-separated subset of {','.join(VARIANTS)} (base is always run)")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--force", action="store_true", help="recompute variants that already have a result (delete OUT/prep to redo "
@@ -265,9 +252,8 @@ def main():
     names = ["base"] + [n for n in (a.only.split(",") if a.only else VARIANTS) if n != "base"]
     if set(names) - set(VARIANTS):
         ap.error(f"unknown variants {sorted(set(names) - set(VARIANTS))}")
-    for path, need in ((a.main, "T_oct2mri.txt"), *((p, "") for p in a.previous)):
-        if path and not (path / need if need else path).exists():
-            ap.error(f"{path} has no {need or 'file'}")
+    if a.main and not (a.main / "T_oct2mri.txt").exists():
+        ap.error(f"{a.main} has no T_oct2mri.txt")
     t0 = time.time()
     sources = sorted({mask_source(n) for n in names})
     prepare(a.out, sources)
@@ -296,44 +282,24 @@ def main():
                     "T_before_ngf": r["T_before_ngf"],
                     "boundary": bnd(T), "search_seconds": r["search"]["seconds"],
                     "refine_seconds": r["refine"]["seconds"], "gpu_peak_gb": r["gpu_peak_gb"], "T_oct2mri": r["T"]}
-    prep = {s: json.loads((a.out / "prep" / s / "prep.json").read_text()) for s in sources + ["mri"]}
+    prep = {s: json.loads((a.out / "prep" / s / "prep.json").read_text(encoding="utf-8")) for s in sources + ["mri"]}
     grid = next((p["grid"] for p in prep.values() if "grid" in p), {})
     work = [grid.get("seconds", 0)] + [p.get("mask_seconds", p.get("seconds", 0)) for p in prep.values()] + [r["seconds"] for r in rows.values()]
     res = {"pair": "I58 brainstem", "oct": E.OCT, "mri": E.MRI, "params_hash": Params().hash(), "prep": prep,
            "variants": table, "seconds": sum(work),          # the computation in the table, also when variants come from the cache
            "peak_rss_gb": max([p.get("peak_rss_gb") or 0 for p in prep.values()] + [r.get("peak_rss_gb") or 0 for r in rows.values()]),
            "driver_seconds": time.time() - t0}
-    res["removed_steps"] = []
-    for path in a.previous:
-        prev = json.loads(path.read_text())
-        found = 0
-        for group in REMOVED:
-            rows = {n: {**prev["variants"][n], "pose_to_present_base": E.pose(np.array(prev["variants"][n]["T_oct2mri"]), T_base, pts,
-                                                                              cor)}
-                    for n in group["step"] if n in prev["variants"] and "error" not in prev["variants"][n]}
-            if rows:
-                found += len(rows)
-                T_prev = np.array(prev["variants"]["base"]["T_oct2mri"])
-                res["removed_steps"].append({**group, "source": path, "rows": rows,
-                                             "present_base_vs_previous_base": E.pose(T_base, T_prev, pts, cor)})
-        if not found:                      # silently empty removed-step rows is how BENCHMARK.md lost its A3 and A7 rows
-            want = ", ".join(n for g in REMOVED for n in g["step"])
-            print(f"warning: --previous {path} holds none of the removed steps ({want}); its variants are "
-                  f"{', '.join(prev.get('variants', {}))}. The removed-step rows of the report will be missing: point "
-                  "--previous at the ablation run that measured them, bench_runs/I58/ablate/ablations.json.",
-                  flush=True)
     if a.main:
         T_main = E.load_T(a.main / "T_oct2mri.txt")
         res["driver_check"] = {"main_run": a.main, "base_vs_main": E.pose(T_base, T_main, pts, cor)}
     store = a.out / "ablations.json"
     if a.only and store.is_file():                     # --only adds rows, it does not throw the rest of the table away
-        old = json.loads(store.read_text())
+        old = json.loads(store.read_text(encoding="utf-8"))
         if old.get("params_hash") == res["params_hash"]:
             res["variants"] = {**old.get("variants", {}), **res["variants"]}
-            res["removed_steps"] = res["removed_steps"] or old.get("removed_steps", [])
             res["prep"] = {**old.get("prep", {}), **res["prep"]}
         else:
-            print(f"warning: {store} was written with params {old.get('params_hash')}, not {res['params_hash']}; "
+            print(f"warning: {store} was written with params {old.get('params_hash')}, not {res['params_hash']}, so "
                   "its rows are not comparable and are replaced.", flush=True)
     io.write_json(res, store)
     print(f"wrote {store} ({time.time() - t0:.0f} s)", flush=True)

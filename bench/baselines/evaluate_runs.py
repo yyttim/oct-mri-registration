@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""Evaluate baseline run directories the same way as an octreg run (bench only; the package never reads this).
+"""Evaluate affine baseline run directories the same way as an octreg run (bench only, not part of the package).
 
-    python bench/baselines/evaluate_runs.py RUN [RUN ...] [--shots] [--summary OUT.json] [--force]
+    python bench/baselines/evaluate_runs.py RUN [RUN ...] [--octreg-run DIR] [--shots] [--summary OUT.json] [--force]
 
-For every RUN (a directory made by rundir.py init, with check.json ok):
-  1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz,
-     the same resampler for every method, so the visual comparison shows the registration and not the interpolation.
-  2. bench/evaluate.py with the method's masks (--masks) and the octreg run as --previous -> RUN/eval.json: rim boundary
-     agreement forward / reverse (median and p90 per face class), pose distance to the octreg affine, raw-data frame check.
-  3. Dice of the OCT specimen mask through T against the MRI foreground on the 0.15 mm grid -> RUN/dice.json (the MRI holds
-     tissue beyond the block, so Dice is bounded below 1 for every method and compares methods, not against 1).
-  4. with --shots: freeview screenshots at the shared sections (baselines/shots/shots.sh in WSL) named <tool>_<variant>.
+For every RUN (a directory made by rundir.py init, with a check.json that is ok):
+  1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz.
+     Every method goes through the same resampler, so the visual comparison shows the registration and not the
+     interpolation.
+  2. bench/evaluate.py with octreg's masks (--masks) and the octreg run (--octreg-run, default
+     OCTREG_PROJECT_ROOT/bench_runs/I58/octreg) as --previous -> RUN/eval.json: rim outline agreement forward and reverse
+     (median and p90 per face class), pose distance to octreg's affine, raw-data frame check.
+  3. Dice of the OCT specimen mask through T against the MRI foreground on the 0.15 mm grid -> RUN/dice.json. The MRI holds
+     tissue beyond the block, so Dice stays below 1 for every method and only compares methods.
+  4. With --shots: freeview screenshots at the shared sections (baselines/shots/shots.sh, run in WSL), named
+     <tool>_<variant>.
 A summary row per run goes into --summary (default OCTREG_PROJECT_ROOT/baselines/summary_affine.json).
-Environment: OCTREG_PROJECT_ROOT (D:/Projects/oct-mri-registration), OCTREG_I58_DIR for the two original files.
+Environment: OCTREG_PROJECT_ROOT, the root of the inputs, runs and screenshots (default: the repository), and
+OCTREG_I58_DIR, the folder of the two original files (default OCTREG_PROJECT_ROOT/data/I58).
 """
 from __future__ import annotations
 
@@ -36,7 +40,7 @@ I58 = Path(os.environ.get("OCTREG_I58_DIR") or ROOT / "data" / "I58")
 OCT = I58 / "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz"
 MRI = I58 / "I58_brainstem_MRI_cropped_to_OCT.nii.gz"
 INPUTS = ROOT / "baselines" / "inputs"
-OCTREG_RUN = ROOT / "bench_runs" / "I58" / "v2" / "main"
+OCTREG_RUN = ROOT / "bench_runs" / "I58" / "octreg"
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
 ENV = {**os.environ, "PYTHONPATH": str(REPO), "PYTHONIOENCODING": "utf-8", "CUDA_VISIBLE_DEVICES": ""}
@@ -79,7 +83,7 @@ def scales(run_dir: Path):
     return np.linalg.norm(T[:3, :3] @ (A[:3, :3] / sp), axis=0).round(4).tolist()
 
 
-def evaluate(run_dir: Path, shots: bool, force: bool):
+def evaluate(run_dir: Path, shots: bool, force: bool, octreg_run: Path = OCTREG_RUN):
     chk = run_dir / "check.json"
     if not chk.is_file() or not json.loads(chk.read_text())["ok"]:
         print(f"{run_dir}: no check.json ok, skipped", flush=True)
@@ -91,7 +95,7 @@ def evaluate(run_dir: Path, shots: bool, force: bool):
                        "-o", str(run_dir / "oct_in_mri_affine.nii.gz"), "--affine-only"], run_dir / "apply.log")
     if force or not (run_dir / "eval.json").is_file():
         t_eval = run([PY, str(REPO / "bench" / "evaluate.py"), str(run_dir), "--masks", str(INPUTS), "--previous",
-                      str(OCTREG_RUN), "-o", str(run_dir / "eval.json")], run_dir / "evaluate.log")
+                      str(octreg_run), "-o", str(run_dir / "eval.json")], run_dir / "evaluate.log")
     d = dice(run_dir)
     if shots and (force or not (SHOTS / "shots" / f"ax_26_{name}.png").is_file()):
         run(["wsl", "bash", wsl_path(SHOTS / "shots.sh"), name, wsl_path(run_dir / "oct_in_mri_affine.nii.gz")],
@@ -122,13 +126,14 @@ def evaluate(run_dir: Path, shots: bool, force: bool):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("runs", nargs="+", type=Path)
+    ap.add_argument("--octreg-run", type=Path, default=OCTREG_RUN)
     ap.add_argument("--shots", action="store_true")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--summary", type=Path, default=ROOT / "baselines" / "summary_affine.json")
     a = ap.parse_args()
     rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}
     for r in a.runs:
-        row = evaluate(r, a.shots, a.force)
+        row = evaluate(r, a.shots, a.force, a.octreg_run)
         if row:
             rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}   # merge with other runs
             rows[row["run"]] = row

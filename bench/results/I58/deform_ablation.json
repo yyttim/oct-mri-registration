@@ -1,6 +1,5 @@
 {
- "run": "bench_runs/I58/rel8/main",
- "cache": "bench_runs/I58/pr6/cache.npz",
+ "cache": "bench_runs/I58/cache.npz",
  "params_hash": "da914d8ccc555207",
  "polarity": -1,
  "axis": {
@@ -211,7 +210,7 @@
    "seconds": 35.983675479888916
   },
   "support": {
-   "label": "boundary points only within 5 mm of a match (the rule of 1.1)",
+   "label": "boundary points only within 5 mm of an interior match",
    "change": {
     "support": 5.0
    },

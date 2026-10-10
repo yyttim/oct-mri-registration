@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Side-by-side section panels of the baseline comparison (bench only).
+"""Side-by-side section panels of the baseline comparison (bench only, not part of the package).
 
     python bench/baselines/composites.py --shots DIR --out DIR/../composites --methods mri octreg ants_com ...
 
-Every method has 800x800 freeview shots DIR/<section>_<method>.png at the shared sections (baselines/shots/sections.txt).
-For each section one image is written with the methods side by side (up to --per-row per row), each panel labelled. The
-label of a method is its name unless --label name=Label pairs are given.
+Reads one 800x800 freeview screenshot DIR/<section>_<method>.png per method at each shared section
+(baselines/shots/sections.txt). Writes one image per section with the methods side by side, up to --per-row per row. Each
+panel carries the method name, or the label of a --label name=Label pair. A missing screenshot gives a dark panel marked
+(missing).
 """
 from __future__ import annotations
 
