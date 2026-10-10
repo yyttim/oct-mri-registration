@@ -1,9 +1,9 @@
 | tool | variant | wall s | scale per OCT axis | rim OCT to MRI / MRI to OCT (mm) | OCT boundary p90 (mm) | Dice | to octreg: mean mm / deg | frame check | note |
 |---|---|---|---|---|---|---|---|---|---|
-| ants | antsai | 19 | 1.031 / 1.004 / 1.032 | 2.88 / 4.29 | 5.37 | 0.000 | 40.8 / 165.2 | fail | antsAI global rotation search (0.15 mm), then the same stages: the search picks a flipped pose |
+| ants | antsai | 17670 | 1.031 / 1.004 / 1.032 | 2.88 / 4.29 | 5.37 | 0.000 | 40.8 / 165.2 | fail | antsAI global rotation search (0.15 mm), then the same stages: the search picks a flipped pose |
 | ants | com | 45 | 0.864 / 0.618 / 0.921 | 1.92 / 2.30 | 4.66 | 0.704 | 3.9 / 9.3 | pass | antsRegistrationSyN.sh -t a (rigid+affine, Mattes MI), centre-of-mass start, OCT shrunk to half its volume |
 | ants | com_fov | 68 | 1.283 / 1.008 / 1.101 | 1.62 / 2.22 | 3.92 | 0.697 | 2.9 / 6.6 | pass | centre-of-mass start with the OCT FOV mask, OCT inflated by 39 % |
-| ants | identity | 25 | 0.915 / 1.032 / 0.989 | 2.09 / 2.10 | 6.16 | 0.020 | 40.3 / 23.2 | fail | same stages from the header alignment, ends 18 deg off, far from the block |
+| ants | identity | 25 | 0.915 / 1.032 / 0.989 | 2.09 / 2.10 | 6.16 | 0.020 | 40.3 / 23.2 | fail | same stages from the header alignment, ends 17.8 deg from that start, far from the block |
 | elastix | center | 26 | 0.916 / 0.835 / 0.974 | 0.86 / 1.28 | 3.25 | 0.809 | 2.6 / 12.1 | pass | model-zoo rigid+affine (Mattes MI), geometric-centre start, stays 1 to 2 deg from the header orientation, shrunk |
 | elastix | cog | 32 | 0.899 / 0.818 / 0.970 | 0.87 / 1.24 | 3.26 | 0.815 | 2.8 / 12.3 | pass | same with the centre-of-gravity start, same pose as center |
 | elastix | cog_fov | 29 | 1.028 / 0.995 / 1.012 | 1.56 / 2.00 | 3.65 | 0.724 | 2.4 / 10.6 | pass | centre-of-gravity start with the OCT FOV mask, no shrink, same wrong orientation |
@@ -16,7 +16,7 @@
 | greedy | centers_fov | 73 | 1.000 / 1.000 / 1.000 | 1.42 / 1.80 | 3.61 | 0.733 | 2.4 / 11.0 | pass | greedy NMI from the image centres with the moving FOV mask, stalled at the start |
 | greedy | identity | 55 | 1.283 / 1.973 / 1.018 | 2.53 / 2.74 | 5.04 | 0.025 | 66.6 / 14.6 | fail | greedy NMI rigid then affine from the header alignment, the affine stage stretched the OCT 2.2x |
 | greedy | search | 53 | 1.000 / 1.000 / 1.000 | n/a / n/a | n/a | 0.000 | 42.5 / 32.3 | fail | greedy -search 1000 global search, the best candidate has almost no overlap with the MRI |
-| mri_coreg | default | 1329 | 0.915 / 0.808 / 0.998 | 1.01 / 1.70 | 3.28 | 0.788 | 4.1 / 16.6 | pass | mri_coreg --dof 6 then --dof 12 --init-reg, brute-force initial search, a 23 % stretch on one axis |
+| mri_coreg | default | 1329 | 0.915 / 0.808 / 0.998 | 1.01 / 1.70 | 3.28 | 0.788 | 4.1 / 16.6 | pass | mri_coreg --dof 6 then --dof 12 --init-reg, brute-force initial search, the OCT shrunk by 19 % along one axis |
 | mri_coreg | default_movmask | 1066 | 0.915 / 0.808 / 0.998 | 1.01 / 1.70 | 3.28 | 0.788 | 4.1 / 16.6 | pass | the same with --mov-mask oct_fov: identical to default |
 | mri_coreg | regheader | 1166 | 1.054 / 1.057 / 1.025 | 1.72 / 2.05 | 4.09 | 0.696 | 2.0 / 10.2 | pass | mri_coreg --regheader (header start) |
 | mri_robust_register | default_com | 842 | 0.990 / 0.997 / 1.071 | 1.61 / 1.94 | 3.54 | 0.746 | 3.0 / 11.7 | pass | mri_robust_register --cost NMI, rigid then --affine --ixform, centre-of-mass start |

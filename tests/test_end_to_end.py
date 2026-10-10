@@ -100,8 +100,8 @@ def test_register_and_apply(tmp_path, capsys):
     oct_img = nib.load(str(oct_path))                          # equal intensities: no histogram valley; texture: the specimen
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
     assert pp.foreground(raw_h, 0.15, Params())[1]["status"] == "no_valley"
-    assert 0.9 < res["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3          # 1.10-1.12 over seeds
-    scale = res["pose"]["scale_per_oct_axis"]                   # true 1.03 / 1 / 1; the mask margin biases it low (0.91-0.97)
+    assert 0.9 < res["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3          # 1.10-1.13 over seeds 0-4
+    scale = res["pose"]["scale_per_oct_axis"]                   # true 1.03 / 1 / 1; 0.97-1.00 on the first axis over seeds 0-4
     assert 0.85 < min(scale) and max(scale) < 1.1
     assert res["params"]["n_rot"] == FAST["n_rot"] and set(res["seconds"]) >= {"oct_mask", "search_refine_ngf", "total"}
     assert res["refine"]["n_poses"] == FAST["topk"] and res["search"]["n_orientations"] == FAST["n_rot"]

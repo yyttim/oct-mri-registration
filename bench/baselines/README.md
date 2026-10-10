@@ -8,13 +8,14 @@ tool fit the OCT better than the §6 field? The results are in [BASELINES.md](BA
 
 ## Inputs
 
-Both volumes keep their NIfTI headers, which place them roughly together. The header orientation is 11 degrees from the true
-pose, and the true position is within about 2 cm of the header alignment. The fixed image is the MRI crop as given (0.08 mm).
-The moving image is the 20 um OCT box-averaged to 0.08 mm isotropic, the resolution of the MRI (`oct_0.08mm.nii.gz`). This is
-how microscopy volumes are usually passed to these tools. The only mask a tool receives is a field-of-view (FOV) mask of the OCT
-(voxels > 0), and only in a separate variant. In the deformable stage the moving image is the OCT resampled onto the MRI grid
-through octreg's affine (`oct_affine_0.08mm.nii.gz`). Every tool then starts from the same alignment and writes its field in the
-MRI world. octreg's own masks serve only the evaluation. `prepare_inputs.py` writes these files.
+Both volumes keep their NIfTI headers, which place them roughly together. The header orientation is 11 degrees from octreg's
+affine, and the header alignment places the block about 27 mm from it (mean over the OCT specimen). The fixed image is the MRI
+crop as given (0.08 mm). The moving image is the 20 um OCT box-averaged to 0.08 mm isotropic, the resolution of the MRI
+(`oct_0.08mm.nii.gz`). This is how microscopy volumes are usually passed to these tools. The only mask a tool receives is a
+field-of-view (FOV) mask of the OCT (voxels > 0), and only in a separate variant. In the deformable stage the moving image is
+the OCT resampled onto the MRI grid through octreg's affine (`oct_affine_0.08mm.nii.gz`). Every tool then starts from the same
+alignment and writes its field in the MRI world. octreg's own masks serve only the evaluation. `prepare_inputs.py` writes these
+files.
 
 ## Tools and settings
 

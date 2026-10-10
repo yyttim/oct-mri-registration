@@ -2,7 +2,7 @@
 
 Two steps, so the sweep costs minutes instead of a full run:
 
-    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE      # §1 once (~15 min on a CPU)
+    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE      # §1 once (about 4 min on a CPU)
     python bench/ngf_lam.py sweep --cache CACHE --run RUN -o OUT.json
 
 `cache` writes the base grids of §1 (register.prepare_mri, register.prepare_oct) that §5 reads, with the measured-OCT

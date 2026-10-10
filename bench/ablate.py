@@ -17,7 +17,7 @@ The smooth deformation (§6) does not change the affine, so no variant runs it. 
 result.json, which bench/report.py prints.
 
 Every variant keeps the pose of §4 (T_before_ngf) as well as the final pose, and the table reports the change of both against
-the base: steps of §1 to §4 act through the §4 pose, which §5 then refines within a few degrees and millimetres.
+the base: steps of §1 to §4 act through the §4 pose, which §5 then refines.
 
 Metrics: pose to base, outline agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
 volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
