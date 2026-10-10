@@ -129,14 +129,14 @@ interior-match residual from 0.250 to 0.124 mm and the median surface-edge offse
 offsets within 0.3 mm instead of 51 %. These are label-free read-outs of octreg, measured again on the warped OCT, and not
 ground truth.
 
-| | sagittal | coronal | axial |
-|---|---|---|---|
-| MRI | <img src="docs/figures/result/sagittal_mri.png" width="248" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="172" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="172" alt="MRI, axial"> |
-| OCT | <img src="docs/figures/result/sagittal_oct.png" width="248" alt="OCT, sagittal"> | <img src="docs/figures/result/coronal_oct.png" width="172" alt="OCT, coronal"> | <img src="docs/figures/result/axial_oct.png" width="172" alt="OCT, axial"> |
-| OCT and MRI tissue boundary | <img src="docs/figures/result/sagittal_oct_boundary.png" width="248" alt="OCT and MRI tissue boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="172" alt="OCT and MRI tissue boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="172" alt="OCT and MRI tissue boundary, axial"> |
+| sagittal | coronal | axial |
+|---|---|---|
+| <img src="docs/figures/result/sagittal_mri.png" width="300" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="208" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="208" alt="MRI, axial"> |
+| <img src="docs/figures/result/sagittal_oct.png" width="300" alt="OCT, sagittal"> | <img src="docs/figures/result/coronal_oct.png" width="208" alt="OCT, coronal"> | <img src="docs/figures/result/axial_oct.png" width="208" alt="OCT, axial"> |
+| <img src="docs/figures/result/sagittal_oct_boundary.png" width="300" alt="OCT and MRI tissue boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, axial"> |
 
-Three planes through the middle of the block in freeview. The rows show the MRI crop, the OCT registered onto it
-(`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red. The boundary is the MRI
+Three planes through the middle of the block in freeview. From top to bottom the rows show the MRI crop, the OCT registered onto
+it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red. The boundary is the MRI
 foreground rule of §1 applied to the crop at its own 0.08 mm. Each panel is the whole crop at one pixel per MRI voxel, 27.4 mm
 from right to left, 39.6 mm from posterior to anterior and 39.1 mm from inferior to superior. The OCT specimen follows the
 boundary and lies on the same anatomy. Where the boundary runs beyond the OCT, at both ends of the block, the MRI holds tissue

@@ -29,11 +29,11 @@ clock on a machine shared with other jobs and only indicative.
 
 | MRI | image centres aligned (start) | octreg, §1 to §5 | NiftyReg reg_aladin |
 |---|---|---|---|
-| <img src="../../docs/figures/affine/mri.png" width="172" alt="MRI"> | <img src="../../docs/figures/affine/start.png" width="172" alt="image centres aligned (start)"> | <img src="../../docs/figures/affine/octreg.png" width="172" alt="octreg, §1 to §5"> | <img src="../../docs/figures/affine/reg_aladin.png" width="172" alt="NiftyReg reg_aladin"> |
+| <img src="../../docs/figures/affine/mri.png" width="196" alt="MRI"> | <img src="../../docs/figures/affine/start.png" width="196" alt="image centres aligned (start)"> | <img src="../../docs/figures/affine/octreg.png" width="196" alt="octreg, §1 to §5"> | <img src="../../docs/figures/affine/reg_aladin.png" width="196" alt="NiftyReg reg_aladin"> |
 | **greedy** | **elastix** | **mri_robust_register** | **ANTs** |
-| <img src="../../docs/figures/affine/greedy.png" width="172" alt="greedy"> | <img src="../../docs/figures/affine/elastix.png" width="172" alt="elastix"> | <img src="../../docs/figures/affine/mri_robust_register.png" width="172" alt="mri_robust_register"> | <img src="../../docs/figures/affine/ants.png" width="172" alt="ANTs"> |
+| <img src="../../docs/figures/affine/greedy.png" width="196" alt="greedy"> | <img src="../../docs/figures/affine/elastix.png" width="196" alt="elastix"> | <img src="../../docs/figures/affine/mri_robust_register.png" width="196" alt="mri_robust_register"> | <img src="../../docs/figures/affine/ants.png" width="196" alt="ANTs"> |
 | **mri_coreg** | **FLIRT** | **SynthMorph** |  |
-| <img src="../../docs/figures/affine/mri_coreg.png" width="172" alt="mri_coreg"> | <img src="../../docs/figures/affine/flirt.png" width="172" alt="FLIRT"> | <img src="../../docs/figures/affine/synthmorph.png" width="172" alt="SynthMorph"> |  |
+| <img src="../../docs/figures/affine/mri_coreg.png" width="196" alt="mri_coreg"> | <img src="../../docs/figures/affine/flirt.png" width="196" alt="FLIRT"> | <img src="../../docs/figures/affine/synthmorph.png" width="196" alt="SynthMorph"> |  |
 
 The axial plane of the README figure (z = 22.7 mm) for each tool at its setting in the table, in freeview, with the boundary
 of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI voxel, 27.4 mm from right to left and 39.6 mm
@@ -76,11 +76,11 @@ misfit. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for
 
 | MRI | no deformation (octreg's affine) | octreg, §6 |
 |---|---|---|
-| <img src="../../docs/figures/deformable/mri.png" width="288" alt="MRI"> | <img src="../../docs/figures/deformable/affine.png" width="288" alt="no deformation (octreg's affine)"> | <img src="../../docs/figures/deformable/octreg.png" width="288" alt="octreg, §6"> |
+| <img src="../../docs/figures/deformable/mri.png" width="270" alt="MRI"> | <img src="../../docs/figures/deformable/affine.png" width="270" alt="no deformation (octreg's affine)"> | <img src="../../docs/figures/deformable/octreg.png" width="270" alt="octreg, §6"> |
 | **ANTs SyN, CC, FOV mask** | **ANTs SyN, CC, script default** | **greedy, WNCC** |
-| <img src="../../docs/figures/deformable/syn_fov.png" width="288" alt="ANTs SyN, CC, FOV mask"> | <img src="../../docs/figures/deformable/syn_default.png" width="288" alt="ANTs SyN, CC, script default"> | <img src="../../docs/figures/deformable/greedy.png" width="288" alt="greedy, WNCC"> |
+| <img src="../../docs/figures/deformable/syn_fov.png" width="270" alt="ANTs SyN, CC, FOV mask"> | <img src="../../docs/figures/deformable/syn_default.png" width="270" alt="ANTs SyN, CC, script default"> | <img src="../../docs/figures/deformable/greedy.png" width="270" alt="greedy, WNCC"> |
 | **ConvexAdam** | **elastix B-spline** | **NiftyReg reg_f3d** |
-| <img src="../../docs/figures/deformable/convexadam.png" width="288" alt="ConvexAdam"> | <img src="../../docs/figures/deformable/elastix.png" width="288" alt="elastix B-spline"> | <img src="../../docs/figures/deformable/reg_f3d.png" width="288" alt="NiftyReg reg_f3d"> |
+| <img src="../../docs/figures/deformable/convexadam.png" width="270" alt="ConvexAdam"> | <img src="../../docs/figures/deformable/elastix.png" width="270" alt="elastix B-spline"> | <img src="../../docs/figures/deformable/reg_f3d.png" width="270" alt="NiftyReg reg_f3d"> |
 
 The superior end of the block on the sagittal plane through the largest displacement of §6 (x = 4.26 mm), in freeview, for
 each tool at its setting in the table, with the boundary of the MRI tissue in red. Each panel is 34.6 mm from posterior to

@@ -190,7 +190,7 @@ These values per section come from the run of the §6 ablations below. Detached 
 
 | MRI | OCT, affine | OCT, affine and §6 |
 |---|---|---|
-| <img src="figures/deformable/mri.png" width="288" alt="MRI"> | <img src="figures/deformable/affine.png" width="288" alt="OCT through the affine"> | <img src="figures/deformable/octreg.png" width="288" alt="OCT through the affine and §6"> |
+| <img src="figures/deformable/mri.png" width="270" alt="MRI"> | <img src="figures/deformable/affine.png" width="270" alt="OCT through the affine"> | <img src="figures/deformable/octreg.png" width="270" alt="OCT through the affine and §6"> |
 
 The superior end of the block in freeview, on the sagittal plane through the largest displacement of the field (x = 4.26 mm),
 at two pixels per MRI voxel. Each panel is 34.6 mm from posterior to anterior and 14.6 mm high, up to the top of the crop.
