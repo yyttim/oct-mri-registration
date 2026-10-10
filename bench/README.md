@@ -6,18 +6,18 @@ metric is label-free.
 
 ## Data layout
 
-The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/` and the data are read from
-`data/` of the repository, and both are in `.gitignore`. Three environment variables move them.
+The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/`, the inputs, runs and summaries
+of the baseline comparison to `baselines/`, and the data are read from `data/` of the repository, and all three are in
+`.gitignore`. Three environment variables move them.
 
 | variable | meaning | default |
 |---|---|---|
-| `OCTREG_PROJECT_ROOT` | the runs go to `<project root>/bench_runs` | the repository root |
+| `OCTREG_PROJECT_ROOT` | the runs go to `<project root>/bench_runs`, the baseline comparison to `<project root>/baselines` | the repository root |
 | `OCTREG_DATA_ROOT` | the data root | `<repository>/data` |
 | `OCTREG_I58_DIR` | the folder that holds the two I58 input files | `<data root>/I58` |
 
 The two input files are `I58_Brainstem_mus_Slice_full_20um_corr.nii.gz` (the OCT) and
-`I58_brainstem_MRI_cropped_to_OCT.nii.gz` (the MRI crop). They are not part of the repository. Nothing else here is
-machine-specific.
+`I58_brainstem_MRI_cropped_to_OCT.nii.gz` (the MRI crop). They are not part of the repository.
 
 The scripts read the pair through `OCT_I58` and `MRI_I58` of `bench/paths.py`, so another pair runs once those two names
 point at its files. Two read-outs are specific to this block. The rim of the outline agreement leaves out the deep end of
@@ -32,21 +32,22 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `evaluate.py` | measures one run against the data: raw-data frame check, outline agreement, OCT specimen mask volume, and on request the pose distance to a second run |
 | `ablate.py` | preprocesses the pair once and runs base and the variants of the table below, written as one JSON table |
 | `ablate_deform.py` | the ablations of §6 from the cached base grids of `ngf_lam.py cache`, every row scored by the same measurement, and on request the fields of chosen rows as run directories |
-| `ngf_lam.py` | §5 alone on cached base grids: `cache` writes the §1 grids, `sweep` refits §5 at several λ values or σ schedules, `transforms` writes every pose of a sweep as a 4x4 text file for `octreg qc --T` |
+| `ngf_lam.py` | §5 alone on cached base grids: `cache` writes the §1 grids, `sweep` refits §5 at several λ values or σ schedules, `transforms` writes every pose of a sweep as a 4×4 text file for `octreg qc --T` |
 | `report.py` | writes `bench/BENCHMARK.md` from the run outputs, and on request the qc figures and the stored results |
-| `compose_pair.py` | two `octreg qc` outputs of one run side by side (`bench/figures/fig_handedness_I58.png`) |
-| `fig_registration.py` | the registration figure: an MRI plane, the OCT placed on it by the run, and the two cut into 8 mm squares and interleaved |
+| `compose_pair.py` | a figure of two `octreg qc` outputs of one run side by side, for example the result and the best pose of the other handedness (A8) |
+| `fig_registration.py` | a registration figure on three MRI planes: the MRI, the OCT placed on it by the run, and the two cut into 8 mm squares and interleaved |
 | `BENCHMARK.md` | the I58 report, written by `report.py` around two hand-written sections |
 | `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
 | `results/I58/` | the stored results of the benchmark (below) |
 | `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md, docs/METHOD.md and BASELINES.md |
-| `figures/` | the default place for the qc figures of `report.py --figures`, not tracked by git |
+| `figures/` | where the report step of `run_i58.py` writes the qc figures (`report.py --figures`), not tracked by git |
 
 ## Running the I58 benchmark
 
 `bench/run_i58.py` runs its steps from the repository root, with the interpreter that runs it. The whole benchmark is
-`register ablate evaluate report`, with `evaluate` run twice, since the mask and outline metrics need the preprocessing
-that the ablate step writes.
+`STEPS="register ablate evaluate report"`, with `evaluate` after `ablate`, since the mask and outline metrics need the
+preprocessing that the ablate step writes. The two commands below split it in two, with a first `evaluate` right after the
+registration for the metrics that need no masks. The second `evaluate` rewrites `OUT/eval.json` with all the metrics.
 
 ```bash
 STEPS="register evaluate" python bench/run_i58.py           # the registration, then the metrics that need no masks
@@ -82,9 +83,9 @@ on synthetic arrays in a few seconds, on the CPU and without any of the data.
 The §5 sweeps and the §6 ablations run on base grids cached once:
 
 ```bash
-python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE
-python bench/ngf_lam.py sweep --cache CACHE --run RUN -o OUT.json             # --vary sigmas
-python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json             # writes OUT.json and OUT.md
+python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE.npz
+python bench/ngf_lam.py sweep --cache CACHE.npz --run RUN -o OUT.json         # --vary sigmas
+python bench/ablate_deform.py --cache CACHE.npz --run RUN -o OUT.json         # writes OUT.json and OUT.md
 ```
 
 The ablation figures of docs/METHOD.md come from `ablate.py --starts` and `ablate_deform.py --save-fields` written into
@@ -92,9 +93,13 @@ one directory, which `figures.py --ablation` reads:
 
 ```bash
 python bench/ablate.py --out ABL --main OUT --starts
-python bench/ablate_deform.py --cache CACHE --run OUT -o ABL/deform_ablation.json --save-fields ABL/deform
+python bench/ablate_deform.py --cache CACHE.npz --run OUT -o ABL/deform_ablation.json --save-fields ABL/deform
 python bench/figures.py --octreg-run OUT --ablation ABL
 ```
+
+`figures.py` makes every panel of `docs/figures` in one run, so it also needs the baseline run directories of `bench/baselines`
+(under `<project root>/baselines`, or `--baselines DIR`) and FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) with its licence, in
+WSL on Windows.
 
 ## Stored results
 
@@ -106,11 +111,12 @@ are cut to a file name or a path under `bench_runs/`.
 | `result.json`, `eval.json` | the output of `octreg register` and of `bench/evaluate.py` for the benchmark run |
 | `ablations.json`, `starts.json` | the ablation table and the start test of `bench/ablate.py` |
 | `deform_ablation.json`, `.md` | the §6 ablation table of `bench/ablate_deform.py` |
-| `baselines/` | the summaries of the comparison with standard registration tools |
+| `baselines/` | the summaries, run notes and tables of the comparison with standard registration tools |
 
 The report step writes `result.json`, `eval.json`, `ablations.json` and `starts.json` with `report.py --store` in the same
-command that writes `BENCHMARK.md`, so the document and the stored numbers agree. `deform_ablation.json` and `.md` are the output of
-`bench/ablate_deform.py`, computed at the affine of the benchmark run.
+command that writes `BENCHMARK.md`, so the document and the stored numbers agree. Only the wall clock and the GPU memory of the
+whole device in its Main result come from the step logs in `${OUT}_logs`, which are not stored. `deform_ablation.json` and `.md`
+are the output of `bench/ablate_deform.py`, computed at the affine of the benchmark run.
 
 ## What is measured
 
@@ -122,11 +128,11 @@ Nothing else. `T = RUN/T_oct2mri.txt` maps the OCT header world to the MRI heade
   as the median per face. "rim" leaves out the deep end of the block (raw axis 0, high index), which has no specimen rim.
   Cut faces of either field of view are excluded. With `--previous` the rim medians of the second run are measured under
   the same masks.
-- OCT specimen mask: the volume of `oct_mask.nii.gz` in cm3.
+- OCT specimen mask: the volume of `oct_mask.nii.gz` in cm³.
 - Pose distance to a second octreg run (`--previous`): mean and max displacement over the points of the run's own OCT
   specimen mask, the same at the 8 block corners, and the rotation angle between the two poses. Without `--masks` the mean
   is over the 8 corners of the OCT array plus a uniform sample of its grid.
-- Raw-data frame check: raw 20 um values streamed from the OCT `.nii.gz` through the header affine and the pose, against
+- Raw-data frame check: raw 20 µm values streamed from the OCT `.nii.gz` through the header affine and the pose, against
   the exported affine overlay `oct_in_mri_affine.nii.gz` (Spearman, 7^3 voxel boxes). Controls flip each raw OCT axis or
   shift the pose by 2 mm. It passes when the pose gives at least 0.9 and every flip at most 0.3.
 
@@ -149,14 +155,14 @@ points of the base specimen mask and over the 8 corners of the OCT array.
 | A6 | no scale prior: λ 0 and clamp 1.0 instead of 2 and 0.15 |
 | A6p, A6c | no penalty, clamp kept (λ 0, clamp 0.15) and no clamp, penalty kept (λ 2, clamp 1.0) |
 | A8 | the other handedness: the OCT world mirrored (z negated) before search and refinement |
-| A9 | no outline term: S = 2 S_class / 3 in the search (patched `search.combined`) and in the refinement (outline weight = the specimen mask, so S_outline = 0) |
+| A9 | no outline term: S = 2 \|S_class\| / 3 in the search (patched `search.combined`) and in the refinement (outline weight = the specimen mask, so S_outline = 0) |
 | A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
 | A11, A11b | simulated cut face (specimen mask removed beyond 70 % of its extent along OCT axis 1, data kept as embedding), with the method and with the two-sided outline |
 | A12 | no fine-structure refinement: the pose of §4 (every other variant ends with §5) |
 | A13 | no two-class term: S = S_outline / 3 in the search and the refinement, polarity +1 |
 | A14 | no orientation search: §4 from the image-centre start (header orientation, centres of the two image boxes aligned) at both polarities, then §5 |
 
-`--starts` adds the start test: the OCT world turned by 90 and 180 degrees about each of its array axes, through the centre
+`--starts` adds the start test: the OCT world turned by 90° and 180° about each of its array axes, through the centre
 of its image box, with the method and A14 run from each turned start (`ABL/starts/`, `ABL/starts.json`).
 
 `Params` holds method constants only, and the method has no ablation switches. Each variant is one explicit change made in

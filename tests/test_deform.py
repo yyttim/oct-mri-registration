@@ -187,7 +187,7 @@ def test_smallest_lam_keeps_the_strain_limit():
     ev, lat = deform.Evidence(mri, PARAMS, "cpu").measure(*on_mri_grid(mri, oct_, T)), lattice_of(mri)
     strain = lambda lam: lat.strain(deform.fit(lat, ev, lam, PARAMS.df_huber_mm))
     lo, hi = deform.LAM_RANGE
-    assert strain(lo) < PARAMS.df_max_strain                                               # the bump strains by 0.08
+    assert strain(lo) < PARAMS.df_max_strain                                               # the fit strains by 0.07
     assert deform.smallest_lam(lat, ev, PARAMS) == lo
     none = float(np.median(np.linalg.norm(ev["D"], axis=1)) + np.median(np.abs(ev["delta"])))
     for limit in (0.05, 0.02):                                                             # a limit inside the range

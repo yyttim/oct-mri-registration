@@ -1,4 +1,4 @@
-"""`octreg register` (docs/METHOD.md §1-6 on two files, then the outputs) and `octreg apply`.
+"""`octreg register` (docs/METHOD.md §1-6 on two files, then the outputs), `octreg apply` and `octreg qc`.
 
 A transform T is a 4x4 matrix (mm) from the OCT world to the MRI world; worlds are the NIfTI header frames (array frame for
 TIFF / NPY). The OCT is only ever streamed: its largest array in memory is the fine grid (Params.fine_mm). The smooth
@@ -71,7 +71,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     P, out, t0, sec = params, Path(out_dir), time.time(), {}
     h, cuda = P.base_mm, str(device).startswith("cuda")
     if cuda and not torch.cuda.is_available():
-        raise ValueError("CUDA is not available: use device 'cpu'")
+        raise ValueError("CUDA is not available: use --device cpu (device='cpu' in Python)")
     vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
     mo = None if oct_mask is None else io.load_volume(oct_mask, oct_spacing_um)
     mm = None if mri_mask is None else io.load_volume(mri_mask)
@@ -202,7 +202,7 @@ def apply(run_dir, moving, reference, out, inverse=False, affine_only=False, oct
     """Resample the volume `moving` (OCT frame; MRI frame with inverse) onto the grid of `reference` through run_dir/T_oct2mri.txt
     (T_mri2oct.txt with inverse): streamed box average to the reference voxel size (never finer than the moving voxel size),
     then trilinear, 0 outside. When the run holds oct2mri_warp.nii.gz (§6), an OCT-frame volume goes through T and that field
-    onto the MRI-frame reference, as oct_in_mri.nii.gz did; affine_only leaves the field out. The field is not inverted: with
+    onto the MRI-frame reference, as for oct_in_mri.nii.gz; affine_only leaves the field out. The field is not inverted: with
     inverse the affine alone is used and a note is printed. moving, reference: image files (io.load_volume; the run's OCT file
     with the run's oct_spacing_um from result.json). oct_spacing_um: (z, y, x) um for the file in the OCT frame (`moving`, or
     `reference` with inverse), overriding the recorded spacing: a TIFF or NPY run needs it once its file has moved. out: NIfTI
@@ -368,11 +368,11 @@ def qc_figures(prefix, oct_grid, mri_grid, T, polarity, oct_file_affine, label="
 
 def qc_deform_figure(path, oct_grid, mri_grid, T, field, polarity, label=""):
     """Visual QC of the smooth deformation (§6), on the MRI base grid: one plane per MRI array axis through the centroid of the
-    OCT specimen mask through T inside the MRI foreground (of the MRI foreground alone if they do not meet). Columns: MRI | OCT through T | OCT through T and
-    the field | field magnitude inside the MRI foreground (mm, colour bar), each with the outline of the MRI foreground (red).
-    Grey levels as in qc_figures (p1-p99 inside the masks, MRI inverted inside its foreground with polarity -1 and mapped by
-    rank onto the grey scale of the OCT through T in the tissue both show); rows are titled
-    by the plane position (mm from the first voxel of the MRI base grid), QC_CELL_IN inches high at QC_DPI. oct_grid, mri_grid:
+    OCT specimen mask through T inside the MRI foreground (of the MRI foreground alone if they do not meet). Columns: MRI | OCT
+    through T | OCT through T and the field | field magnitude inside the MRI foreground (mm, colour bar), each with the outline
+    of the MRI foreground (red). Grey levels as in qc_figures (p1-p99 inside the masks, MRI inverted inside its foreground with
+    polarity -1 and mapped by rank onto the grey scale of the OCT through T in the tissue both show); rows are titled by the plane
+    position (mm from the first voxel of the MRI base grid), QC_CELL_IN inches high at QC_DPI. oct_grid, mri_grid:
     (array, mask, affine) on the base grids; field: [3, D, H, W] on the MRI base grid (octreg.deform). -> Path."""
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure

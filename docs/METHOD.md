@@ -36,8 +36,8 @@ measured OCT). The rule needs the agarose embedding (see Scope).
 The MRI foreground threshold is the first histogram valley, walking down from the brightest peak, that lies below 0.5 of its
 smaller neighbouring peak (peaks found on the square root of the smoothed counts). Without one, nearly the whole field of view
 is kept and the run is flagged `mri_foreground_no_valley`. The mask is closed with a ball of 2 voxels, its holes are filled in
-3-D and components below `min_component` of the foreground volume are dropped. Either mask can be supplied as a file and is then
-used as given.
+3-D and components below `min_component` of the foreground volume are dropped. Either mask can be supplied as a file and then
+replaces the rule. A supplied OCT mask is still restricted to the measured voxels.
 
 ## §2 Two-class maps and outline
 
@@ -63,10 +63,11 @@ sum to 1 wherever w > 0, which is why the mask is a weight and never multiplies 
 ## §3 Orientation search
 
 The crop bounds the position, so no global search is needed. For each of 8,000 rotations sampled uniformly on SO(3), the OCT
-template is rotated about its box centre and S is computed over all translations with FFTs in the masked form of Padfield (IEEE
-Trans. Image Process. 21:2706, 2012). Since q' = q − b E with b = q (1 − w), every sum of the outline NCC is a correlation of a
-template with E, M, M² or M³. Outside the crop, OCT tissue counts as lying over background and agarose is left out. Each
-rotation keeps its best translation, and non-maximum suppression (3 mm, 10°) leaves 24 poses.
+template is rotated about its box centre and S is computed with FFTs over every translation that puts that centre inside the
+crop, in the masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012). Since q' = q − b E with b = q (1 − w), every
+sum of the outline NCC is a correlation of a template with E, M, M² or M³. Outside the crop, OCT tissue counts as lying over
+background and agarose is left out. Each rotation keeps its best translation, and non-maximum suppression (3 mm, 10°) leaves 24
+poses.
 
 ## §4 Affine refinement
 
@@ -85,9 +86,9 @@ The score of §2, dominated by the outline, finds the block, but an outline that
 leaves the last millimetres open. The best pose of §4 is therefore refined on the internal structure of both volumes, such as
 fibre bundles, vessels and nuclei, compared by normalised gradient fields (Haber and Modersitzki, 2006). Each volume I with mask
 m is smoothed and differentiated inside the mask by normalised convolution, g = ∇(G_σ(I m) / G_σ(m)), so the mask edge adds no
-gradient. The normalised gradient is n = g / √(|g|² + ε²), with ε the median |g| over the MRI points used and over the OCT
-specimen mask. Both masks are eroded by five base-grid voxels (0.75 mm), so the outline counts only in §2 to §4. Over every
-second interior MRI voxel along each axis, with the eroded OCT mask w,
+gradient. The normalised gradient is n = g / √(|g|² + ε²), with ε the median |g| of each volume, over the MRI points used for
+the MRI and over the OCT specimen mask for the OCT. Both masks are eroded by 0.8 mm, rounded to five base-grid voxels (0.75 mm),
+so the outline counts only in §2 to §4. Over every second interior MRI voxel along each axis, with the eroded OCT mask w,
 
     F(T) = Σ_x w(T⁻¹x) (n_O(x) · n_M(x))² / Σ_x w(T⁻¹x),   g_O(x) = A⁻ᵀ g_OCT(T⁻¹x),
 
@@ -162,7 +163,7 @@ lists the outputs. The field is not inverted, so the MRI to OCT direction is aff
 ## Evaluation
 
 A registration is judged by looking at it, because label-free numbers can prefer a wrong pose. qc_montage.png shows four planes
-per OCT axis, each as the OCT, the MRI through the transform on the grey scale of the OCT, a checkerboard of the two over
+per OCT axis, each as the OCT, the MRI through the affine on the grey scale of the OCT, a checkerboard of the two over
 everything the specimen mask or the MRI foreground reaches, and the OCT with both outlines. In every plane the MRI outline must
 follow the edge of the OCT specimen, the specimen must lie on the same anatomy in the MRI, and internal structures must continue
 across the checkerboard. Folded pieces, and cut faces that the MRI also shows, must correspond and lie on the same side, and the
@@ -171,22 +172,22 @@ contrast must be consistently inverted or not. `octreg qc --T` renders other can
 ### I58 brainstem pair
 
 The OCT has 1457×2013×1595 voxels at 20 µm and the MRI crop 343×489×495 voxels at 0.08 mm. The run takes 11 min 25 s on the
-original files with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). Of this, §3 takes 33 s,
-§4 345 s and §6 20 s. §1 to §4 give S 0.2781 (S_class −0.1020, S_outline 0.6302) and polarity −1. §5 raises F from 0.089 to
-0.103 and moves the block by 3.75 mm at its corners (1.98 mm over the specimen mask, 8.8°), with scales 0.977 / 0.974 / 0.985.
-At the §5 pose S is lower, 0.244 (S_class −0.055). A frame check confirms that the exported overlay follows the header and the
-transform. Raw 20 µm OCT values mapped through the header and the transform correlate with the affine overlay at Spearman 0.991,
-against at most 0.266 with any OCT axis flipped.
+original files with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). Of this, §3 takes 33 s, §4
+345 s and §6 20 s. §1 to §4 give S 0.2781 (S_class −0.1020, S_outline 0.6302) and polarity −1. §5 raises F at σ 0.3 mm from
+0.089 to 0.103 and moves the OCT by 3.75 mm at the corners of its image (1.98 mm over the specimen mask, 8.8°), with scales
+0.977 / 0.974 / 0.985. A frame check confirms that the exported overlay follows the header and the transform. Raw 20 µm OCT
+values mapped through the header and the transform correlate with the affine overlay at Spearman 0.991, against at most 0.266
+with any OCT axis flipped.
 
 §6 finds 502 interior matches and 18,041 boundary points and takes λ 0.82 at strain 0.148. The held-out median errors fall from
 0.247 to 0.155 mm for the interior matches and from 0.285 to 0.114 mm for the surface-edge offsets. Re-measured on the warped
 OCT, the median residual of the interior matches falls from 0.250 to 0.124 mm and that of the surface-edge offsets from 0.285 to
 0.089 mm, and the offsets within 0.3 mm rise from 51 % to 80 %. Over the MRI foreground the field has a median of 0.28 mm and a
-maximum of 1.05 mm. It is largest at the superior end of the block, where the surface-edge offsets are largest. In 4 mm sections
-along the sectioning axis, the median surface-edge offset falls from 0.82 to 0.22 mm in the first section at that end and from
-0.65 to 0.19 mm in the next. In each of the other sections it falls from between 0.10 and 0.40 mm to between 0.04 and 0.13 mm.
-These values per section are stored in `bench/results/I58/deform_ablation.json`. §6 looks for interior matches and surface edges
-only within the 1.35 mm reach, so it does not bring back tissue that lies farther than that from its MRI position.
+maximum of 1.05 mm. It is largest at the superior end of the block, where the surface-edge offsets are largest. In 4 mm slabs
+along the sectioning axis, the median surface-edge offset falls from 0.82 to 0.22 mm in the first slab at that end and from 0.65
+to 0.19 mm in the next. In each of the other slabs it falls from between 0.10 and 0.40 mm to between 0.04 and 0.13 mm. These
+values per slab are stored in `bench/results/I58/deform_ablation.json`. §6 looks for interior matches and surface edges only
+within the 1.35 mm reach, so it does not bring back tissue that lies farther than that from its MRI position.
 
 The [README](../README.md#results-on-the-i58-brainstem-block) shows the result on three planes in freeview. The first row of the
 deformable comparison in [BASELINES.md](../bench/baselines/BASELINES.md#deformable) shows the OCT through the affine alone and
@@ -291,11 +292,13 @@ whose hash is `da914d8ccc555207`. The first nine rows state what the method assu
 is computed. The scales of §1, the sigmoid width, the rotation set and the erosions are set by hand on the I58 pair.
 
 Each stage also holds guards and fixed rules at the top of its module, outside Params. In §4 and §5 this is the clamp of ±0.15
-on log-scales and shears. In §6 these are the range 0.3 to 30 of λ, the 10 % held-out gain, the least evidence of 100 interior
-matches and 300 boundary points, the 0.75 mm a boundary profile runs beyond the reach, the limit of 50,000 boundary points, the
-σ of 2.5 voxels on the signed distance, the four folds of 7 mm cells, where the cell with index k goes to fold
-(k · (1, 3, 5)) mod 4, the ridge weight 1e-2 on the lattice displacements, the four Huber rounds and the 70 % of a block that
-must lie inside both masks.
+on log-scales and shears, and §5 uses a fifth of the learning rates of §4. In §6 these are the range 0.3 to 30 of λ and the
+factor of 1.05 to which it is found, the 10 % held-out gain, the least evidence of 100 interior matches and 300 boundary points,
+the 0.99 above which the resampled OCT mask is kept, the 0.75 mm a boundary profile runs beyond the reach, the σ of 1 sample of
+its derivative, the 95 % of an OCT profile that must be measured, the limit of 50,000 boundary points drawn with seed 0, the σ
+of 2.5 voxels on the signed distance, the four folds of 7 mm cells, where the cell with index k goes to fold (k · (1, 3, 5)) mod
+4, the ridge weight 1e-2 on the lattice displacements, the four Huber rounds and the 70 % of a block that must lie inside both
+masks.
 
 | parameter | default | role |
 |---|---|---|
@@ -322,4 +325,5 @@ must lie inside both masks.
 octreg is evaluated on one brainstem block, I58, which is unpublished. The constants set by hand (see Parameters) were chosen on
 the same block. The specimen mask of §1 needs the agarose embedding. Without it there are not two classes, and the threshold
 splits the tissue itself, more so where section stripes make tissue quiet along one axis. A block without embedding needs its
-specimen mask given with `--oct-mask`. The OCT file itself can serve, since a mask file is read as its positive voxels.
+specimen mask given with `--oct-mask`. The OCT file itself can serve when it is exactly zero outside the tissue, since a mask
+file is read as its positive voxels.

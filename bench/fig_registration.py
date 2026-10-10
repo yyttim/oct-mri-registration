@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Registration figure in the MRI frame, read from the original files: three MRI array planes through the registered
-OCT specimen centre, three panels each. For the I58 pair it is drawn locally and not published.
+OCT specimen centre, three panels each.
 
     MRI              the reference, as it is, on its own grey scale.
     registered OCT   the OCT through the run's transform and its smooth field, on the same plane and its own grey scale.
@@ -101,7 +101,7 @@ def main():
                  ha="center", va="center", fontsize=8)
     fig.savefig(a.o, dpi=150, facecolor="white")
     from PIL import Image
-    Image.open(a.o).convert("L").save(a.o, optimize=True)                # grey only: nothing is drawn on the data
+    Image.open(a.o).convert("L").save(a.o, optimize=True)                # grey only
     print("wrote", a.o, "MRI planes", idx.tolist())
 
 

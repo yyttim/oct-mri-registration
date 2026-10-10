@@ -7,8 +7,8 @@
 Everything here comes from the two input files of bench/paths.py (OCT_I58, MRI_I58), the run directory RUN and, for the
 comparison read-outs, a second octreg run directory. T = RUN/T_oct2mri.txt maps the OCT header world to the MRI header world
 (mm). DIR is a prep directory of bench/ablate.py, which holds the masks the method itself built: oct_mask.nii.gz (OCT specimen),
-oct_valid.nii.gz (non-zero OCT data) and mri_mask.nii.gz (MRI foreground). Without --masks there is no mask and no outline
-agreement.
+oct_valid.nii.gz (non-zero OCT data) and mri_mask.nii.gz (MRI foreground). Without --masks the three files are looked for in
+RUN, which octreg register does not write, so a plain run gets no mask volume and no outline agreement.
 
 mask              Volume of the run's own OCT specimen mask (DIR/oct_mask.nii.gz) in cm3.
 boundary          Outline agreement of that mask and the MRI foreground, in both directions. OCT mask boundary voxels (at least

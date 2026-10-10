@@ -15,7 +15,6 @@
  "flirt_search_x10_fov": "FLIRT default search with -inweight (FOV weighting), headers scaled x10",
  "flirt_search_native": "FLIRT as documented on the unscaled 0.08 mm inputs",
  "mri_robust_register_default_com": "mri_robust_register --cost NMI, rigid then --affine --ixform, centre-of-mass start",
- "mri_robust_register_rigid_only": "mri_robust_register --noinit (header start): the affine step diverged, the rigid result is recorded",
  "mri_coreg_default": "mri_coreg --dof 6 then --dof 12 --init-reg, brute-force initial search, the OCT shrunk by 19 % along one axis",
  "mri_coreg_regheader": "mri_coreg --regheader (header start)",
  "synthmorph_affine": "mri_synthmorph -m affine as documented (1 mm brain model): out of domain, fails",

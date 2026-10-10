@@ -1,8 +1,8 @@
 """§6 ablation from cached base grids (bench only, the package never reads this): the table of
 bench/results/I58/deform_ablation.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
 
-    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
-    python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
+    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE.npz        # §1 once, shared with ngf_lam.py
+    python bench/ablate_deform.py --cache CACHE.npz --run RUN -o OUT.json  # writes OUT.json and OUT.md
         [--save-fields DIR [--save-rows method,interior_only,boundary_only]]
 
 Every row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity), changing one element of the stage, and
@@ -13,7 +13,7 @@ every row is scored the same way, so the rows compare like for like:
     and the two-class score of §2 (polarity x S_class) over the core 1.5 mm below both surfaces.
 The read-outs of the rows that change the evidence are still in-sample for the default evidence they overlap with. F and the
 two-class score are not. Nothing is excluded along the block: the surface-edge offsets are also reported per 4 mm along the
-sectioning axis (estimated from the section stripes of the OCT), so the end of the block with the torn folia stays in.
+sectioning axis (estimated from the section stripes of the OCT), so the end of the block with the largest misfit stays in.
 
 The rows that the package has no switch for are implemented here: one kind of evidence only (the other kind's rows
 dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one

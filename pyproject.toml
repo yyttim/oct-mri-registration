@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "octreg"
 dynamic = ["version"]
-description = "Label-free registration of serial-sectioning OCT blocks to ex-vivo MRI without initial alignment: an affine and a small smooth deformation"
+description = "Label-free registration of a serial-sectioning OCT block to an ex-vivo MRI cropped around it, without initial alignment: an affine and a small smooth deformation"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Yuntian Yang" }]

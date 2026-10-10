@@ -15,7 +15,11 @@ OCTREG_PROJECT_ROOT/bench_runs/I58/cache.npz) holds the base grids written by be
      not ground truth.
   3. Field statistics over the MRI foreground: |u| median / p95 / max, the Jacobian determinant of x + u(x) (min, fraction
      <= 0, standard deviation of log J).
-  4. With --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>.
+  4. With --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>,
+     by OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local
+     files and not in the repository.
+The wall time of a run is read from RUN/time.txt (seconds), written by the tool's own command, when it is there.
+The roots come from bench/paths.py.
 """
 from __future__ import annotations
 
@@ -38,11 +42,8 @@ import ablate_deform as A  # noqa: E402
 from octreg import geometry as G, io  # noqa: E402
 from octreg.search import to_torch  # noqa: E402
 
-ROOT = Path(os.environ.get("OCTREG_PROJECT_ROOT") or REPO)
-I58 = Path(os.environ.get("OCTREG_I58_DIR") or ROOT / "data" / "I58")
-OCT = I58 / "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz"
-MRI = I58 / "I58_brainstem_MRI_cropped_to_OCT.nii.gz"
-INPUTS = ROOT / "baselines" / "inputs"
+from paths import BENCH_RUNS, MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
 ENV = {**os.environ, "PYTHONPATH": str(REPO), "PYTHONIOENCODING": "utf-8"}
@@ -86,8 +87,8 @@ def field_stats(field, A_f, fg_mask, A_m):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("runs", nargs="*", type=Path)
-    ap.add_argument("--octreg-run", type=Path, default=ROOT / "bench_runs" / "I58" / "octreg")
-    ap.add_argument("--cache", type=Path, default=ROOT / "bench_runs" / "I58" / "cache.npz")
+    ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
+    ap.add_argument("--cache", type=Path, default=BENCH_RUNS / "I58" / "cache.npz")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--shots", action="store_true")
     ap.add_argument("--force", action="store_true")

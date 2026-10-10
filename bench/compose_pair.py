@@ -5,8 +5,8 @@
 
 Columns: OCT | MRI and checkerboard of pose A | MRI and checkerboard of pose B, one row per plane: the three centroid planes of
 qc.png, or montage rows i, j, k of qc_montage.png. Plane images and row labels are cut pixel for pixel from the qc figures (layout
-constants from octreg.register); the OCT planes of the two inputs must be identical. bench/figures/fig_handedness_I58.png,
-drawn locally and not published:
+constants from octreg.register). The OCT planes of the two inputs must be identical. The MRI columns keep the grey scale of
+the qc figures, inverted when the polarity is -1. For example, the result against the best pose of the other handedness:
 
     python -m octreg qc --run RUN --oct OCT --mri MRI --T ABL/variants/A8/T_oct2mri.txt -o OTHER
     python bench/compose_pair.py RUN/qc OTHER OUT.png --titles "octreg result (handedness of the file headers)" \
@@ -81,7 +81,7 @@ def main():
             canvas[oy:oy + b1 - b0, xs[j] + ox:xs[j] + ox + c1 - c0] = img[b0:b1, c0:c1]
     fig = Figure(figsize=(W / QC_DPI, H / QC_DPI), dpi=QC_DPI, facecolor="white")
     fig.figimage(canvas, 0, 0, cmap="gray", vmin=0, vmax=255, origin="upper")
-    for j, t in enumerate(("OCT", "MRI through T, inverted", "checkerboard", "MRI through T, inverted", "checkerboard")):
+    for j, t in enumerate(("OCT", "MRI through T", "checkerboard", "MRI through T", "checkerboard")):
         fig.text((xs[j] + n / 2) / W, 1 - (HEAD - 8) / H, t, ha="center", va="bottom", fontsize=9)
     for (j0, j1), t in zip(((1, 2), (3, 4)), a.titles):
         xa, xb = xs[j0] / W, (xs[j1] + n) / W

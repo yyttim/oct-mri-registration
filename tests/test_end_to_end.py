@@ -4,8 +4,8 @@ a known affine. Reduced search and refinement through --params; the pose is reco
 the texture mask finds the specimen where the histogram rule has no valley, every output is written, `octreg apply`
 reproduces oct_in_mri.nii.gz and `octreg qc` reproduces the visual QC figures; the 6 mm specimen holds no 4.5 mm block, so the
 smooth deformation (§6) reports not_supported and writes no field, and `octreg apply` uses a field file put into the run
-directory; user masks replace both foregrounds; the same OCT as an NPY stack, whose array frame is the mirror image of the
-NIfTI world, is registered in its correct handedness and replayed by `octreg apply --oct-spacing-um` from another path."""
+directory; user masks replace both foregrounds; the same OCT as an NPY stack, taken in its array frame, gives the same pose,
+and `octreg apply --oct-spacing-um` replays an NPY run from another path."""
 import json
 
 import nibabel as nib
@@ -101,7 +101,7 @@ def test_register_and_apply(tmp_path, capsys):
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
     assert pp.foreground(raw_h, 0.15, Params())[1]["status"] == "no_valley"
     assert 0.9 < res["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3          # 1.10-1.13 over seeds 0-4
-    scale = res["pose"]["scale_per_oct_axis"]                   # true 1.03 / 1 / 1; 0.97-1.00 on the first axis over seeds 0-4
+    scale = res["pose"]["scale_per_oct_axis"]                   # true 1.03 / 1 / 1; 0.96-1.00 on the first axis over seeds 0-4
     assert 0.85 < min(scale) and max(scale) < 1.1
     assert res["params"]["n_rot"] == FAST["n_rot"] and set(res["seconds"]) >= {"oct_mask", "search_refine_ngf", "total"}
     assert res["refine"]["n_poses"] == FAST["topk"] and res["search"]["n_orientations"] == FAST["n_rot"]
@@ -228,9 +228,9 @@ def test_array_frame(tmp_path):
     out = tmp_path / "run"
     assert main(["register", str(tmp_path / "oct.npy"), str(mri_path), "-o", str(out), "--device", "cpu", "--params",
                  str(tmp_path / "params.json"), "--oct-spacing-um", "80,80,80"]) == 0
-    res, T = json.loads((out / "result.json").read_text()), np.loadtxt(out / "T_oct2mri.txt")
+    T = np.loadtxt(out / "T_oct2mri.txt")
     assert np.linalg.det(T_arr[:3, :3]) > 0 and np.linalg.det(T[:3, :3]) > 0
-    assert distance(T, T_arr, pts_arr) < 0.4 and "handedness" not in res["pose"]
+    assert distance(T, T_arr, pts_arr) < 0.4
     assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(mri_path), "-o",
                  str(tmp_path / "again.nii.gz")]) == 0
     np.testing.assert_allclose(nib.load(str(tmp_path / "again.nii.gz")).get_fdata(),

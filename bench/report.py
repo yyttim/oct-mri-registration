@@ -19,7 +19,7 @@ import math
 import re
 from pathlib import Path, PureWindowsPath
 
-READING = "<!-- reading: written by hand below this line; bench/report.py keeps it when it rewrites the file -->"
+READING = "<!-- reading: written by hand below this line, and bench/report.py keeps it when it rewrites the file -->"
 
 
 def load(path):
@@ -43,7 +43,7 @@ def num(x, nd=2):
 
 
 def wall_seconds(path):
-    """Wall-clock seconds from a GNU time -v report, or None."""
+    """Wall-clock seconds from a NAME.time file of bench/run_i58.py (the wall-clock line of GNU time -v), or None."""
     t = Path(path).read_text(encoding="utf-8") if path and Path(path).exists() else ""
     wall = re.search(r"Elapsed \(wall clock\) time.*?: ([\d:.]+)", t)
     return sum(float(p) * 60 ** i for i, p in enumerate(reversed(wall.group(1).split(":")))) if wall else None
@@ -77,9 +77,9 @@ def deform_rows(d):
              f"{arrow([cv['none'][0], cv['field'][0]], nd=3)} mm + {arrow([cv['none'][1], cv['field'][1]], nd=3)} mm"
              if cv.get("none") and cv.get("field") else "n/a"),
             ("§6 residuals affine -> deformed, measured again: interior matches, surface-edge offsets (within 0.3 mm)",
-             f"{arrow(r.get('interior_mm'))} mm, {arrow(r.get('boundary_mm'))} mm ({arrow(r.get('boundary_within_0.3mm'), 100, 0)} %)"),
+             f"{arrow(r.get('interior_mm'), nd=3)} mm, {arrow(r.get('boundary_mm'), nd=3)} mm ({arrow(r.get('boundary_within_0.3mm'), 100, 0)} %)"),
             ("§6 field over the MRI foreground, median / p95 / max, and max strain",
-             f"{num(f.get('median_mm'))} / {num(f.get('p95_mm'))} / {num(f.get('max_mm'))} mm, {num(d.get('max_strain'))}")]
+             f"{num(f.get('median_mm'))} / {num(f.get('p95_mm'))} / {num(f.get('max_mm'))} mm, {num(d.get('max_strain'), 3)}")]
 
 
 def main_section(run, logs):
@@ -128,10 +128,10 @@ def ablation_row(n, r):
     """One row of the ablation table. Every read-out is optional, so a partial table still prints."""
     vol = num((r.get("mask") or {}).get("volume_cm3"))
     if "error" in r:
-        return f"| {n} | {r['change']} | failed: {r['error']} | | | | | | | {vol} | {num(r.get('seconds'), 0)} |"
+        return f"| {n} | {r['change'].replace('|', chr(92) + '|')} | failed: {r['error']} | | | | | | | {vol} | {num(r.get('seconds'), 0)} |"
     rim = (r.get("boundary") or {}).get("rim_median_mm") or [None, None]
     d, d4 = r.get("pose_to_base", {}), r.get("pose_to_base_s4", {})
-    return (f"| {n} | {r['change']} | {num(d4.get('mean_mm'))} / {num(d4.get('corners_mean_mm'))} | "
+    return (f"| {n} | {r['change'].replace('|', chr(92) + '|')} | {num(d4.get('mean_mm'))} / {num(d4.get('corners_mean_mm'))} | "
             f"{num(d.get('mean_mm'))} / {num(d.get('corners_mean_mm'))} / {num(d.get('corners_max_mm'))} | "
             f"{num(r.get('S'), 4)} | {num(r.get('L'), 4)} | "
             f"{r.get('polarity', 'n/a')} | {' / '.join(f'{s:.3f}' for s in r.get('scales', [])) or 'n/a'} | "
@@ -199,8 +199,7 @@ def runtime_section(abl):
 def figures(run, out):
     """Three figures of the I58 report from the run's own qc images, not tracked by git:
     out/fig_qc_I58.png is RUN/qc.png without the white margin, outline colours kept, and out/fig_qc_montage_I58.png and
-    out/fig_qc_deform_I58.png are RUN/qc_montage.png and RUN/qc_deform.png as they are. The ablation distances are in the
-    table, which needs no picture."""
+    out/fig_qc_deform_I58.png are RUN/qc_montage.png and RUN/qc_deform.png as they are."""
     import shutil
     from PIL import Image, ImageOps
     out.mkdir(parents=True, exist_ok=True)
@@ -228,12 +227,14 @@ def main():
     st = load(a.ablate / "starts.json") if a.ablate and (a.ablate / "starts.json").exists() else {}
     phash = load(a.main / "result.json").get("params_hash") or abl.get("params_hash")
     intro = ["# Benchmark: the I58 brainstem pair", "",
-             "octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at "
+             "octreg registered the two original files as given (OCT 1457×2013×1595 at 20 µm, header LPI, and MRI crop 343×489×495 at "
              "0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters"
              + (f" (Params hash {phash})" if phash else "") + ". "
              "The pair has no labels, so every number here is label-free. "
              "The numbers are read from the run's result.json and eval.json and from ablations.json"
-             + (" and starts.json" if st else "") + " (copies in bench/results/I58/). "
+             + (" and starts.json" if st else "") + " (copies in bench/results/I58/)"
+             + (", except the wall clock and the GPU memory of the whole device, which come from the step logs of "
+                "bench/run_i58.py and are not stored" if a.logs and (a.logs / "register.time").exists() else "") + ". "
              "Commands: `python bench/run_i58.py` (see bench/README.md).", ""]
     old = a.out.read_text(encoding="utf-8") if a.out.exists() else ""
     visual = re.search(r"^## Visual result\n.*?(?=^## Main result)", old, re.S | re.M)       # hand-written, kept

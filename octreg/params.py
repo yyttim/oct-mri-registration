@@ -46,7 +46,8 @@ class Params:
     df_sigma_mm: float = 0.24                 # Gaussian sigma of the gradients of the structure feature
     df_block_mm: float = 4.5                  # edge of the matched blocks
     df_step_mm: float = 1.5                   # grid step of the block centres
-    df_reach_mm: float = 1.35                 # the reach of the local evidence: search range (+- per axis) of the interior block matches, and the largest distance of a surface edge from the MRI foreground surface
+    df_reach_mm: float = 1.35                 # reach of the local evidence: the search range (+- per axis) of the interior
+                                              # matches, and the largest distance of a surface edge from the MRI surface
     df_z_min: float = 4.0                     # a match is confident this many SDs above the mean of its score map
     df_erode_mm: float = 0.6                  # both masks eroded by this; a block needs 0.7 of it in the core, so it can hang 30 % outside
     df_edge_mad: float = 5.0                  # a prominent fall: this many MADs above the median of the fall along the profile
@@ -64,7 +65,7 @@ class Params:
             raise ValueError("Params: need ngf_erode_mm > 0 and ngf_iters >= 1")
         if not min(self.df_sigma_mm, self.df_block_mm, self.df_step_mm, self.df_reach_mm, self.df_z_min, self.df_erode_mm,
                    self.df_huber_mm, self.df_max_strain, self.df_edge_mad, self.df_grid_mm) > 0:
-            raise ValueError("Params: all df_ lengths, df_z_min and df_max_strain must be positive")
+            raise ValueError("Params: all df_ lengths, df_z_min, df_edge_mad and df_max_strain must be positive")
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)

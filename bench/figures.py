@@ -153,7 +153,7 @@ def sessions(mri, run, baselines, out, surf, ablation=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--mri", type=Path, default=MRI_I58)
     ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
     ap.add_argument("--baselines", type=Path, default=PROJECT_ROOT / "baselines")

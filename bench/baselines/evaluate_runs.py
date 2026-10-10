@@ -9,14 +9,16 @@ For every RUN (a directory made by rundir.py init, with a check.json that is ok)
      interpolation.
   2. bench/evaluate.py with octreg's masks (--masks) and the octreg run (--octreg-run, default
      OCTREG_PROJECT_ROOT/bench_runs/I58/octreg) as --previous -> RUN/eval.json: rim outline agreement forward and reverse
-     (median and p90 per face class), pose distance to octreg's affine, raw-data frame check.
+     (median per face class, and median and p90 over all faces), pose distance to octreg's affine, raw-data frame check.
   3. Dice of the OCT specimen mask through T against the MRI foreground on the 0.15 mm grid -> RUN/dice.json. The MRI holds
      tissue beyond the block, so Dice stays below 1 for every method and only compares methods.
-  4. With --shots: freeview screenshots at the shared sections (baselines/shots/shots.sh, run in WSL), named
-     <tool>_<variant>.
+  4. With --shots: freeview screenshots at the shared sections, named <tool>_<variant>,
+     by OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local
+     files and not in the repository.
 A summary row per run goes into --summary (default OCTREG_PROJECT_ROOT/baselines/summary_affine.json).
-Environment: OCTREG_PROJECT_ROOT, the root of the inputs, runs and screenshots (default: the repository), and
-OCTREG_I58_DIR, the folder of the two original files (default OCTREG_PROJECT_ROOT/data/I58).
+The wall time of a run is read from RUN/time.txt (seconds), written by the tool's own command, when it is there.
+The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and
+screenshots of the comparison are under OCTREG_PROJECT_ROOT/baselines.
 """
 from __future__ import annotations
 
@@ -32,15 +34,12 @@ import nibabel as nib
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO))
+sys.path[:0] = [str(REPO), str(REPO / "bench")]
 from octreg import geometry as G  # noqa: E402
+from paths import BENCH_RUNS, MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
 
-ROOT = Path(os.environ.get("OCTREG_PROJECT_ROOT") or REPO)
-I58 = Path(os.environ.get("OCTREG_I58_DIR") or ROOT / "data" / "I58")
-OCT = I58 / "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz"
-MRI = I58 / "I58_brainstem_MRI_cropped_to_OCT.nii.gz"
 INPUTS = ROOT / "baselines" / "inputs"
-OCTREG_RUN = ROOT / "bench_runs" / "I58" / "octreg"
+OCTREG_RUN = BENCH_RUNS / "I58" / "octreg"
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
 ENV = {**os.environ, "PYTHONPATH": str(REPO), "PYTHONIOENCODING": "utf-8", "CUDA_VISIBLE_DEVICES": ""}
