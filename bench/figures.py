@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """The freeview figures of the I58 pair in docs/figures (bench only, not part of the package).
 
-    python bench/figures.py [--octreg-run DIR] [--baselines DIR] [-o docs/figures] [--work DIR]
+    python bench/figures.py [--octreg-run DIR] [--baselines DIR] [--ablation DIR] [-o docs/figures] [--work DIR]
 
   result/       octreg's result on a sagittal, a coronal and an axial plane through the middle of the block: the MRI, the
                 registered OCT (oct_in_mri.nii.gz, affine and §6), and the same OCT with the MRI tissue boundary
   affine/       the affine baselines on the axial plane of result/, each with the MRI tissue boundary
   deformable/   the deformable baselines on the sagittal plane of result/, each with the MRI tissue boundary
+  ablation/     the ablations of bench/ablate.py and bench/ablate_deform.py (--ablation, their output directory, by default
+                bench_runs/I58/octreg_ablate as in bench/run_i58.py) on the same
+                sagittal plane, each with the MRI tissue boundary. The OCT is first resampled through each variant's affine
+                (and field) by octreg apply, into DIR/overlays/<panel>/ and DIR/deform/<row>/.
 
 The MRI tissue boundary is octreg's MRI foreground rule (octreg.preprocess.foreground) applied to the MRI crop on its own
 0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw, and drawn by freeview as a 2-pixel red line.
@@ -33,7 +37,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
-from bench.paths import BENCH_RUNS, MRI_I58, PROJECT_ROOT  # noqa: E402
+from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT  # noqa: E402
 from octreg import preprocess as pp  # noqa: E402
 from octreg.params import Params  # noqa: E402
 
@@ -49,6 +53,13 @@ DEFORM = [
     ("affine", "RUN/oct_in_mri_affine.nii.gz"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("syn_fov", "deform/ants/syn_cc_fov"),
     ("syn_default", "deform/ants/syn_cc"), ("greedy", "deform/greedy/wncc_fov"), ("convexadam", "deform/convexadam/default_fov"),
     ("elastix", "deform/elastix/default_fov"), ("reg_f3d", "deform/niftyreg/sx5mm")]
+ABLATION = [  # panel name, what it shows under --ablation: an affine (a 4x4 text file) or a §6 run directory with a field
+    ("start", "starts/T_image_centres.txt"), ("intensity_mask", "variants/A0/T_oct2mri.txt"),
+    ("no_outline", "variants/A9/T_oct2mri.txt"), ("outline_only", "variants/A13/T_oct2mri.txt"),
+    ("no_search", "variants/A14/T_oct2mri.txt"), ("no_penalty", "variants/A6p/T_oct2mri.txt"),
+    ("no_refinement", "variants/A12/T_oct2mri.txt"), ("turned_start", "starts/axis2_90/T_start.txt"),
+    ("turned_no_search", "starts/axis2_90/A14/T_oct2mri.txt"), ("turned_octreg", "starts/axis2_90/method/T_oct2mri.txt"),
+    ("interior_only", "deform/interior_only"), ("boundary_only", "deform/boundary_only")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
 WSL = platform.system() == "Windows"
 
@@ -73,8 +84,40 @@ def view(img, plane, point):
             "-ras {:.3f} {:.3f} {:.3f} -cc".format(*centre)], tuple(size)
 
 
-def sessions(mri, run, baselines, out, surf):
-    """freeview -cmd sessions, one per panel size. -> [(name, lines)], {png path: (W, H)}."""
+def overlays(abl, run, oct_path, mri):
+    """The OCT on the MRI grid for every ABLATION panel, made again when missing or older than the affine or field it shows.
+    -> {panel: overlay path}."""
+    import json
+    from octreg import io
+    from octreg.register import apply
+    missing = [str(abl / sub) for _, sub in ABLATION if not (abl / sub).exists()]
+    if missing:
+        sys.exit("missing ablation outputs (bench/README.md gives the commands that write them): " + ", ".join(missing))
+    inputs = json.loads((run / "result.json").read_text(encoding="utf-8"))["inputs"]
+    out = {}
+    for name, sub in ABLATION:
+        if (abl / sub).is_dir():                                               # a §6 row: its affine and field
+            d, f, affine_only = abl / sub, "oct_in_mri.nii.gz", False
+            made_from = [d / "T_oct2mri.txt", d / "oct2mri_warp.nii.gz"]
+        else:
+            T = np.loadtxt(abl / sub)
+            d, f, affine_only = abl / "overlays" / name, "oct_in_mri_affine.nii.gz", True
+            res = {"inputs": inputs, "T_oct2mri": T.tolist()}
+            made_from = [d / "result.json"]
+            if not made_from[0].is_file() or json.loads(made_from[0].read_text(encoding="utf-8")) != res:
+                d.mkdir(parents=True, exist_ok=True)          # written only when the affine changes, so its time dates it
+                io.write_transform_txt(T, d / "T_oct2mri.txt")
+                io.write_transform_txt(np.linalg.inv(T), d / "T_mri2oct.txt")
+                io.write_json(res, made_from[0])
+        if not (d / f).is_file() or (d / f).stat().st_mtime < max(p.stat().st_mtime for p in made_from):
+            apply(d, oct_path, mri, d / f, affine_only=affine_only)
+        out[name] = d / f
+    return out
+
+
+def sessions(mri, run, baselines, out, surf, ablation=None):
+    """freeview -cmd sessions, one per panel size. ablation: {panel: overlay} or None.
+    -> [(name, lines)], {png path: (W, H)}."""
     img = nib.load(str(mri))
     v_mri, f_line = f"-v {host_path(mri)}:grayscale={GREY_MRI}", f"-f {host_path(surf)}:edgecolor=red:edgethickness=2"
     oct_v = lambda f: f"-v {host_path(f)}:grayscale={GREY_OCT}"
@@ -98,6 +141,14 @@ def sessions(mri, run, baselines, out, surf):
             cmd += [oct_v(src), ss(d / f"{name}.png"), "-unload volume"]
         S.append((stage, cmd + ["-quit"]))
         expect.update({d / f"{n}.png": wh for n in ["mri"] + [r[0] for r in rows]})
+    if ablation:
+        lines, wh = view(img, "sagittal", MIDDLE)
+        d = out / "ablation"
+        cmd = [v_mri, f_line, *lines, "-hide volume"]
+        for name, src in ablation.items():
+            cmd += [oct_v(src), ss(d / f"{name}.png"), "-unload volume"]
+        S.append(("ablation", cmd + ["-quit"]))
+        expect.update({d / f"{n}.png": wh for n in ablation})
     return S, expect
 
 
@@ -106,11 +157,15 @@ def main():
     ap.add_argument("--mri", type=Path, default=MRI_I58)
     ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
     ap.add_argument("--baselines", type=Path, default=PROJECT_ROOT / "baselines")
+    ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "octreg_ablate",
+                    help="the output of bench/ablate.py --starts and bench/ablate_deform.py --save-fields, by default the ABL of "
+                    "bench/run_i58.py. Its panels are skipped when it does not exist")
+    ap.add_argument("--oct", type=Path, default=OCT_I58)
     ap.add_argument("-o", "--out", type=Path, default=REPO / "docs" / "figures")
     ap.add_argument("--work", type=Path, default=BENCH_RUNS / "I58" / "figures")
     a = ap.parse_args()
     a.work.mkdir(parents=True, exist_ok=True)
-    for d in ("result", "affine", "deformable"):
+    for d in ("result", "affine", "deformable", "ablation"):
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
@@ -121,7 +176,10 @@ def main():
     nib.save(nib.Nifti1Image(tissue.astype(np.uint8), mi.affine, hdr), str(a.work / "mri_tissue.nii.gz"))
 
     surf = a.work / "mri_tissue.surf"
-    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf)
+    abl = overlays(a.ablation, a.octreg_run, a.oct, a.mri) if a.ablation.is_dir() else None
+    if abl is None:
+        print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again")
+    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, abl)
     sh = ["#!/bin/bash", "set -e", 'if [ -n "$FREESURFER_HOME" ] || [ -d /usr/local/freesurfer/8.2.0 ]; then',
           '  export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}',
           '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi', f"cd {host_path(a.work)}",

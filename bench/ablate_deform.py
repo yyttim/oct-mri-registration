@@ -1,7 +1,9 @@
-"""§6 ablation from cached base grids (bench only, the package never reads this): the §6 ablation table of docs/METHOD.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
+"""§6 ablation from cached base grids (bench only, the package never reads this): the table of
+bench/results/I58/deform_ablation.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE --run RUN -o OUT.json  # writes OUT.json and OUT.md
+        [--save-fields DIR [--save-rows method,interior_only,boundary_only]]
 
 Every row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity), changing one element of the stage, and
 every row is scored the same way, so the rows compare like for like:
@@ -18,6 +20,10 @@ dropped from the fit and from the held-out score), the rim ridge instead of the 
 prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), boundary
 points only within 5 mm of an interior match, and no Huber re-weighting (a Huber threshold no residual reaches). The rest
 are Params overrides.
+
+--save-fields writes, for each of --save-rows that applies a field, DIR/<row>/ in the layout of an octreg run: the field
+(oct2mri_warp.nii.gz on the MRI base grid), RUN's affine (T_oct2mri.txt, T_mri2oct.txt) and a result.json with RUN's inputs,
+so that `octreg apply --run DIR/<row>` resamples the OCT through the affine and that row's field.
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ from scipy import ndimage
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))      # bench/report.py
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the package of this repository
 
 from report import portable                                    # a path cut to its part from bench_runs/ on
 from octreg import deform as D
@@ -44,11 +51,11 @@ from octreg.params import Params
 from octreg.refine import masked_ncc
 from octreg.search import to_torch
 
-ROWS = {    # name: (label as in METHOD.md, change); change None = no field
+ROWS = {    # name: (label in the table, change), with change None for no field
     "none": ("no deformation", None),
     "method": ("§6", {}),
-    "interior_only": ("interior evidence only", {"evidence": "interior"}),
-    "boundary_only": ("boundary evidence only", {"evidence": "boundary"}),
+    "interior_only": ("interior matches only", {"evidence": "interior"}),
+    "boundary_only": ("surface-edge offsets only", {"evidence": "boundary"}),
     "ridge": ("rim ridge instead of the edge", {"edge": "ridge"}),
     "support": ("boundary points only within 5 mm of an interior match", {"support": 5.0}),
     "no_huber": ("no Huber re-weighting", {"params": {"df_huber_mm": 1e9}}),
@@ -152,7 +159,8 @@ class Scorer:
                 "two_class_core": self.polarity * s_class, "core_voxels": int(core.sum()), "boundary_along_axis_mm": prof}
 
 
-def run_row(name, mri, src, scorer, lattice_for, device):
+def run_row(name, mri, src, scorer, lattice_for, device, save=None):
+    """One row; save: a callback that receives the field (numpy [3, D, H, W] on the MRI base grid) when the row applies one."""
     label, change = ROWS[name]
     t0 = time.time()
     row = {"label": label, "change": change}
@@ -182,6 +190,8 @@ def run_row(name, mri, src, scorer, lattice_for, device):
     else:
         c = D.fit(lattice, ev, best[0], P.df_huber_mm)
         field = lattice.on_grid(c, src.shape[1:], mri[2], device)
+        if save is not None:
+            save(field.cpu().numpy())
         with torch.no_grad():
             moved = D.warp(src, mri[2], field)
         mag = np.linalg.norm(field.cpu().numpy(), axis=0)[np.asarray(mri[1], bool)]
@@ -224,6 +234,8 @@ def main():
     ap.add_argument("--only", default=None, help=f"comma-separated subset of {','.join(ROWS)}")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("-o", "--out", default="deform_ablation.json")
+    ap.add_argument("--save-fields", default=None, help="write the fields of --save-rows as octreg run directories into this dir")
+    ap.add_argument("--save-rows", default="method,interior_only,boundary_only")
     a = ap.parse_args()
     names = a.only.split(",") if a.only else list(ROWS)
     if set(names) - set(ROWS):
@@ -260,8 +272,21 @@ def main():
     res = {"run": portable(str(a.run)), "cache": portable(str(a.cache)), "params_hash": Params().hash(), "polarity": polarity,
            "axis": {"oct_axis": axis, "mri_axis": mri_axis, "direction_mri_world": d.tolist(), "extent_mm": s1 - s0,
                     "edges_mm": edges.tolist()}, "rows": {}}
+    def saver(name):
+        if not a.save_fields or name not in a.save_rows.split(","):
+            return None
+        d_ = Path(a.save_fields) / name
+
+        def save(field):
+            io.save_field(field, A_m, d_ / "oct2mri_warp.nii.gz")
+            io.write_transform_txt(T, d_ / "T_oct2mri.txt")
+            io.write_transform_txt(np.linalg.inv(T), d_ / "T_mri2oct.txt")
+            io.write_json({"inputs": res_run["inputs"], "T_oct2mri": T.tolist(), "pose": {"polarity": polarity},
+                           "deform_ablation_row": name}, d_ / "result.json")
+        return save
+
     for name in names:
-        r = res["rows"][name] = run_row(name, mri, src, scorer, lattice_for, a.device)
+        r = res["rows"][name] = run_row(name, mri, src, scorer, lattice_for, a.device, saver(name))
         print(f"[{time.time() - t0:.0f} s] {r['label']:32s} λ {fmt(r['lam'], '.2f'):>5s} strain {fmt(r['max_strain'], '.3f'):>5s} | "
               f"interior {r['interior_mm']:.3f} boundary {r['boundary_mm']:.3f} within {100 * r['within']:.0f} % | "
               f"F {r['F']:.4f} two-class {r['two_class_core']:.4f}", flush=True)

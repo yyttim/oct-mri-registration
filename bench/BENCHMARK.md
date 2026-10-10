@@ -1,12 +1,12 @@
 # Benchmark: the I58 brainstem pair
 
-octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at 0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash da914d8ccc555207). The pair has no labels, so every number here is label-free. The numbers are read from the run's result.json and eval.json and from ablations.json (copies in bench/results/I58/). Commands: `python bench/run_i58.py` (see bench/README.md).
+octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at 0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash da914d8ccc555207). The pair has no labels, so every number here is label-free. The numbers are read from the run's result.json and eval.json and from ablations.json and starts.json (copies in bench/results/I58/). Commands: `python bench/run_i58.py` (see bench/README.md).
 
 ## Visual result
 
-The result is judged on the overlays (docs/METHOD.md, Evaluation), and the numbers below support that judgement. Figures of the result are in README.md, and of the baselines in bench/baselines/BASELINES.md.
+The result is judged on the overlays (docs/METHOD.md, Evaluation), and the numbers below support that judgement. Figures of the result are in README.md, of the ablations in docs/METHOD.md, and of the baselines in bench/baselines/BASELINES.md.
 
-The best pose of the other handedness (ablation A8, also refined by §5) fits the outline better than the result (S_outline 0.6848 against 0.6302) and has the lower §4 loss (L 0.7073 against 0.7287), but its fine structure matches less (F 0.078 against 0.103).
+After §4 the best pose of the other handedness (ablation A8) fits the outline better than the method's §4 pose (S_outline 0.6848 against 0.6302) and has the lower loss (L 0.7073 against 0.7287). After §5 its fine structure matches less than the result's (F 0.078 against 0.103), and its outline agrees less with the MRI (rim outline agreement forward / reverse 1.50 / 2.23 mm against 1.12 / 1.68 mm).
 
 ## Main result
 
@@ -34,9 +34,9 @@ The raw-data frame check passes. The pair has no labels, so none of these number
 
 Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). Pose change is against base, the method run through bench/ablate.py, as the mean over the points of the base specimen mask and the mean and max over the 8 corners of the OCT array. The outline agreement uses the base masks for every variant, so it reflects the pose only. The smooth deformation (§6) does not change the affine, so no variant runs it. Its read-outs are in the Main result above.
 
-| variant | change | §4 pose change: mean / corners mean (mm) | final pose change: mean / corners mean / corners max (mm) | S | L | polarity | scale | rim fwd / rev (mm) | OCT mask cm3 | time (s) |
+| variant | change | §4 pose change: mean / corners mean (mm) | final pose change: mean / corners mean / corners max (mm) | S (§4 pose) | L (§4 pose) | polarity | scale | rim fwd / rev (mm) | OCT mask cm3 | time (s) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| base | the method | 0.00 / 0.00 | 0.00 / 0.00 / 0.00 | 0.2781 | 0.7287 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 399 |
+| base | the method | 0.00 / 0.00 | 0.00 / 0.00 / 0.00 | 0.2781 | 0.7287 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 465 |
 | A0 | OCT intensity foreground (histogram valley) instead of the texture specimen mask | 19.94 / 41.85 | 23.89 / 42.92 / 66.12 | 0.0734 | 0.9272 | -1 | 0.994 / 0.994 / 1.000 | 2.61 / 2.11 | 29.52 | 418 |
 | A0c | texture specimen mask with holes filled in 3-D only (method: in every array plane) | 0.22 / 0.24 | 0.11 / 0.17 / 0.34 | 0.2793 | 0.7280 | -1 | 0.971 / 0.974 / 0.986 | 1.11 / 1.65 | 16.88 | 398 |
 | A1 | MRI flattening off | 1.94 / 3.68 | 0.00 / 0.00 / 0.00 | 0.2883 | 0.7259 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 388 |
@@ -53,8 +53,24 @@ Each variant is the method with one explicit change, run from the same preproces
 | A11 | simulated cut face: specimen mask removed beyond 70 % of its extent along OCT axis 1 (data kept as embedding) | 2.25 / 4.04 | 0.09 / 0.11 / 0.21 | 0.3514 | 0.6617 | -1 | 0.974 / 0.975 / 0.986 | 1.12 / 1.67 | 19.24 | 403 |
 | A11b | the same cut face with the two-sided outline | 1.54 / 2.55 | 0.09 / 0.11 / 0.21 | 0.3123 | 0.6909 | -1 | 0.974 / 0.975 / 0.986 | 1.12 / 1.67 | 19.24 | 358 |
 | A12 | no fine-structure refinement (§5): the pose of §4 | 0.00 / 0.00 | 1.98 / 3.75 / 5.24 | 0.2781 | 0.7287 | -1 | 0.995 / 0.957 / 0.967 | 1.18 / 1.63 | 19.24 | 471 |
+| A13 | no two-class term: S = S_outline / 3 in the search and the refinement, polarity +1 | 5.96 / 12.38 | 5.79 / 10.31 / 14.31 | 0.2228 | 0.7855 | 1 | 0.985 / 0.990 / 0.992 | 1.40 / 1.80 | 19.24 | 384 |
+| A14 | no orientation search: §4 from the image-centre start at both polarities, then §5 | 0.01 / 0.01 | 0.00 / 0.00 / 0.00 | 0.2781 | 0.7287 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 37 |
 
 Base, run through bench/ablate.py, lies 0.00 mm (corners max 0.00 mm) from the CLI run of the Main result.
+
+## Start test
+
+The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre of its image box, and the method and A14 (no orientation search) run from the image-centre start and from each turned start. Each cell gives the mean displacement from the base pose over the points of the base specimen mask, and the angle of the rotation between the two poses.
+
+| start | start pose to base: mm / deg | method to base: mm / deg | A14 to base: mm / deg |
+|---|---|---|---|
+| image centres, header orientation | 2.44 / 11.1 | 0.00 / 0.0 | 0.00 / 0.0 |
+| 90 deg about OCT array axis 0 | 15.28 / 83.0 | 0.00 / 0.0 | 14.34 / 77.9 |
+| 180 deg about OCT array axis 0 | 22.86 / 172.7 | 0.00 / 0.0 | 22.25 / 154.8 |
+| 90 deg about OCT array axis 1 | 14.40 / 86.3 | 0.00 / 0.0 | 17.36 / 115.2 |
+| 180 deg about OCT array axis 1 | 20.42 / 175.8 | 0.00 / 0.0 | 20.14 / 163.4 |
+| 90 deg about OCT array axis 2 | 15.17 / 97.5 | 0.00 / 0.0 | 17.46 / 113.5 |
+| 180 deg about OCT array axis 2 | 20.18 / 172.8 | 0.00 / 0.0 | 21.31 / 169.8 |
 
 ## Runtime and memory of bench/ablate.py
 
@@ -65,7 +81,7 @@ Base, run through bench/ablate.py, lies 0.00 mm (corners max 0.00 mm) from the C
 | prep texture | 82 | 5.0 |
 | prep texture3d | 81 | 5.0 |
 | prep mri | 2 | 0.7 |
-| all variants and preprocessing | 7080 | 5.0 |
+| all variants and preprocessing | 7566 | 5.0 |
 
 Peak GPU memory allocated by torch over the variants: 1.4 GiB.
 
@@ -73,4 +89,4 @@ Peak GPU memory allocated by torch over the variants: 1.4 GiB.
 
 ## Reading
 
-Every variant except A12 ends with §5 on its own best pose. The table gives the change of the pose after §4 against the base's §4 pose and of the final pose against the base. docs/METHOD.md reads this table in its section on the ablations of §1 to §5, and gives the ablations of §6, which are also stored in bench/results/I58/deform_ablation.md.
+Every variant except A12 ends with §5 on its own best pose. The table gives the change of the pose after §4 against the base's §4 pose and of the final pose against the base. [docs/METHOD.md](../docs/METHOD.md#ablations) shows the main variants and the start test in freeview. The ablations of §6 are in bench/results/I58/deform_ablation.md.

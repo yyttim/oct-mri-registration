@@ -14,7 +14,7 @@ specimen. Both voxel sizes are taken as correct, so the true scales are close to
 The OCT and the MRI show the same specimen, so they differ by a proper rotation and never by a mirror image. The file frames fix
 the handedness, and §3 searches proper rotations only. A TIFF or NPY stack, or a NIfTI file without sform and qform, is taken in
 its array frame, which must then have the handedness of the specimen. The score of §2 cannot tell mirror images apart on a
-nearly symmetric block (on I58 the best mirrored pose has the lower L and ends 30.5 mm from the result).
+nearly symmetric block (on I58 the best mirrored pose has the lower L and ends 17.3 mm from octreg's affine).
 
 Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the NIfTI header frame
 or, for TIFF and NPY, diag(spacing) on the axes (x, y, z) = numpy axes (2, 1, 0). The OCT is streamed plane by plane into a
@@ -81,7 +81,7 @@ flagged `clamp_saturated`.
 
 ## §5 Fine-structure refinement
 
-The score of §2 is dominated by the outline. It finds the block, but an outline that carries a margin of agarose, or a cut face,
+The score of §2, dominated by the outline, finds the block, but an outline that carries a margin of agarose, or a cut face,
 leaves the last millimetres open. The best pose of §4 is therefore refined on the internal structure of both volumes, such as
 fibre bundles, vessels and nuclei, compared by normalised gradient fields (Haber and Modersitzki, 2006). Each volume I with mask
 m is smoothed and differentiated inside the mask by normalised convolution, g = ∇(G_σ(I m) / G_σ(m)), so the mask edge adds no
@@ -95,8 +95,8 @@ with A the linear part of T. The squared cosine compares only the orientation of
 gradient and the square removes it, so F needs neither an intensity mapping nor the polarity. L = 1 − F + λ (Σ ℓ_i² + Σ h_i²) is
 minimised with Adam as in §4, from the §4 pose and under the same prior (λ = 2), with a fifth of the learning rates of §4, in
 one pass of 150 iterations at each of σ = 0.6, 0.4 and 0.3 mm. Each pass keeps its lowest-L iterate. At these scales section
-stripes a few tenths of a millimetre apart are smoothed away. §5 refines and does not search. F alone does not find the block,
-and it can lower S, whose outline and tissue classes are coarse.
+stripes a few tenths of a millimetre apart are smoothed away. §5 refines and does not search, and it can lower S, whose outline
+and tissue classes are coarse.
 
 ## §6 Smooth deformation
 
@@ -148,9 +148,9 @@ evidence are split into four spatial folds (cells of 7 mm, with no buffer, so th
 the field is fitted without one fold and tested on it, for each of the four folds. The held-out median error of the interior
 matches plus that of the surface-edge offsets, over all folds, must fall below 0.9 times the same score without deformation. The
 held-out error alone does not bound the field, since on I58 it still falls a little past the strain limit (the strain limit 0.20
-row of the §6 ablation table). The limit therefore sets λ, and the held-out error only gates the field. A field is also refused
-with fewer than 100 interior matches or 300 boundary points, or when no weight up to 30 keeps the limit. Whenever a field is
-refused, the run is flagged `deformation_not_supported` and no field is written.
+row of `bench/results/I58/deform_ablation.md`). The limit therefore sets λ, and the held-out error only gates the field. A field
+is also refused with fewer than 100 interior matches or 300 boundary points, or when no weight up to 30 keeps the limit.
+Whenever a field is refused, the run is flagged `deformation_not_supported` and no field is written.
 
 The evidence is measured and the field fitted once. Both kinds of evidence are then measured again on the warped OCT, the
 interior matches over every confident match before the length cut and the surface-edge offsets over every boundary point with
@@ -183,83 +183,106 @@ against at most 0.266 with any OCT axis flipped.
 OCT, the median residual of the interior matches falls from 0.250 to 0.124 mm and that of the surface-edge offsets from 0.285 to
 0.089 mm, and the offsets within 0.3 mm rise from 51 % to 80 %. Over the MRI foreground the field has a median of 0.28 mm and a
 maximum of 1.05 mm. It is largest at the superior end of the block, where the surface-edge offsets are largest. In 4 mm sections
-along the sectioning axis, the median surface-edge offset falls from 0.81 to 0.22 mm in the first section at that end and from
+along the sectioning axis, the median surface-edge offset falls from 0.82 to 0.22 mm in the first section at that end and from
 0.65 to 0.19 mm in the next. In each of the other sections it falls from between 0.10 and 0.40 mm to between 0.04 and 0.13 mm.
-These values per section come from the run of the §6 ablations below. §6 looks for interior matches and surface edges only
-within the 1.35 mm reach, so it does not bring back tissue that lies farther than that from its MRI position.
+These values per section are stored in `bench/results/I58/deform_ablation.json`. §6 looks for interior matches and surface edges
+only within the 1.35 mm reach, so it does not bring back tissue that lies farther than that from its MRI position.
 
 The [README](../README.md#results-on-the-i58-brainstem-block) shows the result on three planes in freeview. The first row of the
 deformable comparison in [BASELINES.md](../bench/baselines/BASELINES.md#deformable) shows the OCT through the affine alone and
 through the affine and §6 on the same sagittal plane.
 
-### Ablations of §1 to §5
+### Ablations
 
-Each row changes one element of the method, and the row without §5 stops after §4. Pose changes are block-corner means, of the
-§4 pose against the method's §4 pose and of the final pose against the result. The cut-face row compares the two outlines on the
-same cut.
+Each variant is the method with one element removed or replaced, run on the same two files with everything else unchanged. The
+affine variants are shown through their own affine. The §6 variants are fitted at octreg's affine, as the deformable baselines
+are. Every panel is the sagittal plane of the README figure in freeview, the whole MRI crop at one pixel per MRI voxel, with the
+boundary of the MRI tissue in red. Anterior is on the right and superior at the top. At octreg's pose the red line runs beyond
+the OCT at the top left and at the bottom, where the MRI holds tissue beyond the cut faces at the two ends of the block.
+Distances are the mean displacement from octreg's affine over a regular sample of the specimen mask, with the rotation angle
+between the two. They say how far a variant ends from the method, and the panels show which pose fits.
 
-| change | after §4 (mm) | final (mm) |
+| variant | step | result | scale per OCT axis | from octreg's affine |
+|---|---|---|---|---|
+| octreg, §1 to §5 |  | correct | 0.98 / 0.97 / 0.99 |  |
+| intensity-threshold mask instead of the texture mask | §1 | turned over | 0.99 / 0.99 / 1.00 | 23.9 mm, 158° |
+| no outline term | §2 | turned over | 1.00 / 1.00 / 1.00 | 23.4 mm, 176° |
+| no two-class term (the outline alone) | §2 | turned | 0.99 / 0.99 / 0.99 | 5.8 mm, 23.0° |
+| no orientation search, from the image centres | §3 | as octreg's | 0.98 / 0.97 / 0.99 | 0.00 mm, 0.0° |
+| no scale and shear penalty | §4 | turned over and shrunk | 0.86 / 0.87 / 0.88 | 17.3 mm, 141° |
+| no fine-structure refinement | §5 | close, not on the boundary | 0.99 / 0.96 / 0.97 | 2.0 mm, 8.8° |
+
+| MRI | octreg, §1 to §5 | image centres aligned (start, no registration) |
 |---|---|---|
-| intensity-threshold OCT mask instead of the texture mask | 41.9 | 42.9 |
-| no outline term | 42.1 | 44.0 |
-| polarity forced to +1 | 41.1 | 42.3 |
-| no scale prior (λ 0, clamp 1.0): S 0.530 at the §4 pose, final scales 0.40 to 0.58 | 40.1 | 38.4 |
-| the other handedness (OCT mirrored) | 29.8 | 30.5 |
-| of the scale prior, the clamp alone (λ 0, clamp kept): final scales 0.86 to 0.88, at the bound | 41.2 | 38.7 |
-| of the scale prior, the penalty alone (clamp 1.0, λ kept) | 0.00 | 0.00 |
-| no fine-structure refinement (§5) | 0 | 3.75 |
-| OCT flattening off | 0.24 | 0.00 |
-| holes filled in 3-D only | 0.24 | 0.17 |
-| standardised intensities instead of two-class maps | 2.19 | 0.00 |
-| two-sided outline (agarose over MRI tissue counted as a mismatch) | 2.18 | 0.00 |
-| MRI flattening off | 3.68 | 0.00 |
-| cut face simulated by removing the mask beyond 70 % of its extent along OCT axis 1: method / two-sided outline | 4.04 / 2.55 | 0.11 / 0.11 |
+| <img src="figures/deformable/mri.png" width="250" alt="MRI"> | <img src="figures/deformable/affine.png" width="250" alt="octreg, §1 to §5"> | <img src="figures/ablation/start.png" width="250" alt="image centres aligned"> |
+| **intensity-threshold mask** | **no outline term** | **the outline alone** |
+| <img src="figures/ablation/intensity_mask.png" width="250" alt="intensity-threshold mask"> | <img src="figures/ablation/no_outline.png" width="250" alt="no outline term"> | <img src="figures/ablation/outline_only.png" width="250" alt="the outline alone"> |
+| **no orientation search** | **no scale and shear penalty** | **no fine-structure refinement** |
+| <img src="figures/ablation/no_search.png" width="250" alt="no orientation search"> | <img src="figures/ablation/no_penalty.png" width="250" alt="no scale and shear penalty"> | <img src="figures/ablation/no_refinement.png" width="250" alt="no fine-structure refinement"> |
 
-The texture mask, the outline term, the polarity as a sign, the scale prior and the file handedness decide the pose. Without any
-one of them the block ends turned over or misplaced, and §5, which only refines, does not bring it back. Of the scale prior, the
-penalty does the work. Without it the block collapses onto the clamp at 0.86 to 0.88 of its length, and without the clamp the
-pose does not move. Without §5 the result moves by 3.75 mm. The five rows after it change the §4 pose by 0.24 to 3.68 mm, and §5
-settles each of them to within 0.17 mm of the result. OCT flattening moves the §4 pose by only 0.24 mm, but flattening is one
-rule for both volumes, and turned off on the MRI side it moves the §4 pose by 3.68 mm. Filled in 3-D only, the specimen mask
-loses 2.4 of its 19.2 cm³, which is why §1 fills holes in every array plane. Counting agarose over MRI tissue as a mismatch
-moves the §4 pose by 2.18 mm, since this crop holds tissue below the block. With a simulated cut face both outlines end 0.11 mm
-from the result. On this pair the class structure is the weaker term of S, and the outline finds the block. |S_class| is 0.10 at
-the §4 pose, and 0.14 with standardised intensities.
+The texture mask, the outline term and the scale and shear penalty decide the pose. Without any one of them the block ends
+turned over, and the section stripes, nearly level in octreg's panel, slant or stand upright. Without the penalty, §4 shrinks
+the block until all three log-scales sit at the clamp of −0.15, and that pose scores higher than the method's §4 pose (S 0.334
+against 0.278), since S alone rewards distorting the block. With the outline alone the block ends turned by 23°. In its panel
+the anterior surface leaves the boundary and the tissue covers the gap near the inferior end. Its §4 pose has a higher outline
+score than the method's (S_outline 0.668 against 0.630) but a two-class score near zero (|S_class| 0.007 against 0.102), so the
+outline alone prefers a wrong pose and the two-class term rejects it. Without §5 the block lies close to octreg's pose but not
+on it. Along the boundary it fits better in some places and worse in others, for example at the gap near its inferior end, and
+its fine structure agrees less with the MRI (F 0.089 against 0.103). Without the orientation search, §4 and §5 started from the
+image centres reach octreg's affine, because the header orientation of this pair is only 11° from it.
 
-### Ablations of §6
+The start test asks what the search adds. The OCT is turned by 90° and 180° about each of its array axes, through the centre of
+its image box, and the method and the variant without the search run from each turned start. The table gives the distance of
+each start and of each result from octreg's affine.
 
-The elements of §6 are ablated one at a time in a separate run of the stage on cached base grids, at an affine within 0.003 mm
-of the result at the block corners, so the rows can differ in the last digit from the numbers above. Each row is scored by the
-read-outs of the stage, by the held-out errors of its fit and by two numbers the fit never sees: F of §5 at σ 0.3 mm, and the
-two-class score of §2 (polarity × S_class) over the core 1.5 mm below both surfaces. The held-out errors are taken on the
-evidence a row is fitted to, so they compare only rows that use the same evidence.
+| start | the start | octreg | no orientation search |
+|---|---|---|---|
+| image centres, header orientation | 2.4 mm, 11.1° | 0.00 mm, 0.0° | 0.00 mm, 0.0° |
+| turned 90° about OCT array axis 0 | 15.3 mm, 83° | 0.00 mm, 0.0° | 14.3 mm, 78° |
+| turned 180° about OCT array axis 0 | 22.9 mm, 173° | 0.00 mm, 0.0° | 22.2 mm, 155° |
+| turned 90° about OCT array axis 1 | 14.4 mm, 86° | 0.00 mm, 0.0° | 17.4 mm, 115° |
+| turned 180° about OCT array axis 1 | 20.4 mm, 176° | 0.00 mm, 0.0° | 20.1 mm, 163° |
+| turned 90° about OCT array axis 2 (the sectioning axis) | 15.2 mm, 98° | 0.00 mm, 0.0° | 17.5 mm, 114° |
+| turned 180° about OCT array axis 2 (the sectioning axis) | 20.2 mm, 173° | 0.00 mm, 0.0° | 21.3 mm, 170° |
 
-| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | held-out interior matches / surface-edge offsets (mm) | F | two-class, core | field median / max (mm) |
-|---|---|---|---|---|---|---|---|---|---|
-| no deformation | | | 0.249 | 0.285 | 51 % | | 0.1029 | 0.0578 | 0 |
-| §6 | 0.82 | 0.148 | 0.124 | 0.089 | 80 % | 0.155 / 0.114 | 0.1086 | 0.0641 | 0.28 / 1.05 |
-| interior evidence only | 0.30 | 0.134 | 0.101 | 0.237 | 58 % | 0.143 / | 0.1058 | 0.0536 | 0.21 / 1.02 |
-| boundary evidence only | 8.22 | 0.149 | 0.457 | 0.090 | 80 % | / 0.110 | 0.1052 | 0.0661 | 0.35 / 1.10 |
-| rim ridge instead of the edge | 0.98 | 0.148 | 0.140 | 0.224 | 63 % | 0.169 / 0.309 | 0.1064 | 0.0599 | 0.27 / 1.02 |
-| boundary points only within 5 mm of an interior match | 0.51 | 0.148 | 0.121 | 0.104 | 74 % | 0.155 / 0.093 | 0.1068 | 0.0682 | 0.22 / 1.16 |
-| no Huber re-weighting | 1.51 | 0.149 | 0.141 | 0.104 | 77 % | 0.169 / 0.130 | 0.1080 | 0.0624 | 0.25 / 0.96 |
-| lattice 7 mm | 0.79 | 0.148 | 0.140 | 0.094 | 79 % | 0.168 / 0.113 | 0.1086 | 0.0597 | 0.31 / 1.10 |
-| lattice 10 mm | 0.30 | 0.148 | 0.156 | 0.088 | 81 % | 0.179 / 0.106 | 0.1086 | 0.0628 | 0.33 / 1.24 |
-| strain limit 0.10 | 1.95 | 0.100 | 0.146 | 0.113 | 76 % | 0.169 / 0.144 | 0.1074 | 0.0646 | 0.24 / 0.87 |
-| strain limit 0.20 | 0.40 | 0.199 | 0.108 | 0.079 | 82 % | 0.146 / 0.101 | 0.1092 | 0.0638 | 0.31 / 1.25 |
-| reach 2.0 mm | 1.51 | 0.149 | 0.130 | 0.090 | 80 % | 0.212 / 0.145 | 0.1092 | 0.0595 | 0.29 / 1.57 |
-| reach 2.7 mm | 3.46 | 0.149 | 0.145 | 0.115 | 76 % | 0.304 / 0.192 | 0.1082 | 0.0577 | 0.28 / 1.59 |
+| turned 90° about the sectioning axis (start) | no orientation search | octreg |
+|---|---|---|
+| <img src="figures/ablation/turned_start.png" width="250" alt="turned start"> | <img src="figures/ablation/turned_no_search.png" width="250" alt="no orientation search from the turned start"> | <img src="figures/ablation/turned_octreg.png" width="250" alt="octreg from the turned start"> |
 
-Each kind of evidence alone leaves the other kind where it was or makes it worse. The interior matches alone lower the
-surface-edge offsets only a little (0.285 to 0.237 mm), and the surface-edge offsets alone pull the interior matches further off
-(0.249 to 0.457 mm). The ridge of the rim lowers the surface-edge offsets part of the way (0.285 to 0.224 mm) and fits the
-interior matches less closely. Restricting the boundary points to those within 5 mm of an interior match withholds the
-surface-edge offsets at the superior end, where the OCT holds few matches. It leaves the surface-edge offsets in the first 4 mm
-there at 0.39 mm instead of 0.22 mm, with no gain elsewhere along the sectioning axis. Without Huber re-weighting and on coarser
-lattices the residual of the interior matches is higher. A longer reach admits wrong matches. At 2.0 mm the residuals hardly
-move while the field grows (maximum 1.57 against 1.05 mm), and at 2.7 mm every residual is worse. A strain limit of 0.20 fits a
-little closer and scores a little better held out. The limit is a bound on plausible tissue strain rather than a fitted number,
-and the method uses 0.15.
+From every turned start the method returns to octreg's affine, by less than 0.002 mm, since its search covers all orientations.
+Without the search, §4 and §5 end 14 to 22 mm and 78° to 170° away, about as far as the starts themselves.
+
+The §6 variants fit the field at octreg's affine to one kind of local evidence at a time, with λ chosen by the rule of the
+method, the smallest weight between 0.3 and 30 that keeps the strain below 0.15. Both kinds of evidence are then measured again
+on the warped OCT. The table gives their medians, over the whole block and over the 4 mm at its superior end, and the field over
+the MRI foreground. These are octreg's own label-free read-outs.
+
+| variant | λ | interior matches (mm) | surface-edge offsets (mm) | surface-edge offsets, superior 4 mm (mm) | field median / max (mm) |
+|---|---|---|---|---|---|
+| no deformation (octreg's affine) |  | 0.250 | 0.285 | 0.82 | 0 |
+| octreg, §6 | 0.82 | 0.124 | 0.089 | 0.22 | 0.28 / 1.05 |
+| interior matches only | 0.30 | 0.101 | 0.237 | 0.79 | 0.21 / 1.02 |
+| surface-edge offsets only | 8.22 | 0.458 | 0.091 | 0.20 | 0.35 / 1.10 |
+
+| MRI | no deformation (octreg's affine) | octreg, §6 |
+|---|---|---|
+| <img src="figures/deformable/mri.png" width="250" alt="MRI"> | <img src="figures/deformable/affine.png" width="250" alt="no deformation"> | <img src="figures/deformable/octreg.png" width="250" alt="octreg, §6"> |
+| **interior matches only** | **surface-edge offsets only** | |
+| <img src="figures/ablation/interior_only.png" width="250" alt="interior matches only"> | <img src="figures/ablation/boundary_only.png" width="250" alt="surface-edge offsets only"> | |
+
+Each kind of local evidence alone leaves the misfit of the other kind. With the interior matches only, the surface near the
+superior end stays where the affine put it, as without deformation (0.79 mm in the superior 4 mm, against 0.22 mm with §6). With
+the surface-edge offsets only, the surface fits as with §6, but the interior matches end farther off than without deformation
+(0.458 against 0.250 mm). This misfit lies inside the block, not at its surface where the panels draw the boundary.
+
+[bench/BENCHMARK.md](../bench/BENCHMARK.md) lists every variant of §1 to §5 that `bench/ablate.py` runs, with the start test,
+and [bench/results/I58/deform_ablation.md](../bench/results/I58/deform_ablation.md) every variant of §6. Of the §1 to §5
+variants not shown here, the flattening of either volume turned off, holes filled in 3-D only, standardised intensities in place
+of the two-class maps, the polarity forced to the method's own, the two-sided outline, a simulated cut face and the clamp of §4
+and §5 removed each change the final affine by less than 0.12 mm. The wrong polarity and the mirrored OCT end 17 to 20 mm away,
+and with the penalty and the clamp both removed the block ends 17.1 mm away at scales of 0.40 to 0.58. The §6 variants there
+also cover the rim ridge in place of the edge, boundary points only near interior matches, no Huber re-weighting, coarser
+lattices, other strain limits and a longer reach.
 
 ## Parameters
 
