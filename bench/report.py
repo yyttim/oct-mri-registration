@@ -7,8 +7,8 @@
 RUN: the CLI run (result.json, and eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json).
 LOGS (optional): bench/run_i58.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
 to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the existing file are
-kept: the '## Visual result' section before '## Main result', and the reading after the READING marker. The I58 data are
-unpublished, so the figures of --figures are not in the repository.
+kept: the '## Visual result' section before '## Main result', and the reading after the READING marker. The figures of
+--figures are not tracked by git.
 """
 from __future__ import annotations
 
@@ -178,7 +178,7 @@ def runtime_section(abl):
 
 
 def figures(run, out):
-    """Three figures of the I58 report from the run's own qc images, kept out of the repository (the data are unpublished):
+    """Three figures of the I58 report from the run's own qc images, not tracked by git:
     out/fig_qc_I58.png is RUN/qc.png without the white margin, outline colours kept, and out/fig_qc_montage_I58.png and
     out/fig_qc_deform_I58.png are RUN/qc_montage.png and RUN/qc_deform.png as they are. The ablation distances are in the
     table, which needs no picture."""

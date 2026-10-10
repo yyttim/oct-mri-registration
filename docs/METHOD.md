@@ -188,6 +188,18 @@ along the sectioning axis, the median surface-edge offset falls from 0.81 to 0.2
 These values per section come from the run of the §6 ablations below. Detached cerebellar parts that moved by more than the
 1.35 mm reach, folia and torn flaps, stay where the affine puts them, since no evidence reaches them.
 
+| MRI | OCT, affine | OCT, affine and §6 |
+|---|---|---|
+| <img src="figures/deformable/mri.png" width="288" alt="MRI"> | <img src="figures/deformable/affine.png" width="288" alt="OCT through the affine"> | <img src="figures/deformable/octreg.png" width="288" alt="OCT through the affine and §6"> |
+
+The superior end of the block in freeview, on the sagittal plane through the largest displacement of the field (x = 4.26 mm),
+at two pixels per MRI voxel. Each panel is 34.6 mm from posterior to anterior and 14.6 mm high, up to the top of the crop.
+The red line is the boundary of the MRI tissue, as in the figure of the [README](../README.md#results-on-the-i58-brainstem-block),
+which shows the result on three planes. Through the affine alone the anterior surface of the OCT (right) lies outside the
+boundary. §6 brings it onto the boundary and keeps the cut face and the sections straight. At the top left the MRI holds
+tissue beyond the superior cut face, which the OCT never imaged. [BASELINES.md](../bench/baselines/BASELINES.md) shows the
+same plane for the deformable baselines.
+
 ### Ablations of §1 to §5
 
 Each row changes one element of the method, and the row without §5 stops after §4. Pose changes are block-corner means, of the

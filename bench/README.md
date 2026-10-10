@@ -39,7 +39,8 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `BENCHMARK.md` | the I58 report, written by `report.py` around two hand-written sections |
 | `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
 | `results/I58/` | the stored results of the benchmark (below) |
-| `figures/` | the default place for the figures of `report.py --figures`. It is not in the repository, since the I58 data are unpublished |
+| `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md, docs/METHOD.md and BASELINES.md |
+| `figures/` | the default place for the qc figures of `report.py --figures`, not tracked by git |
 
 ## Running the I58 benchmark
 

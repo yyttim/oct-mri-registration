@@ -4,7 +4,7 @@ octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, 
 
 ## Visual result
 
-The result is judged on the overlays (docs/METHOD.md, Evaluation), and the numbers below support that judgement. The I58 data are unpublished, so the figures are not in the repository.
+The result is judged on the overlays (docs/METHOD.md, Evaluation), and the numbers below support that judgement. Figures of the result are in README.md, and of the baselines in bench/baselines/BASELINES.md.
 
 The best pose of the other handedness (ablation A8, also refined by §5) fits the outline better than the result (S_outline 0.6848 against 0.6302) and has the lower §4 loss (L 0.7073 against 0.7287), but its fine structure matches less (F 0.078 against 0.103).
 
