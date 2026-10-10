@@ -1,11 +1,11 @@
 """Roots of the bench scripts, relative to the repository by default. The package (octreg/) never reads this.
 
-    OCTREG_PROJECT_ROOT   where the runs live (bench_runs/...), by default the repository root
+    OCTREG_PROJECT_ROOT   where the runs live (bench_runs/... and, for the baseline comparison, baselines/...), by default
+                          the repository root
     OCTREG_DATA_ROOT      where the data live, by default <repository>/data
     OCTREG_I58_DIR        the folder that holds the two I58 input files, by default <data root>/I58
 
-bench_runs/ and data/ of the repository are in .gitignore. Those three are the only overrides, and nothing else in the
-benchmark hard-codes a path.
+bench_runs/, baselines/ and data/ of the repository are in .gitignore. Those three are the only overrides.
 """
 from __future__ import annotations
 

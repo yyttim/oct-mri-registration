@@ -21,7 +21,7 @@ from . import geometry as G
 from .params import Params
 from .search import EPS, box, to_torch
 
-CLAMP = 0.15               # |log_scale|, |shear| <= CLAMP after every step: a guard, never reached with the penalty (flag clamp_saturated)
+CLAMP = 0.15               # |log_scale|, |shear| <= CLAMP after every step: a guard, and a run that reaches it is flagged clamp_saturated
 
 
 def compose(r, t, ls, sh, c):
@@ -108,7 +108,7 @@ def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Param
         T = compose(r, t, ls, sh, c)
         v = objective(T)
         L = 1.0 - v[0] + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
-        l, *s =torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
+        l, *s = torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
         if l < best[0]:
             best = (l, T.detach().cpu().double().numpy(), *s)
         L.backward()
@@ -123,6 +123,7 @@ def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Param
 def fit(grid, T0, polarity, params: Params = Params()):
     """§4: fit_adam on the score of §2 at the given polarity. -> (T numpy 4x4, S, S_class, S_outline, L), lowest L."""
     return fit_adam(grid, T0, lambda T: grid.score(T, polarity), params.iters, params.iters, 1.0, params)
+
 
 def refine(candidates, mri, oct, params: Params = Params(), device="cuda"):
     """Fit every search pose (fit, its polarity fixed) on the base grid and sort by L. candidates: search output (T, polarity);

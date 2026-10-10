@@ -14,8 +14,9 @@ check        tests the convention of a converted affine. The OCT resampled throu
              octreg's own resampler is compared with the image the tool itself wrote on that grid (WARPED), by the Pearson
              correlation over the voxels where either is non-zero and the Dice of the two non-zero supports. A correct
              conversion gives a correlation near 1, and the check passes when both exceed 0.95. Writes RUN/check.json.
-check-field  the same test for a converted displacement field, with the affine-aligned OCT on the MRI grid (MOVING) sent
-             through RUN/oct2mri_warp.nii.gz. Writes RUN/check_field.json.
+check-field  the same test for a tool's displacement field after its conversion to octreg's convention
+             (RUN/oct2mri_warp.nii.gz, made by the commands of the run), with the affine-aligned OCT on the MRI grid
+             (MOVING) sent through it. Writes RUN/check_field.json.
 Defaults: the inputs of bench/baselines/README.md under OCTREG_PROJECT_ROOT/baselines/inputs (oct_0.08mm.nii.gz,
 mri_0.08mm.nii.gz, oct_affine_0.08mm.nii.gz).
 """

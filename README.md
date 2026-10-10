@@ -69,18 +69,20 @@ octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--affine-only]
 ```
 
 `register` runs §1 to §6 and writes the outputs below into `OUT`. The OCT can be NIfTI, TIFF, OME-TIFF or NPY, and the MRI is
-NIfTI. `--oct-spacing-um` gives the OCT voxel spacing in µm when the file has none. `--oct-mask` and `--mri-mask` replace the
-automatic masks with files whose positive voxels are the mask. `--params` reads parameter overrides from JSON (the fields of
-`octreg.params.Params`, listed in [docs/METHOD.md](docs/METHOD.md#parameters)), and `--device cpu` runs without a GPU.
+NIfTI. `--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy axes z, y, x, for the OCT and its mask file. A TIFF
+or NPY without spacing needs it, and it overrides the spacing a file has. `--oct-mask` and `--mri-mask` replace the automatic
+masks with files in the world frame of their scan, whose positive voxels are the mask. `--params` reads parameter overrides from
+JSON (the fields of `octreg.params.Params`, listed in [docs/METHOD.md](docs/METHOD.md#parameters)), and `--device cpu` runs
+without a GPU.
 
 `qc` renders the QC images of the affine again, for the run's transform or for another one given with `--T`. `-o` sets the
-output prefix (default `OUT/qc`, or `OUT/qc_<T stem>` for another transform), and the other options default to those of the
-run.
+output prefix (default `OUT/qc`, or `OUT/qc_<T stem>` for another transform), and `--oct-spacing-um`, `--oct-mask` and
+`--mri-mask` default to those of the run.
 
 `apply` resamples an OCT-frame volume onto the grid of an MRI-frame `--reference`, through the affine and, when the run wrote
 one, the deformation field. `--affine-only` leaves the field out. With `--inverse` it resamples an MRI-frame volume onto an
 OCT-frame reference through the affine alone, since the field is not inverted. `--oct-spacing-um` gives the spacing of an
-OCT-frame TIFF or NPY and defaults to that of the run.
+OCT-frame TIFF or NPY. It defaults to that of the run for the run's own OCT file at its original path.
 
 The same functions are available in Python: `from octreg.register import register, apply, qc`.
 
@@ -105,29 +107,29 @@ specimen, and the OCT should lie on the same MRI anatomy.
 
 The OCT shows a tissue block embedded in scatterer-doped agarose. The specimen mask of §1 separates tissue from agarose by
 texture, so it needs an embedding. A block that is not embedded should be given its mask with `--oct-mask`, and the OCT file
-itself serves, since a mask file is read as its positive voxels. Exact zeros in the OCT are read as missing data. The OCT
-contrast may be inverted relative to the MRI.
+itself serves when it is exactly zero outside the tissue, since a mask file is read as its positive voxels. Exact zeros in the
+OCT are read as missing data. The OCT contrast may be inverted relative to the MRI.
 
 The MRI is an ex-vivo scan roughly cropped to a region containing the block. The crop is larger than the block and may hold
 tissue that is not in it, for example beyond a face where the block was cut out of a larger specimen. The crop is the only
 position prior.
 
-Both voxel sizes must be correct, so the true scales are close to 1. A NIfTI orientation header (sform or qform) must be
-correct, including its handedness. A TIFF or NPY stack (x, y, z = numpy axes 2, 1, 0), or a NIfTI file without sform and
-qform, is taken in its array frame, which must then have the handedness of the specimen. §3 searches proper rotations only,
-and the score of §2 cannot tell mirror images apart on a nearly symmetric block, so the registration does not correct a
-frame of the wrong handedness.
+Both voxel sizes must be correct, so the true scales are close to 1. A NIfTI header (sform or qform) may give any position and
+orientation, since §3 searches them, but its handedness must be that of the specimen. A TIFF or NPY stack (x, y, z = numpy axes
+2, 1, 0), or a NIfTI file without sform and qform, is taken in its array frame, which must then have the handedness of the
+specimen. §3 searches proper rotations only, and the score of §2 cannot tell mirror images apart on a nearly symmetric block, so
+the registration does not correct a frame of the wrong handedness.
 
 §6 takes the surface edge of each scan as the steepest fall of intensity going outwards. This assumes that in both scans the
 tissue at the surface is brighter than what surrounds it.
 
 ## Results on the I58 brainstem block
 
-On the I58 pair (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, of which §6 is
-20 s, with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). §6 lowers the median
-interior-match residual from 0.250 to 0.124 mm and the median surface-edge offset from 0.285 to 0.089 mm, with 80 % of the
-offsets within 0.3 mm instead of 51 %. These are label-free read-outs of octreg, measured again on the warped OCT, and not
-ground truth.
+octreg is evaluated on this one block, and its constants set by hand were chosen on it ([docs/METHOD.md](docs/METHOD.md#scope)).
+On the I58 pair (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, of which §6 is 20 s,
+with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). §6 lowers the median interior-match
+residual from 0.250 to 0.124 mm and the median surface-edge offset from 0.285 to 0.089 mm, with 80 % of the offsets within 0.3
+mm instead of 51 %. These are label-free read-outs of octreg, measured again on the warped OCT, and not ground truth.
 
 | sagittal | coronal | axial |
 |---|---|---|
@@ -145,10 +147,11 @@ the left.
 
 ### Comparison with standard tools
 
-Eight standard registration tools ran on the same two files with the settings their documentation gives, from each of their
-standard starts, and each is shown with its best setting. In the affine stage only NiftyReg reg_aladin started from the image
-centres reaches octreg's affine. The others stay near the start or change the size of the block. Distances are the mean
-displacement over the specimen mask from octreg's affine, with the rotation angle.
+Standard registration tools ran on the same pair, eight in the affine stage and five in the deformable stage, with the OCT
+box-averaged to the 0.08 mm voxels of the MRI. Each used the settings its documentation gives and is shown with its best
+setting, judged on the overlays. In the affine stage each tool ran from each of its standard starts, and only NiftyReg
+reg_aladin started from the image centres reaches octreg's affine. The others stay near the start or change the size of the
+block. Distances are the mean displacement over the specimen mask from octreg's affine, with the rotation angle.
 
 | method | result | from octreg's affine |
 |---|---|---|
@@ -197,7 +200,7 @@ this pair, 11° from octreg's affine, §4 and §5 find the pose without the orie
 | the outline alone, no two-class term (§2) | turned | 5.8 mm, 23.0° |
 | no scale and shear penalty (§4) | turned over and shrunk | 17.3 mm, 141° |
 | no fine-structure refinement (§5) | close, not on the boundary | 2.0 mm, 8.8° |
-| no orientation search (§3), from the image centres | as octreg's | 0.00 mm |
+| no orientation search (§3), from the image centres | as octreg's | 0.00 mm, 0.0° |
 | no orientation search, from the OCT turned by 90° or 180° | far off | 14 to 22 mm, 78° to 170° |
 | octreg, from the OCT turned by 90° or 180° | as octreg's | less than 0.002 mm |
 
@@ -207,8 +210,9 @@ this pair, 11° from octreg's affine, §4 and §5 find the pose without the orie
 
 The panels show the sagittal plane of the figure above. §6 needs both kinds of local evidence: the interior matches alone leave
 the surface off at the superior end, and the surface-edge offsets alone pull the interior matches further off.
-[docs/METHOD.md](docs/METHOD.md#ablations) shows every variant, the start test and the §6 variants, and the full tables are in
-[bench/BENCHMARK.md](bench/BENCHMARK.md) and [bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
+[docs/METHOD.md](docs/METHOD.md#ablations) shows each of these variants, the start test and the two §6 variants, and the full
+tables are in [bench/BENCHMARK.md](bench/BENCHMARK.md) and
+[bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
 
 ## Reproducing the benchmark
 

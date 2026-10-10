@@ -35,9 +35,9 @@ def main(argv=None) -> int:
                    help="OCT (and OCT mask) voxel spacing (um) along the numpy axes of a TIFF / NPY (NIfTI axes k, j, i)")
     r.add_argument("--oct-mask", help="OCT specimen mask file (voxels > 0, in the OCT world) instead of the texture mask")
     r.add_argument("--mri-mask", help="MRI foreground mask file (voxels > 0) instead of the histogram foreground")
-    r.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
-    r.add_argument("--params", type=Path, metavar="F", help="JSON file with Params overrides, e.g. the params block of a result.json "
-                   "(result.json flags nondefault_params)")
+    r.add_argument("--device", choices=("cuda", "cpu"), default="cuda", help="cuda (default) or cpu")
+    r.add_argument("--params", type=Path, metavar="F", help="JSON file with Params overrides, e.g. the params block of a result.json. "
+                   "A run with overrides is flagged nondefault_params")
     a = sub.add_parser("apply", help="resample a volume through a registration")
     a.add_argument("--run", required=True, help="output directory of octreg register")
     a.add_argument("--moving", required=True, help="volume in the OCT frame (MRI frame with --inverse)")
@@ -46,7 +46,8 @@ def main(argv=None) -> int:
     a.add_argument("--inverse", action="store_true", help="MRI -> OCT (through the affine alone: the deformation field is not inverted)")
     a.add_argument("--affine-only", action="store_true", help="leave out the deformation field oct2mri_warp.nii.gz of the run")
     a.add_argument("--oct-spacing-um", type=_zyx, metavar="Z,Y,X",
-                   help="as for register, for the file in the OCT frame (default: the run's)")
+                   help="as for register, for the file in the OCT frame (default: the run's, for its own OCT file "
+                   "at its original path)")
     q = sub.add_parser("qc", help="render the visual QC of a run for its transform or another one, without registering")
     q.add_argument("--run", required=True, help="output directory of octreg register")
     q.add_argument("--oct", required=True, help="the run's OCT volume")

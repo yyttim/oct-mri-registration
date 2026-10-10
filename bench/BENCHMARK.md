@@ -1,12 +1,12 @@
 # Benchmark: the I58 brainstem pair
 
-octreg registered the two original files as given (OCT 1457x2013x1595 at 20 um, header LPI, and MRI crop 343x489x495 at 0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash da914d8ccc555207). The pair has no labels, so every number here is label-free. The numbers are read from the run's result.json and eval.json and from ablations.json and starts.json (copies in bench/results/I58/). Commands: `python bench/run_i58.py` (see bench/README.md).
+octreg registered the two original files as given (OCT 1457×2013×1595 at 20 µm, header LPI, and MRI crop 343×489×495 at 0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash da914d8ccc555207). The pair has no labels, so every number here is label-free. The numbers are read from the run's result.json and eval.json and from ablations.json and starts.json (copies in bench/results/I58/), except the wall clock and the GPU memory of the whole device, which come from the step logs of bench/run_i58.py and are not stored. Commands: `python bench/run_i58.py` (see bench/README.md).
 
 ## Visual result
 
 The result is judged on the overlays (docs/METHOD.md, Evaluation), and the numbers below support that judgement. Figures of the result are in README.md, of the ablations in docs/METHOD.md, and of the baselines in bench/baselines/BASELINES.md.
 
-After §4 the best pose of the other handedness (ablation A8) fits the outline better than the method's §4 pose (S_outline 0.6848 against 0.6302) and has the lower loss (L 0.7073 against 0.7287). After §5 its fine structure matches less than the result's (F 0.078 against 0.103), and its outline agrees less with the MRI (rim outline agreement forward / reverse 1.50 / 2.23 mm against 1.12 / 1.68 mm).
+Label-free numbers alone can prefer a wrong pose. After §4 the best pose of the other handedness (ablation A8) fits the outline better than the method's §4 pose (S_outline 0.6848 against 0.6302) and has the lower loss (L 0.7073 against 0.7287). After §5 its fine structure matches less than the result's (F 0.078 against 0.103), and its outline agrees less with the MRI (rim outline agreement forward / reverse 1.50 / 2.23 mm against 1.12 / 1.68 mm).
 
 ## Main result
 
@@ -20,8 +20,8 @@ After §4 the best pose of the other handedness (ablation A8) fits the outline b
 | scale per OCT array axis | 0.977 / 0.974 / 0.985 |
 | smooth deformation (§6): status, model, interior matches and surface-edge offsets used by the fit | applied, control lattice 5 mm, λ 0.82, 502 and 18041 |
 | §6 held-out median error, interior matches + surface-edge offsets: no deformation -> the field | 0.247 -> 0.155 mm + 0.285 -> 0.114 mm |
-| §6 residuals affine -> deformed, measured again: interior matches, surface-edge offsets (within 0.3 mm) | 0.25 -> 0.12 mm, 0.28 -> 0.09 mm (51 -> 80 %) |
-| §6 field over the MRI foreground, median / p95 / max, and max strain | 0.28 / 0.72 / 1.05 mm, 0.15 |
+| §6 residuals affine -> deformed, measured again: interior matches, surface-edge offsets (within 0.3 mm) | 0.250 -> 0.124 mm, 0.285 -> 0.089 mm (51 -> 80 %) |
+| §6 field over the MRI foreground, median / p95 / max, and max strain | 0.28 / 0.72 / 1.05 mm, 0.148 |
 | flags | none |
 | rim outline agreement forward / reverse, method masks | 1.12 / 1.68 mm |
 | OCT specimen mask | 19.24 cm3 |
@@ -48,7 +48,7 @@ Each variant is the method with one explicit change, run from the same preproces
 | A6p | no penalty, clamp kept: λ 0, clamp 0.15 | 16.94 / 41.19 | 17.27 / 38.75 / 58.16 | 0.3339 | 0.6661 | -1 | 0.861 / 0.870 / 0.882 | 1.90 / 3.08 | 19.24 | 456 |
 | A6c | no clamp, penalty kept: λ 2, clamp 1.0 | 0.00 / 0.00 | 0.00 / 0.00 / 0.00 | 0.2781 | 0.7287 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 390 |
 | A8 | the other handedness: OCT world mirrored (z negated) before the search | 15.61 / 29.84 | 17.29 / 30.49 / 47.39 | 0.3087 | 0.7073 | -1 | 0.995 / 0.992 / 0.996 | 1.50 / 2.23 | 19.24 | 376 |
-| A9 | no outline term: S = 2 S_class / 3 in the search and the refinement | 20.87 / 42.07 | 23.35 / 44.03 / 64.66 | 0.0975 | 0.9032 | -1 | 0.998 / 0.997 / 1.001 | 2.46 / 2.25 | 19.24 | 274 |
+| A9 | no outline term: S = 2 \|S_class\| / 3 in the search and the refinement | 20.87 / 42.07 | 23.35 / 44.03 / 64.66 | 0.0975 | 0.9032 | -1 | 0.998 / 0.997 / 1.001 | 2.46 / 2.25 | 19.24 | 274 |
 | A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch | 0.97 / 2.18 | 0.00 / 0.00 / 0.00 | 0.2647 | 0.7398 | -1 | 0.977 / 0.974 / 0.985 | 1.12 / 1.68 | 19.24 | 339 |
 | A11 | simulated cut face: specimen mask removed beyond 70 % of its extent along OCT axis 1 (data kept as embedding) | 2.25 / 4.04 | 0.09 / 0.11 / 0.21 | 0.3514 | 0.6617 | -1 | 0.974 / 0.975 / 0.986 | 1.12 / 1.67 | 19.24 | 403 |
 | A11b | the same cut face with the two-sided outline | 1.54 / 2.55 | 0.09 / 0.11 / 0.21 | 0.3123 | 0.6909 | -1 | 0.974 / 0.975 / 0.986 | 1.12 / 1.67 | 19.24 | 358 |
@@ -85,7 +85,7 @@ The OCT is turned by 90 and 180 degrees about each of its array axes, through th
 
 Peak GPU memory allocated by torch over the variants: 1.4 GiB.
 
-<!-- reading: written by hand below this line; bench/report.py keeps it when it rewrites the file -->
+<!-- reading: written by hand below this line, and bench/report.py keeps it when it rewrites the file -->
 
 ## Reading
 

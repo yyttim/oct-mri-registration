@@ -3,8 +3,8 @@
 
     python bench/baselines/summarise.py [--affine SUMMARY.json] [--deform SUMMARY.json] [--out DIR] [--notes NOTES.json]
 
-Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summary files next to
-them. NOTES.json, optional, maps a run name to a short description for the note column (the variant and its outcome).
+Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summary files and
+NOTES.json next to them. NOTES.json, optional, maps a run name to a short description for the note column (the variant and its outcome).
 """
 from __future__ import annotations
 
@@ -68,6 +68,8 @@ def main():
             fh.write(fn(rows, notes) + "\n")
         shutil.copy(src, a.out / f"summary_{name}.json")
         print(f"{name}: {len(rows)} rows -> {a.out / (name + '.md')}")
+    if a.notes.is_file() and a.notes.resolve() != (a.out / "notes.json").resolve():
+        shutil.copy(a.notes, a.out / "notes.json")
 
 
 if __name__ == "__main__":

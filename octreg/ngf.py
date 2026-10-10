@@ -3,7 +3,9 @@ compared by normalised gradient fields (NGF; Haber and Modersitzki 2006), which 
 polarity.
 
 On its base grid each volume I with mask m is smoothed and differentiated inside the mask by normalised convolution,
-g = grad(G_s(I m) / G_s(m)), so the mask edge adds no gradient; g is taken to world coordinates and n = g / sqrt(|g|^2 + eps^2), eps the median |g| over the MRI points used and over the OCT specimen mask. Both masks are eroded by ngf_erode_mm, so the outlines are left to §2-4. Over the MRI interior
+g = grad(G_s(I m) / G_s(m)), so the mask edge adds no gradient, and g is taken to world coordinates. The normalised gradient
+is n = g / sqrt(|g|^2 + eps^2), with eps the median |g| of each volume, over the MRI points used for the MRI and over the OCT
+specimen mask for the OCT. Both masks are eroded by ngf_erode_mm, so the outlines are left to §2-4. Over the MRI interior
 points x (every second interior MRI voxel along each axis), with the OCT interior weight w,
     F(T) = sum_x w(T^-1 x) (n_O(x) . n_M(x))^2 / sum_x w(T^-1 x),   g_O(x) = A^-T g_OCT(T^-1 x) (A the linear part of T),
 and L = 1 - F + lam (sum ls^2 + sum sh^2), the prior of §4, is minimised with Adam from the §4 pose, one pass per sigma in
@@ -73,7 +75,7 @@ class NGFGrid:
 
 def refine_ngf(mri, oct, T0, params: Params = Params(), device="cuda"):
     """§5 from the §4 pose T0: one refine.fit_adam pass on F per sigma in params.ngf_sigmas_mm. mri = (arr, foreground, affine), oct = (arr,
-    specimen mask, affine) on the base grids. -> (T, {F_start, F at the finest sigma, L, sigmas, seconds})."""
+    specimen mask, affine) on the base grids. -> (T, {sigmas_mm, F_start, F at the finest sigma, L, seconds})."""
     t0, T, info = time.time(), np.asarray(T0, float), {"sigmas_mm": list(params.ngf_sigmas_mm)}
     for i, s in enumerate(params.ngf_sigmas_mm):
         grid = NGFGrid(mri, oct, s, params, device)

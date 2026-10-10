@@ -6,7 +6,7 @@
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
 explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only),
 two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4), align(...,
-polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6), the OCT world mirrored so that the search and refinement see the
+polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6, and one of the two in A6p and A6c), the OCT world mirrored so that the search and refinement see the
 other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut face with the method and with the
 two-sided outline (A11, A11b), no fine-structure refinement (A12, the pose of §4), no two-class term (A13, the outline alone),
 or no orientation search (A14: §4 from the image-centre start, the header orientation with the centres of the two image boxes
@@ -27,7 +27,7 @@ the base: steps of §1 to §4 act through the §4 pose, which §5 then refines.
 
 Metrics: pose to base, outline agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
 volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
-array. The geometry helpers come from bench/evaluate.py, which is self-contained. Like it, this script reads the two input
+array. The geometry helpers come from bench/evaluate.py, which does not import the package. Like it, this script reads the two input
 files of bench/paths.py and its own runs, and nothing else.
 
 OUT/prep/<mask>/  oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
@@ -68,7 +68,7 @@ VARIANTS = {    # name: (what changes, the explicit change: mask source, solve()
     "A6p": ("no penalty, clamp kept: λ 0, clamp 0.15", {"params": {"lam": 0.0}}),
     "A6c": ("no clamp, penalty kept: λ 2, clamp 1.0", {"clamp": 1.0}),
     "A8": ("the other handedness: OCT world mirrored (z negated) before the search", {"mirror": True}),
-    "A9": ("no outline term: S = 2 S_class / 3 in the search and the refinement", {"outline": False}),
+    "A9": ("no outline term: S = 2 |S_class| / 3 in the search and the refinement", {"outline": False}),
     "A10": ("two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch", {"two_sided": True}),
     "A11": ("simulated cut face: specimen mask removed beyond 70 % of its extent along OCT axis 1 (data kept as embedding)",
             {"cut_axis": 1}),
@@ -182,7 +182,7 @@ def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_cla
     """§3 to §5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
     clamp: the bound on log-scales and shears of §4 and §5 in place of refine.CLAMP (0.15).
     mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
-    outline False: S = 2 S_class / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
+    outline False: S = 2 |S_class| / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
     the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
     the specimen mask itself, on which the mask is constant, so S_outline is 0.
     two_sided: the two-sided outline, weight q in the search and the refinement (embedding over MRI tissue counts).

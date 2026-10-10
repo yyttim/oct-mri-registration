@@ -83,10 +83,10 @@ def surface(mask, affine):
 
 def edge_offsets(vol, affine, points, normals, params: Params = Params(), measured=MEASURED):
     """Position of the surface edge of vol (torch [D, H, W] on the grid `affine`; 0 = not measured) along each normal: the
-    profile from -(df_reach_mm + PROFILE_EXTRA_MM) to +(df_reach_mm + PROFILE_EXTRA_MM) in grid steps (trilinear) and its derivative by a Gaussian of PROFILE_SIGMA
-    samples; a prominent fall is a local maximum of the fall going outwards more than df_edge_mad MADs above the median of
-    the fall along the profile, within +-df_reach_mm; a point is used when at least `measured` of its profile is > 0 and it has exactly one
-    prominent fall, whose position gets a parabolic sub-sample correction (the sampled peak lies within the reach, the correction
+    profile from -(df_reach_mm + PROFILE_EXTRA_MM) to +(df_reach_mm + PROFILE_EXTRA_MM) in grid steps (trilinear) and its
+    derivative by a Gaussian of PROFILE_SIGMA samples; a prominent fall is a local maximum of the fall going outwards more than
+    df_edge_mad MADs above the median of the fall along the profile, within +-df_reach_mm; a point is used when at least
+    `measured` of its profile is > 0 and it has exactly one prominent fall, whose position gets a parabolic sub-sample correction (the sampled peak lies within the reach, the correction
     can add up to half a step). -> (used bool [M], positions [M] mm, 0 where not used)."""
     P, h = params, float(np.linalg.norm(np.asarray(affine, float)[:3, 0]))
     if not len(points):

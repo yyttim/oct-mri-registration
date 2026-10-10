@@ -146,6 +146,7 @@ def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world
                                                                      cval=0).reshape(-1, shape[1], shape[2])
     return out.view(bool) if arr.dtype == bool else out
 
+
 def gauss_1d(sigma_vox, order, device):
     """1-D Gaussian of sigma_vox voxels, or its first derivative scaled to be exact on a ramp (torch, on device)."""
     r = int(math.ceil(4 * sigma_vox))
@@ -177,4 +178,3 @@ def nc_gradient(xm, m, sigma_vox):
     num, den = filter_sep(xm, sigma_vox, (0, 0, 0)), filter_sep(m, sigma_vox, (0, 0, 0)).clamp(min=1e-3)
     return torch.stack([(filter_sep(xm, sigma_vox, o) * den - num * filter_sep(m, sigma_vox, o)) / (den * den)
                         for o in ((1, 0, 0), (0, 1, 0), (0, 0, 1))]) * m
-

@@ -94,7 +94,7 @@ def load_volume(path, spacing_um=None) -> Volume:
     A[3] = (0.0, 0.0, 0.0, 1.0)
     sp = np.linalg.norm(A[:3, :3], axis=0)
     if not (np.all(np.isfinite(A)) and np.all(sp > 0) and abs(np.linalg.det(A[:3, :3])) > 1e-9 * np.prod(sp)):
-        raise ValueError(f"{p}: singular or missing voxel spacing in affine\n{A}\npass spacing_um (--oct-spacing-um Z,Y,X)")
+        raise ValueError(f"{p}: singular or missing voxel spacing in affine\n{A}\nfix the header, or for the OCT pass spacing_um (--oct-spacing-um Z,Y,X)")
     return Volume(str(p), tuple(shape), A, sp, frame)
 
 

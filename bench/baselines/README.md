@@ -8,21 +8,22 @@ tool fit the OCT better than the §6 field? The results are in [BASELINES.md](BA
 
 ## Inputs
 
-Both volumes keep their NIfTI headers, which place them roughly together. The header orientation is 11 degrees from octreg's
-affine, and the header alignment places the block about 27 mm from it (mean over the OCT specimen). The fixed image is the MRI
-crop as given (0.08 mm). The moving image is the 20 um OCT box-averaged to 0.08 mm isotropic, the resolution of the MRI
+Both volumes keep their NIfTI headers, which place them roughly together. The header orientation is 11° from octreg's affine,
+and the header alignment places the block about 27 mm from it (mean over the OCT specimen). The fixed image is the MRI crop as
+given (0.08 mm). The moving image is the 20 µm OCT box-averaged to 0.08 mm isotropic, the resolution of the MRI
 (`oct_0.08mm.nii.gz`). This is how microscopy volumes are usually passed to these tools. The only mask a tool receives is a
 field-of-view (FOV) mask of the OCT (voxels > 0), and only in a separate variant. In the deformable stage the moving image is
 the OCT resampled onto the MRI grid through octreg's affine (`oct_affine_0.08mm.nii.gz`). Every tool then starts from the same
 alignment and writes its field in the MRI world. octreg's own masks serve only the evaluation. `prepare_inputs.py` writes these
-files.
+files, into `<project root>/baselines/inputs` where the other scripts read them (the project root of
+[bench/README.md](../README.md)).
 
 ## Tools and settings
 
 | stage | tool | version | setting | starts |
 |---|---|---|---|---|
 | affine | ANTs antsRegistration | 2.6.5 | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule | header, centre of mass, antsAI rotation search, centre of mass + FOV mask |
-| affine | FSL FLIRT | 6.0.7.23 | normmi, dof 6 then 12, default and full (+-180 degrees) search, headers scaled x10 because its pyramid works in mm, and one run on the unscaled headers | default search, full search, -usesqform, -inweight FOV, unscaled headers |
+| affine | FSL FLIRT | 6.0.7.23 | normmi, dof 6 then 12, default and full (±180°) search, headers scaled x10 because its pyramid works in mm, and one run on the unscaled headers | default search, full search, -usesqform, -inweight FOV, unscaled headers |
 | affine | elastix | 5.3.1 | model-zoo rigid then affine, AdvancedMattesMutualInformation | header (fails: too few samples inside), geometric centre, centre of gravity, + FOV mask |
 | affine | NiftyReg reg_aladin | 2.1.2 | defaults: symmetric block matching, rigid then affine | image centres, header (-nac), + FOV mask (ignored by this version) |
 | affine | FreeSurfer mri_robust_register | 8.2.0 | --cost NMI, rigid then --affine --ixform | centre of mass, --noinit (diverges), + --maskmov |
@@ -35,20 +36,23 @@ files.
 | deformable | ConvexAdam | 0.2.0 | MIND-SSC, shipped defaults, GPU | identity, + FOV mask |
 | deformable | greedy | 1.4.0 | WNCC 2x2x2 (quick start), smoothing in voxels and in mm, NMI | identity, + FOV mask (as the moving mask) |
 
-[INSTALL.md](INSTALL.md) gives the version and installation route of each tool. The exact commands and the output of every
-run (`cmd.sh`, `log.txt`, `notes.md`) stay in the run directories, which hold image data and are not in the repository.
+[INSTALL.md](INSTALL.md) gives the version and installation route of each tool. The exact commands, the conversion of each
+deformable field to octreg's convention (`oct2mri_warp.nii.gz`) and the output of every run (`cmd.sh`, `log.txt`, `notes.md`)
+stay in the run directories under `<project root>/baselines/`, which hold image data and are not in the repository. The same
+holds for the freeview script and the list of sections behind `--shots`, `composites.py` and `zooms.py` (`shots.sh` and
+`sections.txt` in `<project root>/baselines/shots/`).
 
 ## Scripts
 
 | script | role |
 |---|---|
 | `prepare_inputs.py` | the shared inputs, from the two original files and an octreg run |
-| `convert_affines.py` | every tool's transform file in one convention (OCT world to MRI world, NIfTI RAS mm) |
-| `rundir.py` | `init` makes a run directory in octreg's layout from a converted 4x4 matrix. `check` and `check-field` compare it with the image the tool itself warped (correlation and support Dice above 0.95), so that no result rests on a wrong convention |
-| `evaluate_runs.py` | affine runs: the 20 um OCT through the transform by octreg's resampler, `bench/evaluate.py` (rim outline agreement, pose distance to octreg's affine, frame check), Dice against the MRI foreground, the scale per OCT axis, freeview section shots |
-| `evaluate_deform.py` | deformable runs: the same resampling through affine and field, the §6 read-outs on the warped OCT, the field over the MRI foreground (magnitude, Jacobian, folding), section shots |
-| `composites.py`, `zooms.py` | side-by-side panels per section and 2x zooms of the superior end for the visual comparison |
-| `summarise.py` | the full tables `affine.md` and `deform.md` from the summary JSON |
+| `convert_affines.py` | every tool's affine transform file in one convention (OCT world to MRI world, NIfTI RAS mm) |
+| `rundir.py` | `init` makes a run directory in octreg's layout from a converted 4×4 matrix. `check` and `check-field` compare it with the image the tool itself warped (correlation and support Dice above 0.95), so that no result rests on a wrong convention |
+| `evaluate_runs.py` | affine runs: the 20 µm OCT through the transform by octreg's resampler, `bench/evaluate.py` (rim outline agreement, pose distance to octreg's affine, frame check), Dice against the MRI foreground, the scale per OCT axis, and with `--shots` freeview section shots by the local script above |
+| `evaluate_deform.py` | deformable runs: the same resampling through affine and field, the §6 read-outs on the warped OCT, the field over the MRI foreground (magnitude, Jacobian, folding), and with `--shots` the same section shots |
+| `composites.py`, `zooms.py` | side-by-side panels per section and 2x zooms of the superior end from the `--shots` screenshots, for the visual comparison |
+| `summarise.py` | the full tables `affine.md` and `deform.md` from the summary JSON and the note of each run in `notes.json` |
 
-The stored results (summary JSON and tables) are in `bench/results/I58/baselines/`, and the figures of BASELINES.md in
-`docs/figures/` (`bench/figures.py`).
+The stored results (summary JSON, `notes.json` and the tables) are in `bench/results/I58/baselines/`, and the figures of
+BASELINES.md in `docs/figures/` (`bench/figures.py`).

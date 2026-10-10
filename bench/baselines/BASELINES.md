@@ -1,18 +1,19 @@
 # Baselines on the I58 brainstem pair
 
-Standard registration tools run on the same two files as octreg. The affine stage compares eight tools. Each uses the
-settings its documentation gives for volumes of different contrast, from each of its standard starting points: the header
-alignment, the image centres, the tool's own global search, and the same with a field-of-view (FOV) mask of the OCT. No
-setting is tuned on this pair. Every transform is checked against the image the tool itself resampled. Every result is
-resampled from the 20 um OCT by the same code, so the overlays differ only by registration. Results are judged on the
-overlays on 13 planes through the block and on four zooms of its superior end, as for octreg. Settings and scripts are in
+Standard registration tools run on the same pair as octreg, with the OCT box-averaged to the 0.08 mm voxels of the MRI. The
+affine stage compares eight tools. Each uses the settings its documentation gives for volumes of different contrast, from each
+of its standard starting points: the header alignment, the image centres, the tool's own global search, and the same with a
+field-of-view (FOV) mask of the OCT. No setting is tuned on this pair. Every transform is checked against the image the tool
+itself resampled. Every result is resampled from the 20 µm OCT by the same code, so the overlays differ only by registration.
+Results are judged on the overlays on 13 planes through the block and on four zooms of its superior end, as for octreg. These
+screenshots are not in the repository, and the figures below show one plane per tool. Settings and scripts are in
 [README.md](README.md), and the tables of all runs in `bench/results/I58/baselines/`.
 
 ## Affine
 
-Each tool is shown with its best standard setting, judged on the overlays. The pose distance is the mean displacement over
-the specimen mask between the tool's affine and octreg's, and the rotation is the angle between the two. Times are wall
-clock on a machine shared with other jobs and only indicative.
+Each tool is shown with its best standard setting, judged on the overlays. The pose distance is the mean displacement over the
+specimen mask between the tool's affine and octreg's, and the rotation is the angle between the two. Times are wall clock on a
+machine shared with other jobs and only indicative. octreg's are its own step times in result.json, §1 to §5 here and §6 below.
 
 | method | setting | result | scale per OCT axis | from octreg's affine | time |
 |---|---|---|---|---|---|
@@ -35,23 +36,28 @@ clock on a machine shared with other jobs and only indicative.
 | **mri_coreg** | **FLIRT** | **SynthMorph** |  |
 | <img src="../../docs/figures/affine/mri_coreg.png" width="196" alt="mri_coreg"> | <img src="../../docs/figures/affine/flirt.png" width="196" alt="FLIRT"> | <img src="../../docs/figures/affine/synthmorph.png" width="196" alt="SynthMorph"> |  |
 
-The axial plane of the README figure in freeview for each tool at its setting in the table, with the boundary of the MRI tissue
-in red. Each panel is the whole MRI crop at one pixel per MRI voxel. octreg and reg_aladin put the specimen on the boundary.
-greedy, elastix and mri_robust_register stay near the start, ANTs enlarges the block, mri_coreg and FLIRT shrink it, and
-SynthMorph moves it almost entirely out of this plane.
+The axial plane of the [README result figure](../../README.md#results-on-the-i58-brainstem-block) in freeview for each tool at
+its setting in the table, with the boundary of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI
+voxel. octreg and reg_aladin put the specimen on the boundary. greedy, elastix and mri_robust_register stay near the start, ANTs
+enlarges the block, mri_coreg and FLIRT shrink it, and SynthMorph moves it almost entirely out of this plane.
 
-The header orientation of this pair is 11 degrees from octreg's affine, and aligning the image centres puts the block 2.4 mm
-from it. From there greedy, elastix and mri_robust_register stay near their start. ANTs, mri_coreg and FLIRT change the size of
-the block by 19 to 28 % along one axis. The three global searches (antsAI, FLIRT over ±180°, greedy -search) end on a flipped or
+The header orientation of this pair is 11° from octreg's affine, and aligning the image centres puts the block 2.4 mm from it.
+From there greedy, elastix and mri_robust_register stay near their start. ANTs, mri_coreg and FLIRT change the size of the block
+by 19 to 28 % along one axis. The three global searches (antsAI, FLIRT over ±180°, greedy -search) end on a flipped or
 non-overlapping pose. Only reg_aladin, started from the image centres, finds the rotation. It agrees with octreg's affine to 0.3
-mm over the specimen mask and 1 degree, its block is up to 1.6 % smaller than octreg's, and its overlays cannot be told apart
-from octreg's. Started from the header alignment it ends 32 degrees off. octreg needs neither start, since it searches every
-orientation inside the crop.
+mm over the specimen mask and 1°, its block is up to 1.6 % smaller than octreg's, and its overlays cannot be told apart from
+octreg's. Started from the header alignment it ends 32° off. octreg needs neither start, since it searches every orientation
+inside the crop.
 
 The outline scores, the rim outline agreement of `bench/evaluate.py` and the Dice of the masks, are in the full table but
 do not rank the tools. A block that shrinks inside the MRI tissue scores well on them. The elastix run started from the
 image centres shrinks the block by 26 % in volume and still has a better rim outline agreement than octreg's affine. The
 scale column and the overlays decide.
+
+The frame check of the full tables is the raw-data check of `bench/evaluate.py`. It tests octreg's resampling of each pose, not
+the tool, and passes when the raw OCT values through the pose correlate with the overlay at Spearman 0.9 or more and the OCT
+with any axis flipped correlates at 0.3 or less. Every pose reaches 0.96 or more, except that of greedy -search (0.87), whose
+block barely overlaps the MRI. The other fails come from a flipped axis that correlates above 0.3.
 
 ## Deformable
 
@@ -64,7 +70,7 @@ field statistics are over the MRI foreground, and the last column is what the ov
 | no deformation | octreg's affine | 0.250 | 0.285 | 0.82 | 0 | 1 | | |
 | octreg, §6 | defaults | 0.124 | 0.089 | 0.22 | 0.28 / 1.05 | 0.94 | no artefact | 20 s |
 | ANTs SyN, CC | FOV mask | 0.063 | 0.027 | 0.05 | 0.29 / 1.62 | 0.34 | as octreg's | 48 min |
-| ANTs SyN, CC | script default | 0.049 | 0.024 | 0.03 | 0.68 / 3.41 | 0.03 | cut faces pulled into MRI tissue the OCT never imaged, stripes bent | 88 min |
+| ANTs SyN, CC | script default | 0.049 | 0.024 | 0.03 | 0.68 / 3.41 | 0.03 | cut faces pulled into MRI tissue the OCT never imaged, sections bent | 88 min |
 | greedy, WNCC | FOV mask | 0.181 | 0.033 | 0.09 | 0.14 / 1.53 | 0.14 | superior cut face slightly raised | 4 min |
 | ConvexAdam, MIND-SSC | FOV mask | 0.220 | 0.052 | 0.09 | 0.48 / 1.92 | -0.54 | superior cut face lifted, corners bulged | 13 s (GPU) |
 | elastix B-spline, Mattes MI | FOV mask | 0.367 | 0.254 | 0.65 | 0.27 / 0.59 | 1.00 | as octreg's, small local artefacts in the agarose | 43 s |
@@ -81,12 +87,12 @@ misfit. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for
 | **ConvexAdam** | **elastix B-spline** | **NiftyReg reg_f3d** |
 | <img src="../../docs/figures/deformable/convexadam.png" width="250" alt="ConvexAdam"> | <img src="../../docs/figures/deformable/elastix.png" width="250" alt="elastix B-spline"> | <img src="../../docs/figures/deformable/reg_f3d.png" width="250" alt="NiftyReg reg_f3d"> |
 
-The sagittal plane of the README figure in freeview for each tool at its setting in the table, with the boundary of the MRI
-tissue in red. Each panel is the whole MRI crop at one pixel per MRI voxel, and the sections run horizontally. Every tool starts
-from octreg's affine (top middle). §6 moves the anterior surface of the OCT near the top (right) onto the boundary and keeps the
-sections straight. SyN with the FOV mask and greedy look like §6, and elastix like the affine. Without the mask SyN pulls the
-OCT up into the MRI tissue beyond the superior cut face (top left) and bends the sections. ConvexAdam lifts the cut face, and
-reg_f3d distorts the whole block.
+The sagittal plane of the [README result figure](../../README.md#results-on-the-i58-brainstem-block) in freeview for each tool
+at its setting in the table, with the boundary of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI
+voxel, and the sections run horizontally. Every tool starts from octreg's affine (top middle). §6 moves the anterior surface of
+the OCT near the top (right) onto the boundary and keeps the sections straight. SyN with the FOV mask and greedy look like §6,
+and elastix like the affine. Without the mask SyN pulls the OCT up into the MRI tissue beyond the superior cut face (top left)
+and bends the sections. ConvexAdam lifts the cut face, and reg_f3d distorts the whole block.
 
 On the overlays no tool fits the intact tissue visibly better than §6. The fields that keep the block shape look the same as
 octreg's by eye. The read-outs resolve finer differences, and they are not biased towards octreg. SyN with CC and the FOV mask

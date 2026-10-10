@@ -2136,7 +2136,7 @@
    ]
   },
   "A9": {
-   "change": "no outline term: S = 2 S_class / 3 in the search and the refinement",
+   "change": "no outline term: S = 2 |S_class| / 3 in the search and the refinement",
    "prep": "texture",
    "spec": {
     "outline": false
@@ -3330,7 +3330,7 @@
  },
  "seconds": 7566.007000207901,
  "peak_rss_gb": 4.997283935546875,
- "driver_seconds": 5.075039863586426,
+ "driver_seconds": 5.293402910232544,
  "driver_check": {
   "main_run": "bench_runs/I58/octreg",
   "base_vs_main": {

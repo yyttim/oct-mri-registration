@@ -1,5 +1,6 @@
 """Interior evidence of the smooth deformation (§6, octreg.deform): block matching of a contrast-free structure feature
-between the MRI and the registered OCT on the MRI base grid (docs/METHOD.md §6). The constants are Params fields (df_*).
+between the MRI and the registered OCT on the MRI base grid (docs/METHOD.md §6). Its method constants are Params fields (df_*),
+and the fixed rules and guards are the constants below.
 
 Feature. A volume I with mask m is smoothed inside the mask by normalised convolution, s = G(I m) / G(m) (sigma df_sigma_mm), so
 the mask edge adds no gradient; g = grad s, n = g / sqrt(|g|^2 + eps^2) with eps the median |g| inside the mask, and the feature
@@ -25,7 +26,7 @@ from . import geometry as G
 from .search import to_torch
 
 CORE_FRACTION = 0.7        # a block is used when at least this fraction of it lies in the core
-VAR_FLOOR = 1e-3           # OCT feature variance per block voxel below which a window counts as empty (typical: 0.1)
+VAR_FLOOR = 1e-3           # OCT feature variance per block voxel below which a window counts as empty
 BATCH = 32                 # blocks correlated at a time (memory only)
 SLAB = 1 << 21             # voxels resampled at a time (memory only)
 

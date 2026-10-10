@@ -14,7 +14,7 @@ Sources for each convention (quoted in the function docstrings):
               include/transform.h: LINEAR_VOX_TO_VOX 0, LINEAR_RAS_TO_RAS 1.
   greedy    : reference docs: matrix "maps voxels in fixed image space to voxels in moving image space" via ras().
 
-Command line:  python convert_affines.py scale-header in.nii.gz out.nii.gz 10
+Command line:  python bench/baselines/convert_affines.py scale-header in.nii.gz out.nii.gz 10
 """
 import re
 import sys

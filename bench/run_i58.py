@@ -17,7 +17,8 @@ octreg run, the evaluate step also measures the pose distance to it (bench/evalu
 Each step writes NAME.log, NAME.time (wall time and exit status, the peak memory of a run is in its own result.json)
 and, when nvidia-smi is on the PATH, NAME.gpu_mib into ${OUT}_logs, with a start and a done line
 per step in chain.log. The runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid while it runs and
-refuses to start while another registration job is running, since one GPU takes one at a time.
+refuses to start while another registration job is running, since one GPU takes one at a time. Each step runs with
+OMP_NUM_THREADS=8. The runner takes no arguments, and --help prints this text.
 
 register and ablate refuse a default OUT or ABL that already holds a run, so a second run needs a new OUT and a new ABL.
 The report step has no such guard. It rewrites bench/BENCHMARK.md from whatever OUT and ABL name.
@@ -44,7 +45,7 @@ PREV_MAIN = Path(ENV("PREV_MAIN")) if ENV("PREV_MAIN") else None    # a second r
 LOGS = Path(str(OUT).rstrip("/" + os.sep) + "_logs")
 STEPS = (ENV("STEPS") or "register evaluate").split()
 DEVICE = ENV("DEVICE") or "cuda"
-KILL = LOGS / "runner.pid"                    # the running chain, so a second one refuses to start
+KILL = LOGS / "runner.pid"                    # PID of the running chain (POSIX: its process group), removed when it ends
 BUSY = re.compile(r'(^|/)python[0-9.]*(\.exe)?"? .*(-m octreg|bench/(ablate|evaluate)\.py)',
                   0 if POSIX else re.I)
 
@@ -71,7 +72,7 @@ def command_lines():
 
 
 def run(cmd, log, env):
-    """cmd from CODE with stdout and stderr to log -> (exit status, peak RSS in kB or None)."""
+    """cmd from CODE with stdout and stderr to log -> exit status."""
     with open(log, "wb") as f:
         proc = subprocess.Popen([str(c) for c in cmd], stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                 cwd=CODE, env=env)
@@ -115,6 +116,9 @@ def step(name, args):
 def main():
     if sys.stdout is not None:
         sys.stdout.reconfigure(errors="replace")
+    if sys.argv[1:]:                        # the runner takes no arguments: its settings are environment variables
+        print(__doc__, flush=True)
+        return 0 if sys.argv[1] in ("-h", "--help") else 2
     for f in (OCT_I58, MRI_I58):            # before any mkdir, so that wrong roots create no directories, and with a plain
         if not f.is_file():                 # print, since say() needs the log directory
             print(f"missing input {f} (OCTREG_I58_DIR or OCTREG_DATA_ROOT, see bench/paths.py)", flush=True)

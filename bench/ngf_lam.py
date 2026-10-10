@@ -1,9 +1,10 @@
 """§5 at several prior weights, from cached base grids (bench only, the package never reads this).
 
-Two steps, so the sweep costs minutes instead of a full run:
+Two steps, so the sweep costs minutes instead of a full run, and a third that writes the poses out:
 
-    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE      # §1 once (about 4 min on a CPU)
-    python bench/ngf_lam.py sweep --cache CACHE --run RUN -o OUT.json
+    python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE.npz      # §1 once (about 4 min on a CPU)
+    python bench/ngf_lam.py sweep --cache CACHE.npz --run RUN -o OUT.json
+    python bench/ngf_lam.py transforms --sweep OUT.json [-o DIR]        # every pose as a 4x4 text file for octreg qc --T
 
 `cache` writes the base grids of §1 (register.prepare_mri, register.prepare_oct) that §5 reads, with the measured-OCT
 mask and the OCT header affine the outline read-out needs.

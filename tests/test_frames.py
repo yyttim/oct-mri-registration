@@ -74,8 +74,8 @@ def test_params_defaults_dict_and_hash():
     assert (p.df_sigma_mm, p.df_block_mm, p.df_step_mm, p.df_reach_mm, p.df_z_min, p.df_erode_mm) == (0.24, 4.5, 1.5, 1.35, 4.0, 0.6)
     assert (p.df_grid_mm, p.df_edge_mad, p.df_max_strain) == (5.0, 5.0, 0.15)
     assert Params.from_dict({"df_grid_mm": 7, "df_max_strain": 0.1}) == dataclasses.replace(p, df_grid_mm=7.0, df_max_strain=0.1)
-    for bad, message in (({"df_grids_mm": [10.0, 7.0, 5.0]}, "unknown key"), ({"df_rounds": 2}, "unknown key"),
-                         ({"df_ridge_mad": 5.0}, "unknown key"), ({"df_grid_mm": [5.0]}, "not a float"),
+    for bad, message in (({"df_no_such_list": [10.0, 7.0, 5.0]}, "unknown key"), ({"df_no_such_count": 2}, "unknown key"),
+                         ({"df_no_such_mm": 5.0}, "unknown key"), ({"df_grid_mm": [5.0]}, "not a float"),
                          *(({k: v}, "df_ lengths") for k, v in (("df_sigma_mm", 0.0), ("df_block_mm", -1.0), ("df_step_mm", -0.5),
                                                                 ("df_z_min", 0.0), ("df_erode_mm", 0.0), ("df_grid_mm", 0.0),
                                                                 ("df_edge_mad", 0.0)))):
