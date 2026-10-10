@@ -86,8 +86,8 @@ leaves the last millimetres open. The best pose of §4 is therefore refined on t
 fibre bundles, vessels and nuclei, compared by normalised gradient fields (Haber and Modersitzki, 2006). Each volume I with mask
 m is smoothed and differentiated inside the mask by normalised convolution, g = ∇(G_σ(I m) / G_σ(m)), so the mask edge adds no
 gradient. The normalised gradient is n = g / √(|g|² + ε²), with ε the median |g| over the MRI points used and over the OCT
-specimen mask. Both masks are eroded by 0.8 mm, so the outline counts only in §2 to §4. Over every second interior MRI voxel
-along each axis, with the eroded OCT mask w,
+specimen mask. Both masks are eroded by five base-grid voxels (0.75 mm), so the outline counts only in §2 to §4. Over every
+second interior MRI voxel along each axis, with the eroded OCT mask w,
 
     F(T) = Σ_x w(T⁻¹x) (n_O(x) · n_M(x))² / Σ_x w(T⁻¹x),   g_O(x) = A⁻ᵀ g_OCT(T⁻¹x),
 
@@ -185,20 +185,12 @@ OCT, the median residual of the interior matches falls from 0.250 to 0.124 mm an
 maximum of 1.05 mm. It is largest at the superior end of the block, where the surface-edge offsets are largest. In 4 mm sections
 along the sectioning axis, the median surface-edge offset falls from 0.81 to 0.22 mm in the first section at that end and from
 0.65 to 0.19 mm in the next. In each of the other sections it falls from between 0.10 and 0.40 mm to between 0.04 and 0.13 mm.
-These values per section come from the run of the §6 ablations below. Detached cerebellar parts that moved by more than the
-1.35 mm reach, folia and torn flaps, stay where the affine puts them, since no evidence reaches them.
+These values per section come from the run of the §6 ablations below. §6 looks for interior matches and surface edges only
+within the 1.35 mm reach, so it does not bring back tissue that lies farther than that from its MRI position.
 
-| MRI | OCT, affine | OCT, affine and §6 |
-|---|---|---|
-| <img src="figures/deformable/mri.png" width="270" alt="MRI"> | <img src="figures/deformable/affine.png" width="270" alt="OCT through the affine"> | <img src="figures/deformable/octreg.png" width="270" alt="OCT through the affine and §6"> |
-
-The superior end of the block in freeview, on the sagittal plane through the largest displacement of the field (x = 4.26 mm),
-at two pixels per MRI voxel. Each panel is 34.6 mm from posterior to anterior and 14.6 mm high, up to the top of the crop.
-The red line is the boundary of the MRI tissue, as in the figure of the [README](../README.md#results-on-the-i58-brainstem-block),
-which shows the result on three planes. Through the affine alone the anterior surface of the OCT (right) lies outside the
-boundary. §6 brings it onto the boundary and keeps the cut face and the sections straight. At the top left the MRI holds
-tissue beyond the superior cut face, which the OCT never imaged. [BASELINES.md](../bench/baselines/BASELINES.md) shows the
-same plane for the deformable baselines.
+The [README](../README.md#results-on-the-i58-brainstem-block) shows the result on three planes in freeview. The first row of the
+deformable comparison in [BASELINES.md](../bench/baselines/BASELINES.md#deformable) shows the OCT through the affine alone and
+through the affine and §6 on the same sagittal plane.
 
 ### Ablations of §1 to §5
 

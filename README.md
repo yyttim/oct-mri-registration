@@ -136,25 +136,24 @@ ground truth.
 | <img src="docs/figures/result/sagittal_oct_boundary.png" width="300" alt="OCT and MRI tissue boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, axial"> |
 
 Three planes through the middle of the block in freeview. From top to bottom the rows show the MRI crop, the OCT registered onto
-it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red. The boundary is the MRI
-foreground rule of §1 applied to the crop at its own 0.08 mm. Each panel is the whole crop at one pixel per MRI voxel, 27.4 mm
-from right to left, 39.6 mm from posterior to anterior and 39.1 mm from inferior to superior. The OCT specimen follows the
+it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red, the MRI foreground of §1
+on the grid of the crop. Each panel is the whole crop at one pixel per MRI voxel of 0.08 mm. The OCT specimen follows the
 boundary and lies on the same anatomy. Where the boundary runs beyond the OCT, at both ends of the block, the MRI holds tissue
 outside its cut faces. The grey around the specimen is the agarose, and the horizontal stripes in the sagittal and coronal
 planes are the sections. Sagittal planes have anterior on the right, and coronal and axial planes show the subject's right on
 the left.
 
-Of eight standard registration tools run with their documented settings, only NiftyReg reg_aladin started from the image
-centres reaches octreg's affine (0.3 mm over the specimen mask and 1 degree). No deformable tool started from that affine
-fits the intact tissue visibly better than §6. ANTs SyN with a field-of-view mask scores closer on the read-outs, with
-stronger local compression and about 150 times the run time ([bench/baselines/BASELINES.md](bench/baselines/BASELINES.md)).
+Of eight standard registration tools run with their documented settings, only NiftyReg reg_aladin started from the image centres
+reaches octreg's affine (0.3 mm over the specimen mask and 1 degree). No deformable tool started from that affine fits the
+intact tissue visibly better than §6. ANTs SyN with a field-of-view mask scores closer on the read-outs, with stronger local
+compression and a run of 48 min against 20 s ([bench/baselines/BASELINES.md](bench/baselines/BASELINES.md)).
 
 The evaluation and the ablations are in [docs/METHOD.md](docs/METHOD.md) and [bench/BENCHMARK.md](bench/BENCHMARK.md).
 
 ## Reproducing the benchmark
 
 The scripts in `bench/` run the I58 benchmark: the registration, the ablations, the label-free evaluation, the report
-`bench/BENCHMARK.md` and the freeview figures (`bench/figures.py`). The I58 files are not distributed with the repository, and the stored results of the benchmark are in
-`bench/results/I58/`. `python bench/evaluate.py --selftest` checks the evaluation on synthetic arrays without any of the
-data. [bench/README.md](bench/README.md) describes the steps and how to point the scripts at the data, and
-[bench/baselines/README.md](bench/baselines/README.md) the settings of the baseline comparison.
+`bench/BENCHMARK.md` and the freeview figures (`bench/figures.py`). The I58 files are not distributed with the repository, and
+the stored results of the benchmark are in `bench/results/I58/`. `python bench/evaluate.py --selftest` checks the evaluation on
+synthetic arrays without any of the data. [bench/README.md](bench/README.md) describes the steps and how to point the scripts at
+the data, and [bench/baselines/README.md](bench/baselines/README.md) the settings of the baseline comparison.

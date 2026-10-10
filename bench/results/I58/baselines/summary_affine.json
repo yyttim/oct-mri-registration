@@ -678,7 +678,7 @@
   "run": "ants_antsai",
   "tool": "ants",
   "variant": "antsai",
-  "wall_s": 19.44,
+  "wall_s": 17670.31,
   "rim_fwd_mm": 2.884760618209839,
   "rim_rev_mm": 4.2907280921936035,
   "fwd_all_median_mm": 3.0601675510406494,

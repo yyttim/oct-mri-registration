@@ -2,7 +2,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | none | no deformation | n/a | 0.250 | 0.285 | 51 % | 0.1029 | 0.0581 | 0 | 1 | 0 % | 0 | octreg affine, no field |
 | octreg | §6 | 20 | 0.124 | 0.089 | 80 % | 0.1086 | 0.0641 | 0.28 / 0.72 / 1.05 | 0.94 | 0.00 % | 0.072 | octreg §6: strain-limited field on a 5 mm lattice from interior matches and surface-edge offsets |
-| ants | syn_cc | 5251 | 0.049 | 0.024 | 93 % | 0.1367 | 0.0921 | 0.68 / 1.76 / 3.41 | 0.03 | 0.00 % | 0.464 | antsRegistrationSyN.sh -t so (SyN, CC radius 4) from octreg's affine, both images on the MRI grid |
+| ants | syn_cc | 5251 | 0.049 | 0.024 | 93 % | 0.1367 | 0.0921 | 0.68 / 1.76 / 3.41 | 0.03 | 0.00 % | 0.464 | antsRegistrationSyN.sh -t so (SyN, CC radius 2) from octreg's affine, both images on the MRI grid |
 | ants | syn_cc_fov | 2908 | 0.063 | 0.027 | 89 % | 0.1206 | 0.0725 | 0.29 / 0.79 / 1.62 | 0.34 | 0.00 % | 0.207 | SyN CC with the OCT FOV mask |
 | ants | syn_mi | 4397 | 0.289 | 0.351 | 44 % | 0.1141 | 0.0907 | 0.70 / 2.02 / 4.14 | 0.10 | 0.00 % | 0.355 | the same SyN stage with Mattes MI |
 | convexadam | default | 11 | 0.218 | 0.051 | 81 % | 0.1065 | 0.0426 | 0.52 / 1.44 / 2.46 | -1.09 | 0.45 % | 1.088 | ConvexAdam MIND-SSC, shipped defaults, GPU |
