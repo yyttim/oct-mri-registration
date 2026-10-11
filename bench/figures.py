@@ -15,7 +15,8 @@
 The MRI tissue boundary is octreg's MRI foreground rule (octreg.preprocess.foreground) applied to the MRI crop on its own
 0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw, and drawn by freeview as a 2-pixel red line.
 Every panel is one freeview screenshot as written: freeview is set to show the whole plane of the MRI crop at exactly one
-screen pixel per MRI voxel, with the MRI at grey window 0.3864 to 1.5868 and the OCT at 0.00115 to 0.00367. Nothing is
+screen pixel per MRI voxel. The grey levels are linear, at the windows freeview opens the MRI crop and octreg's
+oct_in_mri.nii.gz with by default (freeview_window), and the OCT window is used for every OCT panel. Nothing is
 resampled, cropped or drawn on afterwards. freeview's default orientation applies: sagittal planes have anterior on the
 right, coronal and axial planes show the subject's right on the left.
 
@@ -41,7 +42,6 @@ from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT  # noqa: E402
 from octreg import preprocess as pp  # noqa: E402
 from octreg.params import Params  # noqa: E402
 
-GREY_MRI, GREY_OCT = "0.3864,1.5868", "0.00115,0.00367"
 MIDDLE = (2.31, -0.82, 22.70)   # RAS mm: the three planes of result/, the axial one also for affine/, the sagittal for deformable/
 AFFINE = [  # panel name, overlay: RUN/... in the octreg run, else under --baselines
     ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri_affine.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
@@ -68,6 +68,24 @@ def host_path(p: Path) -> str:
     """The path as the FreeSurfer shell sees it (/mnt/<drive>/... in WSL)."""
     s = str(Path(p).resolve()).replace("\\", "/")
     return "/mnt/" + s[0].lower() + s[2:] if WSL and len(s) > 1 and s[1] == ":" else s
+
+
+def freeview_window(path):
+    """freeview's default grey window of a volume with no negative values (FreeSurfer 8.2, LayerPropertyMRI and FSVolume):
+    a 1000-bin histogram, from the minimum to the maximum of the volume, of the voxels that are not 0, each split linearly
+    between its two nearest bins, and the window from the bin nearest the 5th percentile to the bin nearest the 99th plus a
+    fifth of the difference. -> (lo, hi)."""
+    a = np.asarray(nib.load(str(path)).dataobj, np.float32).ravel()
+    vmin, vmax = float(a.min()), float(a.max())
+    step = (vmax - vmin) / 999
+    d = (a[np.abs(a) >= 1e-7].astype(np.float64) - vmin) / step
+    lo_bin, hi_bin = np.floor(d), np.ceil(d)
+    counts = (np.bincount(np.minimum(lo_bin, 999).astype(int), hi_bin - d, 1000)
+              + np.bincount(np.minimum(hi_bin, 999).astype(int), d - lo_bin, 1000))
+    cdf = np.cumsum(counts) / counts.sum()
+    bins = vmin + step * np.arange(1000)
+    p5, p99 = (float(bins[np.argmin(np.abs(cdf - p))]) for p in (0.05, 0.99))
+    return p5, p99 + (p99 - p5) / 5
 
 
 def view(img, plane, point):
@@ -119,8 +137,11 @@ def sessions(mri, run, baselines, out, surf, ablation=None):
     """freeview -cmd sessions, one per panel size. ablation: {panel: overlay} or None.
     -> [(name, lines)], {png path: (W, H)}."""
     img = nib.load(str(mri))
-    v_mri, f_line = f"-v {host_path(mri)}:grayscale={GREY_MRI}", f"-f {host_path(surf)}:edgecolor=red:edgethickness=2"
-    oct_v = lambda f: f"-v {host_path(f)}:grayscale={GREY_OCT}"
+    grey_mri, grey_oct = freeview_window(mri), freeview_window(run / "oct_in_mri.nii.gz")
+    print("grey windows: MRI {:.4g} to {:.4g}, OCT {:.4g} to {:.4g}".format(*grey_mri, *grey_oct))
+    v_mri = "-v {}:grayscale={!r},{!r}".format(host_path(mri), *grey_mri)
+    f_line = f"-f {host_path(surf)}:edgecolor=red:edgethickness=2"
+    oct_v = lambda f: "-v {}:grayscale={!r},{!r}".format(host_path(f), *grey_oct)
     ss = lambda p: f"-ss {host_path(p)} 1 0"
     S, expect = [], {}
     for plane in PLANES:

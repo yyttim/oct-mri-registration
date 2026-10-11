@@ -197,11 +197,11 @@ through the affine and §6 on the same sagittal plane.
 
 Each variant is the method with one element removed or replaced, run on the same two files with everything else unchanged. The
 affine variants are shown through their own affine. The §6 variants are fitted at octreg's affine, as the deformable baselines
-are. Every panel is the sagittal plane of the README figure in freeview, the whole MRI crop at one pixel per MRI voxel, with the
-boundary of the MRI tissue in red. Anterior is on the right and superior at the top. At octreg's pose the red line runs beyond
-the OCT at the top left and at the bottom, where the MRI holds tissue beyond the cut faces at the two ends of the block.
-Distances are the mean displacement from octreg's affine over a regular sample of the specimen mask, with the rotation angle
-between the two. They say how far a variant ends from the method, and the panels show which pose fits.
+are. Every panel is the sagittal plane of the README figure in freeview at its grey windows, the whole MRI crop at one pixel per
+MRI voxel, with the boundary of the MRI tissue in red. Anterior is on the right and superior at the top. At octreg's pose the
+red line runs beyond the OCT at the top left and at the bottom, where the MRI holds tissue beyond the cut faces at the two ends
+of the block. Distances are the mean displacement from octreg's affine over a regular sample of the specimen mask, with the
+rotation angle between the two. They say how far a variant ends from the method, and the panels show which pose fits.
 
 | variant | step | result | scale per OCT axis | from octreg's affine |
 |---|---|---|---|---|
