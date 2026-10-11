@@ -139,7 +139,9 @@ mm instead of 51 %. These are label-free read-outs of octreg, measured again on 
 
 Three planes through the middle of the block in freeview. From top to bottom the rows show the MRI crop, the OCT registered onto
 it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red, the MRI foreground of §1
-on the grid of the crop. Each panel is the whole crop at one pixel per MRI voxel of 0.08 mm. The OCT specimen follows the
+on the grid of the crop. Each panel is the whole crop at one pixel per MRI voxel of 0.08 mm. The grey levels are linear, at the
+window freeview opens each file with, from the 5th percentile of the voxels that are not 0 to the 99th plus a fifth of their
+difference: 0.212 to 1.662 for the MRI and 0.00122 to 0.00518 for the OCT, the same in every panel. The OCT specimen follows the
 boundary and lies on the same anatomy. Where the boundary runs beyond the OCT, at both ends of the block, the MRI holds tissue
 outside its cut faces. The grey around the specimen is the agarose, and the horizontal stripes in the sagittal and coronal
 planes are the sections. Sagittal planes have anterior on the right, and coronal and axial planes show the subject's right on

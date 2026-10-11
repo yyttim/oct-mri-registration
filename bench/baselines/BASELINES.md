@@ -38,8 +38,9 @@ machine shared with other jobs and only indicative. octreg's are its own step ti
 
 The axial plane of the [README result figure](../../README.md#results-on-the-i58-brainstem-block) in freeview for each tool at
 its setting in the table, with the boundary of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI
-voxel. octreg and reg_aladin put the specimen on the boundary. greedy, elastix and mri_robust_register stay near the start, ANTs
-enlarges the block, mri_coreg and FLIRT shrink it, and SynthMorph moves it almost entirely out of this plane.
+voxel, at the grey windows of that figure. octreg and reg_aladin put the specimen on the boundary. greedy, elastix and
+mri_robust_register stay near the start, ANTs enlarges the block, mri_coreg and FLIRT shrink it, and SynthMorph moves it almost
+entirely out of this plane.
 
 The header orientation of this pair is 11° from octreg's affine, and aligning the image centres puts the block 2.4 mm from it.
 From there greedy, elastix and mri_robust_register stay near their start. ANTs, mri_coreg and FLIRT change the size of the block
@@ -89,10 +90,11 @@ misfit. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for
 
 The sagittal plane of the [README result figure](../../README.md#results-on-the-i58-brainstem-block) in freeview for each tool
 at its setting in the table, with the boundary of the MRI tissue in red. Each panel is the whole MRI crop at one pixel per MRI
-voxel, and the sections run horizontally. Every tool starts from octreg's affine (top middle). §6 moves the anterior surface of
-the OCT near the top (right) onto the boundary and keeps the sections straight. SyN with the FOV mask and greedy look like §6,
-and elastix like the affine. Without the mask SyN pulls the OCT up into the MRI tissue beyond the superior cut face (top left)
-and bends the sections. ConvexAdam lifts the cut face, and reg_f3d distorts the whole block.
+voxel, at the grey windows of that figure, and the sections run horizontally. Every tool starts from octreg's affine (top
+middle). §6 moves the anterior surface of the OCT near the top (right) onto the boundary and keeps the sections straight. SyN
+with the FOV mask and greedy look like §6, and elastix like the affine. Without the mask SyN pulls the OCT up into the MRI
+tissue beyond the superior cut face (top left) and bends the sections. ConvexAdam lifts the cut face, and reg_f3d distorts the
+whole block.
 
 On the overlays no tool fits the intact tissue visibly better than §6. The fields that keep the block shape look the same as
 octreg's by eye. The read-outs resolve finer differences, and they are not biased towards octreg. SyN with CC and the FOV mask
