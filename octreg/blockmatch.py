@@ -31,6 +31,16 @@ BATCH = 32                 # blocks correlated at a time (memory only)
 SLAB = 1 << 21             # voxels resampled at a time (memory only)
 
 
+def tracefree(n):
+    """Trace-free orientation tensor of unit-ish vectors n [3, ...] (torch): n n^T - |n|^2 I / 3 as six channels (xx, yy, zz,
+    sqrt2 xy, sqrt2 xz, sqrt2 yz), so that the channel dot product is <P(n), P(n')> = (n . n')^2 - |n|^2 |n'|^2 / 3.
+    -> torch [6, ...]."""
+    r2 = math.sqrt(2.0)
+    P = torch.stack([n[0] * n[0], n[1] * n[1], n[2] * n[2], r2 * n[0] * n[1], r2 * n[0] * n[2], r2 * n[1] * n[2]])
+    P[:3] -= (P[0] + P[1] + P[2]) / 3
+    return P
+
+
 def structure_feature(arr, mask, h_mm, sigma_mm, device="cuda"):
     """Trace-free gradient-orientation tensor of arr [D, H, W] (numpy or torch) inside mask on an isotropic grid of spacing h_mm
     (module docstring), in array axes; zero outside the mask. -> torch float32 [6, D, H, W]."""
@@ -44,10 +54,7 @@ def structure_feature(arr, mask, h_mm, sigma_mm, device="cuda"):
     eps2 = inside.median() if inside.numel() else mag2.new_tensor(1.0)      # median |g|^2 = (median |g|)^2
     n = g / torch.sqrt(mag2 + eps2.clamp(min=1e-30))
     del g, mag2
-    r2 = math.sqrt(2.0)
-    P = torch.stack([n[0] * n[0], n[1] * n[1], n[2] * n[2], r2 * n[0] * n[1], r2 * n[0] * n[2], r2 * n[1] * n[2]])
-    P[:3] -= (P[0] + P[1] + P[2]) / 3
-    return P
+    return tracefree(n)
 
 
 def match(feat_m, feat_o, core, base_mm, *, block_mm, step_mm, range_mm, z_min):

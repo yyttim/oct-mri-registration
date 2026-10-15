@@ -61,10 +61,11 @@ class BaseGrid:
     """The base grid on the device: the measured OCT voxels (world points, measured fraction, specimen mask, channels) and the
     MRI channels and foreground."""
 
-    def __init__(self, mri, oct, device="cuda"):
+    def __init__(self, mri, oct, device="cuda", outline=True):
         """mri = (v [2, D, H, W], mask [D, H, W], affine); oct = (u [2, d, h, w], w [d, h, w] specimen mask, measured fraction
-        [d, h, w], affine); numpy or torch."""
+        [d, h, w], affine); numpy or torch. outline False: S_outline = 0 (register.outline_used)."""
         (v, m, self.A_M), (u, w, q, A_O) = mri, oct
+        self.outline = outline
         w, q = to_torch(w, device), to_torch(q, device)
         idx = torch.nonzero(q > 0)
         if not float(w.sum()) > 0:
@@ -83,7 +84,7 @@ class BaseGrid:
         s = G.sample_world(self.v, self.A_M, x)
         E = 1 - G.sample_world(self.not_m, self.A_M, x)[0]                                        # M inside the MRI grid, 1 outside
         S_class = masked_ncc(s[:2, self.spec], self.u[:, self.spec], self.w[self.spec])
-        S_outline = masked_ncc(s[2:], self.w[None], self.q * (1 - (1 - self.w) * E))
+        S_outline = masked_ncc(s[2:], self.w[None], self.q * (1 - (1 - self.w) * E)) if self.outline else torch.zeros_like(S_class)
         return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
 
 
@@ -125,13 +126,13 @@ def fit(grid, T0, polarity, params: Params = Params()):
     return fit_adam(grid, T0, lambda T: grid.score(T, polarity), params.iters, params.iters, 1.0, params)
 
 
-def refine(candidates, mri, oct, params: Params = Params(), device="cuda"):
+def refine(candidates, mri, oct, params: Params = Params(), device="cuda", outline=True):
     """Fit every search pose (fit, its polarity fixed) on the base grid and sort by L. candidates: search output (T, polarity);
     mri = (v [2, D, H, W], mask, affine), oct = (u [2, d, h, w], w, measured fraction, affine) on the base grid.
     -> [{T, S, S_class, S_outline, L, polarity, log_scales, shears, search_rank}] lowest L first."""
     if not candidates or any(c["polarity"] not in (1, -1) for c in candidates):
         raise ValueError("refine needs candidates with polarity +1 or -1")
-    grid, poses = BaseGrid(mri, oct, device), []
+    grid, poses = BaseGrid(mri, oct, device, outline), []
     for i, c in enumerate(candidates):
         T, S, S_class, S_outline, L = fit(grid, np.asarray(c["T"], float), int(c["polarity"]), params)
         _, _, ls, sh = decompose(T, grid.c)

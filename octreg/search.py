@@ -139,9 +139,11 @@ class Searcher:
         return T
 
 
-def search(mri_v, mri_mask, mri_affine, oct_u, oct_w, oct_valid, oct_affine, params: Params = Params(), device="cuda", polarity=0):
+def search(mri_v, mri_mask, mri_affine, oct_u, oct_w, oct_valid, oct_affine, params: Params = Params(), device="cuda", polarity=0,
+           outline=True):
     """Orientation search at one grid (arguments as Searcher). Rotations: geometry.rotations(n_rot, seed), proper rotations only.
-    Per orientation the argmax over the translations of S = combined(S_class, S_outline, polarity); with polarity 0 (the method)
+    Per orientation the argmax over the translations of S = combined(S_class, S_outline, polarity), S_outline = 0 when outline
+    is False (register.outline_used: an image without a measured outside); with polarity 0 (the method)
     the polarity is the sign of S_class there, +1 / -1 force it. Greedy NMS on S: a pose duplicates a kept one iff centres are
     closer than nms_mm and rotations closer than nms_deg; the best topk are kept.
     -> (candidates [{T 4x4, S, S_class signed, S_outline, polarity +1|-1}] best first,
@@ -154,6 +156,8 @@ def search(mri_v, mri_mask, mri_affine, oct_u, oct_w, oct_valid, oct_affine, par
     found = []
     for i, R in enumerate(Rs):
         S_class, S_outline = s.score(R)
+        if not outline:
+            S_outline = torch.zeros_like(S_outline)
         X = combined(S_class, S_outline, polarity).masked_fill(~s.valid, float("-inf")).reshape(-1)
         j = torch.argmax(X)
         x, Sc, So, j = torch.stack([X[j].double(), S_class.reshape(-1)[j].double(), S_outline.reshape(-1)[j].double(),

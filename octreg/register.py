@@ -96,10 +96,11 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     # §2: two-class maps
     u, w = pp.oct_channels(pp.two_class(oct_h, mask_o, h, P), mask_o)
     v = pp.mri_channels(pp.two_class(mri_h, mask_m, h, P), mask_m)
+    outline, outside = outline_used(mask_o, valid_o, mask_m, P)
     lap("two_class")
     # §3-5: search and affine refinement, then fine-structure refinement of the best pose, in the file frames as given (proper
     # rotations only: the frames fix the handedness)
-    poses, info = align((u, w, valid_o, A_o), (v, mask_m, A_m), P, device)
+    poses, info = align((u, w, valid_o, A_o), (v, mask_m, A_m), P, device, outline=outline)
     T, info["ngf"] = refine_ngf((mri_h, mask_m, A_m), (oct_h, mask_o, A_o), poses[0]["T"], P, device)
     best = poses[0]
     lap("search_refine_ngf")
@@ -114,6 +115,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
 
     _, _, ls, sh = decompose(T, box(A_o, oct_h.shape)[0])
     pose = {k: best[k] for k in ("S", "S_class", "S_outline", "L", "polarity", "search_rank")}
+    pose["outline_used"] = outline
     corners = G.apply_affine(vo.affine, np.array([[i, j, k] for i in (0, vo.shape[0] - 1) for j in (0, vo.shape[1] - 1)
                                                   for k in (0, vo.shape[2] - 1)], float))
     shift = float(np.linalg.norm(G.apply_affine(T, corners) - G.apply_affine(best["T"], corners), axis=1).mean())
@@ -121,6 +123,8 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
                 log_scales=ls.tolist(), shears=sh.tolist(),
                 scale_per_oct_axis=np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist())
     flags = ["mri_foreground_no_valley"] * (fg_m.get("status") == "no_valley")
+    flags += ["mri_tissue_valley_passed"] * bool(fg_m.get("tissue_valleys_passed"))
+    flags += ["outline_not_used"] * (not outline)
     flags += ["nondefault_params"] * (P != Params())
     flags += ["clamp_saturated"] * bool(np.abs([*best["log_scales"], *best["shears"], *ls, *sh]).max() >= CLAMP * (1 - 1e-3))
     flags += ["deformation_not_supported"] * (not applied)
@@ -128,7 +132,8 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
               "oct_spacing_um": oct_spacing_um, "oct_mask": oct_mask, "mri_mask": mri_mask, "device": str(device)}
     result = {"octreg_version": __version__, "inputs": inputs, "params": P.to_dict(), "params_hash": P.hash(), "T_oct2mri": T,
               "pose": pose, "flags": flags,
-              "foreground": {"oct": fg_o, "mri": {"source": "histogram", **fg_m}}, **info}
+              "foreground": {"oct": {**fg_o, "outside_fraction": outside["oct"]},
+                             "mri": {"source": "histogram", **fg_m, "outside_fraction": outside["mri"]}}, **info}
     io.write_json(result, out / "result.json")                  # before the overlays, so a failing overlay loses no result
     for f in OUTPUTS_DEFORM:                                    # §6 files another run left in this directory
         (out / f).unlink(missing_ok=True)
@@ -183,18 +188,30 @@ def fine_mask(fine, affine, params: Params = Params(), mask=None):
     return np.logical_and(m, fine > 0, out=m), info
 
 
-def align(oct_base, mri_base, params: Params = Params(), device="cuda", polarity=0):
+def outline_used(mask_o, valid_o, mask_m, params: Params = Params()):
+    """§2: the outline compares what lies outside the tissue in both images, so it is used only when both have a measured
+    outside: measured OCT voxels outside the specimen mask, and MRI voxels outside the foreground, each eroded by one base voxel
+    (which removes the resampling shell of a mask), at least outline_min_outside of the measured OCT voxels and of the MRI grid.
+    An OCT given as tissue only (exactly zero outside, its own --oct-mask) or an MRI crop that is all tissue has none, and the
+    correlation would then rest on a handful of voxels. -> (bool, {'oct': fraction, 'mri': fraction})."""
+    out_o = float(ndimage.binary_erosion(np.asarray(valid_o, bool) & ~np.asarray(mask_o, bool)).sum() / max(np.sum(valid_o), 1))
+    out_m = float(ndimage.binary_erosion(~np.asarray(mask_m, bool)).sum() / np.asarray(mask_m).size)
+    return min(out_o, out_m) >= params.outline_min_outside, {"oct": round(out_o, 5), "mri": round(out_m, 5)}
+
+
+def align(oct_base, mri_base, params: Params = Params(), device="cuda", polarity=0, outline=True):
     """§3-4 on base-grid arrays, oct_base = (u [2, D, H, W], specimen mask, measured fraction, affine) and mri_base =
     (v [2, D', H', W'], mask, affine): box average to search_mm, search.search there (polarity 0 reads the polarity off the sign
-    of the two-class score, +1 / -1 force it), then refine.refine of every search pose on the base grid.
+    of the two-class score, +1 / -1 force it), then refine.refine of every search pose on the base grid; outline False leaves
+    the outline term out of both (outline_used).
     -> (refined poses lowest L first, {'search': search info, 'refine': {n_poses, seconds}})."""
     P = params
     pool = lambda x, A: G.pool_iso(x, A, P.search_mm)[0]
     (u, w, q, A_o), (v, m, A_m) = oct_base, mri_base
     candidates, info = search(pool(v, A_m), *G.pool_iso(m, A_m, P.search_mm), pool(u, A_o), pool(w, A_o),
-                              *G.pool_iso(q, A_o, P.search_mm), P, device, polarity)
+                              *G.pool_iso(q, A_o, P.search_mm), P, device, polarity, outline)
     t0 = time.time()
-    poses = refine(candidates, mri_base, oct_base, P, device)
+    poses = refine(candidates, mri_base, oct_base, P, device, outline)
     return poses, {"search": info, "refine": {"n_poses": len(candidates), "seconds": time.time() - t0}}
 
 

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Ablations of octreg on the I58 brainstem pair.
+"""Ablations of octreg, by default on the I58 brainstem pair.
 
     python bench/ablate.py --out ABL [--main RUN] [--only A1,A4] [--starts] [--device cuda] [--force]
+                           [--oct OCT --mri MRI [--oct-mask MASK] --pair NAME]
+
+--oct and --mri run the same variants on another pair (default: the two I58 files of bench/paths.py). --oct-mask gives the
+specimen mask as a file, as `octreg register --oct-mask` does: it then replaces the texture mask in 'base' and in every variant
+that does not set its own mask (A0, A0c).
 
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
 explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only),
@@ -53,7 +58,7 @@ import evaluate as E                                                    # noqa: 
 from octreg import geometry as G, io, preprocess as pp, refine as Rf, search as S     # noqa: E402
 from octreg.params import Params                                        # noqa: E402
 from octreg.ngf import refine_ngf                                       # noqa: E402
-from octreg.register import MIRROR, align, fine_mask, peak_rss_gb       # noqa: E402
+from octreg.register import MIRROR, align, fine_mask, outline_used, peak_rss_gb       # noqa: E402
 
 VARIANTS = {    # name: (what changes, the explicit change: mask source, solve() keywords, Params overrides)
     "base": ("the method", {}),
@@ -111,8 +116,11 @@ def prep_hash(P):
     return hashlib.sha256(json.dumps({k: d[k] for k in PREP_FIELDS}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
 
 
+MASK_FILE = None                                                        # --oct-mask: the specimen mask as a file
+
+
 def mask_source(name):
-    return VARIANTS[name][1].get("mask", "texture")
+    return VARIANTS[name][1].get("mask", "file" if MASK_FILE else "texture")
 
 
 def prepare(out, sources):
@@ -145,6 +153,8 @@ def prepare(out, sources):
         t1 = time.time()
         if s == "texture":                                                     # the method
             m, info = fine_mask(fine, A_f, P)
+        elif s == "file":                                                      # the method with --oct-mask
+            m, info = fine_mask(fine, A_f, P, io.load_volume(MASK_FILE))
         elif s == "texture3d":                                                 # A0c: holes filled in 3-D only
             fill_planes, pp._fill_planes = pp._fill_planes, ndimage.binary_fill_holes
             try:
@@ -207,6 +217,7 @@ def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_cla
         u, w = pp.oct_channels(pp.two_class(o["arr"], o["mask"], h, P, flatten=oct_flatten), o["mask"])
         v = pp.mri_channels(pp.two_class(m["arr"], m["mask"], h, P, flatten=mri_flatten), m["mask"])
     F, q = MIRROR if mirror else (np.eye(4) if start is None else np.asarray(start, float)), o["valid"] if outline else o["mask"]
+    use = outline and outline_used(o["mask"], o["valid"], m["mask"], P)[0]          # the method's rule (register.outline_used)
     combined, outline_map, score = S.combined, S.Searcher._outline, Rf.BaseGrid.score
     if not outline:
         S.combined = lambda S_class, S_outline, pol: combined(S_class, torch.zeros_like(S_outline), pol)
@@ -232,11 +243,11 @@ def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_cla
     try:
         try:
             if search:
-                poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
+                poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity, use)
             else:
                 t0 = time.time()
                 starts = [{"T": np.asarray(T0, float), "polarity": p} for p in ((1, -1) if polarity == 0 else (polarity,))]
-                poses = Rf.refine(starts, (v, m["mask"], m["affine"]), (u, w, q, F @ o["affine"]), P, device)
+                poses = Rf.refine(starts, (v, m["mask"], m["affine"]), (u, w, q, F @ o["affine"]), P, device, use)
                 info = {"search": {"seconds": 0.0, "n_orientations": 0, "top1": None, "top2": None},
                         "refine": {"n_poses": len(starts), "seconds": time.time() - t0}}
         finally:
@@ -300,7 +311,7 @@ def run_start(name, kind, out, device, force, F, T0):
     if not force and old.get("params_hash") == P.hash() and old.get("spec") == spec:
         return old
     d.mkdir(parents=True, exist_ok=True)
-    with np.load(out / "prep" / "texture" / "oct_h.npz") as z, np.load(out / "prep" / "mri" / "mri_h.npz") as y:
+    with np.load(out / "prep" / mask_source("base") / "oct_h.npz") as z, np.load(out / "prep" / "mri" / "mri_h.npz") as y:
         o, m = {k: z[k] for k in z.files}, {k: y[k] for k in y.files}
     t0 = time.time()
     kw = {"start": F} if kind == "method" else {"start": F, "search": False, "T0": T0}
@@ -326,7 +337,17 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--force", action="store_true", help="recompute variants that already have a result (delete OUT/prep to redo "
                     "the preprocessing)")
+    ap.add_argument("--oct", type=Path, default=None, help="OCT NIfTI of another pair (default: the I58 OCT of bench/paths.py)")
+    ap.add_argument("--mri", type=Path, default=None, help="MRI NIfTI of another pair (default: the I58 MRI crop)")
+    ap.add_argument("--oct-mask", type=Path, default=None, help="OCT specimen mask file instead of the texture mask")
+    ap.add_argument("--pair", default="I58 brainstem", help="name of the pair, stored with the results")
     a = ap.parse_args()
+    global MASK_FILE
+    if (a.oct is None) != (a.mri is None):
+        ap.error("--oct and --mri go together")
+    if a.oct is not None:
+        E.OCT, E.MRI = a.oct, a.mri
+    MASK_FILE = a.oct_mask
     names = ["base"] + [n for n in (a.only.split(",") if a.only else VARIANTS) if n != "base"]
     if set(names) - set(VARIANTS):
         ap.error(f"unknown variants {sorted(set(names) - set(VARIANTS))}")
@@ -336,7 +357,7 @@ def main():
     sources = sorted({mask_source(n) for n in names})
     prepare(a.out, sources)
     A_hdr, shape = E.oct_header(E.OCT)
-    b = a.out / "prep" / "texture"
+    b = a.out / "prep" / mask_source("base")
     om, A_om = E.load_mask(b / "oct_mask.nii.gz")                       # the base specimen mask: the points pose changes are read on
     pts, cor = E.grid_points(om, A_om), E.corners(shape, A_hdr)
     bnd = E.Boundary(om, A_om, E.load_mask(b / "oct_valid.nii.gz")[0], *E.load_mask(b / "mri_mask.nii.gz"), A_hdr)
@@ -363,7 +384,7 @@ def main():
     prep = {s: json.loads((a.out / "prep" / s / "prep.json").read_text(encoding="utf-8")) for s in sources + ["mri"]}
     grid = next((p["grid"] for p in prep.values() if "grid" in p), {})
     work = [grid.get("seconds", 0)] + [p.get("mask_seconds", p.get("seconds", 0)) for p in prep.values()] + [r["seconds"] for r in rows.values()]
-    res = {"pair": "I58 brainstem", "oct": E.OCT, "mri": E.MRI, "params_hash": Params().hash(), "prep": prep,
+    res = {"pair": a.pair, "oct": E.OCT, "mri": E.MRI, "oct_mask": MASK_FILE, "params_hash": Params().hash(), "prep": prep,
            "variants": table, "seconds": sum(work),          # the computation in the table, also when variants come from the cache
            "peak_rss_gb": max([p.get("peak_rss_gb") or 0 for p in prep.values()] + [r.get("peak_rss_gb") or 0 for r in rows.values()]),
            "driver_seconds": time.time() - t0}
@@ -403,7 +424,7 @@ def main():
                            "method_to_base": E.pose(np.array(r_m["T"]), T_base, pts, cor),
                            "no_search_to_base": E.pose(np.array(r_n["T"]), T_base, pts, cor),
                            "seconds": {"method": r_m["seconds"], "no_search": r_n["seconds"]}}
-        io.write_json({"pair": "I58 brainstem", "params_hash": Params().hash(), "image_centre_start": T0.tolist(),
+        io.write_json({"pair": a.pair, "params_hash": Params().hash(), "image_centre_start": T0.tolist(),
                        "starts": table}, a.out / "starts.json")
         print(f"wrote {a.out / 'starts.json'}", flush=True)
 

@@ -102,6 +102,17 @@ def test_ngf_separates_mirror_images():
     _, mirrored = ngf.refine_ngf(mri, (o, mo, MIRROR @ A_O), T, P, "cpu")
     assert true["F"] > 1.5 * mirrored["F"], (true["F"], mirrored["F"])
 
+def test_no_shrink_without_the_prior():
+    """F is a correlation of the trace-free orientation tensors, so it does not reward a smaller block: on a pair without any
+    scale difference, §5 with lam 0 keeps the size (|log-scale| < 0.01 on every axis; the uncentred F of 2.0 shrank it by 1.7 to
+    2.3 %)."""
+    mri, oct_, T = pair(seed=3)
+    c = box(oct_[2], oct_[0].shape)[0]
+    P = Params.from_dict({"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6, "ngf_iters": 80, "lam": 0.0})
+    ls = decompose(ngf.refine_ngf(mri, oct_, T, P, "cpu")[0], c)[2]
+    assert np.abs(ls).max() < 0.01, ls
+
+
 def test_prior_decides_the_scale():
     """The prior of §4 is shared by §5. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
     difference only the fine structure sees: with lam 0 the fit takes that scale, with a strong lam it keeps the size it was

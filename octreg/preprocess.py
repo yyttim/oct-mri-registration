@@ -69,10 +69,12 @@ def foreground(arr, voxel_mm, params: Params = Params()):
     """Foreground mask by the histogram-valley rule (the MRI foreground). Positive finite values below their
     p99.5, 256-bin histogram smoothed over 5 bins, peaks of its square root (so the narrow background peak of a box-averaged
     grid cannot hide the tissue peak) of prominence >= 5 % of the maximum and >= 5 bins apart; walking left
-    from the rightmost peak, t = the first valley < valley_ratio x the smaller of its two peaks (status 'ok'), else
-    t = min(p1, 0.5 x lower cut of a 3-class multi-Otsu) (status 'no_valley': the whole field of view). Mask = arr > t, closing
-    (ball of 2 voxels), holes filled, components >= min_component of the foreground kept. arr: [D, H, W]; voxel_mm: spacing.
-    -> (bool [D, H, W], {threshold (arr units), status, valley_ratio, volume_cm3, n_components})."""
+    from the rightmost peak, t = the first valley < valley_ratio x the smaller of its two peaks whose darker peak lies below
+    medium_fraction x the brightest peak (status 'ok'): a valley between two peaks of tissue, such as grey and white matter in a
+    crop without medium, is passed over and recorded. Without such a valley t = min(p1, 0.5 x lower cut of a 3-class
+    multi-Otsu) (status 'no_valley': the whole field of view). Mask = arr > t, closing (ball of 2 voxels), holes filled,
+    components >= min_component of the foreground kept. arr: [D, H, W]; voxel_mm: spacing.
+    -> (bool [D, H, W], {threshold (arr units), status, valley_ratio, volume_cm3, n_components, tissue_valleys_passed})."""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
     s = s[s < np.percentile(s, 99.5)] if s.size else s
@@ -81,20 +83,22 @@ def foreground(arr, voxel_mm, params: Params = Params()):
     h, e = np.histogram(s, bins=256)
     c, hs = 0.5 * (e[1:] + e[:-1]), ndimage.uniform_filter1d(h.astype(float), 5)
     pk = find_peaks(np.sqrt(hs), prominence=0.05 * np.sqrt(hs.max()), distance=5)[0]
-    t, status, ratio = None, "no_valley", None
+    t, status, ratio, passed = None, "no_valley", None, []
     for j, lo in enumerate(pk[:-1][::-1]):
         hi = pk[len(pk) - 1 - j]
         val = lo + int(np.argmin(hs[lo:hi + 1]))
         r = float(hs[val] / max(min(hs[lo], hs[hi]), 1.0))
         if r < params.valley_ratio:
-            t, status, ratio = float(c[val]), "ok", r
-            break
+            if c[lo] < params.medium_fraction * c[pk[-1]]:
+                t, status, ratio = float(c[val]), "ok", r
+                break
+            passed.append({"threshold": float(c[val]), "valley_ratio": r, "darker_peak_of_brightest": float(c[lo] / c[pk[-1]])})
     if t is None:
         t = float(min(np.percentile(s, 1), 0.5 * threshold_multiotsu(s, classes=3)[0]))
     m = ndimage.binary_fill_holes(_close(v > t, 2))
     m, n = _components(m, params.min_component)
     return m, {"threshold": t, "status": status, "valley_ratio": ratio, "volume_cm3": float(m.sum()) * voxel_mm ** 3 / 1e3,
-               "n_components": n}
+               "n_components": n, "tissue_valleys_passed": passed}
 
 
 # ----------------------------------------------------------------------------- specimen mask (§1)

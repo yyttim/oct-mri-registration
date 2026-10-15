@@ -16,6 +16,7 @@ class Params:
     fine_mm: float = 0.04                     # OCT grid of the specimen mask
     # foreground and specimen mask (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
+    medium_fraction: float = 0.5              # ... and its darker peak below this x the brightest peak (medium, not tissue)
     min_component: float = 0.01               # keep MRI foreground components >= this fraction of the foreground volume
     texture_bandpass_mm: float = 0.08         # Gaussian sigma of the band-pass before the directional variation
     texture_window_mm: float = 0.36           # window of the directional local coefficient of variation
@@ -25,12 +26,13 @@ class Params:
     # two-class maps (§2)
     flatten_sigma_mm: float = 10.0            # Gaussian sigma of the local foreground mean used for flattening
     sigmoid_std: float = 0.25                 # p = sigmoid((I - t) / (sigmoid_std * std of foreground values))
+    outline_min_outside: float = 0.01         # the outline is used when both images have this measured share outside the tissue
     # orientation search (§3)
     n_rot: int = 8000                         # uniform proper rotations, R[0] = identity
     seed: int = 0                             # rotation set seed
     topk: int = 24                            # poses kept after non-maximum suppression, each one refined
     nms_mm: float = 3.0                       # same pose if centres closer than nms_mm ...
-    nms_deg: float = 10.0                     # ... and rotations closer than nms_deg
+    nms_deg: float = 20.0                     # ... and rotations closer than nms_deg
     # affine refinement (§4)
     iters: int = 200                          # Adam iterations per pose
     lam: float = 2.0                          # L = 1 - S + lam (sum log_scale^2 + sum shear^2), the prior of §4 and §5
