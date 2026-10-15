@@ -125,7 +125,8 @@ tissue at the surface is brighter than what surrounds it.
 
 ## Results on the I58 brainstem block
 
-octreg is evaluated on this one block, and its constants set by hand were chosen on it ([docs/METHOD.md](docs/METHOD.md#scope)).
+octreg was developed on this block, and its constants set by hand were chosen on it ([docs/METHOD.md](docs/METHOD.md#scope)).
+[Held-out data](#held-out-data-dandi000874) below tests it on public data with the same constants.
 On the I58 pair (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, of which §6 is 20 s,
 with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). §6 lowers the median interior-match
 residual from 0.250 to 0.124 mm and the median surface-edge offset from 0.285 to 0.089 mm, with 80 % of the offsets within 0.3
@@ -215,6 +216,51 @@ the surface off at the superior end, and the surface-edge offsets alone pull the
 [docs/METHOD.md](docs/METHOD.md#ablations) shows each of these variants, the start test and the two §6 variants, and the full
 tables are in [bench/BENCHMARK.md](bench/BENCHMARK.md) and
 [bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
+
+## Held-out data: DANDI:000874
+
+octreg ran with its default parameters on the four OCT blocks of the public dataset
+[DANDI:000874](https://dandiarchive.org/dandiset/000874/draft) (one infant brainstem, C. Magnain and L. Zöllei, CC BY 4.0,
+draft last modified on 14 August 2026). It played no part in octreg's development. The OCT is the authors' 20 µm scattering
+coefficient, as for I58, and the MRI is their 150 µm ex-vivo FLASH at 5°, the image they registered to. Each block comes with
+the authors' OCT→MRI affine, made with a manual start and an automatic refinement
+([Magnain et al., bioRxiv 2026](https://doi.org/10.64898/2026.08.28.744504)), which serves as the reference.
+
+The MRI was cropped around each block as the I58 MRI is, with a 3 mm margin and a random shift of up to 2 mm, ten times per
+block. octreg and NiftyReg reg_aladin ran on all ten crops, and the other standard tools of the comparison above on the first
+crop of each block, all at their I58 settings. Errors are the mean displacement from the reference over the OCT tissue. A local
+ANTs refinement started at the reference moves it by 0.12 to 0.24 mm, so differences of about 0.2 mm are not resolved by this
+reference.
+
+| block | octreg: pose within 1 mm | octreg: error of those, median | reg_aladin: pose within 1 mm | reg_aladin: error of those, median |
+|---|---|---|---|---|
+| 01 caudal medulla | 10 of 10 | 0.18 mm | 8 of 10 | 0.47 mm |
+| 02 rostral medulla and caudal pons | 8 of 10 | 0.21 mm | 10 of 10 | 0.33 mm |
+| 03 rostral pons | 0 of 10 | none | 1 of 10 | 0.99 mm |
+| 04 midbrain | 0 of 10 | none | 10 of 10 | 0.39 mm |
+
+On block 01 all ten octreg poses lie 0.18 to 0.20 mm from the reference, closer than any standard tool, the closest being
+reg_aladin at 0.37 mm. On block 02 eight lie 0.20 to 0.21 mm away, against 0.26 to 0.45 mm for reg_aladin, a difference the
+reference does not resolve, and the other two turn the block over (177° and 180°). On blocks 03 and 04 octreg's poses are
+turned by 22° to 141°. reg_aladin, the only standard tool that matched octreg on I58, finds a pose within 1 mm more often, at a
+larger error. On the first crop, ANTs, greedy and elastix come within 1 mm on block 04 only, and mri_robust_register,
+mri_coreg, FLIRT and SynthMorph on no block. On the first crop of blocks 03 and 04, octreg comes within 0.7 mm when the MRI is
+the FLASH at 10° or the T1 map instead of the 5° FLASH.
+
+| block | MRI | OCT, authors' reference | OCT, octreg |
+|---|---|---|---|
+| 01 | <img src="docs/figures/sp002/s01_mri.png" width="135" alt="block 01, MRI"> | <img src="docs/figures/sp002/s01_reference.png" width="135" alt="block 01, OCT through the reference"> | <img src="docs/figures/sp002/s01_octreg.png" width="135" alt="block 01, OCT through octreg"> |
+| 02 | <img src="docs/figures/sp002/s02_mri.png" width="180" alt="block 02, MRI"> | <img src="docs/figures/sp002/s02_reference.png" width="180" alt="block 02, OCT through the reference"> | <img src="docs/figures/sp002/s02_octreg.png" width="180" alt="block 02, OCT through octreg"> |
+| 03 | <img src="docs/figures/sp002/s03_mri.png" width="184" alt="block 03, MRI"> | <img src="docs/figures/sp002/s03_reference.png" width="184" alt="block 03, OCT through the reference"> | <img src="docs/figures/sp002/s03_octreg.png" width="184" alt="block 03, OCT through octreg"> |
+| 04 | <img src="docs/figures/sp002/s04_mri.png" width="205" alt="block 04, MRI"> | <img src="docs/figures/sp002/s04_reference.png" width="205" alt="block 04, OCT through the reference"> | <img src="docs/figures/sp002/s04_octreg.png" width="205" alt="block 04, OCT through octreg"> |
+
+The axial plane through the middle slice of the first crop of each block in freeview, at two screen pixels per MRI voxel of 0.15
+mm, with the boundary of the MRI tissue in red. The panels are cropped and resampled from the dataset's images. The OCT lies on
+the MRI grid through the authors' affine and through octreg's. On every block the reference places part of the edge of the OCT
+tissue on the red line. On block 01 octreg's panel matches the reference. On block 02 this crop is one of the two failures, and
+on blocks 03 and 04 octreg's pose is turned against the reference. [bench/dandi874](bench/dandi874/README.md) gives the protocol
+and the full tables ([bench/results/SP002/tables.md](bench/results/SP002/tables.md)): larger crops, all nine MRI images, every
+tool, and how well the reference fits the images.
 
 ## Reproducing the benchmark
 

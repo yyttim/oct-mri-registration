@@ -1,20 +1,21 @@
 # bench
 
-The benchmark of octreg on the I58 brainstem pair: the scripts that run and measure it, and its stored results. The
-directory is not part of the package, and the method never reads anything here. The I58 pair has no labels, so every
-metric is label-free.
+The benchmark of octreg: the scripts that run and measure it, and its stored results. The directory is not part of the
+package, and the method never reads anything here. The I58 brainstem pair has no labels, so every metric on it is label-free.
+The held-out evaluation in `dandi874/` scores octreg on the public DANDI:000874 blocks against the authors' own registrations.
 
 ## Data layout
 
 The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/`, the inputs, runs and summaries
 of the baseline comparison to `baselines/`, and the data are read from `data/` of the repository, and all three are in
-`.gitignore`. Three environment variables move them.
+`.gitignore`. Four environment variables move them.
 
 | variable | meaning | default |
 |---|---|---|
 | `OCTREG_PROJECT_ROOT` | the runs go to `<project root>/bench_runs`, the baseline comparison to `<project root>/baselines` | the repository root |
 | `OCTREG_DATA_ROOT` | the data root | `<repository>/data` |
 | `OCTREG_I58_DIR` | the folder that holds the two I58 input files | `<data root>/I58` |
+| `OCTREG_DANDI874_DIR` | the download of DANDI:000874 for `dandi874/` | `<data root>/dandi-000874` |
 
 The two input files are `I58_Brainstem_mus_Slice_full_20um_corr.nii.gz` (the OCT) and
 `I58_brainstem_MRI_cropped_to_OCT.nii.gz` (the MRI crop). They are not part of the repository.
@@ -38,6 +39,7 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `fig_registration.py` | a registration figure on three MRI planes: the MRI, the OCT placed on it by the run, and the two cut into 8 mm squares and interleaved |
 | `BENCHMARK.md` | the I58 report, written by `report.py` around two hand-written sections |
 | `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
+| `dandi874/` | the held-out evaluation on the public DANDI:000874 blocks, its scripts and [README](dandi874/README.md) |
 | `results/I58/` | the stored results of the benchmark (below) |
 | `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md, docs/METHOD.md and BASELINES.md |
 | `figures/` | where the report step of `run_i58.py` writes the qc figures (`report.py --figures`), not tracked by git |
@@ -112,6 +114,9 @@ are cut to a file name or a path under `bench_runs/`.
 | `ablations.json`, `starts.json` | the ablation table and the start test of `bench/ablate.py` |
 | `deform_ablation.json`, `.md` | the §6 ablation table of `bench/ablate_deform.py` |
 | `baselines/` | the summaries, run notes and tables of the comparison with standard registration tools |
+
+`bench/results/SP002/` holds the results of the DANDI:000874 evaluation (`octreg.json`, `baselines.json`, `reference.json`,
+`crops.json`, `context.json` and the tables `tables.md`), written by the scripts of [dandi874/](dandi874/README.md).
 
 The report step writes `result.json`, `eval.json`, `ablations.json` and `starts.json` with `report.py --store` in the same
 command that writes `BENCHMARK.md`, so the document and the stored numbers agree. Only the wall clock and the GPU memory of the

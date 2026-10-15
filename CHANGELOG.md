@@ -12,6 +12,9 @@
   `bench/ablate_deform.py --save-fields` saves the fields of chosen §6 rows. The full tables are in bench/BENCHMARK.md and
   `bench/results/I58/deform_ablation.md`.
 - README.md shows the result, the comparison with standard tools and the ablation in brief.
+- `bench/dandi874/`: a held-out evaluation on the four OCT blocks of the public DANDI:000874, against the authors' own
+  registrations, with octreg at its default parameters and the standard tools at their I58 settings. The stored results
+  are in `bench/results/SP002/` and the figures in `docs/figures/sp002/`.
 - Every bench script imports the octreg package of its own checkout, also when another copy is installed.
 
 ## 2.0.0

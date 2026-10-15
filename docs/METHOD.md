@@ -322,8 +322,11 @@ masks.
 
 ## Scope
 
-octreg is evaluated on one brainstem block, I58, which is unpublished. The constants set by hand (see Parameters) were chosen on
-the same block. The specimen mask of §1 needs the agarose embedding. Without it there are not two classes, and the threshold
-splits the tissue itself, more so where section stripes make tissue quiet along one axis. A block without embedding needs its
-specimen mask given with `--oct-mask`. The OCT file itself can serve when it is exactly zero outside the tissue, since a mask
-file is read as its positive voxels.
+octreg was developed on one brainstem block, I58, which is unpublished. The constants set by hand (see Parameters) were chosen
+on the same block. With these constants unchanged it was tested on the four blocks of the public DANDI:000874
+([bench/dandi874](../bench/dandi874/README.md)). From crops like the I58 crop it recovers the authors' registration on 18 of the
+20 crops of two blocks and on none of the 20 crops of the other two ([README](../README.md#held-out-data-dandi000874)). The
+specimen mask of §1 needs the agarose embedding. Without it there are not two classes, and the threshold splits the tissue
+itself, more so where section stripes make tissue quiet along one axis. A block without embedding needs its specimen mask given
+with `--oct-mask`. The OCT file itself can serve when it is exactly zero outside the tissue, since a mask file is read as its
+positive voxels.
