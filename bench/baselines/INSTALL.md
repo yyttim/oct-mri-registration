@@ -17,3 +17,8 @@ Two behaviours of these versions matter for the results. NiftyReg 2.1.2 ignores 
 of `reg_f3d` without `-vel`, so those mask variants equal the unmasked runs. `reg_f3d -vel` honours the mask. In this
 FreeSurfer build `mri_coreg --ras2ras` writes a voxel matrix under a RAS label, so `mri_coreg` runs with its default VOX2VOX
 output, which `lta_convert` then converts.
+
+The run scripts of `bench/dandi874` source two small files in the WSL home that put the tools on the path.
+`~/baselines/tools/env.sh` adds ANTs, elastix and NiftyReg (their `bin` and `lib`) and sources FSL's `etc/fslconf/fsl.sh`.
+`~/baselines/fs_env.sh` sets `FREESURFER_HOME`, sources `SetUpFreeSurfer.sh` and sets `FS_LICENSE`. Any setup that puts the
+same programs on the path serves as well.

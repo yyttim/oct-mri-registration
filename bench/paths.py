@@ -4,8 +4,9 @@
                           the repository root
     OCTREG_DATA_ROOT      where the data live, by default <repository>/data
     OCTREG_I58_DIR        the folder that holds the two I58 input files, by default <data root>/I58
+    OCTREG_DANDI874_DIR   the download of DANDI:000874 (bench/dandi874/fetch.sh), by default <data root>/dandi-000874
 
-bench_runs/, baselines/ and data/ of the repository are in .gitignore. Those three are the only overrides.
+bench_runs/, baselines/ and data/ of the repository are in .gitignore. Those four are the only overrides.
 """
 from __future__ import annotations
 
@@ -19,3 +20,4 @@ BENCH_RUNS = PROJECT_ROOT / "bench_runs"
 I58_DIR = Path(os.environ.get("OCTREG_I58_DIR") or DATA_ROOT / "I58")
 OCT_I58 = I58_DIR / "I58_Brainstem_mus_Slice_full_20um_corr.nii.gz"
 MRI_I58 = I58_DIR / "I58_brainstem_MRI_cropped_to_OCT.nii.gz"
+DANDI874_DIR = Path(os.environ.get("OCTREG_DANDI874_DIR") or DATA_ROOT / "dandi-000874")
