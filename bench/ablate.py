@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Ablations of octreg, by default on the I58 brainstem pair.
 
-    python bench/ablate.py --out ABL [--main RUN] [--only A1,A4] [--starts] [--device cuda] [--force]
+    python bench/ablate.py --out ABL [--main RUN] [--only A1,A4] [--starts] [--random-starts N [--seed S]] [--device cuda]
+                           [--force]
                            [--oct OCT --mri MRI [--oct-mask MASK] --pair NAME]
 
 --oct and --mri run the same variants on another pair (default: the two I58 files of bench/paths.py). --oct-mask gives the
@@ -25,7 +26,8 @@ result.json, which bench/report.py prints.
 --starts tests the start: the OCT world is turned by 90 and 180 degrees about each of its array axes, through the centre of
 its image box, and the method and A14 run from each turned start (OUT/starts/<start>/<method|A14>/, the start itself as
 OUT/starts/<start>/T_start.txt and the image-centre start as OUT/starts/T_image_centres.txt, OUT/starts.json with the
-distance of every start and every final pose from the base).
+distance of every start and every final pose from the base). --random-starts N adds N rotations drawn uniformly on SO(3)
+(scipy Rotation.random, seed --seed) about the same centre, as starts rand00, rand01, ... (OUT/random_starts.json).
 
 Every variant keeps the pose of §4 (T_before_ngf) as well as the final pose, and the table reports the change of both against
 the base: steps of §1 to §4 act through the §4 pose, which §5 then refines.
@@ -95,6 +97,19 @@ def turn(a, deg, centre):
     C = np.eye(4)
     C[:3, 3] = centre
     return C @ R @ np.linalg.inv(C)
+
+
+def rotate(R3, centre):
+    """The rotation R3 (3x3, proper) of the OCT world through centre (mm). -> 4x4."""
+    C, R = np.eye(4), np.eye(4)
+    C[:3, 3], R[:3, :3] = centre, R3
+    return C @ R @ np.linalg.inv(C)
+
+
+def random_rotations(n, seed):
+    """n rotations uniform on SO(3), seeded. -> {name: 3x3}."""
+    from scipy.spatial.transform import Rotation
+    return {f"rand{i:02d}": r.as_matrix() for i, r in enumerate(Rotation.random(n, random_state=seed))}
 
 
 def image_centres():
@@ -304,8 +319,10 @@ def run_variant(name, out, device, force):
 
 
 def run_start(name, kind, out, device, force, F, T0):
-    """The method (kind 'method') or A14 (kind 'A14') from the OCT world turned by F (start name in STARTS). -> result dict."""
-    d, spec = out / "starts" / name / kind, {"start": list(STARTS[name]), "F": np.round(F, 9).tolist(), "search": kind == "method"}
+    """The method (kind 'method') or A14 (kind 'A14') from the OCT world turned by F (start name in STARTS, or a random
+    start). -> result dict."""
+    d = out / "starts" / name / kind
+    spec = {"start": list(STARTS[name]) if name in STARTS else name, "F": np.round(F, 9).tolist(), "search": kind == "method"}
     P = Params()
     old = json.loads((d / "result.json").read_text(encoding="utf-8")) if (d / "result.json").exists() else {}
     if not force and old.get("params_hash") == P.hash() and old.get("spec") == spec:
@@ -334,6 +351,9 @@ def main():
     ap.add_argument("--main", type=Path, default=None, help="`octreg register` run dir (T_oct2mri.txt) to compare base with")
     ap.add_argument("--only", default=None, help=f"comma-separated subset of {','.join(VARIANTS)} (base is always run)")
     ap.add_argument("--starts", action="store_true", help="also run the method and A14 from the turned starts (OUT/starts.json)")
+    ap.add_argument("--random-starts", type=int, default=0, metavar="N", help="also run the method and A14 from N starts "
+                    "turned uniformly on SO(3) (OUT/random_starts.json)")
+    ap.add_argument("--seed", type=int, default=0, help="seed of --random-starts")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--force", action="store_true", help="recompute variants that already have a result (delete OUT/prep to redo "
                     "the preprocessing)")
@@ -427,6 +447,24 @@ def main():
         io.write_json({"pair": a.pair, "params_hash": Params().hash(), "image_centre_start": T0.tolist(),
                        "starts": table}, a.out / "starts.json")
         print(f"wrote {a.out / 'starts.json'}", flush=True)
+    if a.random_starts:
+        c_o, c_m = image_centres()
+        T0 = np.eye(4)
+        T0[:3, 3] = c_m - c_o
+        table = {}
+        for name, R3 in random_rotations(a.random_starts, a.seed).items():
+            F = rotate(R3, c_o)
+            r_m, r_n = (run_start(name, k, a.out, a.device, a.force, F, T0) for k in ("method", "A14"))
+            io.write_transform_txt(T0 @ F, a.out / "starts" / name / "T_start.txt")
+            table[name] = {"rotation": np.round(R3, 9).tolist(),
+                           "degrees": float(np.degrees(np.arccos(np.clip((np.trace(R3) - 1) / 2, -1, 1)))),
+                           "start_to_base": E.pose(T0 @ F, T_base, pts, cor),
+                           "method_to_base": E.pose(np.array(r_m["T"]), T_base, pts, cor),
+                           "no_search_to_base": E.pose(np.array(r_n["T"]), T_base, pts, cor),
+                           "seconds": {"method": r_m["seconds"], "no_search": r_n["seconds"]}}
+        io.write_json({"pair": a.pair, "params_hash": Params().hash(), "seed": a.seed, "image_centre_start": T0.tolist(),
+                       "starts": table}, a.out / "random_starts.json")
+        print(f"wrote {a.out / 'random_starts.json'}", flush=True)
 
 
 if __name__ == "__main__":
