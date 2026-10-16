@@ -161,7 +161,8 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   counted as beyond every other.
 - **Pictures:** `figures.py` shows in freeview the C3 crop of the 10° FLASH with the median distance under octreg, on whole
   planes through the tissue centre: the MRI, and the OCT through R, through octreg and through each tool. It also shows the
-  median crop of every condition and every C3 crop of the 10° FLASH. The red line is the white-matter boundary of the authors'
+  median crop of every condition and every C3 crop of the 10° FLASH, and the first crop in three of the OCT's own planes with
+  the line placed through R, through octreg and through each tool. The red line is the white-matter boundary of the authors'
   MRI labels, which comes from no compared method. Black means no OCT.
 
 ## Results
@@ -243,9 +244,22 @@ The same crop in three planes of the OCT itself (`enface/`):
 
 The same crop in three planes of the OCT itself, the way Costantini et al. show their OCT: OCT planes 102, 300 and 498, each
 three planes below the top of its section, 14.7 × 15.2 mm at 48 µm (a 4 × 4 average of the 12 µm OCT). From left: the OCT, the
-OCT with the white-matter label of the authors' MRI labels resampled through R and through octreg as a red outline, and the MRI
-crop resampled through R and through octreg. The grey levels are linear, at freeview's default window of each OCT plane and of
-the crop.
+OCT with the white-matter boundary placed through R and through octreg, and the MRI crop resampled through R and through octreg.
+The line is the boundary above, resampled to a 0.15 mm grid in the OCT frame and cut by the plane. Outside the OCT tissue it
+continues through the MRI, and where the white matter reaches the edge of the crop it runs along that edge. The grey levels are
+linear, at freeview's default window of each OCT plane and of the crop.
+
+OCT plane 300 with the line through R, through octreg and through each standard tool at its declared setting and with its own
+search. FLIRT, SynthMorph and the searches of FLIRT and greedy place no white matter within 0.6 mm of this plane, so their
+panels show no line (`no_line` in figures.json). elastix ended without a transform on this crop.
+
+| R | octreg | NiftyReg reg_aladin | greedy | ANTs |
+|---|---|---|---|---|
+| <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="110" alt="OCT plane 300 with the line through R"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="110" alt="OCT plane 300 with the line through octreg"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reg_aladin.png" width="110" alt="OCT plane 300 with the line through NiftyReg reg_aladin"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_greedy.png" width="110" alt="OCT plane 300 with the line through greedy"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_ants.png" width="110" alt="OCT plane 300 with the line through ANTs"> |
+| **mri_robust_register** | **mri_coreg** | **FLIRT** | **SynthMorph** | **elastix** |
+| <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_mri_robust_register.png" width="110" alt="OCT plane 300 with the line through mri_robust_register"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_mri_coreg.png" width="110" alt="OCT plane 300 with the line through mri_coreg"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_flirt.png" width="110" alt="OCT plane 300 with the line through FLIRT"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_synthmorph.png" width="110" alt="OCT plane 300 with the line through SynthMorph"> | no transform (tool error) |
+| **FLIRT, its search over ±180°** | **ANTs, antsAI start** | **greedy, its search** |  |  |
+| <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_flirt_search.png" width="110" alt="OCT plane 300 with the line through FLIRT, its search over ±180°"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_ants_antsai.png" width="110" alt="OCT plane 300 with the line through ANTs, antsAI start"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_greedy_search.png" width="110" alt="OCT plane 300 with the line through greedy, its search"> |  |  |
 
 Every crop of the 10° FLASH with a 3 mm margin, axial plane:
 

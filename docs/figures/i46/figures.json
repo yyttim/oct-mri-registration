@@ -390,6 +390,12 @@
   "plane_mm": [
    14.74,
    15.22
+  ],
+  "no_line": [
+   "flirt",
+   "synthmorph",
+   "flirt_search",
+   "greedy_search"
   ]
  },
  "enface/flip1_C3_k0_p498": {
