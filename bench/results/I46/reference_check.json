@@ -1,0 +1,2297 @@
+{
+ "lattice": {
+  "steps_mm": [
+   0.3962,
+   0.3959,
+   0.3963,
+   0.3959,
+   0.4881,
+   0.396,
+   0.396,
+   0.396,
+   0.396,
+   0.3961,
+   0.396,
+   0.396,
+   0.396,
+   0.3959,
+   0.3961
+  ],
+  "plane_step_mm": 0.396,
+  "mean_offset_mm": {
+   "equal_steps_from_first": 0.0636,
+   "equal_steps_from_last": -0.029
+  }
+ },
+ "frame": {
+  "headers_scored": 96,
+  "oct_blocks": 120000,
+  "vessel_voxels": 100000,
+  "chosen": {
+   "depth_sign": 1,
+   "slab08": 0,
+   "swap": true,
+   "sign_y": -1,
+   "sign_x": -1,
+   "vessel_share": 0.1575,
+   "oct_inside_mri": 1.0,
+   "correlation": {
+    "flip1": 0.3194,
+    "flip2": 0.3875,
+    "flip3": 0.4003
+   }
+  },
+  "other_orientations": {
+   "headers": 90,
+   "highest_abs_correlation": {
+    "flip1": 0.192,
+    "flip2": 0.1926,
+    "flip3": 0.2124
+   },
+   "highest_vessel_share": 0.0352
+  },
+  "other_slabs": [
+   {
+    "slab08": -1,
+    "correlation": {
+     "flip1": 0.3143,
+     "flip2": 0.3662,
+     "flip3": 0.3562
+    },
+    "vessel_share": 0.0543
+   },
+   {
+    "slab08": 1,
+    "correlation": {
+     "flip1": 0.3244,
+     "flip2": 0.3826,
+     "flip3": 0.3952
+    },
+    "vessel_share": 0.0588
+   },
+   {
+    "slab08": 2,
+    "correlation": {
+     "flip1": 0.3069,
+     "flip2": 0.3608,
+     "flip3": 0.3721
+    },
+    "vessel_share": 0.0265
+   },
+   {
+    "slab08": 3,
+    "correlation": {
+     "flip1": 0.2692,
+     "flip2": 0.3166,
+     "flip3": 0.3276
+    },
+    "vessel_share": 0.0288
+   },
+   {
+    "slab08": 4,
+    "correlation": {
+     "flip1": 0.2259,
+     "flip2": 0.2639,
+     "flip3": 0.2732
+    },
+    "vessel_share": 0.0226
+   }
+  ],
+  "others_highest_vessel_share": 0.0588,
+  "chosen_highest_correlation_over_orientations": {
+   "flip1": true,
+   "flip2": true,
+   "flip3": true
+  },
+  "chosen_highest_vessel_share": true,
+  "headers": [
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0543,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.3143,
+     "flip2": 0.3662,
+     "flip3": 0.3562
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0262,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1339,
+     "flip2": 0.1306,
+     "flip3": 0.1171
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.018,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0169,
+     "flip2": 0.0244,
+     "flip3": 0.0433
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0144,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0689,
+     "flip2": 0.0325,
+     "flip3": 0.0797
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0283,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0429,
+     "flip2": 0.0723,
+     "flip3": 0.0872
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0279,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0608,
+     "flip2": 0.0851,
+     "flip3": 0.0885
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0216,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.019,
+     "flip2": 0.0488,
+     "flip3": 0.0642
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": -1,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0198,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1143,
+     "flip2": 0.1844,
+     "flip3": 0.1999
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.1575,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.3194,
+     "flip2": 0.3875,
+     "flip3": 0.4003
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0308,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1396,
+     "flip2": 0.1387,
+     "flip3": 0.1256
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0249,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0131,
+     "flip2": 0.0227,
+     "flip3": 0.0398
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0179,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0699,
+     "flip2": 0.0362,
+     "flip3": 0.0851
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0271,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0309,
+     "flip2": 0.0649,
+     "flip3": 0.0836
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0235,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.06,
+     "flip2": 0.0827,
+     "flip3": 0.0864
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.019,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0204,
+     "flip2": 0.0494,
+     "flip3": 0.0636
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 0,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0249,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1155,
+     "flip2": 0.1926,
+     "flip3": 0.2124
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0588,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.3244,
+     "flip2": 0.3826,
+     "flip3": 0.3952
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0254,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1382,
+     "flip2": 0.1383,
+     "flip3": 0.1258
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0142,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0095,
+     "flip2": 0.0237,
+     "flip3": 0.04
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0101,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0662,
+     "flip2": 0.0435,
+     "flip3": 0.0928
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0226,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0211,
+     "flip2": 0.0565,
+     "flip3": 0.0772
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0253,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0567,
+     "flip2": 0.0797,
+     "flip3": 0.0846
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0193,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0194,
+     "flip2": 0.0463,
+     "flip3": 0.0588
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 1,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0258,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1095,
+     "flip2": 0.1869,
+     "flip3": 0.2084
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0265,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.3069,
+     "flip2": 0.3608,
+     "flip3": 0.3721
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0263,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1285,
+     "flip2": 0.1301,
+     "flip3": 0.1197
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0134,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0054,
+     "flip2": 0.028,
+     "flip3": 0.0443
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0107,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0698,
+     "flip2": 0.0432,
+     "flip3": 0.094
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0214,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0115,
+     "flip2": 0.0499,
+     "flip3": 0.0728
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0201,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0492,
+     "flip2": 0.0709,
+     "flip3": 0.0768
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0189,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0191,
+     "flip2": 0.0436,
+     "flip3": 0.0541
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 2,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0172,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0907,
+     "flip2": 0.1695,
+     "flip3": 0.1948
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0288,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.2692,
+     "flip2": 0.3166,
+     "flip3": 0.3276
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0301,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1169,
+     "flip2": 0.1176,
+     "flip3": 0.1084
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0175,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0021,
+     "flip2": 0.04,
+     "flip3": 0.0579
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0125,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0749,
+     "flip2": 0.0375,
+     "flip3": 0.0884
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0184,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0064,
+     "flip2": 0.0448,
+     "flip3": 0.0675
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0251,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0388,
+     "flip2": 0.0582,
+     "flip3": 0.0648
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.023,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0193,
+     "flip2": 0.0394,
+     "flip3": 0.0468
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 3,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0188,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0651,
+     "flip2": 0.1453,
+     "flip3": 0.1742
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0226,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.2259,
+     "flip2": 0.2639,
+     "flip3": 0.2732
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.027,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1034,
+     "flip2": 0.102,
+     "flip3": 0.0929
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0151,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0104,
+     "flip2": 0.0535,
+     "flip3": 0.0731
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0138,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0781,
+     "flip2": 0.0286,
+     "flip3": 0.0783
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.016,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0011,
+     "flip2": 0.0352,
+     "flip3": 0.0558
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0219,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0321,
+     "flip2": 0.0492,
+     "flip3": 0.0559
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0231,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0214,
+     "flip2": 0.0376,
+     "flip3": 0.0422
+    }
+   },
+   {
+    "depth_sign": 1,
+    "slab08": 4,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0176,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0402,
+     "flip2": 0.1185,
+     "flip3": 0.1488
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0327,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1591,
+     "flip2": 0.1407,
+     "flip3": 0.1118
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0246,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0447,
+     "flip2": 0.0319,
+     "flip3": 0.0189
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0227,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.18,
+     "flip2": -0.1185,
+     "flip3": -0.0817
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0228,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1417,
+     "flip2": -0.0964,
+     "flip3": -0.074
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0298,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1127,
+     "flip2": 0.0722,
+     "flip3": 0.0373
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0243,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1227,
+     "flip2": -0.099,
+     "flip3": -0.0813
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0237,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0632,
+     "flip2": 0.0637,
+     "flip3": 0.0542
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 14,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0153,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0323,
+     "flip2": 0.007,
+     "flip3": 0.0205
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0281,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1485,
+     "flip2": 0.1262,
+     "flip3": 0.0967
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0262,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0467,
+     "flip2": 0.0342,
+     "flip3": 0.0219
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0207,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1787,
+     "flip2": -0.1094,
+     "flip3": -0.0684
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.016,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1639,
+     "flip2": -0.113,
+     "flip3": -0.0853
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0294,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0701,
+     "flip2": 0.0337,
+     "flip3": 0.0047
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0208,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1151,
+     "flip2": -0.0884,
+     "flip3": -0.0696
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0238,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0616,
+     "flip2": 0.0634,
+     "flip3": 0.0553
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 15,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0169,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0323,
+     "flip2": 0.0012,
+     "flip3": 0.0134
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0314,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1438,
+     "flip2": 0.1172,
+     "flip3": 0.0855
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0257,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0476,
+     "flip2": 0.0369,
+     "flip3": 0.0257
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0177,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1646,
+     "flip2": -0.0912,
+     "flip3": -0.0491
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.015,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1797,
+     "flip2": -0.1247,
+     "flip3": -0.0919
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.021,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.038,
+     "flip2": 0.0038,
+     "flip3": -0.0207
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0209,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0983,
+     "flip2": -0.0705,
+     "flip3": -0.0524
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.025,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0572,
+     "flip2": 0.0587,
+     "flip3": 0.0514
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 16,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0203,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0343,
+     "flip2": -0.0095,
+     "flip3": 0.0005
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0304,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1402,
+     "flip2": 0.1103,
+     "flip3": 0.0769
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0256,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0475,
+     "flip2": 0.0378,
+     "flip3": 0.0274
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0181,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1462,
+     "flip2": -0.0707,
+     "flip3": -0.0287
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0193,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1878,
+     "flip2": -0.131,
+     "flip3": -0.0944
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0257,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0151,
+     "flip2": -0.0161,
+     "flip3": -0.0371
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0183,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0768,
+     "flip2": -0.0511,
+     "flip3": -0.0358
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0237,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0478,
+     "flip2": 0.0515,
+     "flip3": 0.0461
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 17,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0205,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0361,
+     "flip2": -0.0216,
+     "flip3": -0.0143
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0352,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1378,
+     "flip2": 0.1056,
+     "flip3": 0.0711
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0252,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0501,
+     "flip2": 0.0376,
+     "flip3": 0.0253
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0157,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1258,
+     "flip2": -0.0563,
+     "flip3": -0.0181
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0165,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.192,
+     "flip2": -0.132,
+     "flip3": -0.0912
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0234,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0036,
+     "flip2": -0.0341,
+     "flip3": -0.0526
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0215,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.052,
+     "flip2": -0.0337,
+     "flip3": -0.0233
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0232,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0375,
+     "flip2": 0.0416,
+     "flip3": 0.0371
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 18,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0198,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0321,
+     "flip2": -0.0277,
+     "flip3": -0.0239
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0301,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.1388,
+     "flip2": 0.1036,
+     "flip3": 0.0673
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": true,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0247,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0504,
+     "flip2": 0.0353,
+     "flip3": 0.0215
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0155,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1082,
+     "flip2": -0.0525,
+     "flip3": -0.0206
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": true,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.0147,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.1912,
+     "flip2": -0.1298,
+     "flip3": -0.0859
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": -1,
+    "vessel_share": 0.0223,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0183,
+     "flip2": -0.0477,
+     "flip3": -0.0632
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": false,
+    "sign_y": -1,
+    "sign_x": 1,
+    "vessel_share": 0.0203,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0268,
+     "flip2": -0.0192,
+     "flip3": -0.0152
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": -1,
+    "vessel_share": 0.0193,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": 0.0217,
+     "flip2": 0.0275,
+     "flip3": 0.0255
+    }
+   },
+   {
+    "depth_sign": -1,
+    "slab08": 19,
+    "swap": false,
+    "sign_y": 1,
+    "sign_x": 1,
+    "vessel_share": 0.02,
+    "oct_inside_mri": 1.0,
+    "correlation": {
+     "flip1": -0.0276,
+     "flip2": -0.029,
+     "flip3": -0.0272
+    }
+   }
+  ],
+  "seconds": 131
+ },
+ "labels": {
+  "reference": {
+   "spacing_um": [
+    12.46,
+    11.82,
+    14.48
+   ],
+   "objective": {
+    "E": 1.2625,
+    "n_mri": 2469,
+    "n_oct": 62565,
+    "mri_to_oct_mean_mm": 0.1892,
+    "mri_to_oct_median_mm": 0.1448,
+    "mri_within_0.15mm": 0.5205,
+    "oct_to_mri_mean_mm": 0.699,
+    "oct_within_0.15mm": 0.178
+   }
+  },
+  "S9": {
+   "mean_mm": 0.1688,
+   "median_mm": 0.1572,
+   "p95_mm": 0.3222,
+   "max_mm": 0.392,
+   "rotation_deg": 0.833,
+   "by_depth_third": [
+    {
+     "planes": [
+      0,
+      208
+     ],
+     "points": 365947,
+     "mean_mm": 0.105
+    },
+    {
+     "planes": [
+      209,
+      417
+     ],
+     "points": 320128,
+     "mean_mm": 0.1796
+    },
+    {
+     "planes": [
+      418,
+      626
+     ],
+     "points": 157390,
+     "mean_mm": 0.2954
+    }
+   ],
+   "spacing_um": [
+    12.43,
+    11.51,
+    15.01
+   ],
+   "objective": {
+    "E": 1.2461,
+    "n_mri": 2511,
+    "n_oct": 62565,
+    "mri_to_oct_mean_mm": 0.1902,
+    "mri_to_oct_median_mm": 0.1406,
+    "mri_within_0.15mm": 0.5293,
+    "oct_to_mri_mean_mm": 0.686,
+    "oct_within_0.15mm": 0.1891,
+    "plausible": true
+   },
+   "split_half_spread": {
+    "mri": {
+     "rms_mm": 0.0971,
+     "median_mm": 0.0959,
+     "max_mm": 0.1214,
+     "splits_mm": [
+      0.1112,
+      0.0716,
+      0.0972,
+      0.0868,
+      0.1214,
+      0.0945,
+      0.1184,
+      0.1065,
+      0.0744,
+      0.0717
+     ]
+    },
+    "oct": {
+     "rms_mm": 0.0857,
+     "median_mm": 0.0815,
+     "max_mm": 0.1207,
+     "splits_mm": [
+      0.1123,
+      0.0834,
+      0.0834,
+      0.0795,
+      0.071,
+      0.0557,
+      0.0731,
+      0.1207,
+      0.0896,
+      0.0671
+     ]
+    }
+   },
+   "T_oct2mri": [
+    [
+     0.417533934,
+     -0.846072834,
+     -0.241215531,
+     15.707437598
+    ],
+    [
+     -0.064209953,
+     -0.279848882,
+     0.945566493,
+     -2.722156843
+    ],
+    [
+     -0.945630791,
+     -0.354572883,
+     -0.170711921,
+     8.835076683
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  "A12": {
+   "mean_mm": 0.1555,
+   "median_mm": 0.1364,
+   "p95_mm": 0.3138,
+   "max_mm": 0.3988,
+   "rotation_deg": 0.573,
+   "by_depth_third": [
+    {
+     "planes": [
+      0,
+      208
+     ],
+     "points": 365947,
+     "mean_mm": 0.0889
+    },
+    {
+     "planes": [
+      209,
+      417
+     ],
+     "points": 320128,
+     "mean_mm": 0.1724
+    },
+    {
+     "planes": [
+      418,
+      626
+     ],
+     "points": 157390,
+     "mean_mm": 0.2759
+    }
+   ],
+   "spacing_um": [
+    12.48,
+    11.62,
+    14.96
+   ],
+   "objective": {
+    "E": 1.2375,
+    "n_mri": 2521,
+    "n_oct": 62565,
+    "mri_to_oct_mean_mm": 0.1886,
+    "mri_to_oct_median_mm": 0.1379,
+    "mri_within_0.15mm": 0.5395,
+    "oct_to_mri_mean_mm": 0.6871,
+    "oct_within_0.15mm": 0.1941,
+    "plausible": true
+   },
+   "split_half_spread": {
+    "mri": {
+     "rms_mm": 0.0921,
+     "median_mm": 0.0957,
+     "max_mm": 0.1211,
+     "splits_mm": [
+      0.0972,
+      0.075,
+      0.0617,
+      0.0707,
+      0.0944,
+      0.1035,
+      0.1211,
+      0.0772,
+      0.1065,
+      0.0969
+     ]
+    },
+    "oct": {
+     "rms_mm": 0.0883,
+     "median_mm": 0.0939,
+     "max_mm": 0.1052,
+     "splits_mm": [
+      0.0919,
+      0.0812,
+      0.1052,
+      0.0958,
+      0.0655,
+      0.0979,
+      0.0657,
+      0.1017,
+      0.0693,
+      0.0964
+     ]
+    }
+   },
+   "T_oct2mri": [
+    [
+     0.427869281,
+     -0.858593993,
+     -0.230244597,
+     15.697925937
+    ],
+    [
+     -0.064265336,
+     -0.284507384,
+     0.945104501,
+     -2.665068872
+    ],
+    [
+     -0.945796711,
+     -0.34536981,
+     -0.170991736,
+     8.750110922
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  "oct_points": 62565,
+  "mri_labels": 34036,
+  "label_box_voxels": [
+   [
+    638,
+    345,
+    236
+   ],
+   [
+    832,
+    682,
+    576
+   ]
+  ],
+  "seconds": 522
+ },
+ "search": {
+  "rotations": 20000,
+  "handedness": [
+   1,
+   -1
+  ],
+  "grid_mm": 0.6,
+  "peaks": 120000,
+  "candidates": 40,
+  "best": {
+   "ncc": 0.4449,
+   "ncc_rank": 0,
+   "handedness": 1,
+   "reference_handedness": 1,
+   "E_S9": 1.2461,
+   "E_A12": 1.2375,
+   "S9_to_S9_from_reference_mm": 0.0,
+   "A12_to_A12_from_reference_mm": 0.0,
+   "S9": {
+    "mean_mm": 0.1688,
+    "median_mm": 0.1572,
+    "p95_mm": 0.3222,
+    "max_mm": 0.392,
+    "rotation_deg": 0.833
+   },
+   "A12": {
+    "mean_mm": 0.1555,
+    "median_mm": 0.1364,
+    "p95_mm": 0.3138,
+    "max_mm": 0.3988,
+    "rotation_deg": 0.573
+   }
+  },
+  "next_distinct": {
+   "E_S9": 1.4723,
+   "handedness": 1,
+   "distance_mm": 13.7516
+  },
+  "best_other_handedness": {
+   "E_S9": 1.4823
+  },
+  "seconds": 4209,
+  "refined": [
+   {
+    "candidate": 0,
+    "ncc": 0.4449,
+    "ncc_rank": 0,
+    "handedness": 1,
+    "E_S9": 1.2461,
+    "plausible": true,
+    "E_A12": 1.2375,
+    "S9_to_reference_mm": 0.1688
+   },
+   {
+    "candidate": 2,
+    "ncc": 0.4321,
+    "ncc_rank": 2,
+    "handedness": 1,
+    "E_S9": 1.4723,
+    "plausible": true,
+    "E_A12": 1.4233,
+    "S9_to_reference_mm": 13.7263
+   },
+   {
+    "candidate": 31,
+    "ncc": 0.3968,
+    "ncc_rank": 118,
+    "handedness": 1,
+    "E_S9": 1.4806,
+    "plausible": true,
+    "E_A12": 1.4246,
+    "S9_to_reference_mm": 12.4518
+   },
+   {
+    "candidate": 36,
+    "ncc": 0.395,
+    "ncc_rank": 141,
+    "handedness": -1,
+    "E_S9": 1.4823,
+    "plausible": true,
+    "E_A12": 1.4658,
+    "S9_to_reference_mm": 13.7103
+   },
+   {
+    "candidate": 16,
+    "ncc": 0.4087,
+    "ncc_rank": 41,
+    "handedness": -1,
+    "E_S9": 1.4848,
+    "plausible": true,
+    "E_A12": 1.3757,
+    "S9_to_reference_mm": 13.8603
+   },
+   {
+    "candidate": 27,
+    "ncc": 0.4034,
+    "ncc_rank": 67,
+    "handedness": -1,
+    "E_S9": 1.4935,
+    "plausible": true,
+    "E_A12": 1.4675,
+    "S9_to_reference_mm": 11.5049
+   },
+   {
+    "candidate": 4,
+    "ncc": 0.4257,
+    "ncc_rank": 8,
+    "handedness": -1,
+    "E_S9": 1.4946,
+    "plausible": true,
+    "E_A12": 1.4097,
+    "S9_to_reference_mm": 8.8394
+   },
+   {
+    "candidate": 1,
+    "ncc": 0.4381,
+    "ncc_rank": 1,
+    "handedness": 1,
+    "E_S9": 1.4986,
+    "plausible": true,
+    "E_A12": 1.4869,
+    "S9_to_reference_mm": 12.824
+   },
+   {
+    "candidate": 14,
+    "ncc": 0.4095,
+    "ncc_rank": 36,
+    "handedness": -1,
+    "E_S9": 1.5024,
+    "plausible": true,
+    "E_A12": 1.4601,
+    "S9_to_reference_mm": 5.3033
+   },
+   {
+    "candidate": 20,
+    "ncc": 0.4071,
+    "ncc_rank": 51,
+    "handedness": 1,
+    "E_S9": 1.5028,
+    "plausible": true,
+    "E_A12": 1.4708,
+    "S9_to_reference_mm": 23.5271
+   },
+   {
+    "candidate": 24,
+    "ncc": 0.4053,
+    "ncc_rank": 59,
+    "handedness": 1,
+    "E_S9": 1.5079,
+    "plausible": true,
+    "E_A12": 1.5027,
+    "S9_to_reference_mm": 7.9137
+   },
+   {
+    "candidate": 29,
+    "ncc": 0.4007,
+    "ncc_rank": 84,
+    "handedness": 1,
+    "E_S9": 1.5079,
+    "plausible": true,
+    "E_A12": 1.475,
+    "S9_to_reference_mm": 12.1172
+   },
+   {
+    "candidate": 19,
+    "ncc": 0.408,
+    "ncc_rank": 46,
+    "handedness": 1,
+    "E_S9": 1.5107,
+    "plausible": true,
+    "E_A12": 1.4841,
+    "S9_to_reference_mm": 13.3849
+   },
+   {
+    "candidate": 35,
+    "ncc": 0.3951,
+    "ncc_rank": 139,
+    "handedness": 1,
+    "E_S9": 1.514,
+    "plausible": true,
+    "E_A12": 1.4838,
+    "S9_to_reference_mm": 23.4684
+   },
+   {
+    "candidate": 3,
+    "ncc": 0.4315,
+    "ncc_rank": 3,
+    "handedness": 1,
+    "E_S9": 1.5173,
+    "plausible": true,
+    "E_A12": 1.4815,
+    "S9_to_reference_mm": 24.7214
+   },
+   {
+    "candidate": 11,
+    "ncc": 0.4163,
+    "ncc_rank": 18,
+    "handedness": 1,
+    "E_S9": 1.5174,
+    "plausible": true,
+    "E_A12": 1.4593,
+    "S9_to_reference_mm": 7.3866
+   },
+   {
+    "candidate": 17,
+    "ncc": 0.4087,
+    "ncc_rank": 42,
+    "handedness": -1,
+    "E_S9": 1.5174,
+    "plausible": true,
+    "E_A12": 1.4385,
+    "S9_to_reference_mm": 16.2123
+   },
+   {
+    "candidate": 34,
+    "ncc": 0.3957,
+    "ncc_rank": 131,
+    "handedness": -1,
+    "E_S9": 1.5174,
+    "plausible": true,
+    "E_A12": 1.4291,
+    "S9_to_reference_mm": 12.1751
+   },
+   {
+    "candidate": 38,
+    "ncc": 0.3948,
+    "ncc_rank": 143,
+    "handedness": -1,
+    "E_S9": 1.5175,
+    "plausible": true,
+    "E_A12": 1.3963,
+    "S9_to_reference_mm": 7.3283
+   },
+   {
+    "candidate": 21,
+    "ncc": 0.4064,
+    "ncc_rank": 54,
+    "handedness": -1,
+    "E_S9": 1.5179,
+    "plausible": true,
+    "E_A12": 1.4246,
+    "S9_to_reference_mm": 23.3138
+   },
+   {
+    "candidate": 30,
+    "ncc": 0.3974,
+    "ncc_rank": 108,
+    "handedness": 1,
+    "E_S9": 1.5183,
+    "plausible": true,
+    "E_A12": 1.4672,
+    "S9_to_reference_mm": 12.763
+   },
+   {
+    "candidate": 28,
+    "ncc": 0.4034,
+    "ncc_rank": 68,
+    "handedness": -1,
+    "E_S9": 1.5188,
+    "plausible": true,
+    "E_A12": 1.4566,
+    "S9_to_reference_mm": 22.5775
+   },
+   {
+    "candidate": 8,
+    "ncc": 0.4194,
+    "ncc_rank": 13,
+    "handedness": 1,
+    "E_S9": 1.5232,
+    "plausible": true,
+    "E_A12": 1.4728,
+    "S9_to_reference_mm": 13.0502
+   },
+   {
+    "candidate": 12,
+    "ncc": 0.412,
+    "ncc_rank": 29,
+    "handedness": -1,
+    "E_S9": 1.5284,
+    "plausible": true,
+    "E_A12": 1.4926,
+    "S9_to_reference_mm": 11.1837
+   },
+   {
+    "candidate": 32,
+    "ncc": 0.3967,
+    "ncc_rank": 120,
+    "handedness": 1,
+    "E_S9": 1.5311,
+    "plausible": true,
+    "E_A12": 1.5269,
+    "S9_to_reference_mm": 9.9898
+   },
+   {
+    "candidate": 18,
+    "ncc": 0.4085,
+    "ncc_rank": 44,
+    "handedness": 1,
+    "E_S9": 1.5313,
+    "plausible": true,
+    "E_A12": 1.5231,
+    "S9_to_reference_mm": 14.0067
+   },
+   {
+    "candidate": 13,
+    "ncc": 0.4101,
+    "ncc_rank": 33,
+    "handedness": -1,
+    "E_S9": 1.5412,
+    "plausible": true,
+    "E_A12": 1.4936,
+    "S9_to_reference_mm": 17.2106
+   },
+   {
+    "candidate": 15,
+    "ncc": 0.4094,
+    "ncc_rank": 37,
+    "handedness": -1,
+    "E_S9": 1.542,
+    "plausible": true,
+    "E_A12": 1.51,
+    "S9_to_reference_mm": 10.5816
+   },
+   {
+    "candidate": 33,
+    "ncc": 0.3957,
+    "ncc_rank": 129,
+    "handedness": 1,
+    "E_S9": 1.5427,
+    "plausible": true,
+    "E_A12": 1.5082,
+    "S9_to_reference_mm": 18.0556
+   },
+   {
+    "candidate": 25,
+    "ncc": 0.4046,
+    "ncc_rank": 62,
+    "handedness": -1,
+    "E_S9": 1.5431,
+    "plausible": true,
+    "E_A12": 1.5359,
+    "S9_to_reference_mm": 17.3601
+   },
+   {
+    "candidate": 7,
+    "ncc": 0.421,
+    "ncc_rank": 11,
+    "handedness": 1,
+    "E_S9": 1.5436,
+    "plausible": true,
+    "E_A12": 1.444,
+    "S9_to_reference_mm": 19.2009
+   },
+   {
+    "candidate": 23,
+    "ncc": 0.406,
+    "ncc_rank": 57,
+    "handedness": 1,
+    "E_S9": 1.5444,
+    "plausible": true,
+    "E_A12": 1.5079,
+    "S9_to_reference_mm": 16.352
+   },
+   {
+    "candidate": 26,
+    "ncc": 0.4035,
+    "ncc_rank": 66,
+    "handedness": -1,
+    "E_S9": 1.5449,
+    "plausible": true,
+    "E_A12": 1.426,
+    "S9_to_reference_mm": 20.7324
+   },
+   {
+    "candidate": 6,
+    "ncc": 0.4222,
+    "ncc_rank": 10,
+    "handedness": 1,
+    "E_S9": 1.5503,
+    "plausible": true,
+    "E_A12": 1.5229,
+    "S9_to_reference_mm": 12.0195
+   },
+   {
+    "candidate": 39,
+    "ncc": 0.3947,
+    "ncc_rank": 144,
+    "handedness": 1,
+    "E_S9": 1.5506,
+    "plausible": true,
+    "E_A12": 1.483,
+    "S9_to_reference_mm": 12.3842
+   },
+   {
+    "candidate": 10,
+    "ncc": 0.4179,
+    "ncc_rank": 16,
+    "handedness": 1,
+    "E_S9": 1.5586,
+    "plausible": true,
+    "E_A12": 1.5002,
+    "S9_to_reference_mm": 25.8881
+   },
+   {
+    "candidate": 37,
+    "ncc": 0.3949,
+    "ncc_rank": 142,
+    "handedness": 1,
+    "E_S9": 1.5618,
+    "plausible": true,
+    "E_A12": 1.4965,
+    "S9_to_reference_mm": 18.9438
+   },
+   {
+    "candidate": 9,
+    "ncc": 0.4184,
+    "ncc_rank": 14,
+    "handedness": 1,
+    "E_S9": 1.5625,
+    "plausible": true,
+    "E_A12": 1.4782,
+    "S9_to_reference_mm": 18.8747
+   },
+   {
+    "candidate": 22,
+    "ncc": 0.406,
+    "ncc_rank": 56,
+    "handedness": 1,
+    "E_S9": 1.5636,
+    "plausible": true,
+    "E_A12": 1.5274,
+    "S9_to_reference_mm": 24.5501
+   },
+   {
+    "candidate": 5,
+    "ncc": 0.4233,
+    "ncc_rank": 9,
+    "handedness": 1,
+    "E_S9": 1.5782,
+    "plausible": true,
+    "E_A12": 1.4745,
+    "S9_to_reference_mm": 15.0644
+   }
+  ]
+ },
+ "vessels": {
+  "reference": {
+   "vessel_n": 2955,
+   "vessel_mean_mm": 0.1304,
+   "vessel_median_mm": 0.1012
+  },
+  "directions": 12,
+  "shift_0.5mm": {
+   "vessel_mean_mm": 0.221,
+   "vessel_median_mm": 0.2107,
+   "per_direction": [
+    {
+     "vessel_n": 2952,
+     "vessel_mean_mm": 0.2288,
+     "vessel_median_mm": 0.224
+    },
+    {
+     "vessel_n": 2892,
+     "vessel_mean_mm": 0.2296,
+     "vessel_median_mm": 0.2202
+    },
+    {
+     "vessel_n": 2893,
+     "vessel_mean_mm": 0.2262,
+     "vessel_median_mm": 0.2196
+    },
+    {
+     "vessel_n": 2864,
+     "vessel_mean_mm": 0.2299,
+     "vessel_median_mm": 0.2219
+    },
+    {
+     "vessel_n": 2974,
+     "vessel_mean_mm": 0.1685,
+     "vessel_median_mm": 0.1342
+    },
+    {
+     "vessel_n": 3053,
+     "vessel_mean_mm": 0.2208,
+     "vessel_median_mm": 0.2104
+    },
+    {
+     "vessel_n": 3011,
+     "vessel_mean_mm": 0.2285,
+     "vessel_median_mm": 0.2188
+    },
+    {
+     "vessel_n": 2891,
+     "vessel_mean_mm": 0.2275,
+     "vessel_median_mm": 0.2191
+    },
+    {
+     "vessel_n": 2930,
+     "vessel_mean_mm": 0.2431,
+     "vessel_median_mm": 0.2372
+    },
+    {
+     "vessel_n": 2921,
+     "vessel_mean_mm": 0.2199,
+     "vessel_median_mm": 0.2127
+    },
+    {
+     "vessel_n": 3051,
+     "vessel_mean_mm": 0.2072,
+     "vessel_median_mm": 0.1942
+    },
+    {
+     "vessel_n": 2935,
+     "vessel_mean_mm": 0.2224,
+     "vessel_median_mm": 0.2167
+    }
+   ]
+  },
+  "shift_1mm": {
+   "vessel_mean_mm": 0.2575,
+   "vessel_median_mm": 0.2468,
+   "per_direction": [
+    {
+     "vessel_n": 2937,
+     "vessel_mean_mm": 0.2647,
+     "vessel_median_mm": 0.2492
+    },
+    {
+     "vessel_n": 2776,
+     "vessel_mean_mm": 0.2576,
+     "vessel_median_mm": 0.2434
+    },
+    {
+     "vessel_n": 2805,
+     "vessel_mean_mm": 0.27,
+     "vessel_median_mm": 0.2608
+    },
+    {
+     "vessel_n": 2788,
+     "vessel_mean_mm": 0.2688,
+     "vessel_median_mm": 0.2627
+    },
+    {
+     "vessel_n": 2957,
+     "vessel_mean_mm": 0.2022,
+     "vessel_median_mm": 0.1876
+    },
+    {
+     "vessel_n": 3166,
+     "vessel_mean_mm": 0.252,
+     "vessel_median_mm": 0.2411
+    },
+    {
+     "vessel_n": 3046,
+     "vessel_mean_mm": 0.2528,
+     "vessel_median_mm": 0.2372
+    },
+    {
+     "vessel_n": 2838,
+     "vessel_mean_mm": 0.2643,
+     "vessel_median_mm": 0.2593
+    },
+    {
+     "vessel_n": 2923,
+     "vessel_mean_mm": 0.2667,
+     "vessel_median_mm": 0.2603
+    },
+    {
+     "vessel_n": 2886,
+     "vessel_mean_mm": 0.2674,
+     "vessel_median_mm": 0.2577
+    },
+    {
+     "vessel_n": 3167,
+     "vessel_mean_mm": 0.2534,
+     "vessel_median_mm": 0.2418
+    },
+    {
+     "vessel_n": 2887,
+     "vessel_mean_mm": 0.2698,
+     "vessel_median_mm": 0.261
+    }
+   ]
+  },
+  "seconds": 54
+ }
+}

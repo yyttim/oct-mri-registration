@@ -92,7 +92,7 @@ def refine_ngf(mri, oct, T0, params: Params = Params(), device="cuda"):
         if i == len(params.ngf_sigmas_mm) - 1:
             with torch.no_grad():
                 info["F_start"] = float(grid.F(torch.tensor(np.asarray(T0, float), dtype=torch.float32, device=grid.w.device)))
-        T, Fv, L = fit_adam(grid, T, lambda x: (grid.F(x),), params.ngf_iters + 1, params.ngf_iters, LR_FRACTION, params)
+        T, Fv, L = fit_adam(grid, T, lambda x, F=grid.F: (F(x),), params.ngf_iters + 1, params.ngf_iters, LR_FRACTION, params)
         del grid
     info.update(F=Fv, L=L, seconds=time.time() - t0)
     return T, info

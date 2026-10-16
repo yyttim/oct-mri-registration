@@ -24,30 +24,32 @@ tile seams vary along one array axis, while tissue texture varies along all thre
 isotropic texture, and the MRI foreground is a histogram threshold.
 
 **§2 Two-class maps and outline.** Both scans become two-class maps, a soft split of the tissue into a brighter and a darker
-class, scored together with the outline. OCT tissue must lie on MRI tissue, while the MRI may hold tissue beyond the block.
-Swapping the OCT classes negates the two-class score exactly, so its sign gives the contrast polarity.
+class, scored together with the outline when both scans show what lies outside the tissue. OCT tissue must lie on MRI tissue,
+while the MRI may hold tissue beyond the block. Swapping the OCT classes negates the two-class score exactly, so its sign gives
+the contrast polarity.
 
 **§3 Orientation search.** An FFT search scores 8,000 rotations with all translations inside the MRI crop and keeps 24 poses.
 
 **§4 Affine refinement.** Each pose is refined to a 12-parameter affine under a prior on scale and shear, since the score alone
 rewards distorting the block.
 
-**§5 Fine-structure refinement.** The best pose is refined on normalised gradient fields inside both scans. They follow fibre
-bundles and vessels and need neither an intensity mapping nor the polarity.
+**§5 Fine-structure refinement.** The best pose is refined on the orientation of the gradients inside both scans, scored by the
+correlation of their orientation tensors. The gradients follow fibre bundles and vessels, and their orientation needs neither an
+intensity mapping nor the polarity.
 
 **§6 Smooth deformation.** A small displacement field on a 5 mm control lattice is fitted to interior matches and surface-edge
-offsets, as flexible as a strain limit of 0.15 allows. The field is applied only when it predicts held-out evidence at least
-10 % better than no deformation. The affine stays the primary result.
+offsets, as flexible as a strain limit of 0.15 allows. The field is applied only when it predicts held-out evidence at least 10
+% better than no deformation. The affine stays the primary result.
 
 The method uses two kinds of evidence, the shape of the specimen and the structure of the tissue, and each at two scales.
 
 | evidence | global, for the affine (§2 to §5) | local, for the deformation (§6) |
 |---|---|---|
 | specimen shape | the outline: OCT specimen mask against MRI foreground | surface-edge offsets along the MRI boundary normals |
-| tissue structure | two-class maps (§2 to §4) and normalised gradient fields (§5) | interior matches of the same normalised gradients at a finer scale |
+| tissue structure | two-class maps (§2 to §4) and gradient orientation (§5) | interior matches of the same gradient orientation at a finer scale |
 
-None of them needs labels or an intensity mapping between the modalities. [docs/METHOD.md](docs/METHOD.md) gives every step
-in full.
+None of them needs labels or an intensity mapping between the modalities. [docs/METHOD.md](docs/METHOD.md) gives every step in
+full.
 
 ## Installation
 
@@ -110,9 +112,11 @@ texture, so it needs an embedding. A block that is not embedded should be given 
 itself serves when it is exactly zero outside the tissue, since a mask file is read as its positive voxels. Exact zeros in the
 OCT are read as missing data. The OCT contrast may be inverted relative to the MRI.
 
-The MRI is an ex-vivo scan roughly cropped to a region containing the block. The crop is larger than the block and may hold
+The MRI is an ex-vivo scan roughly cropped to a region containing the block. The crop should hold the whole block and may hold
 tissue that is not in it, for example beyond a face where the block was cut out of a larger specimen. The crop is the only
-position prior.
+position prior. Inside the tissue the MRI must show a brighter and a darker class, as grey and white matter do in a FLASH image
+at a suitable flip angle. The medium around the MRI tissue must be darker than half the brightest tissue and the intensities
+free of an offset, otherwise the MRI foreground is given with `--mri-mask`.
 
 Both voxel sizes must be correct, so the true scales are close to 1. A NIfTI header (sform or qform) may give any position and
 orientation, since §3 searches them, but its handedness must be that of the specimen. A TIFF or NPY stack (x, y, z = numpy axes
@@ -125,12 +129,10 @@ tissue at the surface is brighter than what surrounds it.
 
 ## Results on the I58 brainstem block
 
-octreg was developed on this block, and its constants set by hand were chosen on it ([docs/METHOD.md](docs/METHOD.md#scope)).
-[Held-out data](#held-out-data-dandi000874) below tests it on public data with the same constants.
-On the I58 pair (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 11 min 25 s, of which §6 is 20 s,
-with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows). §6 lowers the median interior-match
-residual from 0.250 to 0.124 mm and the median surface-edge offset from 0.285 to 0.089 mm, with 80 % of the offsets within 0.3
-mm instead of 51 %. These are label-free read-outs of octreg, measured again on the warped OCT, and not ground truth.
+octreg was developed on this block, and its constants set by hand were chosen on it, except three set with runs on public data
+([docs/METHOD.md](docs/METHOD.md#parameters)). The block has no reference registration, so its result is shown and not scored.
+On the I58 pair (OCT 1457×2013×1595 at 20 µm, MRI crop 343×489×495 at 0.08 mm) the run takes 10 min 46 s, of which §6 is 21 s,
+with 5.2 GiB of RAM and 1.6 GiB of GPU memory allocated by torch (RTX 5090, Windows).
 
 | sagittal | coronal | axial |
 |---|---|---|
@@ -138,134 +140,182 @@ mm instead of 51 %. These are label-free read-outs of octreg, measured again on 
 | <img src="docs/figures/result/sagittal_oct.png" width="300" alt="OCT, sagittal"> | <img src="docs/figures/result/coronal_oct.png" width="208" alt="OCT, coronal"> | <img src="docs/figures/result/axial_oct.png" width="208" alt="OCT, axial"> |
 | <img src="docs/figures/result/sagittal_oct_boundary.png" width="300" alt="OCT and MRI tissue boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="208" alt="OCT and MRI tissue boundary, axial"> |
 
-Three planes through the middle of the block in freeview. From top to bottom the rows show the MRI crop, the OCT registered onto
-it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red, the MRI foreground of §1
-on the grid of the crop. Each panel is the whole crop at one pixel per MRI voxel of 0.08 mm. The grey levels are linear, at the
-window freeview opens each file with, from the 5th percentile of the voxels that are not 0 to the 99th plus a fifth of their
-difference: 0.212 to 1.662 for the MRI and 0.00122 to 0.00518 for the OCT, the same in every panel. The OCT specimen follows the
-boundary and lies on the same anatomy. Where the boundary runs beyond the OCT, at both ends of the block, the MRI holds tissue
-outside its cut faces. The grey around the specimen is the agarose, and the horizontal stripes in the sagittal and coronal
-planes are the sections. Sagittal planes have anterior on the right, and coronal and axial planes show the subject's right on
-the left.
+Three planes through the centroid of the MRI tissue in freeview. From top to bottom the rows show the MRI crop, the OCT
+registered onto it (`oct_in_mri.nii.gz`, affine and §6), and the same OCT with the boundary of the MRI tissue in red: the
+foreground rule of §1 applied to the MRI crop alone on its 0.08 mm grid. The outline term of §2 to §4 fits the OCT specimen mask
+to this foreground and §6 reads surface edges at its boundary, so the OCT follows this line partly by construction, while the
+standard tools below never saw it. Internal structures are the check that does not depend on it. Each panel is the whole crop at
+one pixel per MRI voxel of 0.08 mm (39.6 × 39.1 mm sagittal, 27.4 × 39.1 mm coronal, 27.4 × 39.6 mm axial). The grey levels are
+linear, at freeview's default window, from the 5th percentile of the voxels that are not 0 to the 99th plus a fifth of their
+difference: 0.212 to 1.662 for the MRI crop and 0.00122 to 0.00553 for the OCT every method received, the same in every panel
+([docs/figures/figures.json](docs/figures/figures.json)). Where the boundary runs beyond the OCT, at both ends of the block, the
+MRI holds tissue outside its cut faces. The grey around the specimen is the agarose, and the horizontal stripes in the sagittal
+and coronal planes are the sections. Sagittal planes have anterior on the right, and coronal and axial planes show the subject's
+right on the left.
 
 ### Comparison with standard tools
 
-Standard registration tools ran on the same pair, eight in the affine stage and five in the deformable stage, with the OCT
-box-averaged to the 0.08 mm voxels of the MRI. Each used the settings its documentation gives and is shown with its best
-setting, judged on the overlays. In the affine stage each tool ran from each of its standard starts, and only NiftyReg
-reg_aladin started from the image centres reaches octreg's affine. The others stay near the start or change the size of the
-block. Distances are the mean displacement over the specimen mask from octreg's affine, with the rotation angle.
+Eight standard registration tools ran on the same pair in the affine stage, and five deformable tools after them. Each is shown
+at the setting its documentation gives (FLIRT with both headers scaled x10, as its schedule works in mm), a rule fixed after the
+runs had been made and applied to every tool ([bench/baselines](bench/baselines/README.md)). The moving image is the OCT
+box-averaged to the 0.08 mm voxels of the MRI. Every deformable tool starts from octreg's affine with the OCT resampled through
+it, as Klein et al. (NeuroImage 46:786, 2009) started every nonlinear method from one common linear registration, so the
+deformable panels compare the deformation alone. The block has no reference, so the comparison is the panels. The tables give
+only properties that need no reference: the scale per OCT axis and the determinant of each affine, and the Jacobian of each
+field. [BASELINES.md](bench/baselines/BASELINES.md) shows every tool on all three planes, with every other setting and start
+that was run.
 
-| method | result | from octreg's affine |
-|---|---|---|
-| image centres aligned (the start) | | 2.4 mm, 11.1° |
-| NiftyReg reg_aladin | as octreg's | 0.3 mm, 1.0° |
-| greedy, elastix, mri_robust_register | near the start | 2.4 to 3.0 mm, 10.6° to 11.7° |
-| ANTs | enlarged | 2.9 mm, 6.6° |
-| mri_coreg, FLIRT | shrunk | 4.1 to 4.9 mm, 6.0° to 16.6° |
-| SynthMorph | fails | 28 mm, 38° |
-
-| image centres aligned (the start) | octreg | NiftyReg reg_aladin | FLIRT |
-|---|---|---|---|
-| <img src="docs/figures/affine/start.png" width="175" alt="image centres aligned"> | <img src="docs/figures/affine/octreg.png" width="175" alt="octreg"> | <img src="docs/figures/affine/reg_aladin.png" width="175" alt="NiftyReg reg_aladin"> | <img src="docs/figures/affine/flirt.png" width="175" alt="FLIRT"> |
-
-In the deformable stage every tool starts from octreg's affine. No tool fits the intact tissue visibly better than §6. ANTs SyN
-with a field-of-view (FOV) mask scores closer on octreg's read-outs, with stronger local compression. Without the mask, the
-default of its script, SyN scores closer still by pulling the cut faces of the OCT into MRI tissue the block does not contain.
-greedy, ConvexAdam and elastix fit the interior matches less closely than §6, and NiftyReg reg_f3d distorts the block. The
-read-outs are medians on the warped OCT, and the Jacobian minimum is the strongest local compression of the field.
-
-| method | interior matches (mm) | surface-edge offsets (mm) | Jacobian min | on the overlays |
+| method | setting | start | scale per OCT axis | determinant |
 |---|---|---|---|---|
-| no deformation (octreg's affine) | 0.250 | 0.285 | 1 | |
-| octreg, §6 | 0.124 | 0.089 | 0.94 | no artefact |
-| ANTs SyN, CC, FOV mask | 0.063 | 0.027 | 0.34 | as octreg's |
-| ANTs SyN, CC, script default | 0.049 | 0.024 | 0.03 | cut faces pulled into MRI tissue, sections bent |
+| image centres aligned (the start) | not a registration | header orientation | 1.00 / 1.00 / 1.00 | 1.00 |
+| octreg 2.1.0 | §1 to §5, default parameters | its orientation search | 0.99 / 0.96 / 0.98 | 0.94 |
+| NiftyReg reg_aladin 2.1.2 | defaults, rigid then affine | image centres | 0.97 / 0.96 / 0.98 | 0.91 |
+| greedy 1.4.0 | NMI, dof 6 then 12 | image centres | 1.19 / 0.93 / 0.90 | 0.91 |
+| elastix 5.3.1 | model-zoo rigid then affine, Mattes MI | geometric centres | 0.92 / 0.84 / 0.97 | 0.74 |
+| FreeSurfer mri_robust_register 8.2.0 | NMI, rigid then affine | centres of mass | 0.99 / 1.00 / 1.07 | 1.06 |
+| ANTs 2.6.5 | antsRegistrationSyN.sh -t a | centres of mass | 0.86 / 0.62 / 0.92 | 0.49 |
+| FreeSurfer mri_coreg 8.2.0 | NMI, dof 6 then 12 | its brute-force search | 0.92 / 0.81 / 1.00 | 0.74 |
+| FSL FLIRT 6.0.7.23 | normmi, dof 6 then 12, headers scaled x10 | its rotation search (±90°) | 0.76 / 0.76 / 0.67 | 0.39 |
+| SynthMorph (FreeSurfer 8.2.0) | -m affine | none | 0.82 / 0.62 / 1.20 | 0.49 |
 
-| octreg, §6 | ANTs SyN, FOV mask | ANTs SyN, script default | NiftyReg reg_f3d |
+| MRI | image centres aligned (the start) | octreg | NiftyReg reg_aladin |
 |---|---|---|---|
-| <img src="docs/figures/deformable/octreg.png" width="175" alt="octreg, §6"> | <img src="docs/figures/deformable/syn_fov.png" width="175" alt="ANTs SyN, FOV mask"> | <img src="docs/figures/deformable/syn_default.png" width="175" alt="ANTs SyN, script default"> | <img src="docs/figures/deformable/reg_f3d.png" width="175" alt="NiftyReg reg_f3d"> |
+| <img src="docs/figures/affine/mri_axial.png" width="175" alt="MRI"> | <img src="docs/figures/affine/start_axial.png" width="175" alt="image centres aligned"> | <img src="docs/figures/affine/octreg_axial.png" width="175" alt="octreg"> | <img src="docs/figures/affine/reg_aladin_axial.png" width="175" alt="NiftyReg reg_aladin"> |
+| **greedy** | **elastix** | **mri_robust_register** | **ANTs** |
+| <img src="docs/figures/affine/greedy_axial.png" width="175" alt="greedy"> | <img src="docs/figures/affine/elastix_axial.png" width="175" alt="elastix"> | <img src="docs/figures/affine/mri_robust_register_axial.png" width="175" alt="mri_robust_register"> | <img src="docs/figures/affine/ants_axial.png" width="175" alt="ANTs"> |
+| **mri_coreg** | **FLIRT** | **SynthMorph** | |
+| <img src="docs/figures/affine/mri_coreg_axial.png" width="175" alt="mri_coreg"> | <img src="docs/figures/affine/flirt_axial.png" width="175" alt="FLIRT"> | <img src="docs/figures/affine/synthmorph_axial.png" width="175" alt="SynthMorph"> | |
 
-The affine panels show the axial plane of the figure above and the deformable panels its sagittal plane, with the MRI tissue
-boundary in red. [bench/baselines/BASELINES.md](bench/baselines/BASELINES.md) gives every tool, its settings and its panels.
+The axial plane of the figure above through each affine, with the MRI tissue boundary in red.
+
+| method | setting | Jacobian min | folded (J ≤ 0) | SD of log J | time |
+|---|---|---|---|---|---|
+| no deformation (octreg's affine) | | 1 | 0 % | 0 | |
+| octreg 2.1.0, §6 | strain-limited field on a 5 mm lattice | 0.94 | 0 % | 0.07 | 21 s |
+| ANTs 2.6.5 SyN | antsRegistrationSyN.sh -t so, CC, no mask | 0.01 | 0 % | 0.46 | 42 min |
+| elastix 5.3.1 | model-zoo B-spline, Mattes MI | 1.02 | 0 % | 0.02 | 21 s |
+| NiftyReg reg_f3d 2.1.2 | defaults | −88.3 | 47.8 % | 6.33 | 3 min |
+| ConvexAdam 0.2.0 | MIND-SSC, shipped defaults | −0.86 | 0.46 % | 1.10 | 8 s |
+| greedy 1.4.0 | quick-start deformable command, WNCC | 0.10 | 0 % | 0.17 | 4 min |
+
+The Jacobian of each field over the MRI foreground: its minimum, the share of voxels where it is not positive, and the standard
+deviation of its logarithm, with J clipped at 10⁻⁶ where it is not positive (as in Learn2Reg, Hering et al., IEEE Trans. Med.
+Imaging 42:697, 2023), on the field's own grid (0.15 mm for octreg, 0.08 mm for the tools). Times are indicative, on a machine
+shared with other jobs.
+
+| MRI | no deformation (octreg's affine) | octreg, §6 | ANTs SyN |
+|---|---|---|---|
+| <img src="docs/figures/deformable/mri_sagittal.png" width="175" alt="MRI"> | <img src="docs/figures/deformable/affine_sagittal.png" width="175" alt="no deformation"> | <img src="docs/figures/deformable/octreg_sagittal.png" width="175" alt="octreg, §6"> | <img src="docs/figures/deformable/ants_syn_sagittal.png" width="175" alt="ANTs SyN"> |
+| **elastix** | **NiftyReg reg_f3d** | **ConvexAdam** | **greedy** |
+| <img src="docs/figures/deformable/elastix_sagittal.png" width="175" alt="elastix"> | <img src="docs/figures/deformable/reg_f3d_sagittal.png" width="175" alt="NiftyReg reg_f3d"> | <img src="docs/figures/deformable/convexadam_sagittal.png" width="175" alt="ConvexAdam"> | <img src="docs/figures/deformable/greedy_sagittal.png" width="175" alt="greedy"> |
+
+The sagittal plane of the figure above through octreg's affine and each field, with the MRI tissue boundary in red.
 
 ### Ablations
 
-Each variant removes or replaces one element of the method and keeps the rest. The texture mask, the outline term, the two-class
-term and the scale and shear penalty each decide the pose, and §5 closes the last millimetres. From the header orientation of
-this pair, 11° from octreg's affine, §4 and §5 find the pose without the orientation search, but from the OCT turned by 90° or
-180° about any of its axes only the search finds it.
+Each variant removes or replaces one element of the method and keeps the rest (`bench/ablate.py`). With an intensity threshold
+in place of the texture mask or without the outline term the section stripes, nearly level in the result, slant, and without the
+scale and shear penalty they stand upright in a smaller block. In all three the specimen leaves the boundary. The intensity
+threshold leaves the measured OCT almost no outside, so the rule of §2 also turns the outline off. With the outline alone, §4
+ends at another pose and §5 moves the block to one whose panel looks like the result. Without §5 the posterior surface lies
+beyond the boundary. From the header orientation of this pair, §4 and §5 without the orientation search end at the result, but
+from the OCT turned by 90° about the sectioning axis the block stays turned without the search. With the interior matches alone
+§6 leaves the bright rim at the superior anterior surface outside the boundary, as without deformation, and with the
+surface-edge offsets alone it lies on the boundary, as with §6.
 
-| variant | result | from octreg's affine |
+| intensity-threshold mask | no outline term | no scale and shear penalty | no fine-structure refinement |
+|---|---|---|---|
+| <img src="docs/figures/ablation/intensity_mask.png" width="175" alt="intensity-threshold mask"> | <img src="docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="docs/figures/ablation/no_penalty.png" width="175" alt="no scale and shear penalty"> | <img src="docs/figures/ablation/no_refinement.png" width="175" alt="no fine-structure refinement"> |
+| **the outline alone** | **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** |
+| <img src="docs/figures/ablation/outline_only.png" width="175" alt="the outline alone"> | <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |
+
+The panels show the sagittal plane of the figure above through each variant's own affine.
+[docs/METHOD.md](docs/METHOD.md#ablations) shows the main variants, the start test and the two §6 variants, and the full tables
+are in [bench/BENCHMARK.md](bench/BENCHMARK.md) and
+[bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md). The ablation on the data of Costantini et al.,
+scored against their registration, is in the next section.
+
+## Test on the data of Costantini et al. (2023)
+
+Costantini et al. imaged a block of Broca's area from one fixed human hemisphere with serial-sectioning OCT, scanned the
+hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform ([Science Advances 9:eadg3844,
+2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
+[DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine, from their code
+repository, serves as the reference R. It is an expert registration, not ground truth: a fit of the OCT vessels to the MRI
+vessel labels alone, L, lies 0.16 mm from it on average (0.31 mm p95), so distances below about 0.3 mm are not interpreted.
+
+The MRI was cropped around the block as R places it, holding at least 99.97 % of the OCT tissue as octreg expects
+([crops.json](bench/results/I46/crops.json)), ten times per condition with a seeded random shift: with a 3 mm margin on the
+FLASH images at 10°, 20° and 30°, and with 6 and 12 mm margins at 10°. octreg got the OCT masked to the tissue and that mask
+(the block is not embedded), and eight standard tools got the same masked OCT at one setting each, fixed from their
+documentation before any run. The distance is the mean displacement from R over the OCT tissue. The protocol, the reference and
+every number are in [bench/i46](bench/i46/README.md) and [its tables](bench/results/I46/tables.md).
+
+| condition | within 1 mm of R | distance from R (mm) |
 |---|---|---|
-| intensity-threshold mask instead of the texture mask (§1) | turned over | 23.9 mm, 158° |
-| no outline term (§2) | turned over | 23.4 mm, 176° |
-| the outline alone, no two-class term (§2) | turned | 5.8 mm, 23.0° |
-| no scale and shear penalty (§4) | turned over and shrunk | 17.3 mm, 141° |
-| no fine-structure refinement (§5) | close, not on the boundary | 2.0 mm, 8.8° |
-| no orientation search (§3), from the image centres | as octreg's | 0.00 mm, 0.0° |
-| no orientation search, from the OCT turned by 90° or 180° | far off | 14 to 22 mm, 78° to 170° |
-| octreg, from the OCT turned by 90° or 180° | as octreg's | less than 0.002 mm |
+| 10° FLASH, 3 mm margin | 10 of 10 | 0.37 to 0.42 |
+| 20° FLASH, 3 mm margin | 10 of 10 | 0.44 to 0.60 |
+| 30° FLASH, 3 mm margin | 10 of 10 | 0.31 to 0.35 |
+| 10° FLASH, 6 mm margin | 10 of 10 | 0.37 to 0.41 |
+| 10° FLASH, 12 mm margin | 10 of 10 | 0.36 to 0.41 |
+| 10° FLASH, 3 mm margin, octreg's own specimen mask | 10 of 10 | 0.52 to 0.67 |
 
-| intensity-threshold mask | the outline alone | no scale and shear penalty | turned 90°, no orientation search |
+No run comes within 0.30 mm of R: every run is turned by 3.5° to 5.2° from it, about an axis that differs between the contrasts,
+and by 3.2° to 5.0° from L, against 0.57° between the two references. Parts of the method, the outline rule of
+§2, the valley rule of §1, the candidate suppression of §3 and the score of §5, were designed with runs on these data, so this
+is not a held-out test. The OCT depth spacing is taken from the acquisition, 500 µm sections of 33 planes (15.15 µm), as octreg
+takes both voxel sizes as correct. The dataset's own metadata give 12 µm, at which R stretches the depth by 1.21, against the
+scale prior of §4 and beyond its clamp.
+
+The standard tools come within 1 mm in none of their 96 runs. Every run starts from the header orientation, 7 mm and 122° from
+R, and octreg without its orientation search comes within 1 mm from that start on none of the ten crops either, so these runs
+test recovery from a large turn rather than accuracy near R. With their own global rotation search, FLIRT, ANTs (antsAI) and
+greedy end 14 to 24 mm away on all ten crops of the 10° FLASH. With the OCT tissue as a mask of the moving image, greedy, ANTs
+and FLIRT come within 1 mm in none of their 30 runs. elastix ends without a transform on every crop, and reg_aladin (NiftyReg
+2.1.2 does not use the mask), mri_robust_register and mri_coreg end where their runs without the mask end. From a start near R
+(1.14 to 1.20 mm and about 10° from it), octreg without its orientation search comes within 1 mm on all ten crops (0.37 to
+0.42 mm), ANTs on six (median over the ten crops 0.84 mm), mri_robust_register on one and the other tools on none.
+
+octreg needs no initial alignment here. On the crop with the median distance, from the OCT turned by 90° and 180° about each
+array axis and by 20 rotations drawn at random over all orientations, it ends 0.38 to 0.42 mm from R every time, while without
+its orientation search it comes within 1 mm from 4 of the 26 starts. Its fine-structure refinement (§5) brings the median
+distance from R down in five of the six conditions (0.55 to 0.39 mm on the 10° FLASH with a 3 mm margin) and up on the 20° FLASH
+(0.35 to 0.50 mm, in all ten runs). It also brings the median distance from L down on the 10° FLASH (0.65 to 0.39 mm), while the
+vessel check moves the other way: after §5 it is higher than at §4 in all 40 runs with `--oct-mask` on the 10° and 20° FLASH
+(median from 0.148 to 0.170 mm on the 10° FLASH with a 3 mm margin), and lower on the 30° FLASH and in 9 of the 10 runs without
+`--oct-mask`. Replacing the two-class maps by standardised intensities changes no final distance by more than 0.07 mm on 40
+crops, and on I58 it ends at the same affine. At §4 the standardised intensities end farther from R in all four conditions
+(median 0.64 against 0.55 mm on the 10° FLASH with a 3 mm margin), and after §5 the median difference is at most 0.001 mm in
+each condition. The outline is not tested here: the masked OCT has almost no outside (0.04 % of its measured voxels), and in the
+runs without `--oct-mask` the MRI crop has none. The texture mask is tested only in those runs, on an OCT that is zero outside
+the tissue. There it leaves out about half of the tissue (50 % of the measured OCT lies outside it), and the §4 affine lies
+beyond 1 mm from R in 9 of the 10 runs (median 2.52 mm). §5 brings all ten within 1 mm. Nor is §6 tested: it found no confident
+interior match and at most three boundary points on any crop, so it refused its field in every run.
+
+| MRI | MRI with the line | OCT, reference | OCT, octreg |
 |---|---|---|---|
-| <img src="docs/figures/ablation/intensity_mask.png" width="175" alt="intensity-threshold mask"> | <img src="docs/figures/ablation/outline_only.png" width="175" alt="the outline alone"> | <img src="docs/figures/ablation/no_penalty.png" width="175" alt="no scale and shear penalty"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> |
+| <img src="docs/figures/i46/main/flip1_C3_k0_mri_coronal.png" width="175" alt="MRI"> | <img src="docs/figures/i46/main/flip1_C3_k0_mri_line_coronal.png" width="175" alt="MRI with the white-matter boundary"> | <img src="docs/figures/i46/main/flip1_C3_k0_reference_coronal.png" width="175" alt="OCT through the reference"> | <img src="docs/figures/i46/main/flip1_C3_k0_octreg_coronal.png" width="175" alt="OCT through octreg"> |
+| **NiftyReg reg_aladin** | **greedy** | **elastix** | **ANTs** |
+| <img src="docs/figures/i46/main/flip1_C3_k0_reg_aladin_coronal.png" width="175" alt="OCT through reg_aladin"> | <img src="docs/figures/i46/main/flip1_C3_k0_greedy_coronal.png" width="175" alt="OCT through greedy"> | no transform (tool error) | <img src="docs/figures/i46/main/flip1_C3_k0_ants_coronal.png" width="175" alt="OCT through ANTs"> |
+| **mri_robust_register** | **mri_coreg** | **FLIRT** | **SynthMorph** |
+| <img src="docs/figures/i46/main/flip1_C3_k0_mri_robust_register_coronal.png" width="175" alt="OCT through mri_robust_register"> | <img src="docs/figures/i46/main/flip1_C3_k0_mri_coreg_coronal.png" width="175" alt="OCT through mri_coreg"> | <img src="docs/figures/i46/main/flip1_C3_k0_flirt_coronal.png" width="175" alt="OCT through FLIRT"> | <img src="docs/figures/i46/main/flip1_C3_k0_synthmorph_coronal.png" width="175" alt="OCT through SynthMorph"> |
+| **FLIRT, its search over ±180°** | **ANTs, antsAI start** | **greedy, its search** |  |
+| <img src="docs/figures/i46/main/flip1_C3_k0_flirt_search_coronal.png" width="175" alt="OCT through FLIRT with its search"> | <img src="docs/figures/i46/main/flip1_C3_k0_ants_antsai_coronal.png" width="175" alt="OCT through ANTs from antsAI"> | <img src="docs/figures/i46/main/flip1_C3_k0_greedy_search_coronal.png" width="175" alt="OCT through greedy with its search"> |  |
 
-The panels show the sagittal plane of the figure above. §6 needs both kinds of local evidence: the interior matches alone leave
-the surface off at the superior end, and the surface-edge offsets alone pull the interior matches further off.
-[docs/METHOD.md](docs/METHOD.md#ablations) shows each of these variants, the start test and the two §6 variants, and the full
-tables are in [bench/BENCHMARK.md](bench/BENCHMARK.md) and
-[bench/results/I58/deform_ablation.md](bench/results/I58/deform_ablation.md).
-
-## Held-out data: DANDI:000874
-
-octreg ran with its default parameters on the four OCT blocks of the public dataset
-[DANDI:000874](https://dandiarchive.org/dandiset/000874/draft) (one infant brainstem, C. Magnain and L. Zöllei, CC BY 4.0,
-draft last modified on 14 August 2026). It played no part in octreg's development. The OCT is the authors' 20 µm scattering
-coefficient, as for I58, and the MRI is their 150 µm ex-vivo FLASH at 5°, the image they registered to. Each block comes with
-the authors' OCT→MRI affine, made with a manual start and an automatic refinement
-([Magnain et al., bioRxiv 2026](https://doi.org/10.64898/2026.08.28.744504)), which serves as the reference.
-
-The MRI was cropped around each block as the I58 MRI is, with a 3 mm margin and a random shift of up to 2 mm, ten times per
-block. octreg and NiftyReg reg_aladin ran on all ten crops, and the other standard tools of the comparison above on the first
-crop of each block, all at their I58 settings. Errors are the mean displacement from the reference over the OCT tissue. A local
-ANTs refinement started at the reference moves it by 0.12 to 0.24 mm, so differences of about 0.2 mm are not resolved by this
-reference.
-
-| block | octreg: pose within 1 mm | octreg: error of those, median | reg_aladin: pose within 1 mm | reg_aladin: error of those, median |
-|---|---|---|---|---|
-| 01 caudal medulla | 10 of 10 | 0.18 mm | 8 of 10 | 0.47 mm |
-| 02 rostral medulla and caudal pons | 8 of 10 | 0.21 mm | 10 of 10 | 0.33 mm |
-| 03 rostral pons | 0 of 10 | none | 1 of 10 | 0.99 mm |
-| 04 midbrain | 0 of 10 | none | 10 of 10 | 0.39 mm |
-
-On block 01 all ten octreg poses lie 0.18 to 0.20 mm from the reference, closer than any standard tool, the closest being
-reg_aladin at 0.37 mm. On block 02 eight lie 0.20 to 0.21 mm away, against 0.26 to 0.45 mm for reg_aladin, a difference the
-reference does not resolve, and the other two turn the block over (177° and 180°). On blocks 03 and 04 octreg's poses are
-turned by 22° to 141°. reg_aladin, the only standard tool that matched octreg on I58, finds a pose within 1 mm more often, at a
-larger error. On the first crop, ANTs, greedy and elastix come within 1 mm on block 04 only, and mri_robust_register,
-mri_coreg, FLIRT and SynthMorph on no block. On the first crop of blocks 03 and 04, octreg comes within 0.7 mm when the MRI is
-the FLASH at 10° or the T1 map instead of the 5° FLASH.
-
-| block | MRI | OCT, authors' reference | OCT, octreg |
-|---|---|---|---|
-| 01 | <img src="docs/figures/sp002/s01_mri.png" width="135" alt="block 01, MRI"> | <img src="docs/figures/sp002/s01_reference.png" width="135" alt="block 01, OCT through the reference"> | <img src="docs/figures/sp002/s01_octreg.png" width="135" alt="block 01, OCT through octreg"> |
-| 02 | <img src="docs/figures/sp002/s02_mri.png" width="180" alt="block 02, MRI"> | <img src="docs/figures/sp002/s02_reference.png" width="180" alt="block 02, OCT through the reference"> | <img src="docs/figures/sp002/s02_octreg.png" width="180" alt="block 02, OCT through octreg"> |
-| 03 | <img src="docs/figures/sp002/s03_mri.png" width="184" alt="block 03, MRI"> | <img src="docs/figures/sp002/s03_reference.png" width="184" alt="block 03, OCT through the reference"> | <img src="docs/figures/sp002/s03_octreg.png" width="184" alt="block 03, OCT through octreg"> |
-| 04 | <img src="docs/figures/sp002/s04_mri.png" width="205" alt="block 04, MRI"> | <img src="docs/figures/sp002/s04_reference.png" width="205" alt="block 04, OCT through the reference"> | <img src="docs/figures/sp002/s04_octreg.png" width="205" alt="block 04, OCT through octreg"> |
-
-The axial plane through the middle slice of the first crop of each block in freeview, at two screen pixels per MRI voxel of 0.15
-mm, with the boundary of the MRI tissue in red. The panels are cropped and resampled from the dataset's images. The OCT lies on
-the MRI grid through the authors' affine and through octreg's. On every block the reference places part of the edge of the OCT
-tissue on the red line. On block 01 octreg's panel matches the reference. On block 02 this crop is one of the two failures, and
-on blocks 03 and 04 octreg's pose is turned against the reference. [bench/dandi874](bench/dandi874/README.md) gives the protocol
-and the full tables ([bench/results/SP002/tables.md](bench/results/SP002/tables.md)): larger crops, all nine MRI images, every
-tool, and how well the reference fits the images.
+The coronal plane through the centre of the OCT tissue placed by R, on the crop with the median distance under octreg (10°
+FLASH, 3 mm margin, k = 0), in freeview at two screen pixels per MRI voxel of 0.15 mm (20.0 × 20.6 mm). The OCT is shown on the
+MRI grid through each transform, black where there is no OCT. The red line is the white-matter boundary of the authors' manual
+MRI labels. The grey levels are linear, at freeview's default window of the crop (22.1 to 44.4) and of the masked OCT every
+method received (8.2 to 191, [docs/figures/i46/figures.json](docs/figures/i46/figures.json)). elastix ended without a transform
+on this crop. [bench/i46](bench/i46/README.md) shows the three planes, the median crop of every condition, and all ten crops of
+this condition.
 
 ## Reproducing the benchmark
 
 The scripts in `bench/` run the I58 benchmark: the registration, the ablations, the label-free evaluation, the report
 `bench/BENCHMARK.md` and the freeview figures (`bench/figures.py`). The I58 files are not distributed with the repository, and
-the stored results of the benchmark are in `bench/results/I58/`. `python bench/evaluate.py --selftest` checks the evaluation on
-synthetic arrays without any of the data. [bench/README.md](bench/README.md) describes the steps and how to point the scripts at
-the data, and [bench/baselines/README.md](bench/baselines/README.md) the settings of the baseline comparison.
+the stored results of the benchmark are in `bench/results/I58/`. [bench/i46](bench/i46/README.md) runs the test on the data of
+Costantini et al. (2023), from the download to the tables and figures, with its stored results in `bench/results/I46/`. `python
+bench/evaluate.py --selftest` checks the evaluation on synthetic arrays without any of the data.
+[bench/README.md](bench/README.md) describes the steps and how to point the scripts at the data, and
+[bench/baselines/README.md](bench/baselines/README.md) the settings of the baseline comparison.

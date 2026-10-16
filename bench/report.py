@@ -38,6 +38,23 @@ def portable(o):
     return o
 
 
+def wrap(lines, width=128):
+    """Prose lines (not tables, headings, comments, images or fenced code) longer than width, wrapped at width."""
+    import textwrap
+    out, code = [], False
+    for line in lines:
+        if line.startswith("```"):
+            code = not code
+        if code or line.startswith(("```", "<img", "![")):
+            out.append(line)
+            continue
+        if len(line) > width and not line.startswith(("|", "#", "<!--")):
+            out += textwrap.wrap(line, width, break_on_hyphens=False, break_long_words=False)
+        else:
+            out.append(line)
+    return out
+
+
 def num(x, nd=2):
     return "n/a" if x is None or (isinstance(x, float) and not math.isfinite(x)) else f"{x:.{nd}f}"
 
@@ -104,14 +121,14 @@ def main_section(run, logs):
         ("score S of the §4 pose = (2 polarity S_class + S_outline) / 3, with S_class, S_outline and the polarity",
          f"{num(pose.get('S'), 4)}, {num(pose.get('S_class'), 4)}, {num(pose.get('S_outline'), 4)}, {pose.get('polarity', 'n/a')}"),
         ("search top-1 / top-2", f"{num(srch.get('top1'), 4)} / {num(srch.get('top2'), 4)}"),
-        ("fine-structure agreement F (§5), at the §4 pose -> refined",
+        ("score F of §5, at the §4 pose -> at the result",
          f"{num(pose.get('NGF_start'), 4)} -> {num(pose.get('NGF'), 4)}"),
         ("pose change of §5 (block-corner mean)", f"{num(pose.get('ngf_shift_mm'))} mm"),
         ("scale per OCT array axis", " / ".join(f"{v:.3f}" for v in pose["scale_per_oct_axis"]) if pose else "n/a"),
         *deform_rows(res.get("deform")),
         ("flags", "n/a" if "flags" not in res else ", ".join(res["flags"]) or "none"),
         ("rim outline agreement forward / reverse, method masks", rims(b)),
-        ("OCT specimen mask", f"{num(mk.get('volume_cm3'))} cm3"),
+        ("OCT specimen mask (base grid, intersected with the measured OCT)", f"{num(mk.get('volume_cm3'))} cm3"),
         ("registration time in process, peak RAM, peak GPU memory allocated by torch",
          f"{num(sec['total'] / 60 if 'total' in sec else None, 1)} min, {num(res.get('peak_rss_gb'), 1)} GiB, "
          f"{num(res.get('gpu_peak_gb'), 2)} GiB" + (f" (wall clock {num(wall / 60, 1)} min, GPU memory in use on the device during the run, all processes, "
@@ -124,33 +141,38 @@ def main_section(run, logs):
     return ["## Main result", "", "| | |", "|---|---|"] + [f"| {a} | {v} |" for a, v in rows] + ["", verdict, ""]
 
 
+def det3(T):
+    """Determinant of the 3 x 3 part of a 4 x 4 nested list."""
+    (a, b, c), (d, e, f), (g, h, i) = (row[:3] for row in T[:3])
+    return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+
 def ablation_row(n, r):
-    """One row of the ablation table. Every read-out is optional, so a partial table still prints."""
-    vol = num((r.get("mask") or {}).get("volume_cm3"))
+    """One row of the ablation table: the variant's own values. Every read-out is optional, so a partial table still prints."""
+    cut = (r.get("spec") or {}).get("cut_axis") is not None             # the mask it ran with is cut, its volume not stored
+    vol = "" if cut else num((r.get("mask") or {}).get("volume_cm3"))
     if "error" in r:
-        return f"| {n} | {r['change'].replace('|', chr(92) + '|')} | failed: {r['error']} | | | | | | | {vol} | {num(r.get('seconds'), 0)} |"
-    rim = (r.get("boundary") or {}).get("rim_median_mm") or [None, None]
-    d, d4 = r.get("pose_to_base", {}), r.get("pose_to_base_s4", {})
-    return (f"| {n} | {r['change'].replace('|', chr(92) + '|')} | {num(d4.get('mean_mm'))} / {num(d4.get('corners_mean_mm'))} | "
-            f"{num(d.get('mean_mm'))} / {num(d.get('corners_mean_mm'))} / {num(d.get('corners_max_mm'))} | "
-            f"{num(r.get('S'), 4)} | {num(r.get('L'), 4)} | "
-            f"{r.get('polarity', 'n/a')} | {' / '.join(f'{s:.3f}' for s in r.get('scales', [])) or 'n/a'} | "
-            f"{num(rim[0])} / {num(rim[1])} | {vol} | {num(r.get('seconds'), 0)} |")
+        return f"| {n} | {r['change'].replace('|', chr(92) + '|')} | failed: {r['error']} | | | | | {vol} | {num(r.get('seconds'), 0)} |"
+    det = num(det3(r["T_oct2mri"]), 3) if r.get("T_oct2mri") else "n/a"
+    return (f"| {n} | {r['change'].replace('|', chr(92) + '|')} | {num(r.get('S'), 4)} | {num(r.get('L'), 4)} | "
+            f"{r.get('polarity', 'n/a')} | {' / '.join(f'{s:.3f}' for s in r.get('scales', [])) or 'n/a'} | {det} | "
+            f"{vol} | {num(r.get('seconds'), 0)} |")
 
 
 def ablation_section(abl):
     if not abl:
         return ["## Ablations", "", "Not run yet (bench/ablate.py).", ""]
     V = abl["variants"]
-    cols = ("| variant | change | §4 pose change: mean / corners mean (mm) | final pose change: mean / corners mean / corners max (mm) "
-            "| S (§4 pose) | L (§4 pose) | polarity | scale | rim fwd / rev (mm) | OCT mask cm3 | time (s) |")
-    rule = "|---|---|---|---|---|---|---|---|---|---|---|"
+    cols = ("| variant | change | S (§4 pose) | L (§4 pose) | polarity | scale per OCT axis | determinant | OCT mask cm3 "
+            "| time (s) |")
+    rule = "|---|---|---|---|---|---|---|---|---|"
     head = ["## Ablations", "",
             "Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). "
-            "Pose change is against base, the method run through bench/ablate.py, as the mean over the points of the base specimen "
-            "mask and the mean and max over the 8 corners of the OCT array. The outline agreement uses the base masks for every "
-            "variant, so it reflects the pose only. The smooth deformation (§6) does not change the affine, so no variant runs it. "
-            "Its read-outs are in the Main result above.", "",
+            "The pair has no reference, so the variants are not scored here: the table gives each variant's own values, "
+            "docs/METHOD.md shows the main variants in freeview, and bench/i46 scores seven of them (A4, A6p, A9, A10, A12, A13 "
+            "and A14) against the registration of Costantini et al. (2023). A11 and A11b cut the specimen mask at 70 % of its "
+            "extent along OCT axis 1, so their mask column is empty. The smooth deformation (§6) does not change the affine, "
+            "so no variant runs it. Its ablation is in bench/results/I58/deform_ablation.md.", "",
             cols, rule]
     rows = [ablation_row(n, r) for n, r in V.items()]
     tail = [""]
@@ -167,15 +189,17 @@ def starts_section(st):
     if not st:
         return []
     out = ["## Start test", "",
-           "The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre of its image box, and the "
-           "method and A14 (no orientation search) run from the image-centre start and from each turned start. Each cell gives "
-           "the mean displacement from the base pose over the points of the base specimen mask, and the angle of the rotation "
-           "between the two poses.", "",
-           "| start | start pose to base: mm / deg | method to base: mm / deg | A14 to base: mm / deg |", "|---|---|---|---|"]
+           "The method's consistency with itself. The OCT is turned by 90 and 180 degrees about each of its array axes, through "
+           "the centre of its image box, and the method runs from the image-centre start and from each turned start. Each cell "
+           "gives the mean displacement from the method's own result from the file orientation (base) over the points of the "
+           "base specimen mask, and the angle of the rotation between the two poses. The variant without the orientation search "
+           "(A14) also runs from each start. docs/METHOD.md shows it from the start turned by 90° about the sectioning axis, "
+           "and bench/i46 scores it against an independent reference.", "",
+           "| start | start pose to base: mm / deg | method to base: mm / deg |", "|---|---|---|"]
     f = lambda d: f"{num(d.get('mean_mm'))} / {num(d.get('rotation_deg'), 1)}" if d else "n/a"
     for name, r in st["starts"].items():
         label = "image centres, header orientation" if r["axis"] is None else f"{r['degrees']} deg about OCT array axis {r['axis']}"
-        out.append(f"| {label} | {f(r.get('start_to_base'))} | {f(r.get('method_to_base'))} | {f(r.get('no_search_to_base'))} |")
+        out.append(f"| {label} | {f(r.get('start_to_base'))} | {f(r.get('method_to_base'))} |")
     return out + [""]
 
 
@@ -242,6 +266,7 @@ def main():
                      + ablation_section(abl) + starts_section(st) + runtime_section(abl))
     if READING in old:                                   # the hand-written reading at the end survives a rewrite
         text += "\n" + READING + old.split(READING, 1)[1]
+    text = "\n".join(wrap(text.split("\n")))
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_bytes(text.encode("utf-8"))             # UTF-8 and LF on every OS
     print(f"wrote {a.out}")

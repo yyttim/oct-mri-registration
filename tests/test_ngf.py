@@ -104,8 +104,7 @@ def test_ngf_separates_mirror_images():
 
 def test_no_shrink_without_the_prior():
     """F is a correlation of the trace-free orientation tensors, so it does not reward a smaller block: on a pair without any
-    scale difference, §5 with lam 0 keeps the size (|log-scale| < 0.01 on every axis; the uncentred F of 2.0 shrank it by 1.7 to
-    2.3 %)."""
+    scale difference, §5 with lam 0 keeps the size (|log-scale| < 0.01 on every axis)."""
     mri, oct_, T = pair(seed=3)
     c = box(oct_[2], oct_[0].shape)[0]
     P = Params.from_dict({"ngf_sigmas_mm": [0.45, 0.3], "ngf_erode_mm": 0.6, "ngf_iters": 80, "lam": 0.0})

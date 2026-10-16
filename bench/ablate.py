@@ -12,13 +12,13 @@ that does not set its own mask (A0, A0c).
 Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
 explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only),
 two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4), align(...,
-polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6, and one of the two in A6p and A6c), the OCT world mirrored so that the search and refinement see the
-other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut face with the method and with the
-two-sided outline (A11, A11b), no fine-structure refinement (A12, the pose of §4), no two-class term (A13, the outline alone),
-or no orientation search (A14: §4 from the image-centre start, the header orientation with the centres of the two image boxes
-aligned, at both polarities). Every other variant ends with §5 on its own best pose. 'base' is the method run through this
-script. Its pose distance to an `octreg register` run of the same pair (--main) is stored as a consistency check. The OCT is
-streamed once, each OCT mask is computed once and the MRI is prepared once.
+polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6, and one of the two in A6p and A6c), the OCT world mirrored so that
+the search and refinement see the other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut
+face with the method and with the two-sided outline (A11, A11b), no fine-structure refinement (A12, the pose of §4), no
+two-class term (A13, the outline alone), or no orientation search (A14: §4 from the image-centre start, the header orientation
+with the centres of the two image boxes aligned, at both polarities). Every other variant ends with §5 on its own best pose.
+'base' is the method run through this script. Its pose distance to an `octreg register` run of the same pair (--main) is stored
+as a consistency check. The OCT is streamed once, each OCT mask is computed once and the MRI is prepared once.
 
 The smooth deformation (§6) does not change the affine, so no variant runs it. Its read-outs are in the run's own
 result.json, which bench/report.py prints.
@@ -34,8 +34,8 @@ the base: steps of §1 to §4 act through the §4 pose, which §5 then refines.
 
 Metrics: pose to base, outline agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
 volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
-array. The geometry helpers come from bench/evaluate.py, which does not import the package. Like it, this script reads the two input
-files of bench/paths.py and its own runs, and nothing else.
+array. The geometry helpers come from bench/evaluate.py, which does not import the package. Like it, this script reads the two
+input files (bench/paths.py, or --oct and --mri), the --oct-mask file if given, and its own runs, and nothing else.
 
 OUT/prep/<mask>/  oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
 OUT/variants/<name>/  T_oct2mri.txt, result.json (reused unless --force)
@@ -121,8 +121,8 @@ def image_centres():
     return c(A_o, shape_o), c(A_m, shape_m)
 
 
-PREP_FIELDS = ("base_mm", "fine_mm", "valley_ratio", "min_component", "texture_bandpass_mm", "texture_window_mm", "texture_grid_mm",
-               "texture_smooth_mm", "texture_close_mm")            # the Params the preprocessing (§1) reads
+PREP_FIELDS = ("base_mm", "fine_mm", "valley_ratio", "medium_fraction", "min_component", "texture_bandpass_mm",
+               "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "texture_close_mm")   # the Params of §1
 
 
 def prep_hash(P):

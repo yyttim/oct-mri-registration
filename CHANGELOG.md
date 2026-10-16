@@ -1,21 +1,39 @@
 # Changelog
 
-## Unreleased
+## 2.1.0
 
+Params hash 9148790ad6c39454.
+
+- §1: an MRI histogram valley is the tissue edge only when its darker peak lies below `medium_fraction` (0.5) of the brightest
+  peak. A valley between two tissue peaks is passed over and flagged `mri_tissue_valley_passed`.
+- §2: the outline is used only when both images have a measured outside, at least `outline_min_outside` (1 %) of the measured
+  voxels each. Otherwise S_outline is 0 and the run is flagged `outline_not_used`.
+- §3: candidates within 3 mm and 20° (`nms_deg`) count as one pose.
+- §5: the score is the weighted correlation of the trace-free orientation tensors of the two normalised gradients, with a finite
+  gradient where the OCT and the MRI points do not overlap.
+
+Added
+
+- `bench/i46/`: a test on block I46 of Costantini et al. (2023) against the authors' registration and a label-only fit of the
+  vessels, with eight standard tools at their declared settings, three of them also with their own search, the tools with a
+  moving mask and from a start near the authors' registration, a start test from turned and random starts, and ablations of
+  the steps and design choices of the method. The results are in
+  `bench/results/I46/` and the figures in `docs/figures/i46/`.
 - `bench/baselines/`: a comparison with standard registration tools on the I58 pair, eight tools for the affine and five
-  deformable tools started from octreg's affine, each with its documented settings. The scripts that prepare the
-  comparison, check and evaluate it are included, and its tables are in `bench/results/I58/baselines/`.
-- Figures of the I58 result and of the baseline comparison, freeview screenshots at freeview's default grey windows in
-  `docs/figures/` rendered by `bench/figures.py`, in README.md and bench/baselines/BASELINES.md.
-- An ablation of each step on the I58 pair in docs/METHOD.md, with freeview figures. `bench/ablate.py` gains two variants (the
-  outline alone, no orientation search) and a start test from turned starts (`--starts`), and
-  `bench/ablate_deform.py --save-fields` saves the fields of chosen §6 rows. The full tables are in bench/BENCHMARK.md and
-  `bench/results/I58/deform_ablation.md`.
-- README.md shows the result, the comparison with standard tools and the ablation in brief.
-- `bench/dandi874/`: a held-out evaluation on the four OCT blocks of the public DANDI:000874, against the authors' own
-  registrations, with octreg at its default parameters and the standard tools at their I58 settings. The stored results
-  are in `bench/results/SP002/` and the figures in `docs/figures/sp002/`.
+  deformable tools started from octreg's affine, each shown at the setting its documentation gives (FLIRT with both headers
+  scaled x10, as its schedule works in mm). The tables in `bench/results/I58/baselines/` hold only properties that need no
+  reference.
+- Figures of the I58 result, of the baseline comparison on three planes and of the ablation, freeview screenshots in
+  `docs/figures/` rendered by `bench/figures.py`, with the OCT at the grey window of the moving image every method received.
+- An ablation of each step on the I58 pair in docs/METHOD.md. `bench/ablate.py` gains two variants (the outline alone, no
+  orientation search), start tests from turned starts (`--starts`) and from random starts (`--random-starts`), and runs on
+  other pairs (`--oct`, `--mri`, `--oct-mask`). `bench/ablate_deform.py --save-fields` saves the fields of chosen §6 rows.
+  `bench/BENCHMARK.md` gives each variant's own values.
 - Every bench script imports the octreg package of its own checkout, also when another copy is installed.
+
+Removed
+
+- `bench/dandi.py` and the stored results in `bench/results/I58/ngf_lam/`.
 
 ## 2.0.0
 

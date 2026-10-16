@@ -14,7 +14,6 @@ import numpy as np
 import pytest
 import torch
 from scipy import ndimage
-from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation
 
 from octreg import blockmatch as bm, deform, geometry as G, io

@@ -1,0 +1,4964 @@
+[
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.7946,
+  "median_mm": 3.6874,
+  "p95_mm": 6.3259,
+  "max_mm": 9.1527,
+  "rotation_deg": 35.727,
+  "rotation_axis": [
+   -0.246,
+   0.968,
+   -0.043
+  ],
+  "centroid_mm": 1.25,
+  "scales": [
+   1.3521,
+   1.3083,
+   1.5554
+  ],
+  "singular_values": [
+   1.7091,
+   1.3512,
+   1.184
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.7834,
+  "rotation_L_deg": 35.736,
+  "vessel_n": 5299,
+  "vessel_mean_mm": 0.2705,
+  "vessel_median_mm": 0.2593,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 1.0,
+  "check_dice": 1.0,
+  "seconds": 7.8
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 13.108,
+  "median_mm": 13.1162,
+  "p95_mm": 13.7394,
+  "max_mm": 14.1233,
+  "rotation_deg": 9.744,
+  "rotation_axis": [
+   -0.015,
+   0.615,
+   0.788
+  ],
+  "centroid_mm": 13.0967,
+  "scales": [
+   1.0356,
+   0.9874,
+   0.9475
+  ],
+  "singular_values": [
+   1.0205,
+   1.0008,
+   0.9715
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 12.991,
+  "rotation_L_deg": 9.212,
+  "vessel_n": 1705,
+  "vessel_mean_mm": 0.2664,
+  "vessel_median_mm": 0.2554,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 1.0,
+  "check_dice": 1.0,
+  "seconds": 337.3
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 505 / 2048"
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 1.1788,
+  "median_mm": 1.1698,
+  "p95_mm": 1.8177,
+  "max_mm": 2.2528,
+  "rotation_deg": 6.625,
+  "rotation_axis": [
+   0.263,
+   0.941,
+   0.215
+  ],
+  "centroid_mm": 1.1241,
+  "scales": [
+   1.0501,
+   0.9921,
+   0.96
+  ],
+  "singular_values": [
+   1.0288,
+   1.0131,
+   0.9828
+  ],
+  "tier": "<= 2.5 mm and <= 10 deg",
+  "mean_L_mm": 1.1088,
+  "rotation_L_deg": 6.421,
+  "vessel_n": 3155,
+  "vessel_mean_mm": 0.2562,
+  "vessel_median_mm": 0.2438,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 0.9985,
+  "check_dice": 0.9943,
+  "seconds": 3.1
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 9.761,
+  "median_mm": 9.6195,
+  "p95_mm": 14.0969,
+  "max_mm": 17.6485,
+  "rotation_deg": 34.397,
+  "rotation_axis": [
+   0.002,
+   -0.059,
+   -0.998
+  ],
+  "centroid_mm": 9.4953,
+  "scales": [
+   1.7234,
+   1.2418,
+   1.0102
+  ],
+  "singular_values": [
+   1.814,
+   1.2962,
+   0.5928
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.6714,
+  "rotation_L_deg": 34.711,
+  "vessel_n": 3618,
+  "vessel_mean_mm": 0.2952,
+  "vessel_median_mm": 0.2817,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 0.9989,
+  "check_dice": 0.9956,
+  "seconds": 333.5
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 6.8119,
+  "median_mm": 6.7934,
+  "p95_mm": 8.7228,
+  "max_mm": 9.8078,
+  "rotation_deg": 16.526,
+  "rotation_axis": [
+   0.481,
+   0.392,
+   0.784
+  ],
+  "centroid_mm": 6.6932,
+  "scales": [
+   1.2389,
+   0.9021,
+   0.6601
+  ],
+  "singular_values": [
+   1.2267,
+   1.0537,
+   0.4245
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.8571,
+  "rotation_L_deg": 15.418,
+  "vessel_n": 298,
+  "vessel_mean_mm": 0.2634,
+  "vessel_median_mm": 0.2339,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 0.9985,
+  "check_dice": 0.9951,
+  "seconds": 44.3
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 20.4322,
+  "median_mm": 20.077,
+  "p95_mm": 27.9095,
+  "max_mm": 31.7703,
+  "rotation_deg": 155.817,
+  "rotation_axis": [
+   0.463,
+   0.451,
+   0.763
+  ],
+  "centroid_mm": 19.1732,
+  "scales": [
+   1.1402,
+   1.0872,
+   1.0395
+  ],
+  "singular_values": [
+   1.1258,
+   1.1054,
+   1.0606
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 20.5174,
+  "rotation_L_deg": 155.317,
+  "vessel_n": 31,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 0.846,
+  "check_dice": 0.5544,
+  "check_voxels": {
+   "tool": 158,
+   "converted": 412,
+   "crop": 1840321
+  },
+  "check_note": "the tool's own resampling holds OCT in only 158 of the 1840321 crop voxels, and the converted pose in 412, so r and Dice rest on them",
+  "seconds": 13.1
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 11.1643,
+  "median_mm": 11.1236,
+  "p95_mm": 13.1083,
+  "max_mm": 14.3117,
+  "rotation_deg": 16.102,
+  "rotation_axis": [
+   0.119,
+   0.42,
+   0.899
+  ],
+  "centroid_mm": 11.0838,
+  "scales": [
+   0.8443,
+   0.9837,
+   0.5731
+  ],
+  "singular_values": [
+   1.1122,
+   0.7087,
+   0.5423
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 11.2702,
+  "rotation_L_deg": 15.361,
+  "vessel_n": 175,
+  "vessel_mean_mm": 0.2919,
+  "vessel_median_mm": 0.2878,
+  "start_pose": {
+   "mean_mm": 1.18,
+   "median_mm": 1.1518,
+   "p95_mm": 1.8311,
+   "max_mm": 2.4468,
+   "rotation_deg": 10.219,
+   "rotation_axis": [
+    -0.022,
+    0.727,
+    0.686
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0369,
+    0.9871,
+    0.9453
+   ],
+   "singular_values": [
+    1.0223,
+    1.0046,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.0853,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0818,
+   "max_mm": 0.2322
+  },
+  "check_r": 0.9998,
+  "check_dice": 0.9982,
+  "seconds": 13.9
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.8166,
+  "median_mm": 3.7986,
+  "p95_mm": 6.048,
+  "max_mm": 8.9782,
+  "rotation_deg": 31.216,
+  "rotation_axis": [
+   -0.18,
+   0.984,
+   0.003
+  ],
+  "centroid_mm": 0.2332,
+  "scales": [
+   1.4452,
+   1.3821,
+   1.7675
+  ],
+  "singular_values": [
+   1.9203,
+   1.4035,
+   1.3149
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.7778,
+  "rotation_L_deg": 31.172,
+  "vessel_n": 6601,
+  "vessel_mean_mm": 0.264,
+  "vessel_median_mm": 0.254,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 22.7
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 13.8195,
+  "median_mm": 13.8432,
+  "p95_mm": 15.0178,
+  "max_mm": 15.5265,
+  "rotation_deg": 11.613,
+  "rotation_axis": [
+   0.324,
+   0.907,
+   0.268
+  ],
+  "centroid_mm": 13.7997,
+  "scales": [
+   1.0221,
+   0.9596,
+   0.7967
+  ],
+  "singular_values": [
+   1.0196,
+   0.9683,
+   0.7974
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 13.7079,
+  "rotation_L_deg": 11.386,
+  "vessel_n": 497,
+  "vessel_mean_mm": 0.2644,
+  "vessel_median_mm": 0.2464,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 2.6
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 5.3545,
+  "median_mm": 5.3357,
+  "p95_mm": 8.5354,
+  "max_mm": 10.6899,
+  "rotation_deg": 10.918,
+  "rotation_axis": [
+   -0.001,
+   0.434,
+   -0.901
+  ],
+  "centroid_mm": 5.0061,
+  "scales": [
+   1.4497,
+   1.2203,
+   1.3956
+  ],
+  "singular_values": [
+   1.7783,
+   1.3152,
+   0.9179
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.239,
+  "rotation_L_deg": 11.698,
+  "vessel_n": 6058,
+  "vessel_mean_mm": 0.2559,
+  "vessel_median_mm": 0.2438,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 8.4
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.5892,
+  "median_mm": 0.5752,
+  "p95_mm": 0.8285,
+  "max_mm": 1.0867,
+  "rotation_deg": 4.783,
+  "rotation_axis": [
+   0.28,
+   0.721,
+   0.634
+  ],
+  "centroid_mm": 0.4597,
+  "scales": [
+   1.0679,
+   0.9895,
+   1.0205
+  ],
+  "singular_values": [
+   1.0716,
+   1.0273,
+   1.0028
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.6075,
+  "rotation_L_deg": 4.383,
+  "vessel_n": 3201,
+  "vessel_mean_mm": 0.2376,
+  "vessel_median_mm": 0.2275,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 7.4
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 10.4057,
+  "median_mm": 10.0574,
+  "p95_mm": 16.2371,
+  "max_mm": 20.7411,
+  "rotation_deg": 37.403,
+  "rotation_axis": [
+   -0.195,
+   -0.262,
+   -0.945
+  ],
+  "centroid_mm": 9.9773,
+  "scales": [
+   1.9942,
+   1.1846,
+   0.9002
+  ],
+  "singular_values": [
+   1.9742,
+   1.166,
+   0.8548
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.2994,
+  "rotation_L_deg": 38.38,
+  "vessel_n": 5322,
+  "vessel_mean_mm": 0.294,
+  "vessel_median_mm": 0.2788,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 225.4
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 6.2526,
+  "median_mm": 6.2261,
+  "p95_mm": 8.9395,
+  "max_mm": 11.1535,
+  "rotation_deg": 24.271,
+  "rotation_axis": [
+   0.273,
+   -0.101,
+   0.957
+  ],
+  "centroid_mm": 6.1273,
+  "scales": [
+   1.2941,
+   0.8492,
+   1.12
+  ],
+  "singular_values": [
+   1.3087,
+   1.2707,
+   0.6328
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.2526,
+  "rotation_L_deg": 23.741,
+  "vessel_n": 505,
+  "vessel_mean_mm": 0.2816,
+  "vessel_median_mm": 0.2703,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 182.1
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 17.9423,
+  "median_mm": 17.8618,
+  "p95_mm": 20.6151,
+  "max_mm": 23.8585,
+  "rotation_deg": 84.21,
+  "rotation_axis": [
+   0.141,
+   0.648,
+   -0.749
+  ],
+  "centroid_mm": 17.2978,
+  "scales": [
+   0.7282,
+   0.69,
+   0.6611
+  ],
+  "singular_values": [
+   0.7159,
+   0.7044,
+   0.6746
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 17.8825,
+  "rotation_L_deg": 84.585,
+  "vessel_n": 65,
+  "vessel_mean_mm": 0.2396,
+  "vessel_median_mm": 0.2342,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 14.0
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.7335,
+  "median_mm": 9.7053,
+  "p95_mm": 11.8006,
+  "max_mm": 12.9138,
+  "rotation_deg": 16.508,
+  "rotation_axis": [
+   0.208,
+   0.292,
+   0.934
+  ],
+  "centroid_mm": 9.6606,
+  "scales": [
+   0.8099,
+   0.9697,
+   0.5412
+  ],
+  "singular_values": [
+   1.0576,
+   0.7228,
+   0.5199
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.8404,
+  "rotation_L_deg": 15.712,
+  "vessel_n": 234,
+  "vessel_mean_mm": 0.2758,
+  "vessel_median_mm": 0.2597,
+  "start_pose": {
+   "mean_mm": 1.14,
+   "median_mm": 1.1248,
+   "p95_mm": 1.7877,
+   "max_mm": 2.4105,
+   "rotation_deg": 10.308,
+   "rotation_axis": [
+    0.309,
+    0.361,
+    0.88
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0399,
+    0.9861,
+    0.9447
+   ],
+   "singular_values": [
+    1.0221,
+    1.0061,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1397,
+   "rotation_L_deg": 9.748
+  },
+  "start_from_S": {
+   "mean_mm": 0.0681,
+   "max_mm": 0.1891
+  },
+  "seconds": 23.7
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.4957,
+  "median_mm": 3.3353,
+  "p95_mm": 6.2527,
+  "max_mm": 9.4064,
+  "rotation_deg": 23.334,
+  "rotation_axis": [
+   -0.286,
+   0.866,
+   0.41
+  ],
+  "centroid_mm": 1.4033,
+  "scales": [
+   1.3731,
+   1.4107,
+   1.771
+  ],
+  "singular_values": [
+   2.0131,
+   1.3215,
+   1.2376
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.4668,
+  "rotation_L_deg": 23.027,
+  "vessel_n": 6906,
+  "vessel_mean_mm": 0.2526,
+  "vessel_median_mm": 0.2357,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 18.8
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 10.3487,
+  "median_mm": 10.6073,
+  "p95_mm": 13.6372,
+  "max_mm": 15.7127,
+  "rotation_deg": 12.515,
+  "rotation_axis": [
+   0.574,
+   0.735,
+   0.361
+  ],
+  "centroid_mm": 9.589,
+  "scales": [
+   0.0972,
+   0.1704,
+   0.1596
+  ],
+  "singular_values": [
+   0.2056,
+   0.1373,
+   0.0797
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.434,
+  "rotation_L_deg": 12.633,
+  "vessel_n": 6,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 2.8
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 2.3588,
+  "median_mm": 2.0985,
+  "p95_mm": 4.612,
+  "max_mm": 6.3339,
+  "rotation_deg": 2.651,
+  "rotation_axis": [
+   -0.86,
+   -0.502,
+   -0.088
+  ],
+  "centroid_mm": 2.0223,
+  "scales": [
+   1.3654,
+   1.0289,
+   1.1637
+  ],
+  "singular_values": [
+   1.5266,
+   1.1021,
+   0.9089
+  ],
+  "tier": "<= 2.5 mm and <= 10 deg",
+  "mean_L_mm": 2.2542,
+  "rotation_L_deg": 2.971,
+  "vessel_n": 4624,
+  "vessel_mean_mm": 0.2511,
+  "vessel_median_mm": 0.2417,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 10.8
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 1.1018,
+  "median_mm": 1.1018,
+  "p95_mm": 1.3285,
+  "max_mm": 1.456,
+  "rotation_deg": 2.424,
+  "rotation_axis": [
+   -0.427,
+   -0.699,
+   -0.574
+  ],
+  "centroid_mm": 1.0608,
+  "scales": [
+   1.0895,
+   0.9958,
+   0.9539
+  ],
+  "singular_values": [
+   1.0653,
+   1.0351,
+   0.9595
+  ],
+  "tier": "<= 2.5 mm and <= 10 deg",
+  "mean_L_mm": 1.0147,
+  "rotation_L_deg": 2.883,
+  "vessel_n": 3323,
+  "vessel_mean_mm": 0.2332,
+  "vessel_median_mm": 0.2168,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 7.5
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 9.3681,
+  "median_mm": 9.1943,
+  "p95_mm": 14.1321,
+  "max_mm": 18.0409,
+  "rotation_deg": 38.357,
+  "rotation_axis": [
+   -0.015,
+   -0.287,
+   -0.958
+  ],
+  "centroid_mm": 9.0121,
+  "scales": [
+   1.8102,
+   1.1669,
+   0.7395
+  ],
+  "singular_values": [
+   1.7843,
+   1.17,
+   0.6497
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.2712,
+  "rotation_L_deg": 39.159,
+  "vessel_n": 3889,
+  "vessel_mean_mm": 0.3016,
+  "vessel_median_mm": 0.2858,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 162.0
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 6.4572,
+  "median_mm": 6.5514,
+  "p95_mm": 8.7185,
+  "max_mm": 9.7917,
+  "rotation_deg": 15.579,
+  "rotation_axis": [
+   0.158,
+   0.459,
+   0.874
+  ],
+  "centroid_mm": 6.3036,
+  "scales": [
+   0.699,
+   0.8891,
+   0.9971
+  ],
+  "singular_values": [
+   1.321,
+   0.6391,
+   0.5261
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.4967,
+  "rotation_L_deg": 14.75,
+  "vessel_n": 196,
+  "vessel_mean_mm": 0.2589,
+  "vessel_median_mm": 0.2436,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 184.0
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 17.0746,
+  "median_mm": 16.8778,
+  "p95_mm": 24.4536,
+  "max_mm": 29.6343,
+  "rotation_deg": 94.281,
+  "rotation_axis": [
+   0.836,
+   0.537,
+   0.113
+  ],
+  "centroid_mm": 16.437,
+  "scales": [
+   1.0391,
+   0.9783,
+   0.9533
+  ],
+  "singular_values": [
+   1.024,
+   1.0024,
+   0.9669
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 17.0673,
+  "rotation_L_deg": 94.168,
+  "vessel_n": 859,
+  "vessel_mean_mm": 0.2656,
+  "vessel_median_mm": 0.2605,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 14.2
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 12.1053,
+  "median_mm": 12.0287,
+  "p95_mm": 13.867,
+  "max_mm": 14.8294,
+  "rotation_deg": 8.27,
+  "rotation_axis": [
+   0.771,
+   -0.623,
+   -0.132
+  ],
+  "centroid_mm": 12.0364,
+  "scales": [
+   0.8113,
+   0.928,
+   0.4553
+  ],
+  "singular_values": [
+   1.0246,
+   0.7215,
+   0.4111
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 12.2028,
+  "rotation_L_deg": 8.527,
+  "vessel_n": 79,
+  "vessel_mean_mm": 0.2841,
+  "vessel_median_mm": 0.2726,
+  "start_pose": {
+   "mean_mm": 1.188,
+   "median_mm": 1.1674,
+   "p95_mm": 1.9164,
+   "max_mm": 2.3898,
+   "rotation_deg": 9.953,
+   "rotation_axis": [
+    0.502,
+    -0.836,
+    -0.222
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0391,
+    0.9783,
+    0.9538
+   ],
+   "singular_values": [
+    1.0245,
+    1.0024,
+    0.967
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2454,
+   "rotation_L_deg": 10.202
+  },
+  "start_from_S": {
+   "mean_mm": 0.102,
+   "max_mm": 0.2466
+  },
+  "seconds": 22.8
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.9078,
+  "median_mm": 3.8248,
+  "p95_mm": 6.4594,
+  "max_mm": 9.1473,
+  "rotation_deg": 32.735,
+  "rotation_axis": [
+   -0.136,
+   0.967,
+   0.214
+  ],
+  "centroid_mm": 0.7695,
+  "scales": [
+   1.4209,
+   1.3489,
+   1.7969
+  ],
+  "singular_values": [
+   1.9592,
+   1.402,
+   1.2399
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.8872,
+  "rotation_L_deg": 32.611,
+  "vessel_n": 6556,
+  "vessel_mean_mm": 0.2735,
+  "vessel_median_mm": 0.2602,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 17.0
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 16.5935,
+  "median_mm": 16.6731,
+  "p95_mm": 18.286,
+  "max_mm": 19.5639,
+  "rotation_deg": 25.978,
+  "rotation_axis": [
+   0.731,
+   -0.122,
+   0.672
+  ],
+  "centroid_mm": 16.4556,
+  "scales": [
+   0.7991,
+   0.6797,
+   1.0451
+  ],
+  "singular_values": [
+   1.1189,
+   0.8482,
+   0.5467
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 16.5175,
+  "rotation_L_deg": 25.696,
+  "vessel_n": 94,
+  "vessel_mean_mm": 0.3663,
+  "vessel_median_mm": 0.361,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 2.6
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 2.1301,
+  "median_mm": 2.0148,
+  "p95_mm": 3.8308,
+  "max_mm": 5.0434,
+  "rotation_deg": 3.56,
+  "rotation_axis": [
+   -0.309,
+   0.931,
+   -0.195
+  ],
+  "centroid_mm": 1.9208,
+  "scales": [
+   1.1944,
+   1.0766,
+   1.1908
+  ],
+  "singular_values": [
+   1.4491,
+   1.0694,
+   0.9421
+  ],
+  "tier": "<= 2.5 mm and <= 10 deg",
+  "mean_L_mm": 2.0222,
+  "rotation_L_deg": 3.702,
+  "vessel_n": 4437,
+  "vessel_mean_mm": 0.2645,
+  "vessel_median_mm": 0.2483,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 10.3
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.7842,
+  "median_mm": 0.7971,
+  "p95_mm": 0.9434,
+  "max_mm": 1.1513,
+  "rotation_deg": 3.211,
+  "rotation_axis": [
+   0.096,
+   0.59,
+   -0.802
+  ],
+  "centroid_mm": 0.7272,
+  "scales": [
+   1.0725,
+   0.9716,
+   0.9641
+  ],
+  "singular_values": [
+   1.0466,
+   1.0211,
+   0.9626
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.6996,
+  "rotation_L_deg": 3.65,
+  "vessel_n": 3232,
+  "vessel_mean_mm": 0.224,
+  "vessel_median_mm": 0.2102,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 5.6
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 11.953,
+  "median_mm": 11.5599,
+  "p95_mm": 20.6943,
+  "max_mm": 27.3877,
+  "rotation_deg": 36.428,
+  "rotation_axis": [
+   -0.179,
+   -0.176,
+   -0.968
+  ],
+  "centroid_mm": 11.5842,
+  "scales": [
+   2.2002,
+   1.8036,
+   0.7737
+  ],
+  "singular_values": [
+   2.5278,
+   1.2218,
+   0.7267
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 11.8479,
+  "rotation_L_deg": 37.687,
+  "vessel_n": 5510,
+  "vessel_mean_mm": 0.2936,
+  "vessel_median_mm": 0.2788,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 368.1
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 7.4956,
+  "median_mm": 7.5203,
+  "p95_mm": 9.2898,
+  "max_mm": 10.4684,
+  "rotation_deg": 9.34,
+  "rotation_axis": [
+   0.248,
+   -0.073,
+   0.966
+  ],
+  "centroid_mm": 7.4502,
+  "scales": [
+   1.0708,
+   0.8831,
+   0.9546
+  ],
+  "singular_values": [
+   1.3202,
+   0.9375,
+   0.5616
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.5395,
+  "rotation_L_deg": 8.34,
+  "vessel_n": 290,
+  "vessel_mean_mm": 0.2308,
+  "vessel_median_mm": 0.2183,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 197.5
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 19.0783,
+  "median_mm": 19.0661,
+  "p95_mm": 26.0377,
+  "max_mm": 29.6417,
+  "rotation_deg": 86.176,
+  "rotation_axis": [
+   -0.144,
+   0.962,
+   -0.23
+  ],
+  "centroid_mm": 18.2188,
+  "scales": [
+   1.2376,
+   1.1577,
+   1.1353
+  ],
+  "singular_values": [
+   1.2186,
+   1.1908,
+   1.1482
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 18.9743,
+  "rotation_L_deg": 86.199,
+  "vessel_n": 895,
+  "vessel_mean_mm": 0.2877,
+  "vessel_median_mm": 0.2791,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 13.1
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.9681,
+  "median_mm": 9.9117,
+  "p95_mm": 11.6907,
+  "max_mm": 12.3521,
+  "rotation_deg": 15.595,
+  "rotation_axis": [
+   0.956,
+   0.289,
+   0.057
+  ],
+  "centroid_mm": 9.9001,
+  "scales": [
+   0.8501,
+   0.8777,
+   0.5671
+  ],
+  "singular_values": [
+   0.9972,
+   0.767,
+   0.4968
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.0749,
+  "rotation_L_deg": 15.28,
+  "vessel_n": 173,
+  "vessel_mean_mm": 0.2314,
+  "vessel_median_mm": 0.2108,
+  "start_pose": {
+   "mean_mm": 1.201,
+   "median_mm": 1.1746,
+   "p95_mm": 1.5732,
+   "max_mm": 2.0855,
+   "rotation_deg": 9.881,
+   "rotation_axis": [
+    0.873,
+    -0.038,
+    -0.487
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0408,
+    0.9736,
+    0.9542
+   ],
+   "singular_values": [
+    1.0244,
+    1.0014,
+    0.9655
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.264,
+   "rotation_L_deg": 10.196
+  },
+  "start_from_S": {
+   "mean_mm": 0.089,
+   "max_mm": 0.2221
+  },
+  "seconds": 22.8
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 8.1282,
+  "median_mm": 7.8263,
+  "p95_mm": 13.7806,
+  "max_mm": 17.7186,
+  "rotation_deg": 85.122,
+  "rotation_axis": [
+   -0.521,
+   0.715,
+   -0.466
+  ],
+  "centroid_mm": 3.9233,
+  "scales": [
+   1.5382,
+   1.4936,
+   1.7215
+  ],
+  "singular_values": [
+   1.8609,
+   1.5159,
+   1.3869
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.104,
+  "rotation_L_deg": 85.233,
+  "vessel_n": 6088,
+  "vessel_mean_mm": 0.2823,
+  "vessel_median_mm": 0.2647,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 17.6
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 14.445,
+  "median_mm": 14.4365,
+  "p95_mm": 15.075,
+  "max_mm": 15.4442,
+  "rotation_deg": 15.359,
+  "rotation_axis": [
+   0.268,
+   0.944,
+   -0.191
+  ],
+  "centroid_mm": 14.3968,
+  "scales": [
+   1.034,
+   0.9784,
+   0.9538
+  ],
+  "singular_values": [
+   1.0235,
+   0.9995,
+   0.9661
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.3556,
+  "rotation_L_deg": 15.381,
+  "vessel_n": 404,
+  "vessel_mean_mm": 0.2389,
+  "vessel_median_mm": 0.2329,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 2.5
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 3.8121,
+  "median_mm": 3.7438,
+  "p95_mm": 6.4547,
+  "max_mm": 8.3281,
+  "rotation_deg": 7.905,
+  "rotation_axis": [
+   -0.077,
+   0.533,
+   -0.843
+  ],
+  "centroid_mm": 3.5295,
+  "scales": [
+   1.3364,
+   1.2102,
+   1.2947
+  ],
+  "singular_values": [
+   1.6542,
+   1.179,
+   0.9821
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.6982,
+  "rotation_L_deg": 8.605,
+  "vessel_n": 5395,
+  "vessel_mean_mm": 0.2496,
+  "vessel_median_mm": 0.2362,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 10.0
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 4.0429,
+  "median_mm": 4.0349,
+  "p95_mm": 5.3617,
+  "max_mm": 5.9346,
+  "rotation_deg": 12.793,
+  "rotation_axis": [
+   -0.092,
+   0.866,
+   -0.492
+  ],
+  "centroid_mm": 3.9531,
+  "scales": [
+   1.1621,
+   0.971,
+   1.1194
+  ],
+  "singular_values": [
+   1.1822,
+   1.1108,
+   0.981
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.9675,
+  "rotation_L_deg": 12.934,
+  "vessel_n": 4200,
+  "vessel_mean_mm": 0.2949,
+  "vessel_median_mm": 0.2835,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 4.5
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 9.5195,
+  "median_mm": 9.5403,
+  "p95_mm": 13.3147,
+  "max_mm": 15.673,
+  "rotation_deg": 47.243,
+  "rotation_axis": [
+   -0.265,
+   -0.675,
+   -0.689
+  ],
+  "centroid_mm": 9.2083,
+  "scales": [
+   1.0923,
+   0.9305,
+   0.9588
+  ],
+  "singular_values": [
+   1.0524,
+   1.0044,
+   0.9419
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.4417,
+  "rotation_L_deg": 47.705,
+  "vessel_n": 2597,
+  "vessel_mean_mm": 0.2996,
+  "vessel_median_mm": 0.2797,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 169.6
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.9599,
+  "median_mm": 5.9677,
+  "p95_mm": 7.5057,
+  "max_mm": 8.4638,
+  "rotation_deg": 12.265,
+  "rotation_axis": [
+   0.37,
+   0.791,
+   0.487
+  ],
+  "centroid_mm": 5.8631,
+  "scales": [
+   0.9735,
+   0.9734,
+   0.9508
+  ],
+  "singular_values": [
+   1.2546,
+   0.9451,
+   0.6573
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.9575,
+  "rotation_L_deg": 11.884,
+  "vessel_n": 311,
+  "vessel_mean_mm": 0.2809,
+  "vessel_median_mm": 0.2579,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 193.5
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 21.7017,
+  "median_mm": 21.4,
+  "p95_mm": 25.9384,
+  "max_mm": 29.9032,
+  "rotation_deg": 139.773,
+  "rotation_axis": [
+   -0.677,
+   0.735,
+   -0.042
+  ],
+  "centroid_mm": 20.1835,
+  "scales": [
+   1.0226,
+   0.9734,
+   0.9504
+  ],
+  "singular_values": [
+   1.0195,
+   0.9956,
+   0.9547
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 21.7794,
+  "rotation_L_deg": 139.701,
+  "vessel_n": 5,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 13.1
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 13.4329,
+  "median_mm": 13.3359,
+  "p95_mm": 15.4986,
+  "max_mm": 16.7694,
+  "rotation_deg": 10.539,
+  "rotation_axis": [
+   -0.584,
+   0.808,
+   -0.072
+  ],
+  "centroid_mm": 13.3478,
+  "scales": [
+   0.9561,
+   0.8825,
+   0.4798
+  ],
+  "singular_values": [
+   1.0974,
+   0.7057,
+   0.4654
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 13.5391,
+  "rotation_L_deg": 10.41,
+  "vessel_n": 118,
+  "vessel_mean_mm": 0.3473,
+  "vessel_median_mm": 0.3179,
+  "start_pose": {
+   "mean_mm": 1.1929,
+   "median_mm": 1.2136,
+   "p95_mm": 1.8793,
+   "max_mm": 2.3772,
+   "rotation_deg": 9.685,
+   "rotation_axis": [
+    -0.059,
+    0.846,
+    -0.529
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.034,
+    0.9784,
+    0.9538
+   ],
+   "singular_values": [
+    1.0235,
+    0.9995,
+    0.9661
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1913,
+   "rotation_L_deg": 9.914
+  },
+  "start_from_S": {
+   "mean_mm": 0.1084,
+   "max_mm": 0.302
+  },
+  "seconds": 52.0
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 2.5245,
+  "median_mm": 2.4612,
+  "p95_mm": 4.234,
+  "max_mm": 5.9399,
+  "rotation_deg": 5.912,
+  "rotation_axis": [
+   0.104,
+   0.81,
+   -0.577
+  ],
+  "centroid_mm": 0.7517,
+  "scales": [
+   1.4015,
+   1.4283,
+   1.6299
+  ],
+  "singular_values": [
+   1.7811,
+   1.4264,
+   1.2952
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 2.4798,
+  "rotation_L_deg": 6.179,
+  "vessel_n": 6694,
+  "vessel_mean_mm": 0.2375,
+  "vessel_median_mm": 0.2221,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 17.3
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 5.7202,
+  "median_mm": 5.506,
+  "p95_mm": 9.771,
+  "max_mm": 12.4092,
+  "rotation_deg": 13.602,
+  "rotation_axis": [
+   0.571,
+   0.654,
+   0.496
+  ],
+  "centroid_mm": 4.102,
+  "scales": [
+   0.0894,
+   0.1288,
+   0.0869
+  ],
+  "singular_values": [
+   0.157,
+   0.083,
+   0.0438
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.6799,
+  "rotation_L_deg": 13.311,
+  "vessel_n": 3,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 2.8
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 2.6236,
+  "median_mm": 2.2344,
+  "p95_mm": 5.5151,
+  "max_mm": 7.9286,
+  "rotation_deg": 6.227,
+  "rotation_axis": [
+   -0.458,
+   -0.046,
+   -0.888
+  ],
+  "centroid_mm": 1.8865,
+  "scales": [
+   1.4792,
+   1.1664,
+   1.2209
+  ],
+  "singular_values": [
+   1.7184,
+   1.0973,
+   0.9971
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 2.5279,
+  "rotation_L_deg": 7.061,
+  "vessel_n": 5256,
+  "vessel_mean_mm": 0.2487,
+  "vessel_median_mm": 0.2347,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 9.9
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.7174,
+  "median_mm": 0.7137,
+  "p95_mm": 1.1133,
+  "max_mm": 1.397,
+  "rotation_deg": 6.468,
+  "rotation_axis": [
+   -0.17,
+   -0.962,
+   0.213
+  ],
+  "centroid_mm": 0.3679,
+  "scales": [
+   1.0984,
+   0.99,
+   1.0873
+  ],
+  "singular_values": [
+   1.1437,
+   1.0641,
+   0.9941
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.7113,
+  "rotation_L_deg": 6.469,
+  "vessel_n": 3449,
+  "vessel_mean_mm": 0.2192,
+  "vessel_median_mm": 0.2065,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 5.9
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 0.4461,
+  "median_mm": 0.4254,
+  "p95_mm": 0.7352,
+  "max_mm": 0.9605,
+  "rotation_deg": 2.334,
+  "rotation_axis": [
+   0.082,
+   0.977,
+   -0.197
+  ],
+  "centroid_mm": 0.399,
+  "scales": [
+   1.0359,
+   1.0065,
+   0.9585
+  ],
+  "singular_values": [
+   1.0562,
+   0.9913,
+   0.9767
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.4012,
+  "rotation_L_deg": 2.452,
+  "vessel_n": 3093,
+  "vessel_mean_mm": 0.1964,
+  "vessel_median_mm": 0.1839,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 102.1
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.7384,
+  "median_mm": 5.7514,
+  "p95_mm": 6.9667,
+  "max_mm": 7.6337,
+  "rotation_deg": 10.983,
+  "rotation_axis": [
+   0.643,
+   0.109,
+   0.758
+  ],
+  "centroid_mm": 5.6255,
+  "scales": [
+   0.9039,
+   1.0648,
+   0.9327
+  ],
+  "singular_values": [
+   1.291,
+   0.8722,
+   0.7058
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.7176,
+  "rotation_L_deg": 10.517,
+  "vessel_n": 416,
+  "vessel_mean_mm": 0.3031,
+  "vessel_median_mm": 0.2853,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 195.3
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 22.396,
+  "median_mm": 22.2591,
+  "p95_mm": 29.0086,
+  "max_mm": 34.6545,
+  "rotation_deg": 179.824,
+  "rotation_axis": [
+   0.405,
+   0.265,
+   -0.875
+  ],
+  "centroid_mm": 21.3771,
+  "scales": [
+   1.0461,
+   0.992,
+   0.9623
+  ],
+  "singular_values": [
+   1.0345,
+   1.0121,
+   0.9769
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 22.2976,
+  "rotation_L_deg": 179.683,
+  "vessel_n": 434,
+  "vessel_mean_mm": 0.2876,
+  "vessel_median_mm": 0.2651,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 13.3
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.5872,
+  "median_mm": 9.5097,
+  "p95_mm": 11.5024,
+  "max_mm": 12.6937,
+  "rotation_deg": 8.697,
+  "rotation_axis": [
+   -0.507,
+   -0.245,
+   0.826
+  ],
+  "centroid_mm": 9.5385,
+  "scales": [
+   0.8659,
+   0.9294,
+   0.5253
+  ],
+  "singular_values": [
+   1.0301,
+   0.7372,
+   0.5419
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.6808,
+  "rotation_L_deg": 8.131,
+  "vessel_n": 219,
+  "vessel_mean_mm": 0.3432,
+  "vessel_median_mm": 0.3431,
+  "start_pose": {
+   "mean_mm": 1.1627,
+   "median_mm": 1.1495,
+   "p95_mm": 2.0354,
+   "max_mm": 2.4523,
+   "rotation_deg": 9.924,
+   "rotation_axis": [
+    0.002,
+    -0.993,
+    0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0362,
+    0.9827,
+    0.9532
+   ],
+   "singular_values": [
+    1.0248,
+    1.0026,
+    0.9677
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.2282,
+   "rotation_L_deg": 9.987
+  },
+  "start_from_S": {
+   "mean_mm": 0.1103,
+   "max_mm": 0.2594
+  },
+  "seconds": 50.9
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.2417,
+  "median_mm": 3.1954,
+  "p95_mm": 5.4867,
+  "max_mm": 7.6918,
+  "rotation_deg": 10.244,
+  "rotation_axis": [
+   -0.302,
+   0.953,
+   -0.031
+  ],
+  "centroid_mm": 1.4931,
+  "scales": [
+   1.4815,
+   1.5186,
+   1.6742
+  ],
+  "singular_values": [
+   1.9198,
+   1.4416,
+   1.345
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.2015,
+  "rotation_L_deg": 10.199,
+  "vessel_n": 7560,
+  "vessel_mean_mm": 0.2493,
+  "vessel_median_mm": 0.2307,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 15.1
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 8.8684,
+  "median_mm": 9.1575,
+  "p95_mm": 12.8611,
+  "max_mm": 15.3958,
+  "rotation_deg": 6.991,
+  "rotation_axis": [
+   0.321,
+   0.721,
+   0.614
+  ],
+  "centroid_mm": 7.928,
+  "scales": [
+   0.0685,
+   0.1014,
+   0.0628
+  ],
+  "singular_values": [
+   0.1221,
+   0.0518,
+   0.0458
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.9419,
+  "rotation_L_deg": 6.388,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 2.9
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 3.5281,
+  "median_mm": 3.1524,
+  "p95_mm": 7.3626,
+  "max_mm": 10.5259,
+  "rotation_deg": 5.472,
+  "rotation_axis": [
+   0.02,
+   0.628,
+   -0.778
+  ],
+  "centroid_mm": 2.6535,
+  "scales": [
+   1.4794,
+   1.3122,
+   1.5285
+  ],
+  "singular_values": [
+   2.0427,
+   1.1599,
+   1.0007
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.4201,
+  "rotation_L_deg": 6.183,
+  "vessel_n": 6319,
+  "vessel_mean_mm": 0.249,
+  "vessel_median_mm": 0.2366,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 10.1
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.726,
+  "median_mm": 0.7178,
+  "p95_mm": 1.1751,
+  "max_mm": 1.4158,
+  "rotation_deg": 6.55,
+  "rotation_axis": [
+   0.149,
+   0.253,
+   0.956
+  ],
+  "centroid_mm": 0.6012,
+  "scales": [
+   1.0734,
+   1.0062,
+   0.9609
+  ],
+  "singular_values": [
+   1.0539,
+   1.0245,
+   0.9811
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.7334,
+  "rotation_L_deg": 5.96,
+  "vessel_n": 3036,
+  "vessel_mean_mm": 0.2399,
+  "vessel_median_mm": 0.2296,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 5.9
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: affine.lta",
+   "",
+   "error: No such file or directory",
+   "error: ltaReadFile(affine.lta): can't open file\u0000",
+   "ERROR reading LTA affine.lta !"
+  ],
+  "log_error": "MyMatrix::MatrixSqrt Internal Error:"
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.4653,
+  "median_mm": 5.4762,
+  "p95_mm": 7.6387,
+  "max_mm": 8.8342,
+  "rotation_deg": 22.038,
+  "rotation_axis": [
+   0.183,
+   0.076,
+   0.98
+  ],
+  "centroid_mm": 5.3982,
+  "scales": [
+   0.9438,
+   0.8675,
+   1.0653
+  ],
+  "singular_values": [
+   1.2656,
+   0.9416,
+   0.6373
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.4598,
+  "rotation_L_deg": 21.382,
+  "vessel_n": 336,
+  "vessel_mean_mm": 0.3052,
+  "vessel_median_mm": 0.2909,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 197.4
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 38.388,
+  "median_mm": 39.3324,
+  "p95_mm": 54.2556,
+  "max_mm": 62.5109,
+  "rotation_deg": 165.508,
+  "rotation_axis": [
+   -0.278,
+   0.53,
+   0.801
+  ],
+  "centroid_mm": 36.0337,
+  "scales": [
+   3.0987,
+   2.9344,
+   2.8134
+  ],
+  "singular_values": [
+   3.0436,
+   2.9944,
+   2.8751
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 38.3045,
+  "rotation_L_deg": 164.965,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 12.6
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.4843,
+  "median_mm": 9.4266,
+  "p95_mm": 11.6209,
+  "max_mm": 12.9579,
+  "rotation_deg": 19.247,
+  "rotation_axis": [
+   -0.077,
+   0.323,
+   0.943
+  ],
+  "centroid_mm": 9.4102,
+  "scales": [
+   0.851,
+   0.8541,
+   0.5529
+  ],
+  "singular_values": [
+   0.9667,
+   0.735,
+   0.5447
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.5814,
+  "rotation_L_deg": 18.466,
+  "vessel_n": 210,
+  "vessel_mean_mm": 0.2418,
+  "vessel_median_mm": 0.2235,
+  "start_pose": {
+   "mean_mm": 1.1567,
+   "median_mm": 1.1168,
+   "p95_mm": 1.7335,
+   "max_mm": 2.2088,
+   "rotation_deg": 10.341,
+   "rotation_axis": [
+    0.307,
+    0.142,
+    0.941
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0406,
+    0.9861,
+    0.9445
+   ],
+   "singular_values": [
+    1.0222,
+    1.0065,
+    0.9648
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1973,
+   "rotation_L_deg": 9.769
+  },
+  "start_from_S": {
+   "mean_mm": 0.0637,
+   "max_mm": 0.1773
+  },
+  "seconds": 46.3
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.2205,
+  "median_mm": 3.1593,
+  "p95_mm": 5.5133,
+  "max_mm": 7.7073,
+  "rotation_deg": 14.567,
+  "rotation_axis": [
+   -0.276,
+   0.925,
+   -0.26
+  ],
+  "centroid_mm": 1.6292,
+  "scales": [
+   1.3912,
+   1.511,
+   1.6503
+  ],
+  "singular_values": [
+   1.8268,
+   1.4419,
+   1.3305
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.169,
+  "rotation_L_deg": 14.684,
+  "vessel_n": 7657,
+  "vessel_mean_mm": 0.2401,
+  "vessel_median_mm": 0.2287,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 16.1
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 8.2006,
+  "median_mm": 8.1578,
+  "p95_mm": 11.4855,
+  "max_mm": 13.6633,
+  "rotation_deg": 35.401,
+  "rotation_axis": [
+   0.283,
+   0.809,
+   0.516
+  ],
+  "centroid_mm": 6.9065,
+  "scales": [
+   0.076,
+   0.0749,
+   0.069
+  ],
+  "singular_values": [
+   0.0947,
+   0.0631,
+   0.0557
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.2839,
+  "rotation_L_deg": 35.139,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 3.2
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 6.1421,
+  "median_mm": 5.9825,
+  "p95_mm": 10.5473,
+  "max_mm": 13.7884,
+  "rotation_deg": 11.799,
+  "rotation_axis": [
+   0.105,
+   0.635,
+   -0.765
+  ],
+  "centroid_mm": 5.5574,
+  "scales": [
+   1.6494,
+   1.4017,
+   1.4693
+  ],
+  "singular_values": [
+   2.1016,
+   1.3592,
+   0.906
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.0293,
+  "rotation_L_deg": 12.619,
+  "vessel_n": 6968,
+  "vessel_mean_mm": 0.261,
+  "vessel_median_mm": 0.2505,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 10.9
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 7.3369,
+  "median_mm": 7.3632,
+  "p95_mm": 8.9318,
+  "max_mm": 9.9948,
+  "rotation_deg": 9.932,
+  "rotation_axis": [
+   0.364,
+   0.02,
+   0.931
+  ],
+  "centroid_mm": 7.3235,
+  "scales": [
+   1.2677,
+   1.0124,
+   0.9541
+  ],
+  "singular_values": [
+   1.234,
+   1.0301,
+   0.9767
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.3184,
+  "rotation_L_deg": 9.306,
+  "vessel_n": 1317,
+  "vessel_mean_mm": 0.2772,
+  "vessel_median_mm": 0.2595,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 6.7
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 12.7287,
+  "median_mm": 12.3398,
+  "p95_mm": 21.2566,
+  "max_mm": 28.3222,
+  "rotation_deg": 42.334,
+  "rotation_axis": [
+   -0.141,
+   0.004,
+   -0.99
+  ],
+  "centroid_mm": 12.3414,
+  "scales": [
+   2.1594,
+   1.7573,
+   0.875
+  ],
+  "singular_values": [
+   2.5006,
+   1.1826,
+   0.7439
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 12.6182,
+  "rotation_L_deg": 43.488,
+  "vessel_n": 5043,
+  "vessel_mean_mm": 0.3017,
+  "vessel_median_mm": 0.2878,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 461.6
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.7306,
+  "median_mm": 5.7023,
+  "p95_mm": 8.4746,
+  "max_mm": 10.9285,
+  "rotation_deg": 23.352,
+  "rotation_axis": [
+   0.196,
+   -0.332,
+   0.923
+  ],
+  "centroid_mm": 5.5936,
+  "scales": [
+   1.317,
+   0.8863,
+   0.9605
+  ],
+  "singular_values": [
+   1.3324,
+   1.1568,
+   0.6078
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.7223,
+  "rotation_L_deg": 22.731,
+  "vessel_n": 464,
+  "vessel_mean_mm": 0.2716,
+  "vessel_median_mm": 0.2341,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 184.9
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 11.4963,
+  "median_mm": 11.394,
+  "p95_mm": 14.7365,
+  "max_mm": 17.1889,
+  "rotation_deg": 46.82,
+  "rotation_axis": [
+   0.955,
+   -0.246,
+   -0.167
+  ],
+  "centroid_mm": 10.8225,
+  "scales": [
+   0.2243,
+   0.2124,
+   0.2035
+  ],
+  "singular_values": [
+   0.2202,
+   0.2169,
+   0.2079
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 11.5801,
+  "rotation_L_deg": 46.964,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 17.2
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.5001,
+  "median_mm": 9.4314,
+  "p95_mm": 11.6715,
+  "max_mm": 12.9522,
+  "rotation_deg": 17.883,
+  "rotation_axis": [
+   0.138,
+   0.121,
+   0.983
+  ],
+  "centroid_mm": 9.4249,
+  "scales": [
+   0.7915,
+   0.9369,
+   0.5511
+  ],
+  "singular_values": [
+   1.0254,
+   0.7089,
+   0.5278
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.5948,
+  "rotation_L_deg": 17.111,
+  "vessel_n": 255,
+  "vessel_mean_mm": 0.2421,
+  "vessel_median_mm": 0.2146,
+  "start_pose": {
+   "mean_mm": 1.1735,
+   "median_mm": 1.1162,
+   "p95_mm": 1.6614,
+   "max_mm": 2.3184,
+   "rotation_deg": 10.353,
+   "rotation_axis": [
+    0.309,
+    -0.006,
+    0.951
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0409,
+    0.9859,
+    0.9446
+   ],
+   "singular_values": [
+    1.0223,
+    1.0067,
+    0.9649
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.1591,
+   "rotation_L_deg": 9.792
+  },
+  "start_from_S": {
+   "mean_mm": 0.0623,
+   "max_mm": 0.1716
+  },
+  "seconds": 58.2
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 4.3754,
+  "median_mm": 4.3255,
+  "p95_mm": 7.0201,
+  "max_mm": 9.4999,
+  "rotation_deg": 36.118,
+  "rotation_axis": [
+   -0.161,
+   0.818,
+   -0.552
+  ],
+  "centroid_mm": 1.6965,
+  "scales": [
+   1.4976,
+   1.5157,
+   1.5911
+  ],
+  "singular_values": [
+   1.6683,
+   1.5466,
+   1.4289
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 4.3627,
+  "rotation_L_deg": 36.33,
+  "vessel_n": 6169,
+  "vessel_mean_mm": 0.275,
+  "vessel_median_mm": 0.2585,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 15.9
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 12.2643,
+  "median_mm": 12.257,
+  "p95_mm": 13.2643,
+  "max_mm": 14.2957,
+  "rotation_deg": 5.347,
+  "rotation_axis": [
+   -0.848,
+   0.453,
+   0.275
+  ],
+  "centroid_mm": 12.1652,
+  "scales": [
+   0.7981,
+   0.7466,
+   0.5706
+  ],
+  "singular_values": [
+   0.9193,
+   0.6414,
+   0.531
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 12.1507,
+  "rotation_L_deg": 5.17,
+  "vessel_n": 668,
+  "vessel_mean_mm": 0.264,
+  "vessel_median_mm": 0.2602,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 2.0
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 4.6839,
+  "median_mm": 4.4199,
+  "p95_mm": 8.6195,
+  "max_mm": 11.6229,
+  "rotation_deg": 12.315,
+  "rotation_axis": [
+   0.061,
+   0.431,
+   -0.9
+  ],
+  "centroid_mm": 4.05,
+  "scales": [
+   1.4892,
+   1.3465,
+   1.4318
+  ],
+  "singular_values": [
+   1.9947,
+   1.1976,
+   0.9544
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 4.5676,
+  "rotation_L_deg": 13.203,
+  "vessel_n": 6232,
+  "vessel_mean_mm": 0.251,
+  "vessel_median_mm": 0.2363,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 11.2
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.6467,
+  "median_mm": 0.621,
+  "p95_mm": 0.982,
+  "max_mm": 1.3034,
+  "rotation_deg": 5.429,
+  "rotation_axis": [
+   0.251,
+   0.961,
+   0.114
+  ],
+  "centroid_mm": 0.4963,
+  "scales": [
+   1.0492,
+   0.9817,
+   1.0057
+  ],
+  "singular_values": [
+   1.0618,
+   1.0089,
+   0.99
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.6757,
+  "rotation_L_deg": 5.305,
+  "vessel_n": 3165,
+  "vessel_mean_mm": 0.241,
+  "vessel_median_mm": 0.2278,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 5.7
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 10.3153,
+  "median_mm": 9.9374,
+  "p95_mm": 16.2187,
+  "max_mm": 20.5922,
+  "rotation_deg": 34.539,
+  "rotation_axis": [
+   -0.298,
+   -0.253,
+   -0.92
+  ],
+  "centroid_mm": 9.9108,
+  "scales": [
+   1.9298,
+   1.2932,
+   0.9786
+  ],
+  "singular_values": [
+   1.9572,
+   1.2706,
+   0.8812
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.2085,
+  "rotation_L_deg": 35.565,
+  "vessel_n": 5769,
+  "vessel_mean_mm": 0.2958,
+  "vessel_median_mm": 0.2771,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 267.7
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.987,
+  "median_mm": 6.0035,
+  "p95_mm": 7.671,
+  "max_mm": 8.7084,
+  "rotation_deg": 21.304,
+  "rotation_axis": [
+   0.293,
+   0.63,
+   0.719
+  ],
+  "centroid_mm": 5.8297,
+  "scales": [
+   1.0073,
+   0.8738,
+   0.8474
+  ],
+  "singular_values": [
+   1.1113,
+   0.9607,
+   0.6253
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.961,
+  "rotation_L_deg": 20.664,
+  "vessel_n": 342,
+  "vessel_mean_mm": 0.3284,
+  "vessel_median_mm": 0.301,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 197.6
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 23.599,
+  "median_mm": 23.5662,
+  "p95_mm": 31.1077,
+  "max_mm": 36.8338,
+  "rotation_deg": 121.831,
+  "rotation_axis": [
+   -0.56,
+   0.059,
+   0.826
+  ],
+  "centroid_mm": 22.8664,
+  "scales": [
+   1.2423,
+   1.1844,
+   1.1355
+  ],
+  "singular_values": [
+   1.227,
+   1.2043,
+   1.1581
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 23.5909,
+  "rotation_L_deg": 121.323,
+  "vessel_n": 7,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 24.3
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 9.3954,
+  "median_mm": 9.3036,
+  "p95_mm": 11.4794,
+  "max_mm": 13.034,
+  "rotation_deg": 18.332,
+  "rotation_axis": [
+   -0.32,
+   0.743,
+   0.588
+  ],
+  "centroid_mm": 9.269,
+  "scales": [
+   0.9281,
+   0.8633,
+   0.543
+  ],
+  "singular_values": [
+   1.0519,
+   0.7108,
+   0.5405
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.5019,
+  "rotation_L_deg": 17.714,
+  "vessel_n": 299,
+  "vessel_mean_mm": 0.2962,
+  "vessel_median_mm": 0.2765,
+  "start_pose": {
+   "mean_mm": 1.1669,
+   "median_mm": 1.1491,
+   "p95_mm": 1.956,
+   "max_mm": 2.4911,
+   "rotation_deg": 10.124,
+   "rotation_axis": [
+    -0.206,
+    0.836,
+    0.509
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0352,
+    0.987,
+    0.9463
+   ],
+   "singular_values": [
+    1.0225,
+    1.0036,
+    0.9651
+   ],
+   "tier": "beyond",
+   "mean_L_mm": 1.2305,
+   "rotation_L_deg": 9.733
+  },
+  "start_from_S": {
+   "mean_mm": 0.0898,
+   "max_mm": 0.2571
+  },
+  "seconds": 59.1
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "reg_aladin_near",
+  "setting": "defaults, -nac",
+  "mean_mm": 3.132,
+  "median_mm": 3.1085,
+  "p95_mm": 5.3399,
+  "max_mm": 7.154,
+  "rotation_deg": 10.842,
+  "rotation_axis": [
+   -0.295,
+   0.943,
+   0.154
+  ],
+  "centroid_mm": 1.7123,
+  "scales": [
+   1.404,
+   1.4655,
+   1.6685
+  ],
+  "singular_values": [
+   1.8867,
+   1.3776,
+   1.3086
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 3.0795,
+  "rotation_L_deg": 10.694,
+  "vessel_n": 7414,
+  "vessel_mean_mm": 0.257,
+  "vessel_median_mm": 0.2431,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 15.4
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "greedy_near",
+  "setting": "NMI, -ia-identity",
+  "mean_mm": 9.9421,
+  "median_mm": 10.2176,
+  "p95_mm": 13.9699,
+  "max_mm": 16.7074,
+  "rotation_deg": 15.564,
+  "rotation_axis": [
+   0.99,
+   -0.042,
+   -0.132
+  ],
+  "centroid_mm": 9.1047,
+  "scales": [
+   0.0803,
+   0.0737,
+   0.0526
+  ],
+  "singular_values": [
+   0.0924,
+   0.0666,
+   0.0416
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.0231,
+  "rotation_L_deg": 15.825,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 2.0
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "elastix_near",
+  "setting": "model zoo, no initialisation",
+  "mean_mm": 5.7803,
+  "median_mm": 5.1016,
+  "p95_mm": 12.1225,
+  "max_mm": 17.3563,
+  "rotation_deg": 11.532,
+  "rotation_axis": [
+   -0.496,
+   0.192,
+   -0.847
+  ],
+  "centroid_mm": 4.5823,
+  "scales": [
+   1.8097,
+   1.3808,
+   1.7907
+  ],
+  "singular_values": [
+   2.5657,
+   1.1515,
+   0.9408
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.6653,
+  "rotation_L_deg": 12.421,
+  "vessel_n": 6883,
+  "vessel_mean_mm": 0.2598,
+  "vessel_median_mm": 0.2449,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 10.8
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "ants_near",
+  "setting": "antsRegistrationSyN -t a, -i Identity",
+  "mean_mm": 0.887,
+  "median_mm": 0.8587,
+  "p95_mm": 1.6199,
+  "max_mm": 2.2563,
+  "rotation_deg": 6.231,
+  "rotation_axis": [
+   0.001,
+   1.0,
+   0.022
+  ],
+  "centroid_mm": 0.6893,
+  "scales": [
+   1.0634,
+   0.9811,
+   1.091
+  ],
+  "singular_values": [
+   1.1802,
+   1.0251,
+   0.9579
+  ],
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.8285,
+  "rotation_L_deg": 6.172,
+  "vessel_n": 3494,
+  "vessel_mean_mm": 0.2388,
+  "vessel_median_mm": 0.2251,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 6.3
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "mri_robust_register_near",
+  "setting": "NMI, --noinit",
+  "mean_mm": 14.1736,
+  "median_mm": 14.2268,
+  "p95_mm": 22.2789,
+  "max_mm": 26.1551,
+  "rotation_deg": 28.078,
+  "rotation_axis": [
+   -0.126,
+   0.314,
+   -0.941
+  ],
+  "centroid_mm": 13.8487,
+  "scales": [
+   1.9795,
+   1.931,
+   1.1573
+  ],
+  "singular_values": [
+   2.6247,
+   1.2265,
+   0.8328
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.0557,
+  "rotation_L_deg": 29.466,
+  "vessel_n": 5221,
+  "vessel_mean_mm": 0.3021,
+  "vessel_median_mm": 0.2817,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 625.3
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "mri_coreg_near",
+  "setting": "defaults, --regheader",
+  "mean_mm": 5.323,
+  "median_mm": 5.2696,
+  "p95_mm": 7.5302,
+  "max_mm": 8.6479,
+  "rotation_deg": 17.825,
+  "rotation_axis": [
+   0.17,
+   0.953,
+   -0.251
+  ],
+  "centroid_mm": 5.1814,
+  "scales": [
+   1.0685,
+   1.2328,
+   0.9539
+  ],
+  "singular_values": [
+   1.2624,
+   1.0287,
+   0.989
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 5.2997,
+  "rotation_L_deg": 17.973,
+  "vessel_n": 3020,
+  "vessel_mean_mm": 0.2746,
+  "vessel_median_mm": 0.256,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 201.8
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "flirt_near",
+  "setting": "normmi, default search, -usesqform, x10 headers",
+  "mean_mm": 19.8952,
+  "median_mm": 20.0161,
+  "p95_mm": 25.7871,
+  "max_mm": 31.2221,
+  "rotation_deg": 115.838,
+  "rotation_axis": [
+   -0.174,
+   -0.29,
+   -0.941
+  ],
+  "centroid_mm": 19.2255,
+  "scales": [
+   1.0325,
+   0.9832,
+   0.951
+  ],
+  "singular_values": [
+   1.0227,
+   1.0008,
+   0.9661
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 19.7953,
+  "rotation_L_deg": 116.423,
+  "vessel_n": 456,
+  "vessel_mean_mm": 0.307,
+  "vessel_median_mm": 0.2908,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 17.0
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "synthmorph_near",
+  "setting": "-m affine",
+  "mean_mm": 8.1887,
+  "median_mm": 8.0922,
+  "p95_mm": 10.5022,
+  "max_mm": 11.9747,
+  "rotation_deg": 18.138,
+  "rotation_axis": [
+   -0.6,
+   0.738,
+   0.31
+  ],
+  "centroid_mm": 8.0428,
+  "scales": [
+   0.9517,
+   0.7775,
+   0.5454
+  ],
+  "singular_values": [
+   1.017,
+   0.6682,
+   0.5631
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.2865,
+  "rotation_L_deg": 17.771,
+  "vessel_n": 283,
+  "vessel_mean_mm": 0.2623,
+  "vessel_median_mm": 0.24,
+  "start_pose": {
+   "mean_mm": 1.1931,
+   "median_mm": 1.2209,
+   "p95_mm": 1.9232,
+   "max_mm": 2.3506,
+   "rotation_deg": 9.773,
+   "rotation_axis": [
+    -0.448,
+    0.887,
+    -0.114
+   ],
+   "centroid_mm": 1.0,
+   "scales": [
+    1.0324,
+    0.9834,
+    0.951
+   ],
+   "singular_values": [
+    1.0231,
+    1.0006,
+    0.9659
+   ],
+   "tier": "<= 2.5 mm and <= 10 deg",
+   "mean_L_mm": 1.1851,
+   "rotation_L_deg": 9.751
+  },
+  "start_from_S": {
+   "mean_mm": 0.1076,
+   "max_mm": 0.3045
+  },
+  "seconds": 58.4
+ }
+]

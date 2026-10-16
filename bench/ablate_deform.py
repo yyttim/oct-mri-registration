@@ -6,11 +6,12 @@ bench/results/I58/deform_ablation.md, whose reach rows widen df_reach_mm (the in
         [--save-fields DIR [--save-rows method,interior_only,boundary_only]]
 
 Every row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity), changing one element of the stage, and
-every row is scored the same way, so the rows compare like for like:
-  - the stage's read-outs (interior-match residuals and surface-edge offsets, fraction of surface-edge offsets within 0.3 mm) measured on the warped
-    OCT by the evidence of the default Params, whatever evidence the row was fitted to,
-  - two numbers the fit never sees: F of §5 at sigma 0.3 mm (NGFGrid.F, the warped OCT against the MRI on the MRI base grid),
-    and the two-class score of §2 (polarity x S_class) over the core 1.5 mm below both surfaces.
+every row is measured the same way:
+  - the stage's read-outs (interior-match residuals and surface-edge offsets, fraction of surface-edge offsets within 0.3 mm)
+    measured on the warped OCT by the evidence of the default Params, whatever evidence the row was fitted to,
+  - two numbers the fit never sees, stored in OUT.json only (not in the table): F of §5 at sigma 0.3 mm (NGFGrid.F, the warped
+    OCT against the MRI on the MRI base grid), and the two-class score of §2 (polarity x S_class) over the core 1.5 mm below
+    both surfaces.
 The read-outs of the rows that change the evidence are still in-sample for the default evidence they overlap with. F and the
 two-class score are not. Nothing is excluded along the block: the surface-edge offsets are also reported per 4 mm along the
 sectioning axis (estimated from the section stripes of the OCT), so the end of the block with the largest misfit stays in.
@@ -206,20 +207,26 @@ def fmt(x, spec):
 
 
 def markdown(res):
-    lines = ["| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | "
-             "held-out interior matches / surface-edge offsets (mm) | F | two-class, core | field median / max (mm) |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+    import textwrap
+    lines = textwrap.wrap("The read-outs of §6 for each variant: the interior matches and surface-edge offsets of the default "
+                          "evidence of §6, measured on the variant's warped OCT, the same for every row. The held-out errors are "
+                          "computed on the evidence each variant was fitted to, without deformation and with its field. They "
+                          "describe what each field does to the evidence §6 measures, and are not a score of the variants, since "
+                          "the pair has no reference.", 124) + ["",
+             "| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | "
+             "held-out interior matches / surface-edge offsets, without → with the field (mm) | field median / max (mm) |",
+             "|---|---|---|---|---|---|---|---|"]
     for r in res["rows"].values():
         fm = r["field_mm"]
         field = "0" if not fm["max"] else f"{fm['median']:.2f} / {fm['max']:.2f}"
-        cv, used = r.get("cv_field"), (r.get("n_interior") != 0, r.get("n_boundary") != 0)
-        cv = "" if cv is None else " / ".join(f"{x:.3f}" if u else "" for x, u in zip(cv, used)).strip()   # no evidence: empty
+        cv, c0, used = r.get("cv_field"), r.get("cv_none"), (r.get("n_interior") != 0, r.get("n_boundary") != 0)
+        cv = "" if cv is None else " / ".join(f"{a:.3f} → {b:.3f}" if u else "" for a, b, u in zip(c0, cv, used)).strip()
         lines.append(f"| {r['label']} | {fmt(r['lam'], '.2f')} | {fmt(r['max_strain'], '.3f')} | {r['interior_mm']:.3f} | "
-                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {cv} | {r['F']:.4f} | {r['two_class_core']:.4f} | "
-                     f"{field} |")
+                     f"{r['boundary_mm']:.3f} | {100 * r['within']:.0f} % | {cv} | {field} |")
     e = res["axis"]["edges_mm"]
-    lines += ["", f"Surface-edge offsets (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from end 0, the end at "
-              f"the start of MRI array axis {res['axis']['mri_axis']} ({res['axis']['extent_mm']:.1f} mm in all):", "",
+    lines += [""] + textwrap.wrap(f"Surface-edge offsets (median |offset|, mm) per {BIN_MM:g} mm along the sectioning axis, from "
+                                  f"end 0, the end at the start of MRI array axis {res['axis']['mri_axis']} "
+                                  f"({res['axis']['extent_mm']:.1f} mm in all):", 124) + ["",
               "| variant | " + " | ".join(f"{a:.0f}-{b:.0f}" for a, b in zip(e[:-1], e[1:])) + " |",
               "|---|" + "---|" * (len(e) - 1)]
     for r in res["rows"].values():

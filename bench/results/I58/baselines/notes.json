@@ -1,46 +1,231 @@
 {
- "ants_com": "antsRegistrationSyN.sh -t a (rigid+affine, Mattes MI), centre-of-mass start, OCT shrunk to half its volume",
- "ants_identity": "same stages from the header alignment, ends 17.8 deg from that start, far from the block",
- "ants_com_fov": "centre-of-mass start with the OCT FOV mask, OCT inflated by 39 %",
- "ants_antsai": "antsAI global rotation search (0.15 mm), then the same stages: the search picks a flipped pose",
- "elastix_center": "model-zoo rigid+affine (Mattes MI), geometric-centre start, stays 1 to 2 deg from the header orientation, shrunk",
- "elastix_cog": "same with the centre-of-gravity start, same pose as center",
- "elastix_cog_fov": "centre-of-gravity start with the OCT FOV mask, no shrink, same wrong orientation",
- "niftyreg_center": "reg_aladin defaults (block matching, rigid then affine), image-centre start, lands near octreg's affine",
- "niftyreg_nac": "reg_aladin -nac (header start), a different, wrong pose",
- "niftyreg_center_fov": "the floating mask is silently ignored by this NiftyReg version: identical to center",
- "flirt_search_x10": "FLIRT normmi, dof 6 then 12, default search, headers scaled x10",
- "flirt_fullsearch_x10": "FLIRT with the full +-180 deg search, headers scaled x10",
- "flirt_sqform_x10": "FLIRT -usesqform -nosearch (header start), headers scaled x10",
- "flirt_search_x10_fov": "FLIRT default search with -inweight (FOV weighting), headers scaled x10",
- "flirt_search_native": "FLIRT as documented on the unscaled 0.08 mm inputs",
- "mri_robust_register_default_com": "mri_robust_register --cost NMI, rigid then --affine --ixform, centre-of-mass start",
- "mri_coreg_default": "mri_coreg --dof 6 then --dof 12 --init-reg, brute-force initial search, the OCT shrunk by 19 % along one axis",
- "mri_coreg_regheader": "mri_coreg --regheader (header start)",
- "synthmorph_affine": "mri_synthmorph -m affine as documented (1 mm brain model): out of domain, fails",
- "greedy_identity": "greedy NMI rigid then affine from the header alignment, the affine stage stretched the OCT 2.2x",
- "greedy_centers": "greedy NMI from the image centres",
- "greedy_centers_fov": "greedy NMI from the image centres with the moving FOV mask, stalled at the start",
- "greedy_search": "greedy -search 1000 global search, the best candidate has almost no overlap with the MRI",
- "none": "octreg affine, no field",
- "octreg": "octreg §6: strain-limited field on a 5 mm lattice from interior matches and surface-edge offsets",
- "deform_ants_syn_cc": "antsRegistrationSyN.sh -t so (SyN, CC radius 2) from octreg's affine, both images on the MRI grid",
- "deform_ants_syn_mi": "the same SyN stage with Mattes MI",
- "deform_ants_syn_cc_fov": "SyN CC with the OCT FOV mask",
- "deform_convexadam_default": "ConvexAdam MIND-SSC, shipped defaults, GPU",
- "deform_convexadam_default_fov": "ConvexAdam MIND-SSC with the FOV mask",
- "deform_elastix_default": "model-zoo B-spline (Mattes MI), 16 mm grid",
- "deform_elastix_grid5mm": "model-zoo B-spline with a 5 mm grid (physical-unit variant)",
- "deform_elastix_default_fov": "model-zoo B-spline, 16 mm grid, with the FOV mask",
- "deform_niftyreg_default": "reg_f3d defaults (NMI, control grid -5 voxels = 0.4 mm): the image collapses",
- "deform_niftyreg_sx5mm": "reg_f3d with a 5 mm control grid",
- "deform_niftyreg_vel_fov": "reg_f3d -vel (symmetric F3D2) with the FOV mask, the one form in which the mask is honoured",
- "deform_greedy_wncc": "greedy deformable, WNCC 2x2x2, quick-start smoothing in voxels",
- "deform_greedy_wncc_mm": "greedy deformable, WNCC, smoothing in mm",
- "deform_greedy_nmi": "greedy deformable with NMI",
- "deform_greedy_wncc_fov": "greedy deformable, WNCC, with the FOV mask",
- "reference_centres": "reference, not a registration: image centres aligned with the header orientation, the start most tools use",
- "mri_robust_register_default_com_maskmov": "the same with --maskmov oct_fov: identical to default_com (the OCT is already zero outside its field of view)",
- "mri_coreg_default_movmask": "the same with --mov-mask oct_fov: identical to default",
- "mri_robust_register_noinit_rigid_only": "mri_robust_register --noinit (header start): the affine step diverged, the rigid result is recorded"
+ "affine": {
+  "reference_centres": {
+   "tool": "image centres aligned (the start)",
+   "setting": "not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept",
+   "start": "image centres aligned"
+  },
+  "octreg": {
+   "tool": "octreg",
+   "setting": "§1 to §5 with default parameters",
+   "start": "own orientation search (8000 orientations) inside the MRI crop"
+  },
+  "ants_com": {
+   "tool": "ANTs 2.6.5",
+   "setting": "antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask",
+   "start": "centres of mass (script default)"
+  },
+  "ants_com_fov": {
+   "tool": "ANTs 2.6.5",
+   "setting": "as ants_com, with the OCT field-of-view (FOV) mask",
+   "start": "centres of mass"
+  },
+  "ants_identity": {
+   "tool": "ANTs 2.6.5",
+   "setting": "as ants_com",
+   "start": "header alignment (identity)"
+  },
+  "ants_antsai": {
+   "tool": "ANTs 2.6.5",
+   "setting": "antsAI rigid rotation search (Mattes MI, 0.15 mm copies), then the stages of ants_com",
+   "start": "antsAI global rotation search"
+  },
+  "elastix_center": {
+   "tool": "elastix 5.3.1",
+   "setting": "model-zoo Parameters_Rigid then Parameters_Affine (AdvancedMattesMutualInformation), no mask",
+   "start": "geometric centres (GeometricalCenter)"
+  },
+  "elastix_cog": {
+   "tool": "elastix 5.3.1",
+   "setting": "as elastix_center",
+   "start": "centres of gravity (CenterOfGravity)"
+  },
+  "elastix_cog_fov": {
+   "tool": "elastix 5.3.1",
+   "setting": "as elastix_center, with the OCT FOV mask",
+   "start": "centres of gravity"
+  },
+  "flirt_search_x10": {
+   "tool": "FSL FLIRT 6.0.7.23",
+   "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule works in mm (an adaptation FSL does not document)",
+   "start": "FLIRT default rotation search (±90°, coarse 60°, fine 18°)"
+  },
+  "flirt_fullsearch_x10": {
+   "tool": "FSL FLIRT 6.0.7.23",
+   "setting": "as flirt_search_x10",
+   "start": "rotation search over ±180°"
+  },
+  "flirt_sqform_x10": {
+   "tool": "FSL FLIRT 6.0.7.23",
+   "setting": "as flirt_search_x10 with -usesqform -nosearch",
+   "start": "header alignment"
+  },
+  "flirt_search_x10_fov": {
+   "tool": "FSL FLIRT 6.0.7.23",
+   "setting": "as flirt_search_x10, with -inweight (OCT FOV)",
+   "start": "FLIRT default rotation search"
+  },
+  "flirt_search_native": {
+   "tool": "FSL FLIRT 6.0.7.23",
+   "setting": "normmi, -dof 6 then -dof 12, as documented, on the unscaled 0.08 mm headers",
+   "start": "FLIRT default rotation search"
+  },
+  "greedy_centers": {
+   "tool": "greedy 1.4.0",
+   "setting": "NMI, -dof 6 then -dof 12, -n 100x50x10, no mask",
+   "start": "image centres (-ia-image-centers)"
+  },
+  "greedy_centers_fov": {
+   "tool": "greedy 1.4.0",
+   "setting": "as greedy_centers, with the OCT FOV as moving mask",
+   "start": "image centres"
+  },
+  "greedy_identity": {
+   "tool": "greedy 1.4.0",
+   "setting": "as greedy_centers",
+   "start": "header alignment (-ia-identity)"
+  },
+  "greedy_search": {
+   "tool": "greedy 1.4.0",
+   "setting": "as greedy_centers",
+   "start": "image centres + -search 1000 random rotations"
+  },
+  "mri_coreg_default": {
+   "tool": "FreeSurfer 8.2.0 mri_coreg",
+   "setting": "NMI, --dof 6 then --dof 12 --init-reg, tool defaults",
+   "start": "volume centres + the default brute-force search"
+  },
+  "mri_coreg_default_movmask": {
+   "tool": "FreeSurfer 8.2.0 mri_coreg",
+   "setting": "as mri_coreg_default, with --mov-mask (OCT FOV)",
+   "start": "volume centres + brute-force search"
+  },
+  "mri_coreg_regheader": {
+   "tool": "FreeSurfer 8.2.0 mri_coreg",
+   "setting": "as mri_coreg_default",
+   "start": "header alignment (--regheader)"
+  },
+  "mri_robust_register_default_com": {
+   "tool": "FreeSurfer 8.2.0 mri_robust_register",
+   "setting": "--cost NMI, rigid then --affine --ixform, tool defaults",
+   "start": "centres of mass (default)"
+  },
+  "mri_robust_register_default_com_maskmov": {
+   "tool": "FreeSurfer 8.2.0 mri_robust_register",
+   "setting": "as default_com, with --maskmov (OCT FOV)",
+   "start": "centres of mass"
+  },
+  "mri_robust_register_noinit_rigid_only": {
+   "tool": "FreeSurfer 8.2.0 mri_robust_register",
+   "setting": "--cost NMI, the rigid step only: the affine step found no overlap of the two images and made no iteration",
+   "start": "header alignment (--noinit)"
+  },
+  "niftyreg_center": {
+   "tool": "NiftyReg 2.1.2 reg_aladin",
+   "setting": "defaults: symmetric block matching, rigid then affine",
+   "start": "image centres (default)"
+  },
+  "niftyreg_center_fov": {
+   "tool": "NiftyReg 2.1.2 reg_aladin",
+   "setting": "as niftyreg_center with -fmask (OCT FOV). This version ignores the mask, and the output equals niftyreg_center",
+   "start": "image centres"
+  },
+  "niftyreg_nac": {
+   "tool": "NiftyReg 2.1.2 reg_aladin",
+   "setting": "defaults",
+   "start": "header origin (-nac)"
+  },
+  "synthmorph_affine": {
+   "tool": "FreeSurfer 8.2.0 mri_synthmorph",
+   "setting": "register -m affine as documented. A 1 mm whole-brain model, outside its domain on a 0.08 mm block",
+   "start": "none (the network predicts the affine)"
+  }
+ },
+ "deform": {
+  "none": {
+   "tool": "no deformation",
+   "setting": "octreg's affine, no field",
+   "start": "octreg's affine"
+  },
+  "octreg": {
+   "tool": "octreg",
+   "setting": "§6: strain-limited field on a 5 mm lattice, default parameters",
+   "start": "octreg's affine"
+  },
+  "deform_ants_syn_cc": {
+   "tool": "ANTs 2.6.5",
+   "setting": "antsRegistrationSyN.sh -t so: SyN, CC radius 2, script defaults, no mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_ants_syn_mi": {
+   "tool": "ANTs 2.6.5",
+   "setting": "the same SyN stage with Mattes MI (32 bins)",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_ants_syn_cc_fov": {
+   "tool": "ANTs 2.6.5",
+   "setting": "as deform_ants_syn_cc, with the OCT FOV as moving mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_elastix_default": {
+   "tool": "elastix 5.3.1",
+   "setting": "model-zoo Parameters_BSpline: Mattes MI, 16 mm final grid, no mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_elastix_grid5mm": {
+   "tool": "elastix 5.3.1",
+   "setting": "model-zoo B-spline with a 5 mm final grid",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_elastix_default_fov": {
+   "tool": "elastix 5.3.1",
+   "setting": "as deform_elastix_default, with the OCT FOV as moving mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_niftyreg_default": {
+   "tool": "NiftyReg 2.1.2 reg_f3d",
+   "setting": "defaults: NMI 64 bins, control grid 5 voxels (0.4 mm), bending energy 0.001, linear elasticity 0.01, no mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_niftyreg_sx5mm": {
+   "tool": "NiftyReg 2.1.2 reg_f3d",
+   "setting": "defaults with a 5 mm control grid (-sx 5)",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_niftyreg_vel_fov": {
+   "tool": "NiftyReg 2.1.2 reg_f3d",
+   "setting": "-vel (symmetric, velocity field) with the OCT FOV floating mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_convexadam_default": {
+   "tool": "ConvexAdam 0.2.0",
+   "setting": "MIND-SSC, the package's shipped defaults, no mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_convexadam_default_fov": {
+   "tool": "ConvexAdam 0.2.0",
+   "setting": "as deform_convexadam_default, with the OCT FOV mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_greedy_wncc": {
+   "tool": "greedy 1.4.0",
+   "setting": "the quick-start deformable command: WNCC 2x2x2, -s 1.732vox 0.707vox, -sv, -n 100x50x10, no mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_greedy_wncc_mm": {
+   "tool": "greedy 1.4.0",
+   "setting": "as deform_greedy_wncc with the smoothing in mm (-s 2mm 0.7mm)",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_greedy_nmi": {
+   "tool": "greedy 1.4.0",
+   "setting": "as deform_greedy_wncc with -m NMI",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  },
+  "deform_greedy_wncc_fov": {
+   "tool": "greedy 1.4.0",
+   "setting": "as deform_greedy_wncc, with the OCT FOV as moving mask",
+   "start": "octreg's affine (both images on the MRI grid, identity start)"
+  }
+ }
 }
