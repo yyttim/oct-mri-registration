@@ -306,9 +306,22 @@ The coronal plane through the centre of the OCT tissue placed by R, on the crop 
 FLASH, 3 mm margin, k = 0), in freeview at two screen pixels per MRI voxel of 0.15 mm (20.0 × 20.6 mm). The OCT is shown on the
 MRI grid through each transform, black where there is no OCT. The red line is the white-matter boundary of the authors' manual
 MRI labels. The grey levels are linear, at freeview's default window of the crop (22.1 to 44.4) and of the masked OCT every
-method received (8.2 to 191, [docs/figures/i46/figures.json](docs/figures/i46/figures.json)). elastix ended without a transform
-on this crop. [bench/i46](bench/i46/README.md) shows the three planes, the median crop of every condition, and all ten crops of
-this condition.
+method received (8.2 to 191, [docs/figures/i46/figures.json](docs/figures/i46/figures.json)). The bands across the OCT are its
+500 µm sections: in each, the OCT intensity falls with the imaging depth. elastix ended without a transform on this crop.
+[bench/i46](bench/i46/README.md) shows the three planes, the median crop of every condition, and all ten crops of this
+condition.
+
+| OCT plane | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
+|---|---|---|---|---|---|
+| 102 | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct.png" width="150" alt="OCT, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_mri_reference.png" width="150" alt="MRI through R, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_mri_octreg.png" width="150" alt="MRI through octreg, plane 102"> |
+| 300 | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct.png" width="150" alt="OCT, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_mri_reference.png" width="150" alt="MRI through R, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_mri_octreg.png" width="150" alt="MRI through octreg, plane 300"> |
+| 498 | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct.png" width="150" alt="OCT, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_reference.png" width="150" alt="MRI through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_octreg.png" width="150" alt="MRI through octreg, plane 498"> |
+
+The same crop in three planes of the OCT itself, the way Costantini et al. show their OCT: OCT planes 102, 300 and 498, each
+three planes below the top of its section, 14.7 × 15.2 mm at 48 µm (a 4 × 4 average of the 12 µm OCT). From left: the OCT, the
+OCT with the white-matter label of the authors' MRI labels resampled through R and through octreg as a red outline, and the MRI
+crop resampled through R and through octreg. The grey levels are linear, at freeview's default window of each OCT plane and of
+the crop ([docs/figures/i46/figures.json](docs/figures/i46/figures.json)).
 
 ## Reproducing the benchmark
 

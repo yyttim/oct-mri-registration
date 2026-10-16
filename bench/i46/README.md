@@ -65,10 +65,12 @@ OCT planes 15.0 µm apart in the MRI against 14.5 µm in R. A global search of t
 both handednesses) ends on that solution, with a clearly lower energy than every other candidate it refines (1.25 against at
 best 1.47, 14 mm away), and fits to random halves of the labels differ by about 0.09 mm (rms). Every distance from R is also
 given from L, and distances below about 0.3 mm are not interpreted. The vessel check of R (below) is 0.101 mm (median), and 0.21
-and 0.25 mm with R shifted by 0.5 and 1 mm. The authors fitted R with a local intensity correlation, a Dice of grey-matter
-segmentations and a vessel distance term, and the paper reports no accuracy for this step on its own. So R may favour intensity-
-or class-based methods, and the vessel check, which is close to the authors' vessel term, favours R. R is affine, so octreg's
-smooth deformation (§6) is not scored against it.
+and 0.25 mm with R shifted by 0.5 and 1 mm. The authors fitted R as one affine for the whole block, moving a crop of their MRI
+onto the OCT with a local intensity correlation inside an OCT mask, a Dice of grey- and white-matter segmentations and a
+distance between vessel segmentations (`scripts/registration/mri2oct_affine.sh` of their repository). The paper reports no
+accuracy for this step on its own, only for the chain from the MRI through the OCT to the light-sheet sections. So R may favour
+intensity- or class-based methods, and the vessel check, which is close to the authors' vessel term, favours R. R is affine, so
+octreg's smooth deformation (§6) is not scored against it.
 
 ## Inputs and protocol
 
@@ -84,9 +86,10 @@ with runs on these crops. The analyses after the main runs were declared before 
 - **OCT specimen mask.** The block is not embedded, and the OCT is not zero around the tissue: 32 % of the 24 µm blocks more
   than 0.3 mm outside the specimen mask are non-zero (context.json). octreg's documented usage then applies: give it a specimen
   mask. The mask was made from the OCT alone (24 µm box average above 40, then morphology) and ships here as
-  `octmask_24um.nii.gz` (only its array is used, as 24 µm blocks of the OCT array). Every method gets the OCT multiplied by this
-  mask, so all inputs are the same, and octreg also gets `--oct-mask` with the same masked OCT, its documented form for an OCT
-  that is zero outside the tissue.
+  `octmask_24um.nii.gz` (only its array is used, as 24 µm blocks of the OCT array). It leaves out the first six OCT planes
+  (91 µm), which hold tissue, for every method alike. Every method gets the OCT multiplied by this mask, so all inputs are the
+  same, and octreg also gets `--oct-mask` with the same masked OCT, its documented form for an OCT that is zero outside the
+  tissue.
 - **MRI.** The three FLASH images, each with the flip-1 header.
 - **Primary MRI image: the 10° FLASH** (an amendment made before any run). octreg's §2 needs the tissue to
   show a brighter and a darker class, so the primary image is the one with the strongest grey/white contrast, measured with the
@@ -229,6 +232,20 @@ The crop with the median distance under octreg in every condition, axial plane:
 | 10° FLASH, 6 mm margin, k3 | <img src="../../docs/figures/i46/conditions/flip1_C6_k3_mri_line_axial.png" width="150" alt="10° FLASH, 6 mm margin, k3, MRI with the line"> | <img src="../../docs/figures/i46/conditions/flip1_C6_k3_reference_axial.png" width="150" alt="10° FLASH, 6 mm margin, k3, OCT, reference"> | <img src="../../docs/figures/i46/conditions/flip1_C6_k3_octreg_axial.png" width="150" alt="10° FLASH, 6 mm margin, k3, OCT, octreg"> |
 | 10° FLASH, 12 mm margin, k1 | <img src="../../docs/figures/i46/conditions/flip1_C12_k1_mri_line_axial.png" width="150" alt="10° FLASH, 12 mm margin, k1, MRI with the line"> | <img src="../../docs/figures/i46/conditions/flip1_C12_k1_reference_axial.png" width="150" alt="10° FLASH, 12 mm margin, k1, OCT, reference"> | <img src="../../docs/figures/i46/conditions/flip1_C12_k1_octreg_axial.png" width="150" alt="10° FLASH, 12 mm margin, k1, OCT, octreg"> |
 | 10° FLASH, 3 mm margin, without --oct-mask, k6 | <img src="../../docs/figures/i46/conditions/flip1_C3_k6_nomask_mri_line_axial.png" width="150" alt="10° FLASH, 3 mm margin, without --oct-mask, k6, MRI with the line"> | <img src="../../docs/figures/i46/conditions/flip1_C3_k6_nomask_reference_axial.png" width="150" alt="10° FLASH, 3 mm margin, without --oct-mask, k6, OCT, reference"> | <img src="../../docs/figures/i46/conditions/flip1_C3_k6_nomask_octreg_axial.png" width="150" alt="10° FLASH, 3 mm margin, without --oct-mask, k6, OCT, octreg"> |
+
+The same crop in three planes of the OCT itself (`enface/`):
+
+| OCT plane | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
+|---|---|---|---|---|---|
+| 102 | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p102_oct.png" width="140" alt="OCT, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p102_mri_reference.png" width="140" alt="MRI through R, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p102_mri_octreg.png" width="140" alt="MRI through octreg, plane 102"> |
+| 300 | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct.png" width="140" alt="OCT, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_mri_reference.png" width="140" alt="MRI through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_mri_octreg.png" width="140" alt="MRI through octreg, plane 300"> |
+| 498 | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct.png" width="140" alt="OCT, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_mri_reference.png" width="140" alt="MRI through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_mri_octreg.png" width="140" alt="MRI through octreg, plane 498"> |
+
+The same crop in three planes of the OCT itself, the way Costantini et al. show their OCT: OCT planes 102, 300 and 498, each
+three planes below the top of its section, 14.7 × 15.2 mm at 48 µm (a 4 × 4 average of the 12 µm OCT). From left: the OCT, the
+OCT with the white-matter label of the authors' MRI labels resampled through R and through octreg as a red outline, and the MRI
+crop resampled through R and through octreg. The grey levels are linear, at freeview's default window of each OCT plane and of
+the crop.
 
 Every crop of the 10° FLASH with a 3 mm margin, axial plane:
 
