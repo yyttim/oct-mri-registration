@@ -299,11 +299,13 @@ interior match and at most three boundary points on any crop, so it refused its 
 | 498 | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct.png" width="150" alt="OCT, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_reference.png" width="150" alt="MRI through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_octreg.png" width="150" alt="MRI through octreg, plane 498"> |
 
 The crop with the median distance under octreg (10° FLASH, 3 mm margin, k = 0) in three planes of the OCT itself, the way
-Costantini et al. show their OCT: OCT planes 102, 300 and 498, each three planes below the top of its section, 14.7 × 15.2 mm
-at 48 µm (a 4 × 4 average of the 12 µm OCT). From left: the OCT, the OCT with the white-matter boundary of the authors' manual
-MRI labels placed through R and through octreg (red), and the MRI crop resampled through R and through octreg. Outside the OCT
-tissue the line continues through the MRI, and where the white matter reaches the edge of the crop it runs along that edge.
-The grey levels are linear, at freeview's default window of each OCT plane and of the crop
+Costantini et al. show their OCT: planes 102, 300 and 498 of the masked OCT every method received, each three planes below the
+top of its section, 14.76 × 15.25 mm at one screen pixel per two 12 µm OCT voxels. From left: the OCT, the OCT with the
+white-matter boundary of the authors' manual MRI labels placed through R and through octreg (red), and the MRI crop placed
+through R and through octreg. FreeSurfer places both: each transform is written as an LTA file by lta_convert, and freeview
+moves the boundary surface and resamples the MRI through it (nearest neighbour, its default). Outside the OCT tissue the line
+continues through the MRI, and where the white matter reaches the edge of the crop it runs along that edge. The grey levels
+are linear, at freeview's default window of the OCT and of the crop
 ([docs/figures/i46/figures.json](docs/figures/i46/figures.json)).
 
 | R | octreg | NiftyReg reg_aladin | greedy | ANTs |
@@ -315,8 +317,8 @@ The grey levels are linear, at freeview's default window of each OCT plane and o
 | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_flirt_search.png" width="120" alt="OCT plane 300 with the line through FLIRT, its search over ±180°"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_ants_antsai.png" width="120" alt="OCT plane 300 with the line through ANTs, antsAI start"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_greedy_search.png" width="120" alt="OCT plane 300 with the line through greedy, its search"> |  |  |
 
 OCT plane 300 of the same crop with the white-matter boundary placed through R, through octreg and through each standard tool
-at its declared setting and with its own search. FLIRT, SynthMorph and the searches of FLIRT and greedy place no white matter
-within 0.6 mm of this plane, so their panels show no line. elastix ended without a transform on this crop.
+at its declared setting and with its own search. For FLIRT, SynthMorph and the searches of FLIRT and greedy the boundary does
+not cross this plane, so their panels show no line. elastix ended without a transform on this crop.
 [bench/i46](bench/i46/README.md) shows the crop on the MRI grid in three planes, the median crop of every condition, and all
 ten crops of this condition.
 

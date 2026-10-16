@@ -13,13 +13,14 @@ conditions/  for every condition of the test, its crop with the lower median dis
 strip/       every C3 crop of the 10 deg FLASH on the axial plane: the MRI with the line and the OCT through the reference and
              through the first --octreg folder of runs
 enface/      the crop of main/ seen in the OCT's own imaging planes, as the authors show the OCT: three OCT planes
-             (ENFACE_PLANES, one near the top of three sections) at 48 um (4 x 4 box average of the masked OCT), and on each
-             the MRI crop resampled through the reference and through octreg (<crop>_p<plane>_mri_<tag>.png), the OCT alone
-             (<crop>_p<plane>_oct.png) and the OCT with the line of main/ placed through the reference and through octreg
-             (<crop>_p<plane>_oct_line_<tag>.png): the white-matter label resampled to a 0.15 mm grid in the OCT frame
-             around the plane and made a surface the same way. On the middle plane also the line through each standard
-             tool of main/ (<crop>_p300_oct_line_<tool>.png), with no line where the tool places no white matter within
-             four label voxels of the plane (listed as no_line in figures.json)
+             (ENFACE_PLANES, one near the top of three sections) of the masked OCT every method received, at one screen
+             pixel per two OCT voxels and freeview's default window, alone (<crop>_p<plane>_oct.png), with the line of main/
+             placed through the reference and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed
+             through each (<crop>_p<plane>_mri_<tag>.png), at freeview's default window and interpolation. FreeSurfer
+             places everything: lta_convert writes each transform as an LTA, and freeview resamples the MRI and moves the
+             boundary surface through it (:reg=). On the middle plane also the line through each standard tool of main/
+             (<crop>_p300_oct_line_<tool>.png): where its boundary does not cross the plane there is no line (listed as
+             no_line in figures.json)
 The planes pass through the MRI voxel centre nearest the centre of the OCT tissue placed by the reference. The OCT is
 box-averaged to the MRI voxel size and resampled by octreg's own resampler, and black means no OCT. The 2-pixel red line is
 the white-matter boundary of the authors' manual MRI layer labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3
@@ -52,7 +53,6 @@ from octreg import geometry as G, io  # noqa: E402
 
 K = 2                                           # screen pixels per MRI voxel
 ENFACE_PLANES = (102, 300, 498)                 # OCT planes of enface/: the fourth plane of sections 3, 9 and 15
-ENFACE_POOL = 4                                 # in-plane box average of enface/ (48 um)
 INFO = {}                                       # figures.json: <folder>/<crop> -> what its panels are drawn with
 
 
@@ -123,72 +123,78 @@ def panels(crop, transforms, boundary, centre_world, out_dir, prefix, work, plan
     return sorted(expect)
 
 
+def tkr(img):
+    """FreeSurfer's tkregister vox2ras of a grid, the frame of the surfaces mri_mc writes from it."""
+    n, z = np.array(img.shape[:3], float), np.array(img.header.get_zooms()[:3], float)
+    return np.array([[-z[0], 0, 0, z[0] * n[0] / 2], [0, 0, z[2], -z[2] * n[2] / 2], [0, -z[1], 0, z[1] * n[1] / 2],
+                     [0, 0, 0, 1]])
+
+
+def crosses(surf, m, T, o, plane):
+    """Whether the boundary surface (made on the crop grid m), placed in the OCT world by T, crosses OCT plane `plane` inside
+    the OCT field of view."""
+    v, f = nib.freesurfer.read_geometry(str(surf))
+    v = (np.linalg.inv(o.affine) @ np.linalg.inv(T) @ m.affine @ np.linalg.inv(tkr(m)) @ np.c_[v, np.ones(len(v))].T)[:3].T
+    z, xy = v[f, 2], v[f, :2].mean(1)
+    inside = (xy >= -0.5).all(1) & (xy <= np.array(o.shape[:2]) - 0.5).all(1)
+    return bool((inside & (z.min(1) <= plane) & (z.max(1) >= plane)).any())
+
+
 def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mri=True):
     """enface/ (module docstring): transforms {tag: 4 x 4 OCT world -> MRI world}, wm the white-matter label on the crop grid,
     mri whether to make the MRI panels too. -> the panel files"""
-    import nibabel as nib
     out_dir.mkdir(parents=True, exist_ok=True)
     work.mkdir(parents=True, exist_ok=True)
-    m = nib.load(str(crop))
-    marr = np.asarray(m.dataobj, np.float32)
-    o = nib.load(str(OCT))
-    gm, k = freeview_window(crop), ENFACE_POOL
-    s = float(min(m.header.get_zooms()[:3]))                       # the label grid: the MRI voxel size, axes of the OCT
-    D = o.affine[:3, :3] / np.linalg.norm(o.affine[:3, :3], axis=0)
-    cmd, expect, surfs = [], {}, []
+    m, o = nib.load(str(crop)), nib.load(str(OCT))
+    hdr = m.header.copy()
+    hdr.set_data_dtype(np.uint8)
+    nib.save(nib.Nifti1Image(np.asarray(wm, np.uint8), m.affine, hdr), str(work / "boundary.nii.gz"))
+    for tag, T in transforms.items():               # lta_convert reads NiftyReg's direction, here MRI world -> OCT world
+        np.savetxt(work / f"{tag}_niftyreg.txt", np.linalg.inv(np.asarray(T, float)), fmt="%.10f")
+    go, gm = freeview_window(OCT), freeview_window(crop)      # what freeview computes itself, for figures.json
+    ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"
+    surf = host_path(work / "boundary.surf")
+    reg = lambda tag: host_path(work / f"{tag}_mri2oct.lta")
+    line_cmd, mri_cmd, expect = [f"-v {host_path(OCT)}"], [f"-v {host_path(OCT)}:visible=0"], {}
     for plane in planes:
-        a = np.asarray(o.dataobj[:, :, plane], np.float32)
-        nx, ny = a.shape[0] // k, a.shape[1] // k
-        a = a[:nx * k, :ny * k].reshape(nx, k, ny, k).mean((1, 3))[:, :, None]
-        A = o.affine @ np.array([[k, 0, 0, (k - 1) / 2], [0, k, 0, (k - 1) / 2], [0, 0, 1, plane], [0, 0, 0, 1]], float)
-        f_oct = work / f"oct_p{plane}.nii.gz"
-        io.save_nifti(a, A, f_oct)
-        go = freeview_window(f_oct)
-        INFO[f"{out_dir.name}/{prefix}_p{plane}"] = {"oct_window": [round(x, 4) for x in go], "mri_window": [round(x, 4) for x in gm],
-                                                   "plane_mm": [round(nx * k * float(o.header.get_zooms()[0]), 2),
-                                                                round(ny * k * float(o.header.get_zooms()[1]), 2)]}
-        ref = nib.Nifti1Image(a, A)
-        lines, wh = view(ref, "axial", (A @ np.r_[(nx - 1) / 2, (ny - 1) / 2, 0, 1])[:3])
-        lines = [f"-viewsize {wh[0] * 2} {wh[1] * 2}" if line.startswith("-viewsize") else line for line in lines]
-        ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"
-        size = (wh[0] * 2, wh[1] * 2)
-        cmd += ["-v {}:grayscale={!r},{!r}".format(host_path(f_oct), *go), *lines, ss(f"{prefix}_p{plane}_oct.png")]
+        lines, wh = view(o, "axial", (o.affine @ np.r_[0, 0, plane, 1])[:3])
+        size = (wh[0] // 2, wh[1] // 2)                                  # one screen pixel per two OCT voxels
+        lines = [f"-viewsize {size[0]} {size[1]}" if line.startswith("-viewsize") else line for line in lines]
+        INFO[f"{out_dir.name}/{prefix}_p{plane}"] = {
+            "oct_window": [round(x, 4) for x in go], "mri_window": [round(x, 4) for x in gm],
+            "plane_mm": [round(o.shape[k] * float(o.header.get_zooms()[k]), 2) for k in (0, 1)]}
+        line_cmd += [*lines, ss(f"{prefix}_p{plane}_oct.png")]
         expect[out_dir / f"{prefix}_p{plane}_oct.png"] = size
-        n = (int(np.ceil((nx * k * float(o.header.get_zooms()[0]) + 4) / s)),    # 2 mm beyond the plane on each side
-             int(np.ceil((ny * k * float(o.header.get_zooms()[1]) + 4) / s)), 9)  # and 4 voxels above and below it
-        A3 = np.eye(4)
-        A3[:3, :3] = D * s
-        A3[:3, 3] = (A @ np.r_[(nx - 1) / 2, (ny - 1) / 2, 0, 1])[:3] - A3[:3, :3] @ ((np.array(n) - 1) / 2)
-        for tag, T in transforms.items():
-            f_wm = work / f"wm_{tag}_p{plane}.nii.gz"
-            f_mri = work / f"mri_{tag}_p{plane}.nii.gz"
-            lab = G.resample_to(wm.astype(np.uint8), m.affine, n, A3, np.asarray(T, float), order=0).astype(np.uint8)
-            io.save_nifti(lab, A3, f_wm)
-            io.save_nifti(G.resample_to(marr, m.affine, a.shape, A, np.asarray(T, float)), A, f_mri)
-            if lab.any():
-                surfs.append(f_wm.name.removesuffix(".nii.gz"))
-                cmd += [f"-f {host_path(work / (surfs[-1] + '.surf'))}:edgecolor=red:edgethickness=2",
-                        ss(f"{prefix}_p{plane}_oct_line_{tag}.png"), "-unload surface"]
-            else:
-                INFO[f"{out_dir.name}/{prefix}_p{plane}"].setdefault("no_line", []).append(tag)
-                cmd.append(ss(f"{prefix}_p{plane}_oct_line_{tag}.png"))
+        for tag in transforms:
+            line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor=red", ss(f"{prefix}_p{plane}_oct_line_{tag}.png"),
+                         "-unload surface"]
             expect[out_dir / f"{prefix}_p{plane}_oct_line_{tag}.png"] = size
-        cmd.append("-unload volume")
         for tag in transforms if mri else ():
-            cmd += ["-v {}:grayscale={!r},{!r}".format(host_path(work / f"mri_{tag}_p{plane}.nii.gz"), *gm), *lines,
-                    ss(f"{prefix}_p{plane}_mri_{tag}.png"), "-unload volume"]
+            mri_cmd += [f"-v {host_path(crop)}:reg={reg(tag)}", *lines, ss(f"{prefix}_p{plane}_mri_{tag}.png"),
+                        "-unload volume"]
             expect[out_dir / f"{prefix}_p{plane}_mri_{tag}.png"] = size
-    (work / "enface.cmd").write_text("\n".join(cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
+    (work / "lines.cmd").write_text("\n".join(line_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
+    (work / "mri.cmd").write_text("\n".join(mri_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
+    O, C = host_path(OCT), host_path(crop)
     sh = ["#!/bin/bash", "export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}",
           "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}",
           "source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1", "set -e", f"cd {host_path(work)}",
-          *(f"mri_mc {f}.nii.gz 1 {f}_raw.surf > mri_mc_{f}.log 2>&1 && "
-            f"mris_smooth -n 3 -nw {f}_raw.surf {f}.surf > mris_smooth_{f}.log 2>&1" for f in surfs),
-          "freeview -cmd enface.cmd > freeview.log 2>&1"]
+          "mri_mc boundary.nii.gz 1 boundary_raw.surf > mri_mc.log 2>&1",
+          "mris_smooth -n 3 -nw boundary_raw.surf boundary.surf > mris_smooth.log 2>&1",
+          *(f"lta_convert --inniftyreg {tag}_niftyreg.txt --src {O} --trg {C} --outlta {tag}_oct2mri.lta "
+            f"> lta_{tag}.log 2>&1 && lta_convert --inlta {tag}_oct2mri.lta --invert --outlta {tag}_mri2oct.lta "
+            f">> lta_{tag}.log 2>&1"
+            for tag in transforms),
+          "freeview -cmd lines.cmd > freeview_lines.log 2>&1",
+          *(["freeview -cmd mri.cmd > freeview_mri.log 2>&1"] if mri else [])]
     (work / "enface.sh").write_text("\n".join(sh) + "\n", encoding="utf-8", newline="\n")
     for f in expect:
         f.unlink(missing_ok=True)
     subprocess.run((["wsl"] if WSL else []) + ["bash", host_path(work / "enface.sh")], check=True)
+    for plane in planes:
+        no = [tag for tag, T in transforms.items() if not crosses(work / "boundary.surf", m, np.asarray(T, float), o, plane)]
+        if no:
+            INFO[f"{out_dir.name}/{prefix}_p{plane}"]["no_line"] = no
     from PIL import Image
     bad = [f"{f}: {Image.open(f).size if f.is_file() else 'missing'}, expected {wh}" for f, wh in expect.items()
            if not f.is_file() or Image.open(f).size != wh]

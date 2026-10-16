@@ -81,13 +81,17 @@ def freeview_window(path):
     a 1000-bin histogram, from the minimum to the maximum of the volume, of the voxels that are not 0, each split linearly
     between its two nearest bins, and the window from the bin nearest the 5th percentile to the bin nearest the 99th plus a
     fifth of the difference. -> (lo, hi)."""
-    a = np.asarray(nib.load(str(path)).dataobj, np.float32).ravel()
-    vmin, vmax = float(a.min()), float(a.max())
+    img = nib.load(str(path))
+    slabs = lambda: (np.asarray(img.dataobj[:, :, i:i + 32], np.float32).ravel() for i in range(0, img.shape[2], 32))
+    vmin = min(float(a.min()) for a in slabs())
+    vmax = max(float(a.max()) for a in slabs())
     step = (vmax - vmin) / 999
-    d = (a[np.abs(a) >= 1e-7].astype(np.float64) - vmin) / step
-    lo_bin, hi_bin = np.floor(d), np.ceil(d)
-    counts = (np.bincount(np.minimum(lo_bin, 999).astype(int), hi_bin - d, 1000)
-              + np.bincount(np.minimum(hi_bin, 999).astype(int), d - lo_bin, 1000))
+    counts = np.zeros(1000)
+    for a in slabs():
+        d = (a[np.abs(a) >= 1e-7].astype(np.float64) - vmin) / step
+        lo_bin, hi_bin = np.floor(d), np.ceil(d)
+        counts += (np.bincount(np.minimum(lo_bin, 999).astype(int), hi_bin - d, 1000)
+                   + np.bincount(np.minimum(hi_bin, 999).astype(int), d - lo_bin, 1000))
     cdf = np.cumsum(counts) / counts.sum()
     bins = vmin + step * np.arange(1000)
     p5, p99 = (float(bins[np.argmin(np.abs(cdf - p))]) for p in (0.05, 0.99))
