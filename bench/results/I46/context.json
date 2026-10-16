@@ -1,0 +1,36 @@
+{
+ "reference": {
+  "det": 0.9763,
+  "singular_values": [
+   1.0436,
+   0.9929,
+   0.9421
+  ],
+  "vessel_n": 2955,
+  "vessel_mean_mm": 0.1304,
+  "vessel_median_mm": 0.1012
+ },
+ "tissue_points": 843465,
+ "grey_white_cnr": {
+  "box_voxels": [
+   [
+    624,
+    353,
+    258
+   ],
+   [
+    874,
+    605,
+    461
+   ]
+  ],
+  "flip1": 3.492,
+  "flip2": 2.873,
+  "flip3": 1.977,
+  "T1map": 0.491
+ },
+ "oct_noise": {
+  "blocks_beyond_0.3mm": 58638094,
+  "nonzero_share": 0.3169
+ }
+}

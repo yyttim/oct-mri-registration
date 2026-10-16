@@ -1,0 +1,2121 @@
+[
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 10.4325,
+  "median_mm": 10.3714,
+  "p95_mm": 17.3153,
+  "max_mm": 23.036,
+  "rotation_deg": 141.056,
+  "rotation_axis": [
+   0.641,
+   -0.74,
+   -0.204
+  ],
+  "centroid_mm": 1.9465,
+  "scales": [
+   1.64,
+   1.4893,
+   1.9712
+  ],
+  "singular_values": [
+   2.0803,
+   1.6307,
+   1.4188
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.3746,
+  "rotation_L_deg": 141.23,
+  "vessel_n": 7587,
+  "vessel_mean_mm": 0.2736,
+  "vessel_median_mm": 0.2614,
+  "check_r": 1.0,
+  "check_dice": 1.0,
+  "seconds": 7.6
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 16.007,
+  "median_mm": 15.9951,
+  "p95_mm": 24.9648,
+  "max_mm": 30.2023,
+  "rotation_deg": 119.405,
+  "rotation_axis": [
+   0.836,
+   -0.352,
+   -0.421
+  ],
+  "centroid_mm": 15.3295,
+  "scales": [
+   0.9999,
+   1.0,
+   0.9997
+  ],
+  "singular_values": [
+   1.0611,
+   1.0068,
+   0.9585
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 15.9497,
+  "rotation_L_deg": 119.714,
+  "vessel_n": 140,
+  "vessel_mean_mm": 0.3895,
+  "vessel_median_mm": 0.3885,
+  "check_r": 1.0,
+  "check_dice": 1.0,
+  "seconds": 11.9
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 567 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 8.1035,
+  "median_mm": 7.9715,
+  "p95_mm": 13.5366,
+  "max_mm": 21.5715,
+  "rotation_deg": 115.164,
+  "rotation_axis": [
+   0.774,
+   -0.301,
+   -0.558
+  ],
+  "centroid_mm": 1.7649,
+  "scales": [
+   2.0144,
+   1.8909,
+   0.9658
+  ],
+  "singular_values": [
+   2.5959,
+   1.0348,
+   0.7871
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.0406,
+  "rotation_L_deg": 115.532,
+  "vessel_n": 4700,
+  "vessel_mean_mm": 0.2561,
+  "vessel_median_mm": 0.2454,
+  "check_r": 0.9983,
+  "check_dice": 0.9948,
+  "seconds": 3.0
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 7.9769,
+  "median_mm": 7.5048,
+  "p95_mm": 13.6034,
+  "max_mm": 19.2567,
+  "rotation_deg": 121.014,
+  "rotation_axis": [
+   0.783,
+   -0.396,
+   -0.48
+  ],
+  "centroid_mm": 4.6235,
+  "scales": [
+   1.0313,
+   0.9933,
+   0.9852
+  ],
+  "singular_values": [
+   1.0466,
+   1.0077,
+   0.9799
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.0157,
+  "rotation_L_deg": 121.358,
+  "vessel_n": 1525,
+  "vessel_mean_mm": 0.2358,
+  "vessel_median_mm": 0.2142,
+  "check_r": 0.9997,
+  "check_dice": 0.9895,
+  "seconds": 79.0
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 7.9904,
+  "median_mm": 7.6479,
+  "p95_mm": 14.3274,
+  "max_mm": 18.6501,
+  "rotation_deg": 118.615,
+  "rotation_axis": [
+   0.773,
+   -0.428,
+   -0.469
+  ],
+  "centroid_mm": 4.7972,
+  "scales": [
+   0.4524,
+   1.3324,
+   1.0768
+  ],
+  "singular_values": [
+   1.3543,
+   1.1263,
+   0.4356
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.9687,
+  "rotation_L_deg": 119.083,
+  "vessel_n": 1462,
+  "vessel_mean_mm": 0.2539,
+  "vessel_median_mm": 0.2391,
+  "check_r": 0.9985,
+  "check_dice": 0.995,
+  "seconds": 41.7
+ },
+ {
+  "crop": "flip1_C3_k0",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 14.2421,
+  "median_mm": 14.1742,
+  "p95_mm": 20.1597,
+  "max_mm": 24.3134,
+  "rotation_deg": 174.448,
+  "rotation_axis": [
+   -0.987,
+   0.066,
+   -0.146
+  ],
+  "centroid_mm": 12.4705,
+  "scales": [
+   0.8413,
+   0.8424,
+   0.8424
+  ],
+  "singular_values": [
+   0.8942,
+   0.8483,
+   0.8062
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.2241,
+  "rotation_L_deg": 174.48,
+  "vessel_n": 362,
+  "vessel_mean_mm": 0.3028,
+  "vessel_median_mm": 0.2811,
+  "check_r": 1.0,
+  "check_dice": 1.0,
+  "check_voxels": {
+   "tool": 414,
+   "converted": 414,
+   "crop": 1840321
+  },
+  "check_note": "the tool's own resampling holds OCT in only 414 of the 1840321 crop voxels, and the converted pose in 414, so r and Dice rest on them",
+  "seconds": 20.1
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 8.2536,
+  "median_mm": 7.914,
+  "p95_mm": 15.045,
+  "max_mm": 21.8627,
+  "rotation_deg": 100.221,
+  "rotation_axis": [
+   0.539,
+   -0.53,
+   -0.655
+  ],
+  "centroid_mm": 3.2852,
+  "scales": [
+   1.5124,
+   1.5648,
+   1.8779
+  ],
+  "singular_values": [
+   2.0589,
+   1.4787,
+   1.4102
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.2389,
+  "rotation_L_deg": 100.44,
+  "vessel_n": 6152,
+  "vessel_mean_mm": 0.2829,
+  "vessel_median_mm": 0.2681,
+  "seconds": 15.4
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 6.5311,
+  "median_mm": 6.4172,
+  "p95_mm": 11.7577,
+  "max_mm": 16.1811,
+  "rotation_deg": 121.911,
+  "rotation_axis": [
+   0.783,
+   -0.409,
+   -0.469
+  ],
+  "centroid_mm": 1.3937,
+  "scales": [
+   1.0323,
+   1.0089,
+   0.8783
+  ],
+  "singular_values": [
+   1.0291,
+   0.9939,
+   0.9158
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.4959,
+  "rotation_L_deg": 122.268,
+  "vessel_n": 2068,
+  "vessel_mean_mm": 0.2468,
+  "vessel_median_mm": 0.2341,
+  "seconds": 2.2
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 8.0789,
+  "median_mm": 7.7864,
+  "p95_mm": 14.2163,
+  "max_mm": 19.095,
+  "rotation_deg": 122.652,
+  "rotation_axis": [
+   0.808,
+   -0.378,
+   -0.452
+  ],
+  "centroid_mm": 5.0312,
+  "scales": [
+   1.0106,
+   0.9908,
+   1.0173
+  ],
+  "singular_values": [
+   1.0788,
+   0.9971,
+   0.9694
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.0601,
+  "rotation_L_deg": 122.986,
+  "vessel_n": 1831,
+  "vessel_mean_mm": 0.2958,
+  "vessel_median_mm": 0.2746,
+  "seconds": 4.2
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: affine.lta",
+   "",
+   "error: No such file or directory",
+   "error: ltaReadFile(affine.lta): can't open file\u0000",
+   "ERROR reading LTA affine.lta !"
+  ],
+  "log_error": "MyMatrix::MatrixSqrt Internal Error:"
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 9.3173,
+  "median_mm": 9.3654,
+  "p95_mm": 12.7473,
+  "max_mm": 15.9349,
+  "rotation_deg": 111.356,
+  "rotation_axis": [
+   0.921,
+   -0.21,
+   -0.328
+  ],
+  "centroid_mm": 6.936,
+  "scales": [
+   1.0,
+   1.5254,
+   0.9194
+  ],
+  "singular_values": [
+   1.7263,
+   0.9598,
+   0.5856
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.3432,
+  "rotation_L_deg": 111.7,
+  "vessel_n": 431,
+  "vessel_mean_mm": 0.2795,
+  "vessel_median_mm": 0.2633,
+  "seconds": 186.0
+ },
+ {
+  "crop": "flip1_C3_k1",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 20.5597,
+  "median_mm": 20.1883,
+  "p95_mm": 24.0956,
+  "max_mm": 28.7164,
+  "rotation_deg": 161.282,
+  "rotation_axis": [
+   0.945,
+   -0.201,
+   -0.26
+  ],
+  "centroid_mm": 18.8396,
+  "scales": [
+   1.0725,
+   1.0727,
+   1.0728
+  ],
+  "singular_values": [
+   1.1387,
+   1.0802,
+   1.0277
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 20.4916,
+  "rotation_L_deg": 161.49,
+  "vessel_n": 1728,
+  "vessel_mean_mm": 0.2766,
+  "vessel_median_mm": 0.2658,
+  "seconds": 18.4
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 9.8626,
+  "median_mm": 9.6804,
+  "p95_mm": 16.6293,
+  "max_mm": 24.2798,
+  "rotation_deg": 158.699,
+  "rotation_axis": [
+   0.654,
+   -0.353,
+   -0.669
+  ],
+  "centroid_mm": 4.0431,
+  "scales": [
+   1.5394,
+   1.3618,
+   1.6656
+  ],
+  "singular_values": [
+   1.7967,
+   1.5127,
+   1.2727
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.8305,
+  "rotation_L_deg": 158.949,
+  "vessel_n": 5590,
+  "vessel_mean_mm": 0.2486,
+  "vessel_median_mm": 0.2374,
+  "seconds": 14.2
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 10.9908,
+  "median_mm": 10.6811,
+  "p95_mm": 17.0547,
+  "max_mm": 21.6829,
+  "rotation_deg": 122.06,
+  "rotation_axis": [
+   0.783,
+   -0.395,
+   -0.481
+  ],
+  "centroid_mm": 9.1031,
+  "scales": [
+   0.9982,
+   0.9969,
+   0.9783
+  ],
+  "singular_values": [
+   1.0354,
+   1.0093,
+   0.954
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.8916,
+  "rotation_L_deg": 122.396,
+  "vessel_n": 2900,
+  "vessel_mean_mm": 0.2767,
+  "vessel_median_mm": 0.2556,
+  "seconds": 1.6
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 567 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 7.046,
+  "median_mm": 7.1181,
+  "p95_mm": 11.0227,
+  "max_mm": 14.1139,
+  "rotation_deg": 114.206,
+  "rotation_axis": [
+   0.782,
+   -0.355,
+   -0.513
+  ],
+  "centroid_mm": 2.6716,
+  "scales": [
+   1.6699,
+   1.2689,
+   0.9924
+  ],
+  "singular_values": [
+   2.0083,
+   0.9576,
+   0.6547
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.0261,
+  "rotation_L_deg": 114.484,
+  "vessel_n": 2958,
+  "vessel_mean_mm": 0.2572,
+  "vessel_median_mm": 0.2455,
+  "seconds": 6.2
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 14.5999,
+  "median_mm": 14.2709,
+  "p95_mm": 22.7091,
+  "max_mm": 27.8393,
+  "rotation_deg": 122.027,
+  "rotation_axis": [
+   0.773,
+   -0.412,
+   -0.482
+  ],
+  "centroid_mm": 13.1275,
+  "scales": [
+   0.9438,
+   1.5052,
+   1.0038
+  ],
+  "singular_values": [
+   1.5309,
+   1.0521,
+   0.9066
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.5404,
+  "rotation_L_deg": 122.483,
+  "vessel_n": 2036,
+  "vessel_mean_mm": 0.2883,
+  "vessel_median_mm": 0.2707,
+  "seconds": 88.9
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 7.7425,
+  "median_mm": 7.473,
+  "p95_mm": 12.2543,
+  "max_mm": 16.6399,
+  "rotation_deg": 116.224,
+  "rotation_axis": [
+   0.758,
+   -0.44,
+   -0.481
+  ],
+  "centroid_mm": 3.9183,
+  "scales": [
+   1.0551,
+   1.1387,
+   0.9536
+  ],
+  "singular_values": [
+   1.1695,
+   1.0488,
+   0.9517
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.7724,
+  "rotation_L_deg": 116.586,
+  "vessel_n": 2052,
+  "vessel_mean_mm": 0.242,
+  "vessel_median_mm": 0.2367,
+  "seconds": 199.1
+ },
+ {
+  "crop": "flip1_C3_k2",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 14.742,
+  "median_mm": 14.2799,
+  "p95_mm": 21.1403,
+  "max_mm": 26.2259,
+  "rotation_deg": 143.465,
+  "rotation_axis": [
+   0.808,
+   -0.503,
+   -0.306
+  ],
+  "centroid_mm": 13.3031,
+  "scales": [
+   0.8156,
+   0.8221,
+   0.8213
+  ],
+  "singular_values": [
+   0.8717,
+   0.8274,
+   0.782
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.6298,
+  "rotation_L_deg": 143.722,
+  "vessel_n": 127,
+  "vessel_mean_mm": 0.376,
+  "vessel_median_mm": 0.3451,
+  "seconds": 20.5
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 7.6215,
+  "median_mm": 7.4518,
+  "p95_mm": 13.0239,
+  "max_mm": 18.8501,
+  "rotation_deg": 101.066,
+  "rotation_axis": [
+   0.645,
+   -0.39,
+   -0.657
+  ],
+  "centroid_mm": 1.3324,
+  "scales": [
+   1.4834,
+   1.2936,
+   2.036
+  ],
+  "singular_values": [
+   2.1594,
+   1.4269,
+   1.2399
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.6155,
+  "rotation_L_deg": 101.213,
+  "vessel_n": 6967,
+  "vessel_mean_mm": 0.2579,
+  "vessel_median_mm": 0.2446,
+  "seconds": 16.2
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 18.4271,
+  "median_mm": 18.5577,
+  "p95_mm": 24.9115,
+  "max_mm": 28.7351,
+  "rotation_deg": 118.291,
+  "rotation_axis": [
+   0.797,
+   -0.394,
+   -0.458
+  ],
+  "centroid_mm": 17.519,
+  "scales": [
+   1.0032,
+   0.9976,
+   0.9867
+  ],
+  "singular_values": [
+   1.0583,
+   1.001,
+   0.9546
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 18.3283,
+  "rotation_L_deg": 118.627,
+  "vessel_n": 457,
+  "vessel_mean_mm": 0.2837,
+  "vessel_median_mm": 0.2732,
+  "seconds": 1.8
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 6.6006,
+  "median_mm": 6.4819,
+  "p95_mm": 10.4204,
+  "max_mm": 13.5489,
+  "rotation_deg": 119.559,
+  "rotation_axis": [
+   0.774,
+   -0.443,
+   -0.452
+  ],
+  "centroid_mm": 4.0898,
+  "scales": [
+   0.7333,
+   0.3966,
+   0.6569
+  ],
+  "singular_values": [
+   0.7291,
+   0.676,
+   0.3791
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.628,
+  "rotation_L_deg": 119.674,
+  "vessel_n": 377,
+  "vessel_mean_mm": 0.2918,
+  "vessel_median_mm": 0.2713,
+  "seconds": 5.9
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 8.7762,
+  "median_mm": 8.4285,
+  "p95_mm": 13.5337,
+  "max_mm": 17.9928,
+  "rotation_deg": 121.525,
+  "rotation_axis": [
+   0.778,
+   -0.4,
+   -0.484
+  ],
+  "centroid_mm": 5.8008,
+  "scales": [
+   0.9939,
+   1.0089,
+   1.0006
+  ],
+  "singular_values": [
+   1.063,
+   1.0113,
+   0.9558
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.8089,
+  "rotation_L_deg": 121.875,
+  "vessel_n": 2026,
+  "vessel_mean_mm": 0.2934,
+  "vessel_median_mm": 0.2794,
+  "seconds": 110.5
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 16.0933,
+  "median_mm": 15.5734,
+  "p95_mm": 24.7758,
+  "max_mm": 31.1067,
+  "rotation_deg": 121.013,
+  "rotation_axis": [
+   0.765,
+   -0.4,
+   -0.505
+  ],
+  "centroid_mm": 15.2772,
+  "scales": [
+   0.999,
+   0.9958,
+   1.001
+  ],
+  "singular_values": [
+   1.0672,
+   1.0015,
+   0.9538
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 16.1005,
+  "rotation_L_deg": 121.381,
+  "vessel_n": 232,
+  "vessel_mean_mm": 0.2717,
+  "vessel_median_mm": 0.2757,
+  "seconds": 192.6
+ },
+ {
+  "crop": "flip1_C3_k3",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 20.9683,
+  "median_mm": 21.2017,
+  "p95_mm": 28.4565,
+  "max_mm": 33.6425,
+  "rotation_deg": 131.684,
+  "rotation_axis": [
+   0.575,
+   0.553,
+   0.603
+  ],
+  "centroid_mm": 20.3758,
+  "scales": [
+   0.7887,
+   0.7885,
+   0.7891
+  ],
+  "singular_values": [
+   0.8372,
+   0.7943,
+   0.7557
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 21.075,
+  "rotation_L_deg": 131.32,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "seconds": 18.0
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 8.6699,
+  "median_mm": 8.2949,
+  "p95_mm": 15.2025,
+  "max_mm": 22.7906,
+  "rotation_deg": 110.993,
+  "rotation_axis": [
+   0.465,
+   -0.638,
+   -0.614
+  ],
+  "centroid_mm": 3.7162,
+  "scales": [
+   1.5242,
+   1.3555,
+   1.696
+  ],
+  "singular_values": [
+   1.8016,
+   1.5685,
+   1.2061
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.6193,
+  "rotation_L_deg": 111.246,
+  "vessel_n": 5087,
+  "vessel_mean_mm": 0.2667,
+  "vessel_median_mm": 0.2531,
+  "seconds": 11.9
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 20.3558,
+  "median_mm": 19.9859,
+  "p95_mm": 24.1853,
+  "max_mm": 27.7348,
+  "rotation_deg": 122.896,
+  "rotation_axis": [
+   0.8,
+   -0.409,
+   -0.44
+  ],
+  "centroid_mm": 19.1563,
+  "scales": [
+   1.0013,
+   0.9976,
+   0.9975
+  ],
+  "singular_values": [
+   1.0605,
+   1.0036,
+   0.9589
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 20.2307,
+  "rotation_L_deg": 123.221,
+  "vessel_n": 426,
+  "vessel_mean_mm": 0.4013,
+  "vessel_median_mm": 0.3619,
+  "seconds": 1.6
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 8.9228,
+  "median_mm": 8.5702,
+  "p95_mm": 14.8617,
+  "max_mm": 19.3042,
+  "rotation_deg": 127.981,
+  "rotation_axis": [
+   0.801,
+   -0.395,
+   -0.45
+  ],
+  "centroid_mm": 5.5068,
+  "scales": [
+   1.169,
+   1.093,
+   1.0354
+  ],
+  "singular_values": [
+   1.1991,
+   1.1443,
+   0.959
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.9163,
+  "rotation_L_deg": 128.358,
+  "vessel_n": 1585,
+  "vessel_mean_mm": 0.2876,
+  "vessel_median_mm": 0.2722,
+  "seconds": 5.9
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 14.2667,
+  "median_mm": 14.3024,
+  "p95_mm": 21.0853,
+  "max_mm": 25.7422,
+  "rotation_deg": 122.053,
+  "rotation_axis": [
+   0.78,
+   -0.403,
+   -0.478
+  ],
+  "centroid_mm": 13.056,
+  "scales": [
+   1.0021,
+   0.9962,
+   0.9906
+  ],
+  "singular_values": [
+   1.0534,
+   1.001,
+   0.9605
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.1698,
+  "rotation_L_deg": 122.398,
+  "vessel_n": 1227,
+  "vessel_mean_mm": 0.2799,
+  "vessel_median_mm": 0.254,
+  "seconds": 95.3
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 9.5567,
+  "median_mm": 9.7016,
+  "p95_mm": 12.8368,
+  "max_mm": 15.8142,
+  "rotation_deg": 110.62,
+  "rotation_axis": [
+   0.912,
+   -0.208,
+   -0.354
+  ],
+  "centroid_mm": 7.3332,
+  "scales": [
+   1.04,
+   1.5056,
+   0.9491
+  ],
+  "singular_values": [
+   1.7389,
+   0.984,
+   0.5833
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.5876,
+  "rotation_L_deg": 110.946,
+  "vessel_n": 407,
+  "vessel_mean_mm": 0.2736,
+  "vessel_median_mm": 0.2557,
+  "seconds": 186.6
+ },
+ {
+  "crop": "flip1_C3_k4",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 17.1432,
+  "median_mm": 16.9567,
+  "p95_mm": 22.0331,
+  "max_mm": 26.065,
+  "rotation_deg": 148.212,
+  "rotation_axis": [
+   0.47,
+   -0.138,
+   -0.872
+  ],
+  "centroid_mm": 16.0617,
+  "scales": [
+   0.7931,
+   0.793,
+   0.793
+  ],
+  "singular_values": [
+   0.8423,
+   0.7983,
+   0.7597
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 17.1707,
+  "rotation_L_deg": 148.74,
+  "vessel_n": 315,
+  "vessel_mean_mm": 0.2476,
+  "vessel_median_mm": 0.228,
+  "seconds": 17.5
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 8.8253,
+  "median_mm": 8.537,
+  "p95_mm": 15.5802,
+  "max_mm": 22.8088,
+  "rotation_deg": 119.893,
+  "rotation_axis": [
+   0.542,
+   -0.52,
+   -0.66
+  ],
+  "centroid_mm": 3.748,
+  "scales": [
+   1.3664,
+   1.3069,
+   1.9858
+  ],
+  "singular_values": [
+   2.0848,
+   1.3941,
+   1.2289
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.7978,
+  "rotation_L_deg": 120.126,
+  "vessel_n": 5615,
+  "vessel_mean_mm": 0.2661,
+  "vessel_median_mm": 0.2463,
+  "seconds": 14.7
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 6.6847,
+  "median_mm": 6.5511,
+  "p95_mm": 11.9299,
+  "max_mm": 16.4302,
+  "rotation_deg": 121.875,
+  "rotation_axis": [
+   0.781,
+   -0.404,
+   -0.477
+  ],
+  "centroid_mm": 1.8738,
+  "scales": [
+   0.9996,
+   0.9996,
+   0.9989
+  ],
+  "singular_values": [
+   1.0607,
+   1.0065,
+   0.9575
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.6275,
+  "rotation_L_deg": 122.217,
+  "vessel_n": 2325,
+  "vessel_mean_mm": 0.2455,
+  "vessel_median_mm": 0.231,
+  "seconds": 1.8
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 8.4043,
+  "median_mm": 8.0105,
+  "p95_mm": 15.3347,
+  "max_mm": 20.7742,
+  "rotation_deg": 126.501,
+  "rotation_axis": [
+   0.815,
+   -0.395,
+   -0.424
+  ],
+  "centroid_mm": 5.0739,
+  "scales": [
+   1.2386,
+   1.0103,
+   0.9009
+  ],
+  "singular_values": [
+   1.1975,
+   1.0285,
+   0.9337
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.3872,
+  "rotation_L_deg": 126.819,
+  "vessel_n": 2239,
+  "vessel_mean_mm": 0.2932,
+  "vessel_median_mm": 0.2697,
+  "seconds": 6.1
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 14.0877,
+  "median_mm": 13.975,
+  "p95_mm": 20.8449,
+  "max_mm": 25.6275,
+  "rotation_deg": 121.736,
+  "rotation_axis": [
+   0.778,
+   -0.403,
+   -0.481
+  ],
+  "centroid_mm": 12.8295,
+  "scales": [
+   0.9969,
+   1.002,
+   1.0017
+  ],
+  "singular_values": [
+   1.0637,
+   1.0087,
+   0.9551
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 13.9938,
+  "rotation_L_deg": 122.081,
+  "vessel_n": 1456,
+  "vessel_mean_mm": 0.2948,
+  "vessel_median_mm": 0.276,
+  "seconds": 97.4
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 9.0138,
+  "median_mm": 8.892,
+  "p95_mm": 12.9887,
+  "max_mm": 16.3964,
+  "rotation_deg": 115.629,
+  "rotation_axis": [
+   0.922,
+   -0.235,
+   -0.308
+  ],
+  "centroid_mm": 6.4094,
+  "scales": [
+   0.9742,
+   1.4188,
+   1.0116
+  ],
+  "singular_values": [
+   1.6109,
+   1.0566,
+   0.5992
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.0312,
+  "rotation_L_deg": 115.962,
+  "vessel_n": 520,
+  "vessel_mean_mm": 0.2816,
+  "vessel_median_mm": 0.272,
+  "seconds": 192.4
+ },
+ {
+  "crop": "flip1_C3_k5",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 15.3142,
+  "median_mm": 15.2159,
+  "p95_mm": 21.0478,
+  "max_mm": 25.2217,
+  "rotation_deg": 159.103,
+  "rotation_axis": [
+   -0.594,
+   -0.586,
+   0.551
+  ],
+  "centroid_mm": 14.0897,
+  "scales": [
+   0.6198,
+   0.6196,
+   0.6198
+  ],
+  "singular_values": [
+   0.6576,
+   0.6242,
+   0.5939
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 15.2172,
+  "rotation_L_deg": 158.819,
+  "vessel_n": 118,
+  "vessel_mean_mm": 0.2771,
+  "vessel_median_mm": 0.2763,
+  "seconds": 16.4
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 10.503,
+  "median_mm": 10.4104,
+  "p95_mm": 17.5356,
+  "max_mm": 23.4445,
+  "rotation_deg": 140.685,
+  "rotation_axis": [
+   0.603,
+   -0.755,
+   -0.258
+  ],
+  "centroid_mm": 2.822,
+  "scales": [
+   1.5585,
+   1.5398,
+   1.9779
+  ],
+  "singular_values": [
+   2.0756,
+   1.6015,
+   1.4413
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.4213,
+  "rotation_L_deg": 140.879,
+  "vessel_n": 8568,
+  "vessel_mean_mm": 0.2751,
+  "vessel_median_mm": 0.2633,
+  "seconds": 14.8
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 19.4121,
+  "median_mm": 19.513,
+  "p95_mm": 29.2258,
+  "max_mm": 34.1292,
+  "rotation_deg": 122.792,
+  "rotation_axis": [
+   0.804,
+   -0.392,
+   -0.447
+  ],
+  "centroid_mm": 18.9381,
+  "scales": [
+   1.0475,
+   0.9941,
+   0.9177
+  ],
+  "singular_values": [
+   1.0592,
+   0.9679,
+   0.9501
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 19.3894,
+  "rotation_L_deg": 123.134,
+  "vessel_n": 58,
+  "vessel_mean_mm": 0.5096,
+  "vessel_median_mm": 0.5448,
+  "seconds": 1.7
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 6.539,
+  "median_mm": 6.4557,
+  "p95_mm": 11.5708,
+  "max_mm": 15.6184,
+  "rotation_deg": 121.48,
+  "rotation_axis": [
+   0.774,
+   -0.418,
+   -0.475
+  ],
+  "centroid_mm": 1.6316,
+  "scales": [
+   1.0241,
+   0.9556,
+   0.9739
+  ],
+  "singular_values": [
+   1.0338,
+   0.9926,
+   0.9492
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.5111,
+  "rotation_L_deg": 121.805,
+  "vessel_n": 2423,
+  "vessel_mean_mm": 0.2673,
+  "vessel_median_mm": 0.2514,
+  "seconds": 6.9
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 14.6593,
+  "median_mm": 14.5113,
+  "p95_mm": 21.7751,
+  "max_mm": 26.6308,
+  "rotation_deg": 121.783,
+  "rotation_axis": [
+   0.775,
+   -0.41,
+   -0.482
+  ],
+  "centroid_mm": 13.4163,
+  "scales": [
+   0.6459,
+   0.9847,
+   1.3859
+  ],
+  "singular_values": [
+   1.4514,
+   0.9995,
+   0.622
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 14.5887,
+  "rotation_L_deg": 122.098,
+  "vessel_n": 217,
+  "vessel_mean_mm": 0.3276,
+  "vessel_median_mm": 0.2882,
+  "seconds": 84.4
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 8.3409,
+  "median_mm": 8.1392,
+  "p95_mm": 13.0108,
+  "max_mm": 17.4619,
+  "rotation_deg": 109.285,
+  "rotation_axis": [
+   0.921,
+   -0.202,
+   -0.333
+  ],
+  "centroid_mm": 6.5205,
+  "scales": [
+   0.9977,
+   1.524,
+   0.0252
+  ],
+  "singular_values": [
+   1.7235,
+   0.5732,
+   0.0008
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.3723,
+  "rotation_L_deg": 109.402,
+  "vessel_n": 0,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "seconds": 177.1
+ },
+ {
+  "crop": "flip1_C3_k6",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 13.2344,
+  "median_mm": 13.212,
+  "p95_mm": 18.5011,
+  "max_mm": 22.8416,
+  "rotation_deg": 143.367,
+  "rotation_axis": [
+   0.771,
+   -0.126,
+   0.624
+  ],
+  "centroid_mm": 12.2023,
+  "scales": [
+   0.4923,
+   0.4936,
+   0.491
+  ],
+  "singular_values": [
+   0.5214,
+   0.4962,
+   0.4724
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 13.186,
+  "rotation_L_deg": 143.059,
+  "vessel_n": 99,
+  "vessel_mean_mm": 0.2535,
+  "vessel_median_mm": 0.2387,
+  "seconds": 18.6
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 8.0049,
+  "median_mm": 7.724,
+  "p95_mm": 14.4072,
+  "max_mm": 21.4964,
+  "rotation_deg": 97.359,
+  "rotation_axis": [
+   0.542,
+   -0.519,
+   -0.661
+  ],
+  "centroid_mm": 1.8573,
+  "scales": [
+   1.5049,
+   1.5329,
+   2.0704
+  ],
+  "singular_values": [
+   2.2372,
+   1.4579,
+   1.4029
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.9875,
+  "rotation_L_deg": 97.563,
+  "vessel_n": 7220,
+  "vessel_mean_mm": 0.2732,
+  "vessel_median_mm": 0.2557,
+  "seconds": 16.2
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 6.5514,
+  "median_mm": 6.4495,
+  "p95_mm": 11.682,
+  "max_mm": 15.9084,
+  "rotation_deg": 121.857,
+  "rotation_axis": [
+   0.786,
+   -0.406,
+   -0.467
+  ],
+  "centroid_mm": 1.5449,
+  "scales": [
+   1.016,
+   1.0051,
+   0.9303
+  ],
+  "singular_values": [
+   1.0395,
+   0.989,
+   0.946
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.5026,
+  "rotation_L_deg": 122.208,
+  "vessel_n": 2265,
+  "vessel_mean_mm": 0.2402,
+  "vessel_median_mm": 0.2265,
+  "seconds": 1.7
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 6.4444,
+  "median_mm": 6.333,
+  "p95_mm": 11.574,
+  "max_mm": 16.0866,
+  "rotation_deg": 120.271,
+  "rotation_axis": [
+   0.78,
+   -0.395,
+   -0.486
+  ],
+  "centroid_mm": 1.4343,
+  "scales": [
+   1.0173,
+   1.0059,
+   0.9767
+  ],
+  "singular_values": [
+   1.0655,
+   1.0021,
+   0.9557
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 6.3994,
+  "rotation_L_deg": 120.613,
+  "vessel_n": 2298,
+  "vessel_mean_mm": 0.2476,
+  "vessel_median_mm": 0.2334,
+  "seconds": 6.6
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 7.0625,
+  "median_mm": 6.5648,
+  "p95_mm": 13.5483,
+  "max_mm": 19.0365,
+  "rotation_deg": 116.687,
+  "rotation_axis": [
+   0.798,
+   -0.387,
+   -0.463
+  ],
+  "centroid_mm": 3.2822,
+  "scales": [
+   1.2241,
+   1.0339,
+   0.9852
+  ],
+  "singular_values": [
+   1.2173,
+   1.028,
+   1.0085
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.0634,
+  "rotation_L_deg": 116.989,
+  "vessel_n": 2326,
+  "vessel_mean_mm": 0.255,
+  "vessel_median_mm": 0.2491,
+  "seconds": 71.6
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 10.1031,
+  "median_mm": 10.3434,
+  "p95_mm": 13.7194,
+  "max_mm": 16.9109,
+  "rotation_deg": 114.36,
+  "rotation_axis": [
+   0.955,
+   -0.173,
+   -0.241
+  ],
+  "centroid_mm": 7.6617,
+  "scales": [
+   0.9535,
+   1.7877,
+   1.0576
+  ],
+  "singular_values": [
+   2.0108,
+   1.0496,
+   0.5107
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 10.133,
+  "rotation_L_deg": 114.805,
+  "vessel_n": 452,
+  "vessel_mean_mm": 0.25,
+  "vessel_median_mm": 0.2473,
+  "seconds": 185.1
+ },
+ {
+  "crop": "flip1_C3_k7",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 13.3577,
+  "median_mm": 13.4978,
+  "p95_mm": 17.8406,
+  "max_mm": 20.7524,
+  "rotation_deg": 148.8,
+  "rotation_axis": [
+   0.631,
+   0.747,
+   -0.209
+  ],
+  "centroid_mm": 12.3868,
+  "scales": [
+   0.2575,
+   0.2578,
+   0.2568
+  ],
+  "singular_values": [
+   0.2729,
+   0.2597,
+   0.2465
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 13.4029,
+  "rotation_L_deg": 148.88,
+  "vessel_n": 7,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "seconds": 20.8
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 9.2485,
+  "median_mm": 8.8891,
+  "p95_mm": 16.3415,
+  "max_mm": 24.1176,
+  "rotation_deg": 115.668,
+  "rotation_axis": [
+   0.618,
+   -0.459,
+   -0.639
+  ],
+  "centroid_mm": 3.7916,
+  "scales": [
+   1.4613,
+   1.363,
+   2.1892
+  ],
+  "singular_values": [
+   2.3012,
+   1.4592,
+   1.288
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.2308,
+  "rotation_L_deg": 115.876,
+  "vessel_n": 7276,
+  "vessel_mean_mm": 0.2698,
+  "vessel_median_mm": 0.2577,
+  "seconds": 15.8
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 18.0513,
+  "median_mm": 18.0242,
+  "p95_mm": 27.5175,
+  "max_mm": 33.0364,
+  "rotation_deg": 124.254,
+  "rotation_axis": [
+   0.817,
+   -0.374,
+   -0.438
+  ],
+  "centroid_mm": 17.4039,
+  "scales": [
+   1.0601,
+   0.9911,
+   0.8054
+  ],
+  "singular_values": [
+   1.0708,
+   0.9943,
+   0.7831
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 17.9907,
+  "rotation_L_deg": 124.551,
+  "vessel_n": 30,
+  "vessel_mean_mm": null,
+  "vessel_median_mm": null,
+  "seconds": 1.9
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 8.134,
+  "median_mm": 7.7752,
+  "p95_mm": 14.2297,
+  "max_mm": 18.819,
+  "rotation_deg": 123.231,
+  "rotation_axis": [
+   0.807,
+   -0.386,
+   -0.448
+  ],
+  "centroid_mm": 5.3033,
+  "scales": [
+   0.9831,
+   0.9532,
+   0.9957
+  ],
+  "singular_values": [
+   1.0459,
+   0.9922,
+   0.917
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 8.125,
+  "rotation_L_deg": 123.536,
+  "vessel_n": 1342,
+  "vessel_mean_mm": 0.309,
+  "vessel_median_mm": 0.294,
+  "seconds": 5.0
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 15.4744,
+  "median_mm": 15.5871,
+  "p95_mm": 22.9522,
+  "max_mm": 30.0283,
+  "rotation_deg": 119.233,
+  "rotation_axis": [
+   0.714,
+   -0.302,
+   -0.631
+  ],
+  "centroid_mm": 12.0335,
+  "scales": [
+   2.0564,
+   1.802,
+   2.7615
+  ],
+  "singular_values": [
+   3.3308,
+   1.794,
+   1.2307
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 15.371,
+  "rotation_L_deg": 119.32,
+  "vessel_n": 7986,
+  "vessel_mean_mm": 0.2671,
+  "vessel_median_mm": 0.2512,
+  "seconds": 108.6
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 9.2524,
+  "median_mm": 9.2351,
+  "p95_mm": 12.5228,
+  "max_mm": 16.5716,
+  "rotation_deg": 111.5,
+  "rotation_axis": [
+   0.909,
+   -0.239,
+   -0.341
+  ],
+  "centroid_mm": 7.1709,
+  "scales": [
+   0.9948,
+   1.439,
+   0.6415
+  ],
+  "singular_values": [
+   1.6404,
+   0.6937,
+   0.5817
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.2734,
+  "rotation_L_deg": 111.78,
+  "vessel_n": 267,
+  "vessel_mean_mm": 0.2517,
+  "vessel_median_mm": 0.2459,
+  "seconds": 162.4
+ },
+ {
+  "crop": "flip1_C3_k8",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 17.0665,
+  "median_mm": 16.9428,
+  "p95_mm": 23.4936,
+  "max_mm": 29.0191,
+  "rotation_deg": 112.747,
+  "rotation_axis": [
+   -0.857,
+   0.247,
+   -0.452
+  ],
+  "centroid_mm": 16.0472,
+  "scales": [
+   0.999,
+   0.9926,
+   0.9996
+  ],
+  "singular_values": [
+   1.059,
+   1.0011,
+   0.9577
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 16.9729,
+  "rotation_L_deg": 112.943,
+  "vessel_n": 155,
+  "vessel_mean_mm": 0.2795,
+  "vessel_median_mm": 0.2505,
+  "seconds": 21.0
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "reg_aladin_mask",
+  "setting": "defaults (image centres), -fmask",
+  "mean_mm": 9.926,
+  "median_mm": 9.7977,
+  "p95_mm": 16.2838,
+  "max_mm": 22.379,
+  "rotation_deg": 124.367,
+  "rotation_axis": [
+   0.579,
+   -0.734,
+   -0.355
+  ],
+  "centroid_mm": 2.8824,
+  "scales": [
+   1.6045,
+   1.4483,
+   1.9769
+  ],
+  "singular_values": [
+   2.097,
+   1.6189,
+   1.3234
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.8361,
+  "rotation_L_deg": 124.557,
+  "vessel_n": 8463,
+  "vessel_mean_mm": 0.2747,
+  "vessel_median_mm": 0.2592,
+  "seconds": 14.2
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "greedy_mask",
+  "setting": "NMI, -ia-image-centers, -mm",
+  "mean_mm": 16.7095,
+  "median_mm": 17.0625,
+  "p95_mm": 24.2633,
+  "max_mm": 28.9227,
+  "rotation_deg": 121.938,
+  "rotation_axis": [
+   0.775,
+   -0.407,
+   -0.483
+  ],
+  "centroid_mm": 15.8733,
+  "scales": [
+   1.0076,
+   0.9995,
+   1.0127
+  ],
+  "singular_values": [
+   1.071,
+   1.0102,
+   0.9654
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 16.6435,
+  "rotation_L_deg": 122.281,
+  "vessel_n": 380,
+  "vessel_mean_mm": 0.2578,
+  "vessel_median_mm": 0.2259,
+  "seconds": 1.7
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "elastix_mask",
+  "setting": "model zoo, geometric centre, -mMask",
+  "tier": "tool error",
+  "error": [
+   "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
+   "Error occurred during actual registration.",
+   "",
+   "",
+   "Errors occurred!"
+  ],
+  "log_error": "Description: ITK ERROR: AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 566 / 3264"
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "ants_mask",
+  "setting": "antsRegistrationSyN -t a, -x NULL,mask",
+  "mean_mm": 7.7087,
+  "median_mm": 7.634,
+  "p95_mm": 13.1522,
+  "max_mm": 16.722,
+  "rotation_deg": 120.115,
+  "rotation_axis": [
+   0.782,
+   -0.401,
+   -0.478
+  ],
+  "centroid_mm": 4.6415,
+  "scales": [
+   0.9958,
+   0.9363,
+   0.9969
+  ],
+  "singular_values": [
+   1.0518,
+   0.9851,
+   0.9155
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 7.685,
+  "rotation_L_deg": 120.417,
+  "vessel_n": 1901,
+  "vessel_mean_mm": 0.2765,
+  "vessel_median_mm": 0.2633,
+  "seconds": 5.1
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "mri_robust_register_mask",
+  "setting": "NMI, default start, --maskmov",
+  "mean_mm": 11.554,
+  "median_mm": 11.1886,
+  "p95_mm": 17.6969,
+  "max_mm": 22.4046,
+  "rotation_deg": 121.833,
+  "rotation_axis": [
+   0.78,
+   -0.4,
+   -0.48
+  ],
+  "centroid_mm": 9.8785,
+  "scales": [
+   1.0,
+   0.8853,
+   1.0011
+  ],
+  "singular_values": [
+   1.0549,
+   0.9607,
+   0.8957
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 11.4545,
+  "rotation_L_deg": 122.144,
+  "vessel_n": 2531,
+  "vessel_mean_mm": 0.2841,
+  "vessel_median_mm": 0.262,
+  "seconds": 54.0
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "mri_coreg_mask",
+  "setting": "defaults, --mov-mask",
+  "mean_mm": 9.9748,
+  "median_mm": 9.8471,
+  "p95_mm": 15.833,
+  "max_mm": 19.8157,
+  "rotation_deg": 119.472,
+  "rotation_axis": [
+   0.787,
+   -0.375,
+   -0.489
+  ],
+  "centroid_mm": 7.7585,
+  "scales": [
+   1.0518,
+   1.0571,
+   1.0092
+  ],
+  "singular_values": [
+   1.1105,
+   1.0722,
+   0.9513
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 9.9649,
+  "rotation_L_deg": 119.841,
+  "vessel_n": 1686,
+  "vessel_mean_mm": 0.2729,
+  "vessel_median_mm": 0.2617,
+  "seconds": 93.7
+ },
+ {
+  "crop": "flip1_C3_k9",
+  "tool": "flirt_mask",
+  "setting": "normmi, default search, x10 headers, -inweight",
+  "mean_mm": 19.2729,
+  "median_mm": 19.0668,
+  "p95_mm": 23.486,
+  "max_mm": 26.2922,
+  "rotation_deg": 100.806,
+  "rotation_axis": [
+   -0.839,
+   -0.519,
+   0.164
+  ],
+  "centroid_mm": 18.2138,
+  "scales": [
+   1.0159,
+   1.0158,
+   1.0174
+  ],
+  "singular_values": [
+   1.0797,
+   1.0233,
+   0.9733
+  ],
+  "tier": "beyond",
+  "mean_L_mm": 19.3109,
+  "rotation_L_deg": 100.724,
+  "vessel_n": 512,
+  "vessel_mean_mm": 0.2942,
+  "vessel_median_mm": 0.2835,
+  "seconds": 29.8
+ }
+]

@@ -1,0 +1,21 @@
+{
+ "mri": "I58_brainstem_MRI_cropped_to_OCT.nii.gz",
+ "mri_window": [
+  0.211602,
+  1.662132
+ ],
+ "oct_window_from": "oct_0.08mm.nii.gz",
+ "oct_window": [
+  0.001224,
+  0.005526
+ ],
+ "planes_through_ras_mm": [
+  1.7515,
+  0.3752,
+  22.1768
+ ],
+ "mri_tissue": {
+  "threshold": 0.546812,
+  "volume_cm3": 13.5193
+ }
+}

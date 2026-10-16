@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
-"""Evaluate affine baseline run directories the same way as an octreg run (bench only, not part of the package).
+"""Method-independent properties of affine baseline runs (bench only, not part of the package).
 
-    python bench/baselines/evaluate_runs.py RUN [RUN ...] [--octreg-run DIR] [--shots] [--summary OUT.json] [--force]
+    python bench/baselines/evaluate_runs.py [RUN ...] [--octreg-run DIR] [--oct-grid OCT] [--shots] [--summary OUT.json] [--force]
 
 For every RUN (a directory made by rundir.py init, with a check.json that is ok):
   1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz.
-     Every method goes through the same resampler, so the visual comparison shows the registration and not the
+     Every method goes through the same resampler, so the panels of bench/figures.py show the registration and not the
      interpolation.
-  2. bench/evaluate.py with octreg's masks (--masks) and the octreg run (--octreg-run, default
-     OCTREG_PROJECT_ROOT/bench_runs/I58/octreg) as --previous -> RUN/eval.json: rim outline agreement forward and reverse
-     (median per face class, and median and p90 over all faces), pose distance to octreg's affine, raw-data frame check.
-  3. Dice of the OCT specimen mask through T against the MRI foreground on the 0.15 mm grid -> RUN/dice.json. The MRI holds
-     tissue beyond the block, so Dice stays below 1 for every method and only compares methods.
-  4. With --shots: freeview screenshots at the shared sections, named <tool>_<variant>,
-     by OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local
-     files and not in the repository.
-A summary row per run goes into --summary (default OCTREG_PROJECT_ROOT/baselines/summary_affine.json).
-The wall time of a run is read from RUN/time.txt (seconds), written by the tool's own command, when it is there.
-The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and
-screenshots of the comparison are under OCTREG_PROJECT_ROOT/baselines.
+  2. The properties of the transform that need no reference: the scale along each OCT array axis (the length of T applied to
+     a unit step along that axis of the OCT header, 1 = voxel size kept) and the determinant of its 3x3 (1 = volume kept).
+  3. The wall time of the registration, from RUN/time.txt (seconds, written by the tool's own command), and the hardware,
+     from RUN/threads.txt.
+  4. With --shots: freeview screenshots at the shared sections, named <tool>_<variant>, by
+     OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local files and not
+     in the repository.
+With --octreg-run, a row "octreg" is added for that octreg run: its T_oct2mri.txt, the sum of its §1 to §5 step times in
+result.json and its device. A summary row per run goes into --summary (default
+OCTREG_PROJECT_ROOT/baselines/summary_affine.json). No row holds a distance to octreg's affine or a score computed with
+octreg's masks or read-outs. The roots come from
+bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and screenshots of the
+comparison are under OCTREG_PROJECT_ROOT/baselines.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -35,14 +37,13 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench")]
-from octreg import geometry as G  # noqa: E402
-from paths import BENCH_RUNS, MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
 
 INPUTS = ROOT / "baselines" / "inputs"
-OCTREG_RUN = BENCH_RUNS / "I58" / "octreg"
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
 ENV = {**os.environ, "PYTHONPATH": str(REPO), "PYTHONIOENCODING": "utf-8", "CUDA_VISIBLE_DEVICES": ""}
+OCTREG_AFFINE_STEPS = ("mri", "oct_fine_grid", "oct_mask", "two_class", "search_refine_ngf")   # result.json seconds, §1 to §5
 
 
 def wsl_path(p: Path) -> str:
@@ -60,83 +61,81 @@ def run(cmd, log=None):
     return time.time() - t0
 
 
-def dice(run_dir: Path):
-    T = np.loadtxt(run_dir / "T_oct2mri.txt")
-    om, mm = nib.load(INPUTS / "oct_mask.nii.gz"), nib.load(INPUTS / "mri_mask.nii.gz")
-    o = np.asarray(om.dataobj) > 0
-    moved = G.resample_to(o, om.affine, mm.shape, mm.affine, np.linalg.inv(T), order=0) > 0
-    m = np.asarray(mm.dataobj) > 0
-    d = {"dice_oct_mask_vs_mri_foreground": float(2 * (moved & m).sum() / max(moved.sum() + m.sum(), 1)),
-         "oct_mask_inside_mri_foreground": float((moved & m).sum() / max(moved.sum(), 1)),
-         "grid_mm": float(np.linalg.norm(mm.affine[:3, 0]))}
-    (run_dir / "dice.json").write_text(json.dumps(d, indent=1), encoding="utf-8")
-    return d
-
-
-def scales(run_dir: Path):
+def scales(T, oct_affine):
     """Scale of the transform along each OCT array axis (octreg's pose.scale_per_oct_axis): the length of T applied to a unit
     step along each axis of the OCT header, so 1 means the voxel size is kept."""
-    T = np.loadtxt(run_dir / "T_oct2mri.txt")
-    A = np.array(nib.load(INPUTS / "oct_0.08mm.nii.gz").affine)
+    A = np.asarray(oct_affine, float)
     sp = np.linalg.norm(A[:3, :3], axis=0)
     return np.linalg.norm(T[:3, :3] @ (A[:3, :3] / sp), axis=0).round(4).tolist()
 
 
-def evaluate(run_dir: Path, shots: bool, force: bool, octreg_run: Path = OCTREG_RUN):
+def hardware(run_dir: Path, tool: str) -> str:
+    """The device and thread count a run recorded in threads.txt ('' when there is none, as for the start)."""
+    f = run_dir / "threads.txt"
+    t = f.read_text(encoding="utf-8", errors="replace") if f.is_file() else ""
+    if not t.strip():
+        return ""
+    if "GPU" in t:
+        return "GPU"
+    if tool == "flirt":
+        return "CPU (FLIRT runs single-threaded)"
+    n = re.findall(r"\d+", t.split("machine")[0])
+    return f"CPU, {n[0]} threads" if n else "CPU"
+
+
+def row_of(name, tool, variant, T, wall, hw, oct_affine):
+    return {"run": name, "tool": tool, "variant": variant, "scale_per_oct_axis": scales(T, oct_affine),
+            "det": float(np.linalg.det(T[:3, :3])), "wall_s": wall, "hardware": hw}
+
+
+def evaluate(run_dir: Path, shots: bool, force: bool, oct_affine):
     chk = run_dir / "check.json"
     if not chk.is_file() or not json.loads(chk.read_text())["ok"]:
         print(f"{run_dir}: no check.json ok, skipped", flush=True)
         return None
     name = f"{run_dir.parent.name}_{run_dir.name}"
-    t_apply = t_eval = None
     if force or not (run_dir / "oct_in_mri_affine.nii.gz").is_file():
-        t_apply = run([PY, "-m", "octreg", "apply", "--run", str(run_dir), "--moving", str(OCT), "--reference", str(MRI),
-                       "-o", str(run_dir / "oct_in_mri_affine.nii.gz"), "--affine-only"], run_dir / "apply.log")
-    if force or not (run_dir / "eval.json").is_file():
-        t_eval = run([PY, str(REPO / "bench" / "evaluate.py"), str(run_dir), "--masks", str(INPUTS), "--previous",
-                      str(octreg_run), "-o", str(run_dir / "eval.json")], run_dir / "evaluate.log")
-    d = dice(run_dir)
+        run([PY, "-m", "octreg", "apply", "--run", str(run_dir), "--moving", str(OCT), "--reference", str(MRI),
+             "-o", str(run_dir / "oct_in_mri_affine.nii.gz"), "--affine-only"], run_dir / "apply.log")
     if shots and (force or not (SHOTS / "shots" / f"ax_26_{name}.png").is_file()):
         run(["wsl", "bash", wsl_path(SHOTS / "shots.sh"), name, wsl_path(run_dir / "oct_in_mri_affine.nii.gz")],
             run_dir / "shots.log")
-    e = json.loads((run_dir / "eval.json").read_text(encoding="utf-8"))
-    b, pv, fc = e.get("boundary", {}), e.get("pose_to_previous", {}), e.get("frame_check", {})
     tm = run_dir / "time.txt"
-    row = {"run": name, "tool": run_dir.parent.name, "variant": run_dir.name,
-           "wall_s": float(tm.read_text().split()[0]) if tm.is_file() else None,
-           "rim_fwd_mm": b.get("rim_median_mm", [None, None])[0], "rim_rev_mm": b.get("rim_median_mm", [None, None])[1],
-           "fwd_all_median_mm": b.get("forward_oct_to_mri", {}).get("all", {}).get("median_mm"),
-           "fwd_all_p90_mm": b.get("forward_oct_to_mri", {}).get("all", {}).get("p90_mm"),
-           "rev_all_median_mm": b.get("reverse_mri_to_oct", {}).get("all", {}).get("median_mm"),
-           "rev_all_p90_mm": b.get("reverse_mri_to_oct", {}).get("all", {}).get("p90_mm"),
-           "dice": d["dice_oct_mask_vs_mri_foreground"], "oct_inside_mri": d["oct_mask_inside_mri_foreground"],
-           "to_octreg_mean_mm": pv.get("mean_mm"), "to_octreg_corners_max_mm": pv.get("corners_max_mm"),
-           "to_octreg_rotation_deg": pv.get("rotation_deg"),
-           "frame_ok": fc.get("ok"), "frame_spearman": fc.get("spearman_export"),
-           "det": float(np.linalg.det(np.loadtxt(run_dir / "T_oct2mri.txt")[:3, :3])),
-           "scale_per_oct_axis": scales(run_dir),
-           "apply_s": t_apply, "evaluate_s": t_eval}
-    f = lambda v, nd=2: "n/a" if v is None else f"{v:.{nd}f}"
-    print(f"{name}: rim {f(row['rim_fwd_mm'])} / {f(row['rim_rev_mm'])} mm, dice {f(row['dice'], 3)}, "
-          f"to octreg {f(row['to_octreg_mean_mm'])} mm, frame {row['frame_ok']}", flush=True)
+    row = row_of(name, run_dir.parent.name, run_dir.name, np.loadtxt(run_dir / "T_oct2mri.txt"),
+                 float(tm.read_text().split()[0]) if tm.is_file() else None, hardware(run_dir, run_dir.parent.name), oct_affine)
+    print(f"{name}: scale {row['scale_per_oct_axis']}, det {row['det']:.4f}, wall {row['wall_s']} s, {row['hardware']}",
+          flush=True)
     return row
+
+
+def octreg_row(run_dir: Path, oct_affine):
+    res = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
+    wall = sum(res["seconds"][k] for k in OCTREG_AFFINE_STEPS)
+    return row_of("octreg", "octreg", "§1 to §5", np.loadtxt(run_dir / "T_oct2mri.txt"), wall,
+                  "GPU" if res["inputs"].get("device") == "cuda" else "CPU", oct_affine)
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("runs", nargs="+", type=Path)
-    ap.add_argument("--octreg-run", type=Path, default=OCTREG_RUN)
+    ap.add_argument("runs", nargs="*", type=Path)
+    ap.add_argument("--octreg-run", type=Path, default=None, help="add the row of this octreg run")
+    ap.add_argument("--oct-grid", type=Path, default=INPUTS / "oct_0.08mm.nii.gz",
+                    help="the moving image of the comparison, whose header gives the OCT array axes of the scales")
     ap.add_argument("--shots", action="store_true")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--summary", type=Path, default=ROOT / "baselines" / "summary_affine.json")
     a = ap.parse_args()
+    oct_affine = nib.load(str(a.oct_grid)).affine
     rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}
-    for r in a.runs:
-        row = evaluate(r, a.shots, a.force, a.octreg_run)
+    new = [octreg_row(a.octreg_run, oct_affine)] if a.octreg_run else []
+    for r in (r for r in a.runs if r.is_dir()):
+        row = evaluate(r, a.shots, a.force, oct_affine)
         if row:
-            rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}   # merge with other runs
-            rows[row["run"]] = row
-            a.summary.write_text(json.dumps(rows, indent=1), encoding="utf-8")
+            new.append(row)
+    for row in new:
+        rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}   # merge with other runs
+        rows[row["run"]] = row
+        a.summary.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(f"{len(rows)} rows in {a.summary}")
 
 

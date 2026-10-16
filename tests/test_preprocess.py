@@ -1,4 +1,4 @@
-"""preprocess: histogram-valley status, isotropic-texture specimen mask against the intensity rule (and chunk invariance),
+"""preprocess: histogram-valley status, a grey/white valley passed over, isotropic-texture specimen mask against the intensity rule (and chunk invariance),
 flattening, gain invariance and the channel pairs."""
 import dataclasses
 
@@ -30,6 +30,20 @@ def test_foreground_status():
     assert info["n_components"] == 1 and info["volume_cm3"] == pytest.approx(m.sum() * 0.15 ** 3 / 1e3)
     m, info = pp.foreground(rng.normal(500, 40, (48,) * 3).astype(np.float32), 0.15, P)
     assert info["status"] == "no_valley" and m.all()
+
+
+def test_foreground_passes_a_tissue_valley():
+    """Two tissue classes (white 300, grey 500) with a deep valley between them: in a medium (60) the threshold is the
+    medium's valley and the mask keeps both classes; without medium the crop is all tissue (no_valley), the grey/white valley
+    recorded as passed over, never taken as the edge of the tissue."""
+    rng = np.random.default_rng(1)
+    ball, core = _ball(64, (32, 32, 32), 26), _ball(64, (32, 32, 32), 15)
+    tissue = np.where(core, rng.normal(300, 15, ball.shape), rng.normal(500, 15, ball.shape))
+    m, info = pp.foreground(np.where(ball, tissue, rng.normal(60, 10, ball.shape)).astype(np.float32), 0.15, P)
+    assert info["status"] == "ok" and 60 < info["threshold"] < 300 and _dice(m, ball) > 0.98
+    assert info["tissue_valleys_passed"] and all(v["darker_peak_of_brightest"] > P.medium_fraction for v in info["tissue_valleys_passed"])
+    m, info = pp.foreground(tissue.astype(np.float32), 0.15, P)
+    assert info["status"] == "no_valley" and m.all() and info["tissue_valleys_passed"]
 
 
 def _embedded_block(seed, n=96):

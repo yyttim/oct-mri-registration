@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """The shared inputs of the baseline comparison (bench only, not part of the package).
 
-    python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN --masks PREP_DIR -o DIR
+    python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN -o DIR
 
 Writes into DIR: oct_0.08mm.nii.gz and oct_0.15mm.nii.gz (the OCT box-averaged to isotropic grids, original world header),
 mri_0.08mm.nii.gz (the crop as given) and mri_0.15mm.nii.gz, the field-of-view (FOV) masks oct_fov_*.nii.gz (voxels > 0),
 the moving images of the deformable stage oct_affine_0.08mm.nii.gz and oct_affine_0.15mm.nii.gz (the 20 um OCT through the
-affine of OCTREG_RUN onto the MRI grids) with oct_affine_fov_0.08mm.nii.gz, and, for the evaluation, copies of octreg's
-masks from PREP_DIR (oct_mask, oct_valid and mri_mask of the bench/ablate.py preprocessing).
+affine of OCTREG_RUN onto the MRI grids) with oct_affine_fov_0.08mm.nii.gz.
 """
 from __future__ import annotations
 
@@ -35,7 +34,6 @@ def main():
     ap.add_argument("--oct", required=True, type=Path)
     ap.add_argument("--mri", required=True, type=Path)
     ap.add_argument("--run", required=True, type=Path, help="octreg run directory (T_oct2mri.txt, result.json)")
-    ap.add_argument("--masks", required=True, type=Path, help="prep directory with oct_mask / oct_valid / mri_mask .nii.gz")
     ap.add_argument("-o", "--out", required=True, type=Path)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -52,8 +50,6 @@ def main():
                         str(a.out / f"mri_{mm}mm.nii.gz"), "-o", str(a.out / f"oct_affine_{mm}mm.nii.gz"), "--affine-only"],
                        check=True, env={**__import__("os").environ, "PYTHONPATH": str(REPO)})
     fov(a.out / "oct_affine_0.08mm.nii.gz", a.out / "oct_affine_fov_0.08mm.nii.gz")
-    for f in ("oct_mask.nii.gz", "oct_valid.nii.gz", "mri_mask.nii.gz"):
-        shutil.copy(a.masks / f, a.out / f)
     print("inputs in", a.out)
 
 

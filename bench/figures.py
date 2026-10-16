@@ -1,33 +1,42 @@
 #!/usr/bin/env python3
 """The freeview figures of the I58 pair in docs/figures (bench only, not part of the package).
 
-    python bench/figures.py [--octreg-run DIR] [--baselines DIR] [--ablation DIR] [-o docs/figures] [--work DIR]
+    python bench/figures.py [--octreg-run DIR] [--baselines DIR] [--deform-baselines DIR] [--ablation DIR] [--stages S]
+                            [--window-from OCT] [-o docs/figures] [--work DIR]
 
-  result/       octreg's result on a sagittal, a coronal and an axial plane through the middle of the block: the MRI, the
-                registered OCT (oct_in_mri.nii.gz, affine and §6), and the same OCT with the MRI tissue boundary
-  affine/       the affine baselines on the axial plane of result/, each with the MRI tissue boundary
-  deformable/   the deformable baselines on the sagittal plane of result/, each with the MRI tissue boundary
+  result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
+                the registered OCT (oct_in_mri.nii.gz, affine and §6), and the same OCT with the MRI tissue boundary
+  affine/       the affine baselines, each at the setting declared from its documentation (bench/baselines/README.md), on
+                the three planes of result/, each with the MRI tissue boundary (<panel>_<plane>.png)
+  deformable/   the deformable baselines at their declared settings, started from octreg's affine, on the three planes of
+                result/, each with the MRI tissue boundary (<panel>_<plane>.png)
   ablation/     the ablations of bench/ablate.py and bench/ablate_deform.py (--ablation, their output directory, by default
                 bench_runs/I58/octreg_ablate as in bench/run_i58.py) on the same
                 sagittal plane, each with the MRI tissue boundary. The OCT is first resampled through each variant's affine
                 (and field) by octreg apply, into DIR/overlays/<panel>/ and DIR/deform/<row>/.
 
-The MRI tissue boundary is octreg's MRI foreground rule (octreg.preprocess.foreground) applied to the MRI crop on its own
-0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw, and drawn by freeview as a 2-pixel red line.
-Every panel is one freeview screenshot as written: freeview is set to show the whole plane of the MRI crop at exactly one
-screen pixel per MRI voxel. The grey levels are linear, at the windows freeview opens the MRI crop and octreg's
-oct_in_mri.nii.gz with by default (freeview_window), and the OCT window is used for every OCT panel. Nothing is
-resampled, cropped or drawn on afterwards. freeview's default orientation applies: sagittal planes have anterior on the
-right, coronal and axial planes show the subject's right on the left.
+The MRI tissue boundary is the MRI foreground rule of §1 (octreg.preprocess.foreground, a histogram-valley threshold of the
+MRI alone) applied to the MRI crop on its own 0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw,
+and drawn by freeview as a 2-pixel red line, the same in every panel. The outline term of §2 to §4 compares the OCT specimen
+mask with this foreground, and §5 does not use it. Otsu's threshold of the same MRI cuts the dim tissue at the superior cut face
+and along the anterior surface out of the foreground, so it does not trace the tissue edge. The three planes pass through the
+voxel centre nearest the centroid of this tissue. Every panel
+is one freeview screenshot as written: freeview is set to show the whole plane of the MRI crop at exactly one screen pixel per
+MRI voxel. The grey levels are linear. The MRI takes the window freeview opens it with by default (freeview_window), and every
+OCT panel takes the default window of the moving image every method received (--window-from, the OCT box-averaged to 0.08 mm
+of bench/baselines). The windows, the plane centre and the MRI tissue are written to figures.json in -o. Nothing is resampled,
+cropped or drawn on afterwards. freeview's default orientation applies: sagittal
+planes have anterior on the right, coronal and axial planes show the subject's right on the left.
 
 The baseline overlays are the oct_in_mri_affine.nii.gz (affine) and oct_in_mri.nii.gz (deformable) of the run directories
 of bench/baselines, under --baselines (default OCTREG_PROJECT_ROOT/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth)
-must be set up in the shell with its licence (FS_LICENSE), or on Windows in WSL (FREESURFER_HOME, default
-/usr/local/freesurfer/8.2.0 there, and FS_LICENSE passed through WSLENV).
+must be set up in the shell with its licence (FS_LICENSE, default ~/freesurfer/license.txt), or on Windows in WSL
+(FREESURFER_HOME, default /usr/local/freesurfer/8.2.0 there, and FS_LICENSE passed through WSLENV or at the default path).
 """
 from __future__ import annotations
 
 import argparse
+import json
 import platform
 import subprocess
 import sys
@@ -39,20 +48,16 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT  # noqa: E402
-from octreg import preprocess as pp  # noqa: E402
-from octreg.params import Params  # noqa: E402
 
-MIDDLE = (2.31, -0.82, 22.70)   # RAS mm: the three planes of result/, the axial one also for affine/, the sagittal for deformable/
-AFFINE = [  # panel name, overlay: RUN/... in the octreg run, else under --baselines
+AFFINE = [  # panel name, overlay: RUN/... in the octreg run, else under --baselines; each tool at its declared setting
     ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri_affine.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
-    ("greedy", "affine/greedy/centers_fov"), ("elastix", "affine/elastix/cog_fov"),
-    ("mri_robust_register", "affine/mri_robust_register/default_com"), ("ants", "affine/ants/com_fov"),
-    ("mri_coreg", "affine/mri_coreg/default"), ("flirt", "affine/flirt/search_x10_fov"),
-    ("synthmorph", "affine/synthmorph/affine")]
-DEFORM = [
-    ("affine", "RUN/oct_in_mri_affine.nii.gz"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("syn_fov", "deform/ants/syn_cc_fov"),
-    ("syn_default", "deform/ants/syn_cc"), ("greedy", "deform/greedy/wncc_fov"), ("convexadam", "deform/convexadam/default_fov"),
-    ("elastix", "deform/elastix/default_fov"), ("reg_f3d", "deform/niftyreg/sx5mm")]
+    ("greedy", "affine/greedy/centers"), ("elastix", "affine/elastix/center"),
+    ("mri_robust_register", "affine/mri_robust_register/default_com"), ("ants", "affine/ants/com"),
+    ("mri_coreg", "affine/mri_coreg/default"), ("flirt", "affine/flirt/search_x10"), ("synthmorph", "affine/synthmorph/affine")]
+DEFORM = [  # the same for the deformable stage, under --deform-baselines
+    ("affine", "RUN/oct_in_mri_affine.nii.gz"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("ants_syn", "deform/ants/syn_cc"),
+    ("elastix", "deform/elastix/default"), ("reg_f3d", "deform/niftyreg/default"), ("convexadam", "deform/convexadam/default"),
+    ("greedy", "deform/greedy/wncc")]
 ABLATION = [  # panel name, what it shows under --ablation: an affine (a 4x4 text file) or a §6 run directory with a field
     ("start", "starts/T_image_centres.txt"), ("intensity_mask", "variants/A0/T_oct2mri.txt"),
     ("no_outline", "variants/A9/T_oct2mri.txt"), ("outline_only", "variants/A13/T_oct2mri.txt"),
@@ -61,6 +66,7 @@ ABLATION = [  # panel name, what it shows under --ablation: an affine (a 4x4 tex
     ("turned_no_search", "starts/axis2_90/A14/T_oct2mri.txt"), ("turned_octreg", "starts/axis2_90/method/T_oct2mri.txt"),
     ("interior_only", "deform/interior_only"), ("boundary_only", "deform/boundary_only")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
+STAGES = ("result", "affine", "deformable", "ablation")
 WSL = platform.system() == "Windows"
 
 
@@ -133,37 +139,60 @@ def overlays(abl, run, oct_path, mri):
     return out
 
 
-def sessions(mri, run, baselines, out, surf, ablation=None):
-    """freeview -cmd sessions, one per panel size. ablation: {panel: overlay} or None.
-    -> [(name, lines)], {png path: (W, H)}."""
+def figure_info(mri, window_from, tissue, threshold, middle):
+    """What the panels are drawn with, for figures.json: the grey windows, the plane centre and the MRI tissue of the line."""
     img = nib.load(str(mri))
-    grey_mri, grey_oct = freeview_window(mri), freeview_window(run / "oct_in_mri.nii.gz")
+    return {"mri": Path(mri).name, "mri_window": [round(x, 6) for x in freeview_window(mri)],
+            "oct_window_from": Path(window_from).name, "oct_window": [round(x, 6) for x in freeview_window(window_from)],
+            "planes_through_ras_mm": [round(x, 4) for x in middle],
+            "mri_tissue": {"threshold": round(float(threshold), 6),
+                           "volume_cm3": round(float(tissue.sum() * np.prod(np.linalg.norm(img.affine[:3, :3], axis=0)) / 1e3), 4)}}
+
+
+def mri_tissue(img):
+    """The MRI tissue of the red line: octreg's MRI foreground rule on the grid of the crop. -> (bool array, threshold)."""
+    from octreg import preprocess as pp
+    from octreg.params import Params
+    tissue, info = pp.foreground(np.asarray(img.dataobj, np.float32), float(np.linalg.norm(img.affine[:3, :3], axis=0).min()),
+                                 Params())
+    return tissue, info["threshold"]
+
+
+def sessions(mri, run, baselines, out, surf, middle, window_from, ablation=None, deform_baselines=None, stages=STAGES):
+    """freeview -cmd sessions, one per panel size, for the folders in stages. middle: RAS mm of the three planes. ablation:
+    {panel: overlay} or None. -> [(name, lines)], {png path: (W, H)}."""
+    img = nib.load(str(mri))
+    grey_mri, grey_oct = freeview_window(mri), freeview_window(window_from)
     print("grey windows: MRI {:.4g} to {:.4g}, OCT {:.4g} to {:.4g}".format(*grey_mri, *grey_oct))
     v_mri = "-v {}:grayscale={!r},{!r}".format(host_path(mri), *grey_mri)
     f_line = f"-f {host_path(surf)}:edgecolor=red:edgethickness=2"
     oct_v = lambda f: "-v {}:grayscale={!r},{!r}".format(host_path(f), *grey_oct)
     ss = lambda p: f"-ss {host_path(p)} 1 0"
     S, expect = [], {}
-    for plane in PLANES:
-        lines, wh = view(img, plane, MIDDLE)
+    for plane in PLANES if "result" in stages else ():
+        lines, wh = view(img, plane, middle)
         d = out / "result"
         S.append((f"result_{plane}", [v_mri, *lines, ss(d / f"{plane}_mri.png"), "-hide volume", oct_v(run / "oct_in_mri.nii.gz"),
                                       ss(d / f"{plane}_oct.png"), f_line, ss(d / f"{plane}_oct_boundary.png"), "-quit"]))
         expect.update({d / f"{plane}_{n}.png": wh for n in ("mri", "oct", "oct_boundary")})
-    for stage, rows, plane, file in (("affine", AFFINE, "axial", "oct_in_mri_affine.nii.gz"),
-                                     ("deformable", DEFORM, "sagittal", "oct_in_mri.nii.gz")):
-        lines, wh = view(img, plane, MIDDLE)
+    for stage, rows, file in (("affine", AFFINE, "oct_in_mri_affine.nii.gz"), ("deformable", DEFORM, "oct_in_mri.nii.gz")):
+        if stage not in stages:
+            continue
         d = out / stage
-        cmd = [v_mri, f_line, *lines, ss(d / "mri.png"), "-hide volume"]
-        for name, sub in rows:
-            src = run / sub[4:] if sub.startswith("RUN/") else baselines / sub / file
-            if not src.is_file():
-                raise FileNotFoundError(src)
-            cmd += [oct_v(src), ss(d / f"{name}.png"), "-unload volume"]
-        S.append((stage, cmd + ["-quit"]))
-        expect.update({d / f"{n}.png": wh for n in ["mri"] + [r[0] for r in rows]})
-    if ablation:
-        lines, wh = view(img, "sagittal", MIDDLE)
+        root = (deform_baselines or baselines) if stage == "deformable" else baselines
+        srcs = {name: run / sub[4:] if sub.startswith("RUN/") else root / sub / file for name, sub in rows}
+        missing = [str(f) for f in srcs.values() if not f.is_file()]
+        if missing:
+            raise FileNotFoundError(", ".join(missing))
+        for plane in PLANES:
+            lines, wh = view(img, plane, middle)
+            cmd = [v_mri, f_line, *lines, ss(d / f"mri_{plane}.png"), "-hide volume"]
+            for name, src in srcs.items():
+                cmd += [oct_v(src), ss(d / f"{name}_{plane}.png"), "-unload volume"]
+            S.append((f"{stage}_{plane}", cmd + ["-quit"]))
+            expect.update({d / f"{n}_{plane}.png": wh for n in ["mri"] + list(srcs)})
+    if ablation and "ablation" in stages:
+        lines, wh = view(img, "sagittal", middle)
         d = out / "ablation"
         cmd = [v_mri, f_line, *lines, "-hide volume"]
         for name, src in ablation.items():
@@ -178,10 +207,16 @@ def main():
     ap.add_argument("--mri", type=Path, default=MRI_I58)
     ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
     ap.add_argument("--baselines", type=Path, default=PROJECT_ROOT / "baselines")
+    ap.add_argument("--deform-baselines", type=Path, default=None,
+                    help="the root of the deformable baseline runs, started from this octreg run's affine (default: --baselines)")
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "octreg_ablate",
                     help="the output of bench/ablate.py --starts and bench/ablate_deform.py --save-fields, by default the ABL of "
                     "bench/run_i58.py. Its panels are skipped when it does not exist")
     ap.add_argument("--oct", type=Path, default=OCT_I58)
+    ap.add_argument("--stages", default=",".join(STAGES), help="comma-separated folders to make (default: all four)")
+    ap.add_argument("--window-from", type=Path, default=PROJECT_ROOT / "baselines" / "inputs" / "oct_0.08mm.nii.gz",
+                    help="the volume whose freeview default window every OCT panel takes (default: the moving image of "
+                    "bench/baselines)")
     ap.add_argument("-o", "--out", type=Path, default=REPO / "docs" / "figures")
     ap.add_argument("--work", type=Path, default=BENCH_RUNS / "I58" / "figures")
     a = ap.parse_args()
@@ -190,20 +225,26 @@ def main():
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
-    tissue, info = pp.foreground(np.asarray(mi.dataobj, np.float32), float(abs(mi.affine[0, :3]).max()), Params())
-    print(f"MRI tissue on the 0.08 mm grid: threshold {info['threshold']:.4f}, {info['volume_cm3']:.2f} cm3")
+    tissue, t = mri_tissue(mi)
+    c = np.floor(np.argwhere(tissue).mean(0) + 0.5)                       # the voxel centre nearest the tissue centroid
+    middle = tuple(float(x) for x in (mi.affine @ np.r_[c, 1])[:3])
+    vol = tissue.sum() * np.prod(np.linalg.norm(mi.affine[:3, :3], axis=0)) / 1e3
+    print(f"MRI tissue: threshold {t:.4f}, {vol:.2f} cm3, planes through RAS " + "{:.2f} {:.2f} {:.2f}".format(*middle))
     hdr = mi.header.copy()
     hdr.set_data_dtype(np.uint8)
     nib.save(nib.Nifti1Image(tissue.astype(np.uint8), mi.affine, hdr), str(a.work / "mri_tissue.nii.gz"))
 
     surf = a.work / "mri_tissue.surf"
-    abl = overlays(a.ablation, a.octreg_run, a.oct, a.mri) if a.ablation.is_dir() else None
+    stages = a.stages.split(",")
+    abl = overlays(a.ablation, a.octreg_run, a.oct, a.mri) if a.ablation.is_dir() and "ablation" in stages else None
     if abl is None:
-        print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again")
-    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, abl)
+        print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again"
+              if "ablation" in stages else "the ablation panels are not made (--stages)")
+    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, a.window_from, abl, a.deform_baselines, stages)
     sh = ["#!/bin/bash", "set -e", 'if [ -n "$FREESURFER_HOME" ] || [ -d /usr/local/freesurfer/8.2.0 ]; then',
           '  export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}',
-          '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi', f"cd {host_path(a.work)}",
+          '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi',
+          "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}", f"cd {host_path(a.work)}",
           "mri_mc mri_tissue.nii.gz 1 mri_tissue_raw.surf > mri_mc.log 2>&1",
           "mris_smooth -n 3 -nw mri_tissue_raw.surf mri_tissue.surf > mris_smooth.log 2>&1"]
     for name, lines in S:
@@ -219,6 +260,8 @@ def main():
            if not p.is_file() or Image.open(p).size != wh]
     if bad:
         sys.exit("\n".join(bad))
+    (a.out / "figures.json").write_text(json.dumps(figure_info(a.mri, a.window_from, tissue, t, middle), indent=1) + "\n",
+                                    encoding="utf-8")
     print(f"{len(expect)} panels in {a.out}")
 
 

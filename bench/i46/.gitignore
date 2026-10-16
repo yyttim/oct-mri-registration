@@ -1,0 +1,2 @@
+# the specimen mask of the OCT is an input of the test and is tracked, unlike other volumes (see the root .gitignore)
+!octmask_24um.nii.gz

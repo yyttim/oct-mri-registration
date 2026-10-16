@@ -67,7 +67,7 @@ def test_params_defaults_dict_and_hash():
                 {"ngf_sigmas_mm": 0.3}, {"ngf_iters": 0}, {"ngf_erode_mm": 0.0}, {"no_such_list": [3.0, 1.0]}):
         with pytest.raises(ValueError):
             Params.from_dict(bad)
-    assert p.hash() == "da914d8ccc555207"                                              # the default Params
+    assert p.hash() == "9148790ad6c39454"                                              # the default Params
     assert {k for k in p.to_dict() if k.startswith("df_")} == {                       # §6: the two kinds of evidence, one
         "df_sigma_mm", "df_block_mm", "df_step_mm", "df_reach_mm", "df_z_min", "df_erode_mm",                # lattice, one fit
         "df_edge_mad", "df_huber_mm", "df_grid_mm", "df_max_strain"}
