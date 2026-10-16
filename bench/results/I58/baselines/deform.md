@@ -1,14 +1,13 @@
 # I58, deformable stage
 
 Every tool starts from octreg's affine: the OCT resampled through it onto the 0.08 mm MRI grid, and the identity as initial
-transform. No ground truth exists for this pair, and the overlays of BASELINES.md are the result. J is the Jacobian
-determinant of x + u(x), u the field, by finite differences on the field grid, over the MRI foreground of octreg's §1 (a
-mask of the MRI alone, on the 0.15 mm grid) sampled onto that grid. folded: the share of those voxels with J <= 0. SD log J:
-the standard deviation of log J, with J clipped at 1e-6 where it is not positive (Learn2Reg, Hering et al., IEEE Trans. Med.
-Imaging 42:697, 2023). Wall times as each run recorded them, on a machine shared with other jobs, and only indicative.
-octreg's is its §6 step time in result.json.
+transform. The pair has no reference, and BASELINES.md shows the overlays. J is the Jacobian determinant of x + u(x), u the
+field, by finite differences on the field grid, over the MRI foreground of octreg's §1 (a mask of the MRI alone, on the 0.15
+mm grid) sampled onto that grid. folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J,
+with J clipped at 1e-6 where it is not positive (Learn2Reg, Hering et al., IEEE Trans. Med. Imaging 42:697, 2023). Wall
+times as each run recorded them, on a machine shared with other jobs. octreg's is its §6 step time in result.json.
 
-## Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)
+## Main: each tool at the setting its documentation gives
 
 | method | run | setting | start | field grid | Jacobian min | folded (J <= 0) | SD log J | wall time | hardware |
 |---|---|---|---|---|---|---|---|---|---|

@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
-"""Method-independent properties of deformable baseline runs (bench only, not part of the package).
+"""Properties of the deformable baseline runs that need no reference.
 
     python bench/baselines/evaluate_deform.py RUN [RUN ...] [--octreg-run DIR] [--cache CACHE.npz] [--shots]
                                               [--summary OUT.json] [--force]
 
 Every RUN holds octreg's affine (T_oct2mri.txt), the tool's field converted to octreg's convention (oct2mri_warp.nii.gz) and
 a check_field.json that is ok (bench/baselines/rundir.py). For each RUN:
-  1. octreg apply: the 20 um OCT through affine and field onto the MRI grid -> RUN/oct_in_mri.nii.gz (one resampler for all,
-     the overlays of bench/figures.py).
+  1. octreg apply: the 20 um OCT through affine and field onto the MRI grid -> RUN/oct_in_mri.nii.gz (the overlays of
+     bench/figures.py).
   2. The Jacobian determinant J of x + u(x), u the field, by finite differences on the field's own grid: its minimum, the
      share of voxels with J <= 0 (folded) and the standard deviation of log J (the smoothness measure of Learn2Reg, Hering et
      al., IEEE Trans. Med. Imaging 42:697, 2023), over the MRI foreground of --cache (octreg's MRI foreground on the 0.15 mm
-     base grid, a mask of the MRI alone) sampled onto the field's grid.
+     base grid) sampled onto the field's grid.
   3. The wall time of the registration from RUN/time.txt (seconds, written by the tool's own command), the hardware from
      RUN/threads.txt and the spacing of the field grid.
   4. With --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>, by
-     OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local files and not
-     in the repository.
+     OCTREG_PROJECT_ROOT/baselines/shots/shots.sh in WSL, a local script that is not in the repository.
 With --octreg-run, the rows "none" (octreg's affine, no field) and "octreg" (its §6 field oct2mri_warp.nii.gz, wall time
-the §6 step time of result.json) are added. Displacement magnitudes are not kept: every field starts from octreg's affine,
-so their size is a distance from octreg's result. None of octreg's own read-outs is computed. A row per run goes into
---summary (default OCTREG_PROJECT_ROOT/baselines/summary_deform.json). The roots come from bench/paths.py.
+the §6 step time of result.json) are added. A row per run goes into --summary (default
+OCTREG_PROJECT_ROOT/baselines/summary_deform.json). The roots come from bench/paths.py.
 """
 from __future__ import annotations
 

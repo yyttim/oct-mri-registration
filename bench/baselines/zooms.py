@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Zoomed crops of the superior-end sections for the artefact check (bench only, not part of the package).
+"""Zoomed crops of the superior-end sections of the baseline comparison.
 
     python bench/baselines/zooms.py --shots DIR --out DIR --methods a b c [--label a=Label ...] [--per-row 4]
 
-The --shots screenshots of evaluate_runs.py and evaluate_deform.py show the top_* sections (the keys of WINDOWS below)
-at 2.4x. This script crops a fixed window per section,
-the band at the end of the block where the section stripes and the cut edge of the block are visible, and enlarges it 2x,
-one panel per method. Bent stripes, bowed block edges and smeared tissue then show at a glance.
+The --shots screenshots of evaluate_runs.py and evaluate_deform.py show the top_* sections (the keys of WINDOWS below) at
+2.4x. This script crops a fixed window per section, the band at the end of the block where the section stripes and the cut
+edge of the block are visible, and enlarges it 2x, one panel per method, so that bent stripes, bowed block edges and smeared
+tissue show.
 """
 from __future__ import annotations
 

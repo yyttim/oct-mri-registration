@@ -1,20 +1,16 @@
 # Benchmark: the I58 brainstem pair
 
 octreg registered the two original files as given (OCT 1457×2013×1595 at 20 µm, header LPI, and MRI crop 343×489×495 at 0.08 mm,
-header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash 9148790ad6c39454). The pair has no labels,
-so every number here is label-free. The numbers are read from the run's result.json and eval.json and from ablations.json and
-starts.json (copies in bench/results/I58/). Commands: `python bench/run_i58.py` (see bench/README.md).
+header RIA) with `octreg register OCT MRI -o OUT` and default parameters (Params hash 9148790ad6c39454). The numbers come from
+result.json, eval.json, ablations.json and starts.json, stored in bench/results/I58/.
+
+Commands: `python bench/run_i58.py` (see bench/README.md).
 
 ## Visual result
 
-The result is judged on the overlays (docs/METHOD.md, Evaluation). The pair has no reference, so none of the numbers below is a
-success criterion. Figures of the result are in README.md, of the ablations in docs/METHOD.md, and of the baselines in
-bench/baselines/BASELINES.md. bench/i46 scores octreg and seven of the variants (A4, A6p, A9, A10, A12, A13 and A14) against
-the registration of Costantini et al. (2023).
-
-Label-free numbers alone can prefer a wrong pose. After §4 the best pose of the other handedness (A8, a mirror image of the
-specimen) fits the outline better than the method's §4 pose (S_outline 0.6848 against 0.6302) and has the lower loss (L 0.7073
-against 0.7287).
+The pair has no reference, so the result is judged on the overlays in the
+[README](../README.md#results-on-the-i58-brainstem-block).
+Figures of the result and the ablations are in README.md, and of the baselines in bench/baselines/BASELINES.md.
 
 ## Main result
 
@@ -36,15 +32,11 @@ against 0.7287).
 | registration time in process, peak RAM, peak GPU memory allocated by torch | 10.8 min, 5.2 GiB, 1.59 GiB |
 | time per step (s) | mri 2, oct fine grid 130, oct mask 89, two class 2, search 31, refinement 316, fine-structure refinement 5, smooth deformation 21, outputs 50 |
 
-The raw-data frame check passes. The pair has no labels, so none of these numbers is a success criterion.
-
 ## Ablations
 
-Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). The pair
-has no reference, so the variants are not scored here: the table gives each variant's own values, docs/METHOD.md shows the main
-variants in freeview, and bench/i46 scores seven of them (A4, A6p, A9, A10, A12, A13 and A14) against the registration of
-Costantini et al. (2023). A11 and A11b cut the specimen mask at 70 % of its extent along OCT axis 1, so their mask column is
-empty. The smooth deformation (§6) does not change the affine, so no variant runs it. Its ablation is in
+Each variant is the method with one change, run from the same preprocessed grids (one per OCT mask source). L is the loss of §4,
+1 - S plus the scale and shear penalty (docs/METHOD.md). A11 and A11b cut the specimen mask, so their mask column is empty. No
+variant runs the smooth deformation (§6), which does not change the affine. Its ablation is in
 bench/results/I58/deform_ablation.md.
 
 | variant | change | S (§4 pose) | L (§4 pose) | polarity | scale per OCT axis | determinant | OCT mask cm3 | time (s) |
@@ -73,12 +65,11 @@ Base, run through bench/ablate.py, lies 0.00 mm (corners max 0.00 mm) from the C
 
 ## Start test
 
-The method's consistency with itself. The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre
-of its image box, and the method runs from the image-centre start and from each turned start. Each cell gives the mean
-displacement from the method's own result from the file orientation (base) over the points of the base specimen mask, and the
-angle of the rotation between the two poses. The variant without the orientation search (A14) also runs from each start.
-docs/METHOD.md shows it from the start turned by 90° about the sectioning axis, and bench/i46 scores it against an independent
-reference.
+The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre of its image box, and the method runs
+from the image-centre start and from each turned start. Each cell gives the mean displacement from the base result (the method
+from the file orientation) over the base specimen mask, and the angle of the rotation between the two poses. A14, the variant
+without the orientation search, also runs from each start, and README.md shows it from the start turned by 90° about the
+sectioning axis.
 
 | start | start pose to base: mm / deg | method to base: mm / deg |
 |---|---|---|
@@ -107,8 +98,6 @@ Peak GPU memory allocated by torch over the variants: 1.4 GiB.
 
 ## Reading
 
-Every variant except A12 ends with §5 on its own best pose. The table gives each variant's own values.
-[docs/METHOD.md](../docs/METHOD.md#ablations) shows the main variants and the start test in freeview, and
-[bench/i46](i46/README.md) scores seven of the variants (A4, A6p, A9, A10, A12, A13 and A14) against the registration of
-Costantini et al. (2023). The ablations of §6 are in
-bench/results/I58/deform_ablation.md.
+Every variant except A12 ends with §5 on its own best pose. [README.md](../README.md#ablations) shows the main variants and
+the start test in freeview, and [bench/i46](i46/README.md) scores seven of the variants (A4, A6p, A9, A10, A12, A13 and A14)
+against the registration of Costantini et al. (2023).

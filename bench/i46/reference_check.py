@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Checks of the I46 reference (bench/i46/README.md, Reference): the numbers the README states about the reference, computed
-from the download of bench/i46/fetch.sh and the inputs of bench/i46/prepare.py. -> bench/results/I46/reference_check.json
+"""Checks of the I46 reference (bench/i46/README.md, Reference), from the download of bench/i46/fetch.sh and the inputs of
+bench/i46/prepare.py. -> bench/results/I46/reference_check.json
 
 lattice  The centres of the 16 lattices of the authors' OCT -> LSFM fields (svf.08 ... svf.23, affine applied to (shape -
          1) / 2) on the depth axis of common.authors_oct_header (-ax[:, 2] of svf.08): the 15 steps between consecutive

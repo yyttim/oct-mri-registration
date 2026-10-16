@@ -3,15 +3,14 @@
 
 run      Runs, in this order, with the default parameters: the C3 crops of the 10, 20 and 30 deg FLASH, then the C6 and C12
          crops of the 10 deg FLASH, each as `octreg register OCT CROP --oct-mask OCT -o RUN`, the masked OCT given as its own
-         specimen mask (octreg's documented form for an OCT that is zero outside the tissue). Then the C3 crops of the 10 deg
-         FLASH without --oct-mask (octreg's own specimen mask on the same OCT), named <crop>_nomask. A run whose result.json is
-         complete (it holds the run time) is not run again. Then collect.
+         specimen mask (it is zero outside the tissue). Then the C3 crops of the 10 deg FLASH without --oct-mask (octreg's own
+         specimen mask on the same OCT), named <crop>_nomask. A run whose result.json is complete (it holds the run time) is
+         not run again. Then collect.
 collect  Scores every run of that list in the runs folder against the reference (common.error and common.vessel_score): the
-         final affine T_oct2mri.txt, and in "s4" the affine of §4 (pose.T_before_ngf of result.json). Each entry also holds
-         the version and parameter hash of the run, the scores of the pose, the flags, the evidence §6 found, the darker peaks of
-         the MRI valleys passed over (as fractions of the brightest peak), the outside fraction of each image and the run time,
-         from its result.json.
-         If a run is missing or incomplete, the script names it and stops before writing.
+         final affine T_oct2mri.txt, and in "s4" the affine of §4 (pose.T_before_ngf of result.json). Each entry also holds,
+         from its result.json, the version and parameter hash of the run, the scores of the pose, the flags, the evidence §6
+         found, the darker peaks of the MRI valleys passed over (as fractions of the brightest peak), the outside fraction of
+         each image and the run time. If a run is missing or incomplete, the script names it and stops before writing.
 -> <bench_runs>/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]

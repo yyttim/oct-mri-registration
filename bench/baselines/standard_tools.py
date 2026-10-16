@@ -1,5 +1,5 @@
-"""The standard registration tools on the I46 test data, each at one setting fixed before any run from its own documentation,
-with no masks, and three sets of variants, each with one change: the inputs of a run, the command of every tool, the conversion
+"""The standard registration tools on the I46 test data, each at one setting from its own documentation with no masks, and
+three sets of variants that each make one change. For each run it gives the inputs, the command of the tool, the conversion
 of its transform and the check of that conversion. The caller (bench/i46/baselines.py) passes its own files and scorer.
 
     reg_aladin           NiftyReg reg_aladin with its defaults: rigid then affine block matching from the image centres
@@ -12,8 +12,7 @@ of its transform and the check of that conversion. The caller (bench/i46/baselin
     synthmorph           mri_synthmorph register -m affine, which registers in its own space of 256 voxels of 1 mm, where the
                          block spans about 14 x 14 x 9 voxels (FLIRT, whose schedule is also in mm, gets headers scaled x10)
 
-The tools' own global searches, each one of the settings above with the search option of the I58 comparison added and nothing
-else changed (SEARCH):
+The tools' own global searches, each a setting above with the search option of the I58 comparison added (SEARCH):
 
     flirt_search         flirt with -searchrx -180 180 -searchry -180 180 -searchrz -180 180 in the rigid step
     ants_antsai          antsAI rotation search (Mattes MI with 32 bins and 20 % regular sampling, Rigid[0.1], the full circle
@@ -22,9 +21,9 @@ else changed (SEARCH):
     greedy_search        greedy with -search 1000 any 20 in the rigid step: 1000 random rigid candidates around the image
                          centres, any rotation and a 20 mm standard deviation of the offset
 
-The tools that take a mask of the moving image, each declared setting with that mask added and nothing else changed (MASK).
-The mask is the OCT tissue, the voxels > 0 of the moving image (prepare_mask: oct_mask.nii.gz next to the inputs, and
-oct_mask_x10.nii.gz for FLIRT), given to both steps of the two-step tools:
+The tools that take a mask of the moving image, each setting above with that mask added (MASK). The mask is the OCT tissue,
+the voxels > 0 of the moving image (prepare_mask: oct_mask.nii.gz next to the inputs, and oct_mask_x10.nii.gz for FLIRT),
+given to both steps of the two-step tools:
 
     reg_aladin_mask           -fmask, which NiftyReg 2.1.2 does not use (bench/baselines/INSTALL.md)
     greedy_mask               -mm
@@ -36,7 +35,7 @@ oct_mask_x10.nii.gz for FLIRT), given to both steps of the two-step tools:
 
 mri_synthmorph register has no mask option (NO_MASK).
 
-The declared settings started from the header alignment of the two images instead of their own start (NEAR), for a moving
+The settings above started from the header alignment of the two images instead of their own start (NEAR), for a moving
 image whose header carries the start (bench/i46/baselines.py, the near start):
 
     reg_aladin_near           -nac
@@ -95,8 +94,8 @@ NEAR = {"reg_aladin_near": "defaults, -nac", "greedy_near": "NMI, -ia-identity",
         "ants_near": "antsRegistrationSyN -t a, -i Identity", "mri_robust_register_near": "NMI, --noinit",
         "mri_coreg_near": "defaults, --regheader", "flirt_near": "normmi, default search, -usesqform, x10 headers",
         "synthmorph_near": "-m affine"}
-DECLARED = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "greedy",     # the setting each variant extends
-            **{t: t.removesuffix("_mask") for t in MASK}, **{t: t.removesuffix("_near") for t in NEAR}}
+EXTENDS = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "greedy",      # the setting each variant extends
+           **{t: t.removesuffix("_mask") for t in MASK}, **{t: t.removesuffix("_near") for t in NEAR}}
 ELASTIX = HERE / "elastix_defaults"
 PY = sys.executable
 WIN = platform.system() == "Windows"
@@ -150,7 +149,7 @@ def script(tool, run, inp):
     times = lambda a, b: "awk '{s+=$1} END {printf \"%.2f\\n\", s}' " + f"{a} {b} > time.txt"
     total = times("time_rigid.txt", "time_affine.txt")
     head = ["#!/bin/bash", "set -o pipefail", f"cd {R} || exit 1"]
-    base, mask, near = DECLARED.get(tool, tool), tool in MASK, tool in NEAR
+    base, mask, near = EXTENDS.get(tool, tool), tool in MASK, tool in NEAR
     if base == "reg_aladin":
         x = f" -fmask {I}/oct_mask.nii.gz" if mask else " -nac" if near else ""
         return head + [tl, f"{t} reg_aladin -ref {I}/mri.nii.gz -flo {I}/oct.nii.gz{x} -aff {R}/aff.txt -res {R}/warped_tool.nii.gz -omp 8 > log.txt 2>&1",
@@ -225,7 +224,7 @@ def prepare(base, runs, inputs):
         inp = inputs(crop)
         run = Path(base) / crop / tool
         run.mkdir(parents=True, exist_ok=True)
-        if DECLARED.get(tool, tool) == "elastix":
+        if EXTENDS.get(tool, tool) == "elastix":
             for f in ("rigid.txt", "affine.txt"):
                 shutil.copy(ELASTIX / f, run / f)
                 if tool in NEAR:        # the header start: no automatic initialisation in either stage
@@ -234,7 +233,7 @@ def prepare(base, runs, inputs):
                         raise ValueError(f"{ELASTIX / f}: not one AutomaticTransformInitialization line")
                     (run / f).write_bytes(b.replace(on, b'(AutomaticTransformInitialization "false")'))
         (run / "run.sh").write_text("\n".join(script(tool, run, inp)) + "\n", encoding="utf-8", newline="\n")
-        launch = (f"MSYS_NO_PATHCONV=1 wsl bash {wsl(run / 'run.sh')}" if WIN and DECLARED.get(tool, tool) != "greedy"
+        launch = (f"MSYS_NO_PATHCONV=1 wsl bash {wsl(run / 'run.sh')}" if WIN and EXTENDS.get(tool, tool) != "greedy"
                   else f'bash "{str(run / "run.sh").replace(chr(92), "/")}"')
         lines.append(f'[ -f "{str(run / "time.txt").replace(chr(92), "/")}" ] || {launch}; echo "{crop}/{tool} done"')
     (Path(base) / "queue.sh").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
@@ -244,7 +243,7 @@ def prepare(base, runs, inputs):
 def convert(tool, run, inp):
     """The tool's transform as a 4x4 OCT world -> MRI world (NIfTI RAS mm)."""
     import convert_affines as C
-    tool = DECLARED.get(tool, tool)
+    tool = EXTENDS.get(tool, tool)
     src, dst = nib.load(str(inp / "oct.nii.gz")), nib.load(str(inp / "mri.nii.gz"))
     if tool == "elastix":                 # the parameter files name each other by the path elastix saw (WSL on Windows)
         for n in (0, 1):
@@ -267,7 +266,7 @@ def convert(tool, run, inp):
 def check(tool, run, inp, T):
     """The convention check of one converted transform T: check_r, check_dice (and check_note for an empty FLIRT resampling)."""
     from octreg import geometry as G
-    tool = DECLARED.get(tool, tool)
+    tool = EXTENDS.get(tool, tool)
     f = run / ("warped_check_x10.nii.gz" if tool == "flirt" else "warped_check.nii.gz")
     if not f.is_file():
         return {}

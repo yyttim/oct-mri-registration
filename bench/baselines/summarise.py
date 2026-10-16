@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""Tables of the baseline comparison from the summary JSON files (bench only, not part of the package).
+"""Tables of the I58 baseline comparison from the summary JSON files.
 
     python bench/baselines/summarise.py [--affine SUMMARY.json] [--deform SUMMARY.json] [--notes NOTES.json] [--out DIR]
 
-Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summary files and
-NOTES.json next to them. The summaries are those of evaluate_runs.py and evaluate_deform.py. NOTES.json maps each run of
-each stage (keys affine and deform) to the tool and its version, the setting and the start, written from the run's command.
-Each table has a main section, one row per tool at the setting its documentation gives for this kind of registration, FLIRT with
-both headers scaled x10 as its schedule works in mm (MAIN_AFFINE, MAIN_DEFORM, the panels of bench/figures.py), and a
-supplement with every stored run. The columns are properties that need no reference: for an affine the scale along each OCT
-array axis and the determinant, for a field the grid, the minimum of the Jacobian determinant J, the share of voxels with J <= 0
-and the standard deviation of log J, and for both the wall time and the hardware.
+Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summaries (of
+evaluate_runs.py and evaluate_deform.py) and NOTES.json next to them. NOTES.json gives, for each run of each stage (keys
+affine and deform), the tool and its version, the setting and the start. Each table has a main section, one row per tool at
+the setting its documentation gives (MAIN_AFFINE, MAIN_DEFORM, the panels of bench/figures.py), and a supplement with every
+stored run.
 """
 from __future__ import annotations
 
@@ -70,14 +67,14 @@ def deform_line(r, n):
             f"{opt(r.get('sd_log_jac'), '{:.2f}')} | {wall(r.get('wall_s'))} | {r.get('hardware', '')} |")
 
 
-def table(rows, notes, main, head, line, title, intro):
+def table(rows, notes, main, head, line, title, intro, main_title):
     missing = [run for _, run in main if run not in rows]
     if missing:
         raise KeyError(f"main runs without a summary row: {missing}")
     first = ("reference_centres", "none")
     rest = sorted(rows.values(), key=lambda r: (r["run"] not in first, r["run"] != "octreg", r["tool"], r["run"]))
     intro = "\n".join(textwrap.wrap(intro, 124, break_on_hyphens=False, break_long_words=False))
-    out = [f"# {title}", "", intro, "", "## Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)", "", *head,
+    out = [f"# {title}", "", intro, "", f"## {main_title}", "", *head,
            *[line(rows[run], note(notes, run)) for _, run in main], "", "## Supplement: every stored run", "", *head,
            *[line(r, note(notes, r["run"])) for r in rest]]
     return "\n".join(out) + "\n"
@@ -99,25 +96,27 @@ def main():
     head_d = ["| method | run | setting | start | field grid | Jacobian min | folded (J <= 0) | SD log J | wall time | "
               "hardware |",
               "|---|---|---|---|---|---|---|---|---|---|"]
-    intro_a = ("No ground truth exists for this pair, and the table holds no accuracy column: the overlays of BASELINES.md "
-               "are the result. Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
+    intro_a = ("The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. "
+               "Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
                "of the OCT header (1 = voxel size kept). det: the determinant of its 3x3 (1 = volume kept). Wall times as each "
-               "run recorded them, on a 24-core machine shared with other jobs, and only indicative. octreg's is the sum of "
+               "run recorded them, on a 24-core machine shared with other jobs. octreg's is the sum of "
                "its §1 to §5 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule works in mm, "
                "and its run on the unscaled headers is flirt_search_native.")
     intro_d = ("Every tool starts from octreg's affine: the OCT resampled through it onto the 0.08 mm MRI grid, and the "
-               "identity as initial transform. No ground truth exists for this pair, and the overlays of BASELINES.md are the "
-               "result. J is the Jacobian determinant of x + u(x), u the field, by finite differences on the field grid, "
+               "identity as initial transform. The pair has no reference, and BASELINES.md shows the overlays. "
+               "J is the Jacobian determinant of x + u(x), u the field, by finite differences on the field grid, "
                "over the MRI foreground of octreg's §1 (a mask of the MRI alone, on the 0.15 mm grid) sampled onto that grid. "
                "folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J, with J clipped at 1e-6 "
                "where it is not positive (Learn2Reg, Hering "
                "et al., IEEE Trans. Med. Imaging 42:697, 2023). Wall times as each run recorded them, on a machine shared with "
-               "other jobs, and only indicative. octreg's is its §6 step time in result.json.")
-    for name, rows, main_rows, head, line, title, intro in (
-            ("affine", ra, MAIN_AFFINE, head_a, affine_line, "I58, affine stage", intro_a),
-            ("deform", rd, MAIN_DEFORM, head_d, deform_line, "I58, deformable stage", intro_d)):
-        (a.out / f"{name}.md").write_text(table(rows, notes[name], main_rows, head, line, title, intro), encoding="utf-8",
-                                          newline="\n")
+               "other jobs. octreg's is its §6 step time in result.json.")
+    main_title = "Main: each tool at the setting its documentation gives"
+    for name, rows, main_rows, head, line, title, intro, main_t in (
+            ("affine", ra, MAIN_AFFINE, head_a, affine_line, "I58, affine stage", intro_a,
+             main_title + " (FLIRT with both headers scaled x10)"),
+            ("deform", rd, MAIN_DEFORM, head_d, deform_line, "I58, deformable stage", intro_d, main_title)):
+        (a.out / f"{name}.md").write_text(table(rows, notes[name], main_rows, head, line, title, intro, main_t),
+                                          encoding="utf-8", newline="\n")
         src = a.affine if name == "affine" else a.deform
         if src.resolve() != (a.out / f"summary_{name}.json").resolve():
             shutil.copy(src, a.out / f"summary_{name}.json")

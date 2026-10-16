@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Label-free evaluation of an octreg run on the I58 brainstem pair (bench only, the method never sees any of this).
+"""Label-free evaluation of an octreg run on the I58 brainstem pair.
 
     python bench/evaluate.py RUN [--masks DIR] [--previous OTHER] [--no-frame-check] [-o RUN/eval.json]
     python bench/evaluate.py --selftest                     # synthetic, CPU, a few seconds
 
-Everything here comes from the two input files of bench/paths.py (OCT_I58, MRI_I58), the run directory RUN and, for the
-comparison read-outs, a second octreg run directory. T = RUN/T_oct2mri.txt maps the OCT header world to the MRI header world
-(mm). DIR is a prep directory of bench/ablate.py, which holds the masks the method itself built: oct_mask.nii.gz (OCT specimen),
-oct_valid.nii.gz (non-zero OCT data) and mri_mask.nii.gz (MRI foreground). Without --masks the three files are looked for in
-RUN, which octreg register does not write, so a plain run gets no mask volume and no outline agreement.
+The inputs are the two files of bench/paths.py (OCT_I58, MRI_I58), the run directory RUN and, with --previous, a second
+octreg run directory. T = RUN/T_oct2mri.txt maps the OCT header world to the MRI header world (mm). DIR is a prep directory of
+bench/ablate.py, which holds the masks the method built: oct_mask.nii.gz (OCT specimen), oct_valid.nii.gz (non-zero OCT data)
+and mri_mask.nii.gz (MRI foreground). Without --masks the three files are looked for in RUN. octreg register does not write
+them, so a plain run gets no mask volume and no outline agreement.
 
 mask              Volume of the run's own OCT specimen mask (DIR/oct_mask.nii.gz) in cm3.
 boundary          Outline agreement of that mask and the MRI foreground, in both directions. OCT mask boundary voxels (at least
                   3 voxels from the grid faces, on valid OCT data) go through T to their distance to the MRI foreground
                   boundary, and MRI boundary voxels go through inv(T) to their distance to the OCT mask boundary. Points within
                   1 mm of the MRI grid faces are dropped. Medians per outward-normal class along the raw OCT array axes. 'rim'
-                  leaves out the deep end a0+, which has no specimen rim. With --previous, the rim medians of OTHER under the
-                  same masks as well, which compares two octreg runs on the same footing.
+                  leaves out the deep end a0+, which has no specimen rim. With --previous, also the rim medians of OTHER
+                  under the same masks.
 pose_to_previous  Distance between T and T_other = OTHER/T_oct2mri.txt (--previous). Mean and max displacement over the points
                   of the run's own OCT specimen mask, or, without --masks, over the 8 corners of the OCT array plus a uniform
                   sample of its grid. The same at the 8 corners on their own, and the rotation angle of inv(T_other) @ T.
-frame_check       Random voxels of the affine overlay (RUN/oct_in_mri_affine.nii.gz, or RUN/oct_in_mri.nii.gz when the run has no
-                  affine overlay) go through inv(T) and inv(A_hdr) to raw OCT voxels, whose 20 um values (box^3 mean)
+frame_check       Random voxels of the affine overlay (RUN/oct_in_mri_affine.nii.gz, or RUN/oct_in_mri.nii.gz when the run has
+                  no affine overlay) go through inv(T) and inv(A_hdr) to raw OCT voxels, whose 20 um values (box^3 mean)
                   are streamed from the .nii.gz. Spearman against the exported values. Controls: T composed with a flip of each
                   raw OCT axis about the block centre, and 2 mm shifts along each MRI world axis. ok iff rho >= 0.9 and every
                   flip gives rho <= 0.3.
@@ -90,7 +90,7 @@ def volume_points(shape, A, n_max=200_000):
 
 
 def pose(T, T_other, pts, corner_pts):
-    """Displacement of T against T_other (mm) over points and block corners; rotation angle of inv(T_other) @ T (deg)."""
+    """Displacement of T against T_other (mm) over points and block corners, and rotation angle of inv(T_other) @ T (deg)."""
     d = np.linalg.norm(apply(T, pts) - apply(T_other, pts), axis=1)
     dc = np.linalg.norm(apply(T, corner_pts) - apply(T_other, corner_pts), axis=1)
     D = (np.linalg.inv(T_other) @ T)[:3, :3]
@@ -132,7 +132,7 @@ def _boundary(mask, A, keep):
 
 
 class Boundary:
-    """Outline agreement of an OCT specimen mask and an MRI foreground through a pose; distance maps are built once."""
+    """Outline agreement of an OCT specimen mask and an MRI foreground through a pose. The distance maps are built once."""
 
     def __init__(self, oct_mask, A_o, oct_valid, mri_mask, A_m, A_raw):
         self.A_o, self.A_m, self.A_raw = A_o, A_m, A_raw
@@ -254,7 +254,7 @@ def evaluate(run, masks=None, frame=True, previous=None):
         out["pose_to_previous"] = {"run": str(previous), "points": pts_of, "n_points": int(len(pts)),
                                    **pose(T, others["previous"], pts, corners(shape, A_hdr))}
     if frame:
-        affine_overlay = run / "oct_in_mri_affine.nii.gz"       # oct_in_mri.nii.gz goes through the field of §6 when one is applied
+        affine_overlay = run / "oct_in_mri_affine.nii.gz"       # oct_in_mri.nii.gz goes through the §6 field when there is one
         out["frame_check"] = frame_check(T, affine_overlay if affine_overlay.exists() else run / "oct_in_mri.nii.gz", OCT)
     return out
 
@@ -279,7 +279,7 @@ def selftest():
         A_m[:3, 3] = np.round((apply(T @ A_hdr, (np.array(shape) - 1)[None] / 2.0)[0] - A_m[:3, :3] @ np.full(3, 23.5)) * 64) / 64
         Pm = apply(A_m, np.indices((48, 48, 48)).reshape(3, -1).T.astype(float))
         raw_ijk = apply(np.linalg.inv(A_hdr) @ np.linalg.inv(T), Pm)                       # MRI voxels -> raw OCT voxels
-        # exported overlay = raw 3^3 box means at those voxels; the frame check must pass and its flips must fail
+        # exported overlay = raw 3^3 box means at those voxels. The frame check must pass and its flips must fail
         v = np.rint(raw_ijk).astype(int)
         ok = np.all((v >= 1) & (v < np.array(shape) - 1), 1)
         Vb = ndimage.uniform_filter(V, 3)

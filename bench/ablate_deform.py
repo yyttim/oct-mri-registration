@@ -1,30 +1,24 @@
-"""§6 ablation from cached base grids (bench only, the package never reads this): the table of
-bench/results/I58/deform_ablation.md, whose reach rows widen df_reach_mm (the interior search range and the edge window).
+"""Ablation of the smooth deformation (§6) from cached base grids: the table of bench/results/I58/deform_ablation.md.
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE.npz        # §1 once, shared with ngf_lam.py
     python bench/ablate_deform.py --cache CACHE.npz --run RUN -o OUT.json  # writes OUT.json and OUT.md
         [--save-fields DIR [--save-rows method,interior_only,boundary_only]]
 
-Every row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity), changing one element of the stage, and
-every row is measured the same way:
-  - the stage's read-outs (interior-match residuals and surface-edge offsets, fraction of surface-edge offsets within 0.3 mm)
-    measured on the warped OCT by the evidence of the default Params, whatever evidence the row was fitted to,
-  - two numbers the fit never sees, stored in OUT.json only (not in the table): F of §5 at sigma 0.3 mm (NGFGrid.F, the warped
-    OCT against the MRI on the MRI base grid), and the two-class score of §2 (polarity x S_class) over the core 1.5 mm below
-    both surfaces.
-The read-outs of the rows that change the evidence are still in-sample for the default evidence they overlap with. F and the
-two-class score are not. Nothing is excluded along the block: the surface-edge offsets are also reported per 4 mm along the
-sectioning axis (estimated from the section stripes of the OCT), so the end of the block with the largest misfit stays in.
+Each row fits §6 once at the affine of RUN (result.json: T_oct2mri, pose.polarity) with one element of the stage changed.
+Every row is measured the same way: the read-outs of §6 (interior-match residuals, surface-edge offsets and the fraction of
+offsets within 0.3 mm) on the warped OCT with the evidence of the default Params, and the surface-edge offsets per 4 mm along
+the sectioning axis (estimated from the section stripes of the OCT). OUT.json also stores F of §5 at sigma 0.3 mm
+(NGFGrid.F, the warped OCT against the MRI on the MRI base grid) and the two-class score of §2 (polarity x S_class) over the
+core 1.5 mm below both surfaces. The reach rows widen df_reach_mm (the interior search range and the edge window).
 
-The rows that the package has no switch for are implemented here: one kind of evidence only (the other kind's rows
-dropped from the fit and from the held-out score), the rim ridge instead of the edge (the OCT boundary taken at the one
-prominent maximum of the intensity along the normal, not at its steepest fall, while the MRI side keeps the edge), boundary
-points only within 5 mm of an interior match, and no Huber re-weighting (a Huber threshold no residual reaches). The rest
-are Params overrides.
+Rows without a Params switch are implemented here: one kind of evidence only (the other kind dropped from the fit and from
+the held-out score), the rim ridge instead of the edge (the OCT boundary at the one prominent maximum of the intensity along
+the normal, not at its steepest fall, while the MRI side keeps the edge), boundary points only within 5 mm of an interior
+match, and no Huber re-weighting (a Huber threshold no residual reaches). The other rows are Params overrides.
 
---save-fields writes, for each of --save-rows that applies a field, DIR/<row>/ in the layout of an octreg run: the field
-(oct2mri_warp.nii.gz on the MRI base grid), RUN's affine (T_oct2mri.txt, T_mri2oct.txt) and a result.json with RUN's inputs,
-so that `octreg apply --run DIR/<row>` resamples the OCT through the affine and that row's field.
+--save-fields writes, for each of --save-rows that applies a field, DIR/<row>/ in the layout of an octreg run (the field
+oct2mri_warp.nii.gz on the MRI base grid, RUN's T_oct2mri.txt and T_mri2oct.txt, and a result.json with RUN's inputs), so
+that `octreg apply --run DIR/<row>` resamples the OCT through the affine and that row's field.
 """
 from __future__ import annotations
 
@@ -161,7 +155,7 @@ class Scorer:
 
 
 def run_row(name, mri, src, scorer, lattice_for, device, save=None):
-    """One row; save: a callback that receives the field (numpy [3, D, H, W] on the MRI base grid) when the row applies one."""
+    """One row. The callback save receives the field (numpy [3, D, H, W] on the MRI base grid) when the row applies one."""
     label, change = ROWS[name]
     t0 = time.time()
     row = {"label": label, "change": change}
@@ -208,11 +202,11 @@ def fmt(x, spec):
 
 def markdown(res):
     import textwrap
-    lines = textwrap.wrap("The read-outs of §6 for each variant: the interior matches and surface-edge offsets of the default "
-                          "evidence of §6, measured on the variant's warped OCT, the same for every row. The held-out errors are "
-                          "computed on the evidence each variant was fitted to, without deformation and with its field. They "
-                          "describe what each field does to the evidence §6 measures, and are not a score of the variants, since "
-                          "the pair has no reference.", 124) + ["",
+    lines = ["# I58, ablation of the smooth deformation (§6)", ""] + textwrap.wrap(
+        "The read-outs of §6 for each variant: the interior matches and surface-edge offsets of the default evidence of §6, "
+        "measured on the variant's warped OCT. The held-out errors are computed on the evidence each variant was fitted to, "
+        "without and with its field. The pair has no reference, so the table describes the fields and does not rank them.",
+        124) + ["",
              "| variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | "
              "held-out interior matches / surface-edge offsets, without → with the field (mm) | field median / max (mm) |",
              "|---|---|---|---|---|---|---|---|"]

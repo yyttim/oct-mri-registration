@@ -3,10 +3,11 @@
 
     python bench/compose_pair.py PREFIX_A PREFIX_B OUT.png [--titles "pose A" "pose B"] [--rows qc|montage:i,j,k]
 
-Columns: OCT | MRI and checkerboard of pose A | MRI and checkerboard of pose B, one row per plane: the three centroid planes of
-qc.png, or montage rows i, j, k of qc_montage.png. Plane images and row labels are cut pixel for pixel from the qc figures (layout
-constants from octreg.register). The OCT planes of the two inputs must be identical. The MRI columns keep the grey scale of
-the qc figures, inverted when the polarity is -1. For example, the result against the best pose of the other handedness:
+Columns: OCT | MRI and checkerboard of pose A | MRI and checkerboard of pose B, one row per plane: the three centroid planes
+of qc.png, or montage rows i, j, k of qc_montage.png. Plane images and row labels are cut pixel for pixel from the qc figures
+(layout constants from octreg.register). The OCT planes of the two inputs must be identical. The MRI columns keep the grey
+scale of the qc figures, inverted when the polarity is -1. For example, the result against the best pose of the other
+handedness:
 
     python -m octreg qc --run RUN --oct OCT --mri MRI --T ABL/variants/A8/T_oct2mri.txt -o OTHER
     python bench/compose_pair.py RUN/qc OTHER OUT.png --titles "octreg result (handedness of the file headers)" \

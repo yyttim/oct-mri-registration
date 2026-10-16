@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The shared inputs of the baseline comparison (bench only, not part of the package).
+"""The shared inputs of the baseline comparison.
 
     python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN -o DIR
 

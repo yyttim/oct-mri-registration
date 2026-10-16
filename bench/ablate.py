@@ -5,39 +5,33 @@
                            [--force]
                            [--oct OCT --mri MRI [--oct-mask MASK] --pair NAME]
 
---oct and --mri run the same variants on another pair (default: the two I58 files of bench/paths.py). --oct-mask gives the
-specimen mask as a file, as `octreg register --oct-mask` does: it then replaces the texture mask in 'base' and in every variant
+--oct and --mri run the variants on another pair (default: the two I58 files of bench/paths.py). --oct-mask gives the OCT
+specimen mask as a file, as `octreg register --oct-mask` does. It then replaces the texture mask in 'base' and in every variant
 that does not set its own mask (A0, A0c).
 
-Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
-explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only),
-two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4), align(...,
-polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6, and one of the two in A6p and A6c), the OCT world mirrored so that
-the search and refinement see the other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut
-face with the method and with the two-sided outline (A11, A11b), no fine-structure refinement (A12, the pose of §4), no
-two-class term (A13, the outline alone), or no orientation search (A14: §4 from the image-centre start, the header orientation
-with the centres of the two image boxes aligned, at both polarities). Every other variant ends with §5 on its own best pose.
-'base' is the method run through this script. Its pose distance to an `octreg register` run of the same pair (--main) is stored
-as a consistency check. The OCT is streamed once, each OCT mask is computed once and the MRI is prepared once.
+'base' is the method, run with the package's own functions. Each variant makes one change to it: another OCT mask (A0 the
+histogram valley of the OCT, A0c the texture mask with holes filled in 3-D only), two_class(..., flatten=False) for one
+modality (A1, A2), standardised intensity channels instead of two-class maps (A4), the polarity forced to +1 or -1 (A5+1,
+A5-1), Params lam 0 and refine.CLAMP 1 (A6, and one of the two in A6p and A6c), the OCT world mirrored so that the search and
+refinement see the other handedness (A8), no outline term (A9), the two-sided outline (A10), a simulated cut face with the
+method and with the two-sided outline (A11, A11b), no fine-structure refinement (A12, the pose of §4), no two-class term (A13,
+the outline alone), or no orientation search (A14: §4 from the image-centre start, the header orientation with the centres of
+the two image boxes aligned, at both polarities). Every other variant ends with §5 on its own best pose. No variant runs §6,
+which does not change the affine. With --main, the pose distance of base to that `octreg register` run of the same pair is
+stored as a consistency check.
 
-The smooth deformation (§6) does not change the affine, so no variant runs it. Its read-outs are in the run's own
-result.json, which bench/report.py prints.
+--starts turns the OCT world by 90 and 180 degrees about each of its array axes, through the centre of its image box, and runs
+the method and A14 from each turned start (OUT/starts/<start>/<method|A14>/, the start itself as OUT/starts/<start>/T_start.txt
+and the image-centre start as OUT/starts/T_image_centres.txt, OUT/starts.json with the distance of every start and every final
+pose from base). --random-starts N adds N rotations drawn uniformly on SO(3) (scipy Rotation.random, seed --seed) about the
+same centre, as starts rand00, rand01, ... (OUT/random_starts.json).
 
---starts tests the start: the OCT world is turned by 90 and 180 degrees about each of its array axes, through the centre of
-its image box, and the method and A14 run from each turned start (OUT/starts/<start>/<method|A14>/, the start itself as
-OUT/starts/<start>/T_start.txt and the image-centre start as OUT/starts/T_image_centres.txt, OUT/starts.json with the
-distance of every start and every final pose from the base). --random-starts N adds N rotations drawn uniformly on SO(3)
-(scipy Rotation.random, seed --seed) about the same centre, as starts rand00, rand01, ... (OUT/random_starts.json).
+For every variant the table holds the final pose and the pose of §4 (T_before_ngf) with their distances from base, over the
+points of the base specimen mask and over the 8 corners of the OCT array, the outline agreement under the base masks and the
+OCT mask volume per mask source. The geometry helpers come from bench/evaluate.py. The OCT is streamed once, each OCT mask is
+computed once and the MRI is prepared once.
 
-Every variant keeps the pose of §4 (T_before_ngf) as well as the final pose, and the table reports the change of both against
-the base: steps of §1 to §4 act through the §4 pose, which §5 then refines.
-
-Metrics: pose to base, outline agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
-volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
-array. The geometry helpers come from bench/evaluate.py, which does not import the package. Like it, this script reads the two
-input files (bench/paths.py, or --oct and --mri), the --oct-mask file if given, and its own runs, and nothing else.
-
-OUT/prep/<mask>/  oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
+OUT/prep/<mask>/      oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
 OUT/variants/<name>/  T_oct2mri.txt, result.json (reused unless --force)
 OUT/ablations.json    the table read by bench/report.py
 """
@@ -126,7 +120,8 @@ PREP_FIELDS = ("base_mm", "fine_mm", "valley_ratio", "medium_fraction", "min_com
 
 
 def prep_hash(P):
-    """16 hex characters for the Params fields the preprocessing reads: a prep stays valid when only fields of §2 to §6 differ."""
+    """16 hex characters for the Params fields the preprocessing reads. A prep stays valid when only fields of §2 to §6
+    differ."""
     d = P.to_dict()
     return hashlib.sha256(json.dumps({k: d[k] for k in PREP_FIELDS}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
 
@@ -176,7 +171,7 @@ def prepare(out, sources):
                 m, info = fine_mask(fine, A_f, P)
             finally:
                 pp._fill_planes = fill_planes
-        else:                                                                  # A0: histogram valley of the OCT on the base grid
+        else:                                                                  # A0: histogram valley of the OCT, base grid
             m_h, info = pp.foreground(arr_h, h, P)
             m = G.resample_to(m_h, A_h, fine.shape, A_f, np.eye(4), order=0)
             np.logical_and(m, fine > 0, out=m)
@@ -204,21 +199,21 @@ def standardised(arr, mask, h, P):
 
 def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_class", polarity=0, mirror=False, outline=True,
           two_sided=False, cut_axis=None, ngf=True, clamp=None, classes=True, search=True, start=None, T0=None):
-    """§3 to §5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
+    """§3 to §5 on prepared base-grid arrays. With the default keywords these are register.register's own calls.
     clamp: the bound on log-scales and shears of §4 and §5 in place of refine.CLAMP (0.15).
     mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
-    outline False: S = 2 |S_class| / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
-    the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
-    the specimen mask itself, on which the mask is constant, so S_outline is 0.
+    outline False: S = 2 |S_class| / 3. The search's combined score is patched to leave S_outline out, since on the pooled
+    search grid the mask edge is fractional and a zero outline weight alone would not remove it. In the refinement the outline
+    weight is the specimen mask itself, on which the mask is constant, so S_outline is 0.
     two_sided: the two-sided outline, weight q in the search and the refinement (embedding over MRI tissue counts).
-    cut_axis: the specimen mask is removed beyond 70 % of its extent along that OCT axis, the OCT data there kept as embedding,
-    as for a block cut out of a larger specimen whose MRI tissue continues beyond the cut.
-    ngf False: the best pose of §4 without the fine-structure refinement (§5); otherwise §5 refines the best pose, as in register,
-    on the raw base-grid arrays with the (cut) specimen mask.
+    cut_axis: the specimen mask is removed beyond 70 % of its extent along that OCT axis and the OCT data there kept as
+    embedding, as for a block cut out of a larger specimen whose MRI tissue continues beyond the cut.
+    ngf False: the best pose of §4 without §5. Otherwise §5 refines the best pose, as in register, on the raw base-grid
+    arrays with the (cut) specimen mask.
     classes False: S = S_outline / 3 in the search and the refinement (the two-class term left out, its weight kept).
-    search False: no orientation search; §4 refines T0 (the image-centre start, 4x4) at both polarities, or at the forced one.
-    start: a proper 4x4 rotation of the OCT world (turn()); the search and refinement see the turned OCT, poses are returned in the
-    OCT header world, and T0 applies to the turned OCT.
+    search False: no orientation search. §4 refines T0 (the image-centre start, 4x4) at both polarities, or at the forced one.
+    start: a proper 4x4 rotation of the OCT world (turn()). The search and refinement see the turned OCT, poses are returned in
+    the OCT header world, and T0 applies to the turned OCT.
     -> (refined poses lowest L first, info)."""
     h = P.base_mm
     if cut_axis is not None:
@@ -297,7 +292,7 @@ def run_variant(name, out, device, force):
     head = {"name": name, "change": change, "prep": src, "spec": spec, "params_hash": P.hash()}
     try:
         poses, info = solve(o, m, P, device, **kw)
-    except ValueError as e:                     # a variant may break the method: recorded, not hidden
+    except ValueError as e:                     # a variant that fails is recorded
         if name == "base":
             raise
         io.write_json({**head, "error": f"{type(e).__name__}: {e}", "seconds": time.time() - t0}, d / "result.json")
@@ -378,7 +373,7 @@ def main():
     prepare(a.out, sources)
     A_hdr, shape = E.oct_header(E.OCT)
     b = a.out / "prep" / mask_source("base")
-    om, A_om = E.load_mask(b / "oct_mask.nii.gz")                       # the base specimen mask: the points pose changes are read on
+    om, A_om = E.load_mask(b / "oct_mask.nii.gz")                       # the base specimen mask, where pose changes are read
     pts, cor = E.grid_points(om, A_om), E.corners(shape, A_hdr)
     bnd = E.Boundary(om, A_om, E.load_mask(b / "oct_valid.nii.gz")[0], *E.load_mask(b / "mri_mask.nii.gz"), A_hdr)
     masks = {s: {"volume_cm3": E.volume_cm3(*E.load_mask(a.out / "prep" / s / "oct_mask.nii.gz"))} for s in sources}
@@ -405,14 +400,14 @@ def main():
     grid = next((p["grid"] for p in prep.values() if "grid" in p), {})
     work = [grid.get("seconds", 0)] + [p.get("mask_seconds", p.get("seconds", 0)) for p in prep.values()] + [r["seconds"] for r in rows.values()]
     res = {"pair": a.pair, "oct": E.OCT, "mri": E.MRI, "oct_mask": MASK_FILE, "params_hash": Params().hash(), "prep": prep,
-           "variants": table, "seconds": sum(work),          # the computation in the table, also when variants come from the cache
+           "variants": table, "seconds": sum(work),          # the computation in the table, also for cached variants
            "peak_rss_gb": max([p.get("peak_rss_gb") or 0 for p in prep.values()] + [r.get("peak_rss_gb") or 0 for r in rows.values()]),
            "driver_seconds": time.time() - t0}
     if a.main:
         T_main = E.load_T(a.main / "T_oct2mri.txt")
         res["driver_check"] = {"main_run": a.main, "base_vs_main": E.pose(T_base, T_main, pts, cor)}
     store = a.out / "ablations.json"
-    if a.only and store.is_file():                     # --only adds rows, it does not throw the rest of the table away
+    if a.only and store.is_file():                     # --only adds rows to the stored table
         old = json.loads(store.read_text(encoding="utf-8"))
         if old.get("params_hash") == res["params_hash"]:
             res["variants"] = {**old.get("variants", {}), **res["variants"]}
