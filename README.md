@@ -292,23 +292,33 @@ the tissue. There it leaves out about half of the tissue (50 % of the measured O
 beyond 1 mm from R in 9 of the 10 runs (median 2.52 mm). §5 brings all ten within 1 mm. Nor is §6 tested: it found no confident
 interior match and at most three boundary points on any crop, so it refused its field in every run.
 
-| MRI | MRI with the line | OCT, reference | OCT, octreg |
-|---|---|---|---|
-| <img src="docs/figures/i46/main/flip1_C3_k0_mri_coronal.png" width="175" alt="MRI"> | <img src="docs/figures/i46/main/flip1_C3_k0_mri_line_coronal.png" width="175" alt="MRI with the white-matter boundary"> | <img src="docs/figures/i46/main/flip1_C3_k0_reference_coronal.png" width="175" alt="OCT through the reference"> | <img src="docs/figures/i46/main/flip1_C3_k0_octreg_coronal.png" width="175" alt="OCT through octreg"> |
-| **NiftyReg reg_aladin** | **greedy** | **elastix** | **ANTs** |
-| <img src="docs/figures/i46/main/flip1_C3_k0_reg_aladin_coronal.png" width="175" alt="OCT through reg_aladin"> | <img src="docs/figures/i46/main/flip1_C3_k0_greedy_coronal.png" width="175" alt="OCT through greedy"> | no transform (tool error) | <img src="docs/figures/i46/main/flip1_C3_k0_ants_coronal.png" width="175" alt="OCT through ANTs"> |
-| **mri_robust_register** | **mri_coreg** | **FLIRT** | **SynthMorph** |
-| <img src="docs/figures/i46/main/flip1_C3_k0_mri_robust_register_coronal.png" width="175" alt="OCT through mri_robust_register"> | <img src="docs/figures/i46/main/flip1_C3_k0_mri_coreg_coronal.png" width="175" alt="OCT through mri_coreg"> | <img src="docs/figures/i46/main/flip1_C3_k0_flirt_coronal.png" width="175" alt="OCT through FLIRT"> | <img src="docs/figures/i46/main/flip1_C3_k0_synthmorph_coronal.png" width="175" alt="OCT through SynthMorph"> |
-| **FLIRT, its search over ±180°** | **ANTs, antsAI start** | **greedy, its search** |  |
-| <img src="docs/figures/i46/main/flip1_C3_k0_flirt_search_coronal.png" width="175" alt="OCT through FLIRT with its search"> | <img src="docs/figures/i46/main/flip1_C3_k0_ants_antsai_coronal.png" width="175" alt="OCT through ANTs from antsAI"> | <img src="docs/figures/i46/main/flip1_C3_k0_greedy_search_coronal.png" width="175" alt="OCT through greedy with its search"> |  |
+| OCT plane | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
+|---|---|---|---|---|---|
+| 102 | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct.png" width="150" alt="OCT, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_mri_reference.png" width="150" alt="MRI through R, plane 102"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p102_mri_octreg.png" width="150" alt="MRI through octreg, plane 102"> |
+| 300 | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct.png" width="150" alt="OCT, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_mri_reference.png" width="150" alt="MRI through R, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_mri_octreg.png" width="150" alt="MRI through octreg, plane 300"> |
+| 498 | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct.png" width="150" alt="OCT, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_reference.png" width="150" alt="OCT with the line through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_octreg.png" width="150" alt="OCT with the line through octreg, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_reference.png" width="150" alt="MRI through R, plane 498"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p498_mri_octreg.png" width="150" alt="MRI through octreg, plane 498"> |
 
-The coronal plane through the centre of the OCT tissue placed by R, on the crop with the median distance under octreg (10°
-FLASH, 3 mm margin, k = 0), in freeview at two screen pixels per MRI voxel of 0.15 mm (20.0 × 20.6 mm). The OCT is shown on the
-MRI grid through each transform, black where there is no OCT. The red line is the white-matter boundary of the authors' manual
-MRI labels. The grey levels are linear, at freeview's default window of the crop (22.1 to 44.4) and of the masked OCT every
-method received (8.2 to 191, [docs/figures/i46/figures.json](docs/figures/i46/figures.json)). elastix ended without a transform
-on this crop. [bench/i46](bench/i46/README.md) shows the three planes, the median crop of every condition, and all ten crops of
-this condition.
+The crop with the median distance under octreg (10° FLASH, 3 mm margin, k = 0) in three planes of the OCT itself, the way
+Costantini et al. show their OCT: OCT planes 102, 300 and 498, each three planes below the top of its section, 14.7 × 15.2 mm
+at 48 µm (a 4 × 4 average of the 12 µm OCT). From left: the OCT, the OCT with the white-matter boundary of the authors' manual
+MRI labels placed through R and through octreg (red), and the MRI crop resampled through R and through octreg. Outside the OCT
+tissue the line continues through the MRI, and where the white matter reaches the edge of the crop it runs along that edge.
+The grey levels are linear, at freeview's default window of each OCT plane and of the crop
+([docs/figures/i46/figures.json](docs/figures/i46/figures.json)).
+
+| R | octreg | NiftyReg reg_aladin | greedy | ANTs |
+|---|---|---|---|---|
+| <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="120" alt="OCT plane 300 with the line through R"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="120" alt="OCT plane 300 with the line through octreg"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reg_aladin.png" width="120" alt="OCT plane 300 with the line through NiftyReg reg_aladin"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_greedy.png" width="120" alt="OCT plane 300 with the line through greedy"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_ants.png" width="120" alt="OCT plane 300 with the line through ANTs"> |
+| **mri_robust_register** | **mri_coreg** | **FLIRT** | **SynthMorph** | **elastix** |
+| <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_mri_robust_register.png" width="120" alt="OCT plane 300 with the line through mri_robust_register"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_mri_coreg.png" width="120" alt="OCT plane 300 with the line through mri_coreg"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_flirt.png" width="120" alt="OCT plane 300 with the line through FLIRT"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_synthmorph.png" width="120" alt="OCT plane 300 with the line through SynthMorph"> | no transform (tool error) |
+| **FLIRT, its search over ±180°** | **ANTs, antsAI start** | **greedy, its search** |  |  |
+| <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_flirt_search.png" width="120" alt="OCT plane 300 with the line through FLIRT, its search over ±180°"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_ants_antsai.png" width="120" alt="OCT plane 300 with the line through ANTs, antsAI start"> | <img src="docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_greedy_search.png" width="120" alt="OCT plane 300 with the line through greedy, its search"> |  |  |
+
+OCT plane 300 of the same crop with the white-matter boundary placed through R, through octreg and through each standard tool
+at its declared setting and with its own search. FLIRT, SynthMorph and the searches of FLIRT and greedy place no white matter
+within 0.6 mm of this plane, so their panels show no line. elastix ended without a transform on this crop.
+[bench/i46](bench/i46/README.md) shows the crop on the MRI grid in three planes, the median crop of every condition, and all
+ten crops of this condition.
 
 ## Reproducing the benchmark
 

@@ -12,6 +12,14 @@ conditions/  for every condition of the test, its crop with the lower median dis
              runs without --oct-mask as <crop>_nomask)
 strip/       every C3 crop of the 10 deg FLASH on the axial plane: the MRI with the line and the OCT through the reference and
              through the first --octreg folder of runs
+enface/      the crop of main/ seen in the OCT's own imaging planes, as the authors show the OCT: three OCT planes
+             (ENFACE_PLANES, one near the top of three sections) at 48 um (4 x 4 box average of the masked OCT), and on each
+             the MRI crop resampled through the reference and through octreg (<crop>_p<plane>_mri_<tag>.png), the OCT alone
+             (<crop>_p<plane>_oct.png) and the OCT with the line of main/ placed through the reference and through octreg
+             (<crop>_p<plane>_oct_line_<tag>.png): the white-matter label resampled to a 0.15 mm grid in the OCT frame
+             around the plane and made a surface the same way. On the middle plane also the line through each standard
+             tool of main/ (<crop>_p300_oct_line_<tool>.png), with no line where the tool places no white matter within
+             four label voxels of the plane (listed as no_line in figures.json)
 The planes pass through the MRI voxel centre nearest the centre of the OCT tissue placed by the reference. The OCT is
 box-averaged to the MRI voxel size and resampled by octreg's own resampler, and black means no OCT. The 2-pixel red line is
 the white-matter boundary of the authors' manual MRI layer labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3
@@ -22,6 +30,7 @@ the masked OCT box-averaged to 0.15 mm. The windows, the plane centre and the pl
 figures.json in -o. Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
 
     python bench/i46/figures.py [-o docs/figures/i46] [--octreg RUNS ...] [--baselines DIR] [--search DIR] [--scores FILE]
+                                [--stages main,conditions,strip,enface]
 """
 from __future__ import annotations
 
@@ -42,6 +51,8 @@ from bench.figures import WSL, freeview_window, host_path, view  # noqa: E402
 from octreg import geometry as G, io  # noqa: E402
 
 K = 2                                           # screen pixels per MRI voxel
+ENFACE_PLANES = (102, 300, 498)                 # OCT planes of enface/: the fourth plane of sections 3, 9 and 15
+ENFACE_POOL = 4                                 # in-plane box average of enface/ (48 um)
 INFO = {}                                       # figures.json: <folder>/<crop> -> what its panels are drawn with
 
 
@@ -112,6 +123,80 @@ def panels(crop, transforms, boundary, centre_world, out_dir, prefix, work, plan
     return sorted(expect)
 
 
+def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mri=True):
+    """enface/ (module docstring): transforms {tag: 4 x 4 OCT world -> MRI world}, wm the white-matter label on the crop grid,
+    mri whether to make the MRI panels too. -> the panel files"""
+    import nibabel as nib
+    out_dir.mkdir(parents=True, exist_ok=True)
+    work.mkdir(parents=True, exist_ok=True)
+    m = nib.load(str(crop))
+    marr = np.asarray(m.dataobj, np.float32)
+    o = nib.load(str(OCT))
+    gm, k = freeview_window(crop), ENFACE_POOL
+    s = float(min(m.header.get_zooms()[:3]))                       # the label grid: the MRI voxel size, axes of the OCT
+    D = o.affine[:3, :3] / np.linalg.norm(o.affine[:3, :3], axis=0)
+    cmd, expect, surfs = [], {}, []
+    for plane in planes:
+        a = np.asarray(o.dataobj[:, :, plane], np.float32)
+        nx, ny = a.shape[0] // k, a.shape[1] // k
+        a = a[:nx * k, :ny * k].reshape(nx, k, ny, k).mean((1, 3))[:, :, None]
+        A = o.affine @ np.array([[k, 0, 0, (k - 1) / 2], [0, k, 0, (k - 1) / 2], [0, 0, 1, plane], [0, 0, 0, 1]], float)
+        f_oct = work / f"oct_p{plane}.nii.gz"
+        io.save_nifti(a, A, f_oct)
+        go = freeview_window(f_oct)
+        INFO[f"{out_dir.name}/{prefix}_p{plane}"] = {"oct_window": [round(x, 4) for x in go], "mri_window": [round(x, 4) for x in gm],
+                                                   "plane_mm": [round(nx * k * float(o.header.get_zooms()[0]), 2),
+                                                                round(ny * k * float(o.header.get_zooms()[1]), 2)]}
+        ref = nib.Nifti1Image(a, A)
+        lines, wh = view(ref, "axial", (A @ np.r_[(nx - 1) / 2, (ny - 1) / 2, 0, 1])[:3])
+        lines = [f"-viewsize {wh[0] * 2} {wh[1] * 2}" if line.startswith("-viewsize") else line for line in lines]
+        ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"
+        size = (wh[0] * 2, wh[1] * 2)
+        cmd += ["-v {}:grayscale={!r},{!r}".format(host_path(f_oct), *go), *lines, ss(f"{prefix}_p{plane}_oct.png")]
+        expect[out_dir / f"{prefix}_p{plane}_oct.png"] = size
+        n = (int(np.ceil((nx * k * float(o.header.get_zooms()[0]) + 4) / s)),    # 2 mm beyond the plane on each side
+             int(np.ceil((ny * k * float(o.header.get_zooms()[1]) + 4) / s)), 9)  # and 4 voxels above and below it
+        A3 = np.eye(4)
+        A3[:3, :3] = D * s
+        A3[:3, 3] = (A @ np.r_[(nx - 1) / 2, (ny - 1) / 2, 0, 1])[:3] - A3[:3, :3] @ ((np.array(n) - 1) / 2)
+        for tag, T in transforms.items():
+            f_wm = work / f"wm_{tag}_p{plane}.nii.gz"
+            f_mri = work / f"mri_{tag}_p{plane}.nii.gz"
+            lab = G.resample_to(wm.astype(np.uint8), m.affine, n, A3, np.asarray(T, float), order=0).astype(np.uint8)
+            io.save_nifti(lab, A3, f_wm)
+            io.save_nifti(G.resample_to(marr, m.affine, a.shape, A, np.asarray(T, float)), A, f_mri)
+            if lab.any():
+                surfs.append(f_wm.name.removesuffix(".nii.gz"))
+                cmd += [f"-f {host_path(work / (surfs[-1] + '.surf'))}:edgecolor=red:edgethickness=2",
+                        ss(f"{prefix}_p{plane}_oct_line_{tag}.png"), "-unload surface"]
+            else:
+                INFO[f"{out_dir.name}/{prefix}_p{plane}"].setdefault("no_line", []).append(tag)
+                cmd.append(ss(f"{prefix}_p{plane}_oct_line_{tag}.png"))
+            expect[out_dir / f"{prefix}_p{plane}_oct_line_{tag}.png"] = size
+        cmd.append("-unload volume")
+        for tag in transforms if mri else ():
+            cmd += ["-v {}:grayscale={!r},{!r}".format(host_path(work / f"mri_{tag}_p{plane}.nii.gz"), *gm), *lines,
+                    ss(f"{prefix}_p{plane}_mri_{tag}.png"), "-unload volume"]
+            expect[out_dir / f"{prefix}_p{plane}_mri_{tag}.png"] = size
+    (work / "enface.cmd").write_text("\n".join(cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
+    sh = ["#!/bin/bash", "export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}",
+          "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}",
+          "source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1", "set -e", f"cd {host_path(work)}",
+          *(f"mri_mc {f}.nii.gz 1 {f}_raw.surf > mri_mc_{f}.log 2>&1 && "
+            f"mris_smooth -n 3 -nw {f}_raw.surf {f}.surf > mris_smooth_{f}.log 2>&1" for f in surfs),
+          "freeview -cmd enface.cmd > freeview.log 2>&1"]
+    (work / "enface.sh").write_text("\n".join(sh) + "\n", encoding="utf-8", newline="\n")
+    for f in expect:
+        f.unlink(missing_ok=True)
+    subprocess.run((["wsl"] if WSL else []) + ["bash", host_path(work / "enface.sh")], check=True)
+    from PIL import Image
+    bad = [f"{f}: {Image.open(f).size if f.is_file() else 'missing'}, expected {wh}" for f, wh in expect.items()
+           if not f.is_file() or Image.open(f).size != wh]
+    if bad:
+        sys.exit("\n".join(bad))
+    return sorted(expect)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--out", type=Path, default=REPO / "docs/figures/i46")
@@ -121,7 +206,9 @@ def main():
     ap.add_argument("--search", type=Path, default=WORK / "baselines_search",
                     help="the folder of the runs of the tools with their own search")
     ap.add_argument("--scores", type=Path, default=RESULTS / "octreg.json", help="the octreg scores that choose the crop")
+    ap.add_argument("--stages", default="main,conditions,strip,enface", help="comma-separated folders to make (default: all)")
     a = ap.parse_args()
+    stages = a.stages.split(",")
     scores = {x["name"]: x for x in json.loads(a.scores.read_text(encoding="utf-8"))}
     rows = {x["name"]: x for x in json.loads((INPUTS / "crops.json").read_text(encoding="utf-8"))}
     centre = (reference() @ np.r_[tissue().mean(0), 1])[:3]
@@ -148,19 +235,27 @@ def main():
     for folder in (a.baselines, a.search):
         for d in sorted((folder / crop).glob("*/T_oct2mri.txt")) if (folder / crop).is_dir() else []:
             T[d.parent.name if d.parent.name not in T else d.parent.name + "_search"] = np.loadtxt(d)
-    files = panels(crop_file(crop), T, wm(crop), centre, a.out / "main", crop, WORK / "figures" / crop)
+    files = panels(crop_file(crop), T, wm(crop), centre, a.out / "main", crop, WORK / "figures" / crop) if "main" in stages else []
+    if "enface" in stages:
+        files += enface(crop_file(crop), {"reference": reference(), **dict(list(octreg(crop).items())[:1])}, wm(crop),
+                        a.out / "enface", crop, WORK / "figures" / "enface" / crop)
+        files += enface(crop_file(crop), {k: v for k, v in T.items() if k != "reference" and not k.startswith("octreg")},
+                        wm(crop), a.out / "enface", crop, WORK / "figures" / "enface" / crop / "tools", planes=(300,),
+                        mri=False)
     conds = [(im, "C3", "") for im in FLIPS] + [(PRIMARY, c, "") for c in CONDITIONS if c != "C3"]
     conds.append((PRIMARY, "C3", "_nomask"))
-    for image, cond, suffix in conds:
+    for image, cond, suffix in conds if "conditions" in stages else []:
         name = median_crop(image, cond, suffix)
         c = name.removesuffix(suffix) if suffix else name
         files += panels(crop_file(c), {"reference": reference(), **octreg(name)}, wm(c), centre, a.out / "conditions", name,
                         WORK / "figures" / "conditions" / name, planes=("axial",), plain_mri=False)
-    for k in range(SEEDS):
+    for k in range(SEEDS) if "strip" in stages else []:
         c = crop_name(PRIMARY, "C3", k)
         files += panels(crop_file(c), {"reference": reference(), **dict(list(octreg(c).items())[:1])}, wm(c), centre,
                         a.out / "strip", c, WORK / "figures" / "strip" / c, planes=("axial",), plain_mri=False)
-    (a.out / "figures.json").write_text(json.dumps(INFO, indent=1) + "\n", encoding="utf-8")
+    info = a.out / "figures.json"                                     # a partial --stages run keeps the other entries
+    old = json.loads(info.read_text(encoding="utf-8")) if info.is_file() else {}
+    info.write_text(json.dumps({**old, **INFO}, indent=1) + "\n", encoding="utf-8")
     print(len(files), "panels in", a.out)
 
 
