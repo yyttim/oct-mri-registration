@@ -161,9 +161,9 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   counted as beyond every other.
 - **Pictures:** `figures.py` shows in freeview the C3 crop of the 10° FLASH with the median distance under octreg, on whole
   planes through the tissue centre: the MRI, and the OCT through R, through octreg and through each tool. It also shows the
-  median crop of every condition and every C3 crop of the 10° FLASH, and the first crop in three of the OCT's own planes with
-  the line placed through R, through octreg and through each tool. The red line is the white-matter boundary of the authors'
-  MRI labels, which comes from no compared method. Black means no OCT.
+  median crop of every condition and every C3 crop of the 10° FLASH, and the median C3 crop in three of the OCT's own planes
+  with the line placed through R, through octreg and through each tool. The red line is the white-matter boundary of the
+  authors' MRI labels, which comes from no compared method. Black means no OCT.
 
 ## Results
 
