@@ -113,6 +113,17 @@ def test_no_shrink_without_the_prior():
     assert np.abs(ls).max() < 0.01, ls
 
 
+def test_no_overlap_gives_a_finite_gradient():
+    """A pose that puts the OCT interior away from every MRI point scores 0 with a finite gradient, so the fit can leave it."""
+    mri, oct_, T = pair(seed=3)
+    far = np.eye(4)
+    far[:3, 3] = [200.0, 0.0, 0.0]
+    Tt = torch.tensor(far @ T, dtype=torch.float32, requires_grad=True)
+    F = ngf.NGFGrid(mri, oct_, 0.3, Params(), "cpu").F(Tt)
+    F.backward()
+    assert float(F) == 0.0 and bool(torch.isfinite(Tt.grad).all())
+
+
 def test_prior_decides_the_scale():
     """The prior of §4 is shared by §5. The OCT of this pair is 6 % longer along its first axis than the pose it starts from, a
     difference only the fine structure sees: with lam 0 the fit takes that scale, with a strong lam it keeps the size it was

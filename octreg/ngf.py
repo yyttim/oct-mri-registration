@@ -80,7 +80,7 @@ class NGFGrid:
         da = a - (a * w).sum(1, keepdim=True) / W
         db = self.tM - (self.tM * w).sum(1, keepdim=True) / W
         num = (w * (da * db).sum(0)).sum()
-        return num / torch.sqrt((w * (da * da).sum(0)).sum() * (w * (db * db).sum(0)).sum()).clamp(min=1e-12)
+        return num / torch.sqrt((w * (da * da).sum(0)).sum() * (w * (db * db).sum(0)).sum() + 1e-24)      # finite gradient without overlap
 
 
 def refine_ngf(mri, oct, T0, params: Params = Params(), device="cuda"):
