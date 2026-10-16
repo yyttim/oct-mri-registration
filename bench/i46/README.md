@@ -201,7 +201,8 @@ as a red line (`figures.py`). The planes pass through the centre of the OCT tiss
 MRI at freeview's default window of its crop, and every OCT panel at the default window of the masked OCT every method received.
 The windows, the plane centres and the plane sizes of every panel set are in
 [docs/figures/i46/figures.json](../../docs/figures/i46/figures.json). On the crop with the median distance, octreg places the
-OCT 0.38 mm from R on average, about five screen pixels.
+OCT 0.38 mm from R on average, about five screen pixels. The bands across the OCT are its 500 µm sections: in each, the OCT
+intensity falls with the imaging depth.
 
 The crop with the median distance under octreg (the lower of the two middle runs: 10° FLASH, 3 mm margin, k = 0), through octreg
 and through every standard tool at its declared setting and with its own search. elastix ended without a transform on this crop.
