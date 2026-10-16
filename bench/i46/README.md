@@ -195,13 +195,13 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 
 ## Pictures
 
-Every panel is a freeview screenshot of a whole plane of the crop at two screen pixels per MRI voxel of 0.15 mm, the OCT on the
-MRI grid through each transform, black where there is no OCT, with the white-matter boundary of the authors' manual MRI labels
-as a red line (`figures.py`). The planes pass through the centre of the OCT tissue placed by R. The grey levels are linear: the
-MRI at freeview's default window of its crop, and every OCT panel at the default window of the masked OCT every method received.
-The windows, the plane centres and the plane sizes of every panel set are in
-[docs/figures/i46/figures.json](../../docs/figures/i46/figures.json). On the crop with the median distance, octreg places the
-OCT 0.38 mm from R on average, about five screen pixels. The bands across the OCT are its 500 µm sections: in each, the OCT
+The panels on the MRI grid (all but the en-face panels at the end) are freeview screenshots of a whole plane of the crop at two
+screen pixels per MRI voxel of 0.15 mm, the OCT on the MRI grid through each transform, black where there is no OCT, with the
+white-matter boundary of the authors' manual MRI labels as a red line (`figures.py`). The planes pass through the centre of the
+OCT tissue placed by R. The grey levels are linear: the MRI at freeview's default window of its crop, and every OCT panel at the
+default window of the masked OCT every method received. The windows, the plane centres and the plane sizes of every panel set
+are in [docs/figures/i46/figures.json](../../docs/figures/i46/figures.json). On the crop with the median distance, octreg places
+the OCT 0.38 mm from R on average, about five screen pixels. The bands across the OCT are its 500 µm sections: in each, the OCT
 intensity falls with the imaging depth.
 
 The crop with the median distance under octreg (the lower of the two middle runs: 10° FLASH, 3 mm margin, k = 0), through octreg
@@ -243,17 +243,18 @@ The same crop in three planes of the OCT itself (`enface/`):
 | 300 | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct.png" width="140" alt="OCT, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_mri_reference.png" width="140" alt="MRI through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p300_mri_octreg.png" width="140" alt="MRI through octreg, plane 300"> |
 | 498 | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct.png" width="140" alt="OCT, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_mri_reference.png" width="140" alt="MRI through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k0_p498_mri_octreg.png" width="140" alt="MRI through octreg, plane 498"> |
 
-The same crop in three planes of the OCT itself, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the
-masked OCT every method received, each three planes below the top of its section, 14.76 × 15.25 mm at one screen pixel per two
-12 µm OCT voxels. From left: the OCT, the OCT with the white-matter boundary placed through R and through octreg, and the MRI
-crop placed through R and through octreg. The line is the boundary surface above. FreeSurfer places it and the MRI: each
-transform is written as an LTA file by lta_convert, and freeview moves the surface and resamples the MRI through it (nearest
-neighbour, its default). Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the
-edge of the crop it runs along that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop.
+The same crop in three planes of the OCT itself, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the 12 µm
+masked OCT that octreg received, each three planes below the top of its section, 14.76 × 15.25 mm at one screen pixel per two
+OCT voxels. From left: the OCT, the OCT with the white-matter boundary placed through R and through octreg, and the MRI crop
+placed through R and through octreg. The line is the boundary surface above (mri_mc, then mris_smooth -n 3). FreeSurfer places
+it and the MRI: each transform is written as an LTA file by lta_convert, and freeview moves the surface and resamples the MRI
+through it (nearest neighbour, its default). Outside the OCT tissue the line continues through the MRI, and where the white
+matter reaches the edge of the crop it runs along that edge. The grey levels are linear, at freeview's default window of the OCT
+and of the crop.
 
 OCT plane 300 with the line through R, through octreg and through each standard tool at its declared setting and with its own
-search. For FLIRT, SynthMorph and the searches of FLIRT and greedy the boundary does not cross this plane, so their panels
-show no line (`no_line` in figures.json). elastix ended without a transform on this crop.
+search. For FLIRT, SynthMorph and the searches of FLIRT and greedy the boundary does not cross this plane inside the OCT field
+of view, so their panels show no line (`no_line` in figures.json). elastix ended without a transform on this crop.
 
 | R | octreg | NiftyReg reg_aladin | greedy | ANTs |
 |---|---|---|---|---|

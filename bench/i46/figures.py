@@ -13,19 +13,22 @@ conditions/  for every condition of the test, its crop with the lower median dis
 strip/       every C3 crop of the 10 deg FLASH on the axial plane: the MRI with the line and the OCT through the reference and
              through the first --octreg folder of runs
 enface/      the crop of main/ seen in the OCT's own imaging planes, as the authors show the OCT: three OCT planes
-             (ENFACE_PLANES, one near the top of three sections) of the masked OCT every method received, at one screen
-             pixel per two OCT voxels and freeview's default window, alone (<crop>_p<plane>_oct.png), with the line of main/
-             placed through the reference and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed
-             through each (<crop>_p<plane>_mri_<tag>.png), at freeview's default window and interpolation. FreeSurfer
-             places everything: lta_convert writes each transform as an LTA, and freeview resamples the MRI and moves the
-             boundary surface through it (:reg=). On the middle plane also the line through each standard tool of main/
-             (<crop>_p300_oct_line_<tool>.png): where its boundary does not cross the plane there is no line (listed as
-             no_line in figures.json)
-The planes pass through the MRI voxel centre nearest the centre of the OCT tissue placed by the reference. The OCT is
-box-averaged to the MRI voxel size and resampled by octreg's own resampler, and black means no OCT. The 2-pixel red line is
-the white-matter boundary of the authors' manual MRI layer labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3
--nw: it comes from no method that is compared. Every panel is one freeview screenshot of the whole plane at two screen pixels
-per MRI voxel (0.15 mm), nothing drawn afterwards. Grey levels are linear: each MRI panel at freeview's default window of its
+             (ENFACE_PLANES, one near the top of three sections) of the 12 um masked OCT that octreg received, at one screen
+             pixel per two OCT voxels, alone (<crop>_p<plane>_oct.png), with the line of main/ placed through the reference
+             and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed through each
+             (<crop>_p<plane>_mri_<tag>.png). FreeSurfer places everything: lta_convert writes each transform as an LTA,
+             and freeview resamples the MRI (nearest neighbour, its default) and moves the boundary surface through it
+             (:reg=). The grey windows are freeview's default ones (bench.figures.freeview_window), given explicitly so that
+             a window freeview remembers for a file cannot replace them, and each freeview session sets the zoom once (it
+             multiplies). On the middle plane also the line through each standard tool of main/
+             (<crop>_p300_oct_line_<tool>.png): where its boundary does not cross the plane inside the OCT field of view
+             there is no line (listed as no_line in figures.json)
+main/, conditions/ and strip/ are on the MRI grid. Their planes pass through the MRI voxel centre nearest the centre of
+the OCT tissue placed by the reference. The OCT is box-averaged to the MRI voxel size and resampled by octreg's own
+resampler, and black means no OCT. The 2-pixel red line is the white-matter boundary of the authors' manual MRI layer
+labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw: it comes from no method that is compared. Each of
+their panels is one freeview screenshot of the whole plane at two screen pixels per MRI voxel (0.15 mm), nothing drawn
+afterwards. Grey levels are linear: each MRI panel at freeview's default window of its
 crop (bench.figures.freeview_window), and every OCT panel at the default window of the moving image every method received,
 the masked OCT box-averaged to 0.15 mm. The windows, the plane centre and the plane sizes of each crop are written to
 figures.json in -o. Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
@@ -140,9 +143,9 @@ def crosses(surf, m, T, o, plane):
     return bool((inside & (z.min(1) <= plane) & (z.max(1) >= plane)).any())
 
 
-def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mri=True):
+def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mri=True, alone=True):
     """enface/ (module docstring): transforms {tag: 4 x 4 OCT world -> MRI world}, wm the white-matter label on the crop grid,
-    mri whether to make the MRI panels too. -> the panel files"""
+    mri whether to make the MRI panels too, alone whether to shoot the OCT alone. -> the panel files"""
     out_dir.mkdir(parents=True, exist_ok=True)
     work.mkdir(parents=True, exist_ok=True)
     m, o = nib.load(str(crop)), nib.load(str(OCT))
@@ -155,7 +158,10 @@ def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mr
     ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"
     surf = host_path(work / "boundary.surf")
     reg = lambda tag: host_path(work / f"{tag}_mri2oct.lta")
-    line_cmd, mri_cmd, expect = [f"-v {host_path(OCT)}"], [f"-v {host_path(OCT)}:visible=0"], {}
+    expect = {}
+    line_cmd = ["-v {}:grayscale={!r},{!r}".format(host_path(OCT), *go)]
+    mri_cmd = ["-v {}:visible=0".format(host_path(OCT))]
+    once = lambda cmd, lines: [x for x in lines if not (x.startswith("-zoom") and any(c.startswith("-zoom") for c in cmd))]
     for plane in planes:
         lines, wh = view(o, "axial", (o.affine @ np.r_[0, 0, plane, 1])[:3])
         size = (wh[0] // 2, wh[1] // 2)                                  # one screen pixel per two OCT voxels
@@ -163,15 +169,17 @@ def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mr
         INFO[f"{out_dir.name}/{prefix}_p{plane}"] = {
             "oct_window": [round(x, 4) for x in go], "mri_window": [round(x, 4) for x in gm],
             "plane_mm": [round(o.shape[k] * float(o.header.get_zooms()[k]), 2) for k in (0, 1)]}
-        line_cmd += [*lines, ss(f"{prefix}_p{plane}_oct.png")]
-        expect[out_dir / f"{prefix}_p{plane}_oct.png"] = size
+        line_cmd += once(line_cmd, lines)
+        if alone:
+            line_cmd.append(ss(f"{prefix}_p{plane}_oct.png"))
+            expect[out_dir / f"{prefix}_p{plane}_oct.png"] = size
         for tag in transforms:
             line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor=red", ss(f"{prefix}_p{plane}_oct_line_{tag}.png"),
                          "-unload surface"]
             expect[out_dir / f"{prefix}_p{plane}_oct_line_{tag}.png"] = size
         for tag in transforms if mri else ():
-            mri_cmd += [f"-v {host_path(crop)}:reg={reg(tag)}", *lines, ss(f"{prefix}_p{plane}_mri_{tag}.png"),
-                        "-unload volume"]
+            mri_cmd += ["-v {}:reg={}:grayscale={!r},{!r}".format(host_path(crop), reg(tag), *gm), *once(mri_cmd, lines),
+                        ss(f"{prefix}_p{plane}_mri_{tag}.png"), "-unload volume"]
             expect[out_dir / f"{prefix}_p{plane}_mri_{tag}.png"] = size
     (work / "lines.cmd").write_text("\n".join(line_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
     (work / "mri.cmd").write_text("\n".join(mri_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
@@ -247,7 +255,7 @@ def main():
                         a.out / "enface", crop, WORK / "figures" / "enface" / crop)
         files += enface(crop_file(crop), {k: v for k, v in T.items() if k != "reference" and not k.startswith("octreg")},
                         wm(crop), a.out / "enface", crop, WORK / "figures" / "enface" / crop / "tools", planes=(300,),
-                        mri=False)
+                        mri=False, alone=False)
     conds = [(im, "C3", "") for im in FLIPS] + [(PRIMARY, c, "") for c in CONDITIONS if c != "C3"]
     conds.append((PRIMARY, "C3", "_nomask"))
     for image, cond, suffix in conds if "conditions" in stages else []:
