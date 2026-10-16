@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
-"""Method-independent properties of affine baseline runs (bench only, not part of the package).
+"""Properties of the affine baseline runs that need no reference.
 
-    python bench/baselines/evaluate_runs.py [RUN ...] [--octreg-run DIR] [--oct-grid OCT] [--shots] [--summary OUT.json] [--force]
+    python bench/baselines/evaluate_runs.py [RUN ...] [--octreg-run DIR] [--oct-grid OCT] [--shots] [--summary OUT.json]
+                                            [--force]
 
 For every RUN (a directory made by rundir.py init, with a check.json that is ok):
-  1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz.
-     Every method goes through the same resampler, so the panels of bench/figures.py show the registration and not the
-     interpolation.
-  2. The properties of the transform that need no reference: the scale along each OCT array axis (the length of T applied to
-     a unit step along that axis of the OCT header, 1 = voxel size kept) and the determinant of its 3x3 (1 = volume kept).
+  1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz,
+     with the same resampler for every method (the panels of bench/figures.py).
+  2. The scale along each OCT array axis (the length of T applied to a unit step along that axis of the OCT header, 1 = voxel
+     size kept) and the determinant of its 3x3 (1 = volume kept).
   3. The wall time of the registration, from RUN/time.txt (seconds, written by the tool's own command), and the hardware,
      from RUN/threads.txt.
   4. With --shots: freeview screenshots at the shared sections, named <tool>_<variant>, by
-     OCTREG_PROJECT_ROOT/baselines/shots/shots.sh, run in WSL. That script and its list of sections are local files and not
-     in the repository.
+     OCTREG_PROJECT_ROOT/baselines/shots/shots.sh in WSL, a local script that is not in the repository.
 With --octreg-run, a row "octreg" is added for that octreg run: its T_oct2mri.txt, the sum of its §1 to §5 step times in
-result.json and its device. A summary row per run goes into --summary (default
-OCTREG_PROJECT_ROOT/baselines/summary_affine.json). No row holds a distance to octreg's affine or a score computed with
-octreg's masks or read-outs. The roots come from
-bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and screenshots of the
-comparison are under OCTREG_PROJECT_ROOT/baselines.
+result.json and its device. A row per run goes into --summary (default OCTREG_PROJECT_ROOT/baselines/summary_affine.json).
+The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and
+screenshots of the comparison are under OCTREG_PROJECT_ROOT/baselines.
 """
 from __future__ import annotations
 

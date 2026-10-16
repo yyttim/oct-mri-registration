@@ -1,7 +1,8 @@
+# I58, ablation of the smooth deformation (§6)
+
 The read-outs of §6 for each variant: the interior matches and surface-edge offsets of the default evidence of §6, measured
-on the variant's warped OCT, the same for every row. The held-out errors are computed on the evidence each variant was
-fitted to, without deformation and with its field. They describe what each field does to the evidence §6 measures, and are
-not a score of the variants, since the pair has no reference.
+on the variant's warped OCT. The held-out errors are computed on the evidence each variant was fitted to, without and with
+its field. The pair has no reference, so the table describes the fields and does not rank them.
 
 | variant | λ | strain | interior matches (mm) | surface-edge offsets (mm) | within 0.3 mm | held-out interior matches / surface-edge offsets, without → with the field (mm) | field median / max (mm) |
 |---|---|---|---|---|---|---|---|

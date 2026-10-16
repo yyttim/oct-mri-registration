@@ -1,11 +1,10 @@
 """The label-only fit of the I46 reference check (bench/i46/reference_check.py): an affine from the test's OCT world to the MRI
-world fitted to the vessels alone, the dataset's OCT vessel segmentation against the authors' MRI vessel labels. No image
-intensity and no octreg enter it, and the global search uses no transform of the authors.
+world fitted to the vessels alone, the dataset's OCT vessel segmentation against the authors' MRI vessel labels.
 
 Points
     OCT        the voxels of the vessel segmentation (ves_seg, OCT planes 0..560) whose local radius, the largest distance to
-               the background within the 5 x 5 x 5 voxels around them, is at least 2 voxels: the thicker vessels, which the
-               0.15 mm MRI can show. One point per cell of 4 x 4 x 4 voxels, at the centroid of those voxels.
+               the background within the 5 x 5 x 5 voxels around them, is at least 2 voxels (the thicker vessels). One point
+               per cell of 4 x 4 x 4 voxels, at the centroid of those voxels.
     footprint  the region the OCT vessels cover: the cells that hold any vessel voxel, dilated by 14 cells, holes filled,
                eroded by 14 cells, the largest component. It says where an MRI label should have an OCT partner.
     MRI        the vessel label voxels in a box around the labels, with their distance map on that box

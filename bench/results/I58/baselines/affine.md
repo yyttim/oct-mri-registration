@@ -1,10 +1,10 @@
 # I58, affine stage
 
-No ground truth exists for this pair, and the table holds no accuracy column: the overlays of BASELINES.md are the result.
-Scale per OCT axis: the length of the transform applied to a unit step along each array axis of the OCT header (1 = voxel
-size kept). det: the determinant of its 3x3 (1 = volume kept). Wall times as each run recorded them, on a 24-core machine
-shared with other jobs, and only indicative. octreg's is the sum of its §1 to §5 step times in result.json. FLIRT's main run
-has both headers scaled x10, as its schedule works in mm, and its run on the unscaled headers is flirt_search_native.
+The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. Scale per OCT axis: the
+length of the transform applied to a unit step along each array axis of the OCT header (1 = voxel size kept). det: the
+determinant of its 3x3 (1 = volume kept). Wall times as each run recorded them, on a 24-core machine shared with other jobs.
+octreg's is the sum of its §1 to §5 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule
+works in mm, and its run on the unscaled headers is flirt_search_native.
 
 ## Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)
 

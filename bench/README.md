@@ -1,14 +1,14 @@
 # bench
 
-The benchmark of octreg: the scripts that run and measure it, and its stored results. The directory is not part of the
-package, and the method never reads anything here. The I58 brainstem pair has no labels and no reference registration, so it
-is shown in pictures and every number on it is a label-free read-out. The test in `i46/` scores octreg and the standard tools
-on block I46 of Costantini et al. (2023), the public data of the work octreg extends, against the authors' registration.
+This directory holds the scripts that run and measure octreg, and their stored results. It is not part of the package. The
+I58 brainstem pair has no labels and no reference registration, so it is shown in pictures and every number on it is a
+label-free read-out. The test in [i46/](i46/README.md) scores octreg and the standard tools on block I46 of Costantini et al.
+(2023), the public data of the work octreg extends, against the authors' registration.
 
 ## Data layout
 
 The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/`, the inputs, runs and summaries
-of the baseline comparison to `baselines/`, and the data are read from `data/` of the repository, and all three are in
+of the baseline comparison to `baselines/`, and the data are read from `data/` of the repository. All three are in
 `.gitignore`. Four environment variables move them.
 
 | variable | meaning | default |
@@ -32,25 +32,27 @@ raw OCT axis 0, and the simulated cut face of A11 lies along OCT axis 1.
 | `run_i58.py` | runs the steps register, ablate, evaluate and report on the I58 pair, with a log per step, on any OS |
 | `paths.py` | the run and data roots and the two input files |
 | `evaluate.py` | measures one run against the data: raw-data frame check, outline agreement, OCT specimen mask volume, and on request the pose distance to a second run |
-| `ablate.py` | preprocesses the pair once and runs base and the variants, written as one JSON table, and with `--starts` and `--random-starts N` the method and the variant without the orientation search from turned starts |
-| `ablate_deform.py` | the ablations of §6 from the cached base grids of `ngf_lam.py cache`, every row measured the same way (the read-outs of §6 on the warped OCT), and on request the fields of chosen rows as run directories |
+| `ablate.py` | preprocesses the pair once and runs base and the variants into one JSON table, and with `--starts` and `--random-starts N` runs the method and the variant without the orientation search from turned starts |
+| `ablate_deform.py` | the ablations of §6 on the cached base grids of `ngf_lam.py cache`, each row measured by the read-outs of §6 on the warped OCT, and on request the fields of chosen rows as run directories |
 | `ngf_lam.py` | §5 alone on cached base grids: `cache` writes the §1 grids, `sweep` refits §5 at several λ values or σ schedules, `transforms` writes every pose of a sweep as a 4×4 text file for `octreg qc --T` |
 | `report.py` | writes `bench/BENCHMARK.md` from the run outputs, and on request the qc figures and the stored results |
 | `compose_pair.py` | a figure of two `octreg qc` outputs of one run side by side, for example the result and the best pose of the other handedness (A8) |
 | `fig_registration.py` | a registration figure on three MRI planes: the MRI, the OCT placed on it by the run, and the two cut into 8 mm squares and interleaved |
+| `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md and BASELINES.md |
 | `BENCHMARK.md` | the I58 report, written by `report.py` around two hand-written sections |
 | `baselines/` | the comparison with standard registration tools, its scripts and [BASELINES.md](baselines/BASELINES.md) |
 | `i46/` | the test on block I46 of Costantini et al. (2023), its scripts and [README](i46/README.md) |
 | `results/I58/` | the stored results of the benchmark (below) |
-| `figures.py` | the freeview figures of the I58 pair in `docs/figures/`, shown in README.md, docs/METHOD.md and BASELINES.md |
 | `figures/` | where the report step of `run_i58.py` writes the qc figures (`report.py --figures`), not tracked by git |
+
+The scripts print their options with `--help`.
 
 ## Running the I58 benchmark
 
-`bench/run_i58.py` runs its steps from the repository root, with the interpreter that runs it. The whole benchmark is
-`STEPS="register ablate evaluate report"`, with `evaluate` after `ablate`, since the mask and outline metrics need the
-preprocessing that the ablate step writes. The two commands below split it in two, with a first `evaluate` right after the
-registration for the metrics that need no masks. The second `evaluate` rewrites `OUT/eval.json` with all the metrics.
+`bench/run_i58.py` runs the steps named in `STEPS` (default `register evaluate`) from the repository root, with the
+interpreter that runs it. `STEPS="register ablate evaluate report"` runs the whole benchmark. The mask and outline metrics
+need the preprocessing that the ablate step writes, so the two commands below run `evaluate` after the registration and again
+after the ablations, when it rewrites `OUT/eval.json` with all the metrics.
 
 ```bash
 STEPS="register evaluate" python bench/run_i58.py           # the registration, then the metrics that need no masks
@@ -75,10 +77,10 @@ Every step writes `NAME.log`, `NAME.time` (wall time and exit status) and `NAME.
 nvidia-smi is on the PATH) into `${OUT}_logs`, and a start and a done line per step (and the last 5 log lines on failure)
 into `chain.log` there. The peak memory of a run is in its own result.json.
 
-The runner refuses to start while another `python -m octreg`, `bench/ablate.py` or `bench/evaluate.py` process runs, so that one
-job holds the GPU at a time. `register` and `ablate` refuse a default `OUT` or `ABL` that already holds a run, so a second run
-needs a new `OUT` and a new `ABL`. `report` has no such guard. It overwrites `bench/BENCHMARK.md` and `bench/results/I58` with
-the run that `OUT` and `ABL` name.
+The runner does not start while another `python -m octreg`, `bench/ablate.py` or `bench/evaluate.py` process runs, so that
+one job holds the GPU at a time. `register` and `ablate` refuse a default `OUT` or `ABL` that already holds a run, so a
+second run needs a new `OUT` and a new `ABL`. `report` overwrites `bench/BENCHMARK.md` and `bench/results/I58` with the run
+that `OUT` and `ABL` name.
 
 `python bench/evaluate.py --selftest` checks the frame check, the outline agreement, the pose distance and the mask volume
 on synthetic arrays in a few seconds, on the CPU and without any of the data.
@@ -91,12 +93,11 @@ python bench/ngf_lam.py sweep --cache CACHE.npz --run RUN -o OUT.json         # 
 python bench/ablate_deform.py --cache CACHE.npz --run RUN -o OUT.json         # writes OUT.json and OUT.md
 ```
 
-The ablation figures of docs/METHOD.md come from `ablate.py --starts` and `ablate_deform.py --save-fields` written into
-one directory, which `figures.py --ablation` reads:
+The ablation figures in `docs/figures/ablation/` come from the output of `ablate.py --starts`, which `figures.py --ablation`
+reads:
 
 ```bash
 python bench/ablate.py --out ABL --main OUT --starts
-python bench/ablate_deform.py --cache CACHE.npz --run OUT -o ABL/deform_ablation.json --save-fields ABL/deform
 python bench/figures.py --octreg-run OUT --ablation ABL
 ```
 
@@ -114,22 +115,19 @@ are cut to a file name or a path under `bench_runs/`.
 |---|---|
 | `result.json`, `eval.json` | the output of `octreg register` and of `bench/evaluate.py` for the benchmark run |
 | `ablations.json`, `starts.json` | the ablation table and the start test of `bench/ablate.py` |
-| `deform_ablation.json`, `.md` | the §6 ablation table of `bench/ablate_deform.py` |
+| `deform_ablation.json`, `.md` | the §6 ablation table of `bench/ablate_deform.py`, computed at the affine of the benchmark run |
 | `baselines/` | the summaries, run notes and tables of the comparison with standard registration tools |
 
 `bench/results/I46/` holds the results of the I46 test and its tables (`tables.md`), written by the scripts of
 [i46/](i46/README.md).
 
 The report step writes `result.json`, `eval.json`, `ablations.json` and `starts.json` with `report.py --store` in the same
-command that writes `BENCHMARK.md`, so the document and the stored numbers agree. Only the wall clock and the GPU memory of the
-whole device in its Main result come from the step logs in `${OUT}_logs`, which are not stored. `deform_ablation.json` and `.md`
-are the output of `bench/ablate_deform.py`, computed at the affine of the benchmark run.
+command that writes `BENCHMARK.md`. When the step logs in `${OUT}_logs` exist, the Main result of `BENCHMARK.md` also gives the
+wall clock and the GPU memory in use on the whole device. These two are not stored.
 
 ## What is measured
 
-The I58 pair has no labels, so `evaluate.py` measures the run against the data itself. It reads the two input files, the
-run directory, the masks of an `ablate.py` prep directory (`--masks`) and, on request, a second octreg run (`--previous`).
-Nothing else. `T = RUN/T_oct2mri.txt` maps the OCT header world to the MRI header world.
+`evaluate.py` measures a run against the data. `T = RUN/T_oct2mri.txt` maps the OCT header world to the MRI header world.
 
 - Outline agreement: the outline of the OCT specimen mask through the pose to the outline of the MRI foreground, and back,
   as the median per face. "rim" leaves out the deep end of the block (raw axis 0, high index), which has no specimen rim.
@@ -143,13 +141,8 @@ Nothing else. `T = RUN/T_oct2mri.txt` maps the OCT header world to the MRI heade
   the exported affine overlay `oct_in_mri_affine.nii.gz` (Spearman, 7^3 voxel boxes). Controls flip each raw OCT axis or
   shift the pose by 2 mm. It passes when the pose gives at least 0.9 and every flip at most 0.3.
 
-The masks come from `ablate.py` (`ABL/prep/texture/`), so `evaluate` reports the mask and outline metrics only after the
-ablate step. The pose distance and the frame check need no masks.
-
-`ablate.py` reads the two input files (or those of `--oct` and `--mri`), the `--oct-mask` file if given, and its own runs,
-and nothing else. `--oct OCT --mri MRI [--oct-mask MASK] --pair NAME` runs the same variants on another pair, with the mask
-file in place of the texture mask in base and in every variant that does not set its own. Its pose changes are measured over the
-points of the base specimen mask and over the 8 corners of the OCT array.
+The outline agreement and the mask volume use the masks of `ablate.py` (`--masks ABL/prep/texture`), so `evaluate` reports
+them only after the ablate step.
 
 ## Ablations
 
@@ -158,16 +151,16 @@ points of the base specimen mask and over the 8 corners of the OCT array.
 | base | the method (default Params) run through `bench/ablate.py` |
 | A0 | OCT intensity foreground (histogram valley) instead of the texture specimen mask |
 | A0c | the texture mask with holes filled in 3-D only instead of in every array plane |
-| A1, A2 | MRI flattening off, OCT flattening off (`two_class(..., flatten=False)`) |
+| A1, A2 | MRI flattening off, OCT flattening off |
 | A4 | standardised intensity channels (z, -z) instead of two-class maps |
-| A5+1, A5-1 | polarity forced to +1 or -1 instead of the sign of the two-class score (`align(..., polarity=...)`) |
+| A5+1, A5-1 | polarity forced to +1 or -1 instead of the sign of the two-class score |
 | A6 | no scale prior: λ 0 and clamp 1.0 instead of 2 and 0.15 |
 | A6p, A6c | no penalty, clamp kept (λ 0, clamp 0.15) and no clamp, penalty kept (λ 2, clamp 1.0) |
 | A8 | the other handedness: the OCT world mirrored (z negated) before search and refinement |
-| A9 | no outline term: S = 2 \|S_class\| / 3 in the search (patched `search.combined`) and in the refinement (outline weight = the specimen mask, so S_outline = 0) |
+| A9 | no outline term: S = 2 \|S_class\| / 3 in the search and the refinement |
 | A10 | two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch |
 | A11, A11b | simulated cut face (specimen mask removed beyond 70 % of its extent along OCT axis 1, data kept as embedding), with the method and with the two-sided outline |
-| A12 | no fine-structure refinement: the pose of §4 (every other variant ends with §5) |
+| A12 | no fine-structure refinement: the pose of §4 |
 | A13 | no two-class term: S = S_outline / 3 in the search and the refinement, polarity +1 |
 | A14 | no orientation search: §4 from the image-centre start (header orientation, centres of the two image boxes aligned) at both polarities, then §5 |
 
@@ -176,25 +169,16 @@ of its image box, with the method and A14 run from each turned start (`ABL/start
 does the same from N rotations drawn uniformly on SO(3) (scipy `Rotation.random`, `--seed`), into `ABL/starts/randNN/` and
 `ABL/random_starts.json`.
 
-`Params` holds method constants only, and the method has no ablation switches. Each variant is one explicit change made in
-`ablate.py` around the package functions the method itself uses: an argument of `register.fine_mask`,
-`preprocess.two_class` or `register.align`, a Params override (`lam` 0 in A6 and A6p), or `refine.CLAMP` patched for the
-variant (clamp 1.0 in A6 and A6c). The clamp is a module constant, not a Params field, so `ablate.py` sets it around the
-call and restores it. A0 takes its OCT mask from `preprocess.foreground`, A4 builds its channels in `ablate.py`, and A0c,
-A9, A10 and A13 temporarily replace `preprocess._fill_planes` (with the 3-D `ndimage.binary_fill_holes`), `search.combined`
-and the outline or the score of the search and of the refinement. A14 calls `refine.refine` from the image-centre start in
-place of `register.align`, so it runs no search. The turned starts run the method and A14 with the OCT affine turned, as A8
-does with its mirror.
+Each variant is one change made in `ablate.py` around the package functions the method uses (`VARIANTS` lists them).
+`--oct OCT --mri MRI [--oct-mask MASK] --pair NAME` runs the same variants on another pair, with the mask file in place of
+the texture mask in base and in every variant that does not set its own.
 
-The OCT is streamed once, and each OCT mask source (texture, texture3d, intensity, or file with `--oct-mask`) is computed once
-and cached under `ABL/prep/`. A prep is checked against the Params fields that §1 reads (`prep_hash` in `prep.json`), so it
-stays valid when the Params of later steps change. The pose distance of base to the CLI run (`--main`) is stored as a
-consistency check. ablations.json also stores each variant's pose change against base, and the outline agreement of every
-variant under the base masks. The pair has no reference, so `BENCHMARK.md` shows each variant's own values and not these
-changes, and seven of the variants are scored against an independent reference only on I46 (`i46/analyses.py`). A variant that
-makes the method refuse is recorded as failed with the message. Finished variants are reused on a rerun unless `--force` is
-given.
+`ablations.json` stores each variant's own values, its pose change against base over the points of the base specimen mask and
+over the 8 corners of the OCT array, and its outline agreement under the base masks. `driver_check` holds the pose distance of
+base to the CLI run (`--main`). A variant that makes the method refuse is recorded as failed with the message. Each OCT mask
+source (texture, texture3d, intensity, or file with `--oct-mask`) is computed once and cached under `ABL/prep/`, checked
+against the Params fields that §1 reads (`prep_hash` in `prep.json`). Finished variants are reused on a rerun unless
+`--force` is given.
 
-The smooth deformation (§6) does not change the affine, so `ablate.py` does not run it. Its read-outs are in the run's
-result.json, which `report.py` prints in the Main result of `BENCHMARK.md`. `bench/ablate_deform.py` ablates the elements
-of §6, and `bench/results/I58/deform_ablation.md` gives the table.
+`ablate.py` does not run §6, which does not change the affine. The §6 read-outs of a run are in its result.json, and
+`bench/ablate_deform.py` ablates the elements of §6 (`bench/results/I58/deform_ablation.md`).

@@ -1,32 +1,30 @@
 #!/usr/bin/env python3
-"""The freeview figures of the I58 pair in docs/figures (bench only, not part of the package).
+"""The freeview figures of the I58 pair in docs/figures.
 
     python bench/figures.py [--octreg-run DIR] [--baselines DIR] [--deform-baselines DIR] [--ablation DIR] [--stages S]
                             [--window-from OCT] [-o docs/figures] [--work DIR]
 
   result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
                 the registered OCT (oct_in_mri.nii.gz, affine and §6), and the same OCT with the MRI tissue boundary
-  affine/       the affine baselines, each at the setting declared from its documentation (bench/baselines/README.md), on
-                the three planes of result/, each with the MRI tissue boundary (<panel>_<plane>.png)
-  deformable/   the deformable baselines at their declared settings, started from octreg's affine, on the three planes of
-                result/, each with the MRI tissue boundary (<panel>_<plane>.png)
-  ablation/     the ablations of bench/ablate.py and bench/ablate_deform.py (--ablation, their output directory, by default
-                bench_runs/I58/octreg_ablate as in bench/run_i58.py) on the same
-                sagittal plane, each with the MRI tissue boundary. The OCT is first resampled through each variant's affine
-                (and field) by octreg apply, into DIR/overlays/<panel>/ and DIR/deform/<row>/.
+  affine/       the affine baselines, each at its setting in bench/baselines/README.md, on the three planes of result/, each
+                with the MRI tissue boundary (<panel>_<plane>.png)
+  deformable/   the deformable baselines at their settings, started from octreg's affine, on the three planes of result/,
+                each with the MRI tissue boundary (<panel>_<plane>.png)
+  ablation/     the ablations of bench/ablate.py --starts (--ablation, its output directory, by default
+                bench_runs/I58/octreg_ablate as in bench/run_i58.py) on the same sagittal plane, each with the MRI tissue
+                boundary. The OCT is first resampled through each variant's affine by octreg apply, into
+                DIR/overlays/<panel>/.
 
 The MRI tissue boundary is the MRI foreground rule of §1 (octreg.preprocess.foreground, a histogram-valley threshold of the
-MRI alone) applied to the MRI crop on its own 0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw,
-and drawn by freeview as a 2-pixel red line, the same in every panel. The outline term of §2 to §4 compares the OCT specimen
-mask with this foreground, and §5 does not use it. Otsu's threshold of the same MRI cuts the dim tissue at the superior cut face
-and along the anterior surface out of the foreground, so it does not trace the tissue edge. The three planes pass through the
-voxel centre nearest the centroid of this tissue. Every panel
-is one freeview screenshot as written: freeview is set to show the whole plane of the MRI crop at exactly one screen pixel per
-MRI voxel. The grey levels are linear. The MRI takes the window freeview opens it with by default (freeview_window), and every
-OCT panel takes the default window of the moving image every method received (--window-from, the OCT box-averaged to 0.08 mm
-of bench/baselines). The windows, the plane centre and the MRI tissue are written to figures.json in -o. Nothing is resampled,
-cropped or drawn on afterwards. freeview's default orientation applies: sagittal
-planes have anterior on the right, coronal and axial planes show the subject's right on the left.
+MRI) applied to the MRI crop on its own 0.08 mm grid, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw, and
+drawn by freeview as a 2-pixel red line, the same in every panel. The three planes pass through the voxel centre nearest the
+centroid of this tissue.
+
+Every panel is one freeview screenshot of the whole plane of the MRI crop at one screen pixel per MRI voxel, with linear grey
+levels. The MRI takes freeview's default window (freeview_window), and every OCT panel takes the default window of the moving
+image every method received (--window-from, the OCT box-averaged to 0.08 mm of bench/baselines). The windows, the plane centre
+and the MRI tissue are written to figures.json in -o. freeview's default orientation applies: sagittal planes have anterior on
+the right, coronal and axial planes show the subject's right on the left.
 
 The baseline overlays are the oct_in_mri_affine.nii.gz (affine) and oct_in_mri.nii.gz (deformable) of the run directories
 of bench/baselines, under --baselines (default OCTREG_PROJECT_ROOT/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth)
@@ -49,7 +47,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT  # noqa: E402
 
-AFFINE = [  # panel name, overlay: RUN/... in the octreg run, else under --baselines; each tool at its declared setting
+AFFINE = [  # panel name, overlay: RUN/... in the octreg run, else under --baselines, each tool at its documented setting
     ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri_affine.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
     ("greedy", "affine/greedy/centers"), ("elastix", "affine/elastix/center"),
     ("mri_robust_register", "affine/mri_robust_register/default_com"), ("ants", "affine/ants/com"),
@@ -58,13 +56,11 @@ DEFORM = [  # the same for the deformable stage, under --deform-baselines
     ("affine", "RUN/oct_in_mri_affine.nii.gz"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("ants_syn", "deform/ants/syn_cc"),
     ("elastix", "deform/elastix/default"), ("reg_f3d", "deform/niftyreg/default"), ("convexadam", "deform/convexadam/default"),
     ("greedy", "deform/greedy/wncc")]
-ABLATION = [  # panel name, what it shows under --ablation: an affine (a 4x4 text file) or a §6 run directory with a field
-    ("start", "starts/T_image_centres.txt"), ("intensity_mask", "variants/A0/T_oct2mri.txt"),
-    ("no_outline", "variants/A9/T_oct2mri.txt"), ("outline_only", "variants/A13/T_oct2mri.txt"),
-    ("no_search", "variants/A14/T_oct2mri.txt"), ("no_penalty", "variants/A6p/T_oct2mri.txt"),
-    ("no_refinement", "variants/A12/T_oct2mri.txt"), ("turned_start", "starts/axis2_90/T_start.txt"),
-    ("turned_no_search", "starts/axis2_90/A14/T_oct2mri.txt"), ("turned_octreg", "starts/axis2_90/method/T_oct2mri.txt"),
-    ("interior_only", "deform/interior_only"), ("boundary_only", "deform/boundary_only")]
+ABLATION = [  # panel name, the affine it shows (a 4x4 text file under --ablation)
+    ("intensity_mask", "variants/A0/T_oct2mri.txt"), ("no_outline", "variants/A9/T_oct2mri.txt"),
+    ("no_penalty", "variants/A6p/T_oct2mri.txt"), ("no_refinement", "variants/A12/T_oct2mri.txt"),
+    ("outline_only", "variants/A13/T_oct2mri.txt"), ("turned_start", "starts/axis2_90/T_start.txt"),
+    ("turned_no_search", "starts/axis2_90/A14/T_oct2mri.txt"), ("turned_octreg", "starts/axis2_90/method/T_oct2mri.txt")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
 STAGES = ("result", "affine", "deformable", "ablation")
 WSL = platform.system() == "Windows"
@@ -113,7 +109,7 @@ def view(img, plane, point):
 
 
 def overlays(abl, run, oct_path, mri):
-    """The OCT on the MRI grid for every ABLATION panel, made again when missing or older than the affine or field it shows.
+    """The OCT on the MRI grid for every ABLATION panel, made again when missing or older than the affine it shows.
     -> {panel: overlay path}."""
     import json
     from octreg import io
@@ -124,21 +120,16 @@ def overlays(abl, run, oct_path, mri):
     inputs = json.loads((run / "result.json").read_text(encoding="utf-8"))["inputs"]
     out = {}
     for name, sub in ABLATION:
-        if (abl / sub).is_dir():                                               # a §6 row: its affine and field
-            d, f, affine_only = abl / sub, "oct_in_mri.nii.gz", False
-            made_from = [d / "T_oct2mri.txt", d / "oct2mri_warp.nii.gz"]
-        else:
-            T = np.loadtxt(abl / sub)
-            d, f, affine_only = abl / "overlays" / name, "oct_in_mri_affine.nii.gz", True
-            res = {"inputs": inputs, "T_oct2mri": T.tolist()}
-            made_from = [d / "result.json"]
-            if not made_from[0].is_file() or json.loads(made_from[0].read_text(encoding="utf-8")) != res:
-                d.mkdir(parents=True, exist_ok=True)          # written only when the affine changes, so its time dates it
-                io.write_transform_txt(T, d / "T_oct2mri.txt")
-                io.write_transform_txt(np.linalg.inv(T), d / "T_mri2oct.txt")
-                io.write_json(res, made_from[0])
-        if not (d / f).is_file() or (d / f).stat().st_mtime < max(p.stat().st_mtime for p in made_from):
-            apply(d, oct_path, mri, d / f, affine_only=affine_only)
+        T = np.loadtxt(abl / sub)
+        d, f = abl / "overlays" / name, "oct_in_mri_affine.nii.gz"
+        res, made_from = {"inputs": inputs, "T_oct2mri": T.tolist()}, d / "result.json"
+        if not made_from.is_file() or json.loads(made_from.read_text(encoding="utf-8")) != res:
+            d.mkdir(parents=True, exist_ok=True)              # written only when the affine changes, so its time dates it
+            io.write_transform_txt(T, d / "T_oct2mri.txt")
+            io.write_transform_txt(np.linalg.inv(T), d / "T_mri2oct.txt")
+            io.write_json(res, made_from)
+        if not (d / f).is_file() or (d / f).stat().st_mtime < made_from.stat().st_mtime:
+            apply(d, oct_path, mri, d / f, affine_only=True)
         out[name] = d / f
     return out
 
@@ -214,8 +205,8 @@ def main():
     ap.add_argument("--deform-baselines", type=Path, default=None,
                     help="the root of the deformable baseline runs, started from this octreg run's affine (default: --baselines)")
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "octreg_ablate",
-                    help="the output of bench/ablate.py --starts and bench/ablate_deform.py --save-fields, by default the ABL of "
-                    "bench/run_i58.py. Its panels are skipped when it does not exist")
+                    help="the output of bench/ablate.py --starts, by default the ABL of bench/run_i58.py. Its panels are "
+                    "skipped when it does not exist")
     ap.add_argument("--oct", type=Path, default=OCT_I58)
     ap.add_argument("--stages", default=",".join(STAGES), help="comma-separated folders to make (default: all four)")
     ap.add_argument("--window-from", type=Path, default=PROJECT_ROOT / "baselines" / "inputs" / "oct_0.08mm.nii.gz",

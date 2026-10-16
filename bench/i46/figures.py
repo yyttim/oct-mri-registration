@@ -1,40 +1,35 @@
 #!/usr/bin/env python3
-"""freeview panels of the I46 test, made the way bench/figures.py makes the I58 panels.
+"""freeview panels of the I46 test (bench/i46/README.md, Pictures), made like the I58 panels of bench/figures.py.
 
-main/        the C3 crop of the 10 deg FLASH whose distance from the reference under octreg is the lower median among
-             k = 0..9 (bench/results/I46/octreg.json, or --scores), on three planes, axial, coronal and sagittal: the MRI
-             (<crop>_mri_<plane>.png), the MRI with the line (<crop>_mri_line_<plane>.png), and the OCT on the MRI grid
-             through the reference, through octreg (octreg, or octreg<major><minor> when several --octreg folders are given) and
-             through each standard tool with a transform, at its declared setting (<tool>) and with its own search
-             (<tool> of --search)
-conditions/  for every condition of the test, its crop with the lower median distance under octreg, on the axial
-             plane: the MRI with the line and the OCT through the reference and through every --octreg folder of runs (the
-             runs without --oct-mask as <crop>_nomask)
-strip/       every C3 crop of the 10 deg FLASH on the axial plane: the MRI with the line and the OCT through the reference and
-             through the first --octreg folder of runs
-enface/      the crop of main/ seen in the OCT's own imaging planes, as the authors show the OCT: three OCT planes
-             (ENFACE_PLANES, one near the top of three sections) of the 12 um masked OCT that octreg received, at one screen
-             pixel per two OCT voxels, alone (<crop>_p<plane>_oct.png), with the line of main/ placed through the reference
-             and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed through each
-             (<crop>_p<plane>_mri_<tag>.png). FreeSurfer places everything: lta_convert writes each transform as an LTA,
-             and freeview resamples the MRI (nearest neighbour, its default) and moves the boundary surface through it
-             (:reg=). The grey windows are freeview's default ones (bench.figures.freeview_window), given explicitly so that
-             a window freeview remembers for a file cannot replace them, and each freeview session sets the zoom once (it
-             multiplies). On the middle plane also the line through each standard tool of main/
-             (<crop>_p300_oct_line_<tool>.png): where its boundary does not cross the plane inside the OCT field of view
-             there is no line (listed as no_line in figures.json)
-main/, conditions/ and strip/ are on the MRI grid. Their planes pass through the MRI voxel centre nearest the centre of
-the OCT tissue placed by the reference. The OCT is box-averaged to the MRI voxel size and resampled by octreg's own
-resampler, and black means no OCT. The 2-pixel red line is the white-matter boundary of the authors' manual MRI layer
-labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw: it comes from no method that is compared. Each of
-their panels is one freeview screenshot of the whole plane at two screen pixels per MRI voxel (0.15 mm), nothing drawn
-afterwards. Grey levels are linear: each MRI panel at freeview's default window of its
-crop (bench.figures.freeview_window), and every OCT panel at the default window of the moving image every method received,
-the masked OCT box-averaged to 0.15 mm. The windows, the plane centre and the plane sizes of each crop are written to
-figures.json in -o. Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
+The panels show the C3 crop of the 10 deg FLASH with the lower median distance from the reference under octreg among
+k = 0..9 (bench/results/I46/octreg.json, or --scores), except in conditions/ and strip/. The red line is the white-matter
+boundary of the authors' manual MRI layer labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw. Grey levels
+are linear, at freeview's default windows (bench.figures.freeview_window). The windows and the plane sizes of each panel set
+are written to figures.json in -o.
+
+enface/      the default stage, stored in docs/figures/i46: OCT planes ENFACE_PLANES of the 12 um masked OCT that octreg
+             received, at one screen pixel per two OCT voxels. The OCT alone (<crop>_p<plane>_oct.png), with the line placed
+             through the reference and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed through
+             each (<crop>_p<plane>_mri_<tag>.png). On plane 300 also the line through each standard tool with a transform,
+             at its documented setting and with its own search (--search). A line that does not cross the plane inside the OCT
+             field of view is listed as no_line in figures.json. lta_convert writes each transform as an LTA, and freeview
+             moves the surface (:reg=) and resamples the MRI (nearest neighbour) through it.
+
+main/, conditions/ and strip/ are optional stages that are not stored in the repository. They show the OCT on the MRI grid,
+box-averaged to the MRI voxel size and resampled by octreg (black where there is no OCT), at two screen pixels per MRI voxel,
+on planes through the MRI voxel centre nearest the centre of the OCT tissue placed by the reference:
+main/        axial, coronal and sagittal planes: the MRI (<crop>_mri_<plane>.png), the MRI with the line
+             (<crop>_mri_line_<plane>.png) and the OCT through the reference, octreg and each standard tool as in enface/
+             (<crop>_<tag>_<plane>.png). With several --octreg folders the octreg tag is octreg<major><minor>.
+conditions/  the crop with the lower median distance in every condition (<crop>_nomask for the runs without --oct-mask),
+             axial plane: the MRI with the line and the OCT through the reference and through every --octreg folder
+strip/       every C3 crop of the 10 deg FLASH, axial plane: the MRI with the line and the OCT through the reference and
+             through the first --octreg folder
+
+Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
 
     python bench/i46/figures.py [-o docs/figures/i46] [--octreg RUNS ...] [--baselines DIR] [--search DIR] [--scores FILE]
-                                [--stages main,conditions,strip,enface]
+                                [--stages enface,main,conditions,strip]
 """
 from __future__ import annotations
 
@@ -154,13 +149,14 @@ def enface(crop, transforms, wm, out_dir, prefix, work, planes=ENFACE_PLANES, mr
     nib.save(nib.Nifti1Image(np.asarray(wm, np.uint8), m.affine, hdr), str(work / "boundary.nii.gz"))
     for tag, T in transforms.items():               # lta_convert reads NiftyReg's direction, here MRI world -> OCT world
         np.savetxt(work / f"{tag}_niftyreg.txt", np.linalg.inv(np.asarray(T, float)), fmt="%.10f")
-    go, gm = freeview_window(OCT), freeview_window(crop)      # what freeview computes itself, for figures.json
+    go, gm = freeview_window(OCT), freeview_window(crop)      # freeview's defaults, explicit so no remembered window wins
     ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"
     surf = host_path(work / "boundary.surf")
     reg = lambda tag: host_path(work / f"{tag}_mri2oct.lta")
     expect = {}
     line_cmd = ["-v {}:grayscale={!r},{!r}".format(host_path(OCT), *go)]
     mri_cmd = ["-v {}:visible=0".format(host_path(OCT))]
+    # -zoom once per freeview session: it multiplies
     once = lambda cmd, lines: [x for x in lines if not (x.startswith("-zoom") and any(c.startswith("-zoom") for c in cmd))]
     for plane in planes:
         lines, wh = view(o, "axial", (o.affine @ np.r_[0, 0, plane, 1])[:3])
@@ -220,7 +216,8 @@ def main():
     ap.add_argument("--search", type=Path, default=WORK / "baselines_search",
                     help="the folder of the runs of the tools with their own search")
     ap.add_argument("--scores", type=Path, default=RESULTS / "octreg.json", help="the octreg scores that choose the crop")
-    ap.add_argument("--stages", default="main,conditions,strip,enface", help="comma-separated folders to make (default: all)")
+    ap.add_argument("--stages", default="enface",
+                    help="comma-separated folders to make: enface (default), main, conditions, strip")
     a = ap.parse_args()
     stages = a.stages.split(",")
     scores = {x["name"]: x for x in json.loads(a.scores.read_text(encoding="utf-8"))}

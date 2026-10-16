@@ -1,17 +1,14 @@
-"""§5 at several prior weights, from cached base grids (bench only, the package never reads this).
-
-Two steps, so the sweep costs minutes instead of a full run, and a third that writes the poses out:
+"""§5 at several prior weights, from cached base grids.
 
     python bench/ngf_lam.py cache --oct OCT --mri MRI -o CACHE.npz      # §1 once (about 4 min on a CPU)
     python bench/ngf_lam.py sweep --cache CACHE.npz --run RUN -o OUT.json
     python bench/ngf_lam.py transforms --sweep OUT.json [-o DIR]        # every pose as a 4x4 text file for octreg qc --T
 
-`cache` writes the base grids of §1 (register.prepare_mri, register.prepare_oct) that §5 reads, with the measured-OCT
-mask and the OCT header affine the outline read-out needs.
-`sweep` starts every fit from the §4 pose of RUN (result.json, pose.T_before_ngf) and reports, per weight, F of §5, the
-scales and shears of the fitted pose, how far it lands from the run's own §5 pose and from §4, and the outline agreement
-of bench/evaluate.py at that pose, which §5 never sees. Default Params otherwise, so only the varied field moves (lam
-reaches §5 alone here, since §4 is not run).
+`cache` writes the base grids of §1 (register.prepare_mri, register.prepare_oct) that §5 reads, with the measured-OCT mask
+and the OCT header affine of the outline read-out.
+`sweep` starts every fit from the §4 pose of RUN (result.json, pose.T_before_ngf), with default Params except the varied
+field (lam, or ngf_sigmas_mm with --vary sigmas). Per setting it reports F of §5, the scales and shears of the fitted pose,
+its distance from the run's own §5 pose and from §4, and the outline agreement of bench/evaluate.py at that pose.
 """
 from __future__ import annotations
 

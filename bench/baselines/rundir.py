@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run directories of the baseline comparison (bench only, not part of the package).
+"""Run directories of the baseline comparison.
 
     python bench/baselines/rundir.py init RUN --T T.txt [--template RESULT.json]
     python bench/baselines/rundir.py check RUN --warped WARPED.nii.gz [--oct OCT.nii.gz] [--mri MRI.nii.gz]

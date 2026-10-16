@@ -2,12 +2,9 @@
 """Registration figure in the MRI frame, read from the original files: three MRI array planes through the registered
 OCT specimen centre, three panels each.
 
-    MRI              the reference, as it is, on its own grey scale.
+    MRI              the reference image on its own grey scale.
     registered OCT   the OCT through the run's transform and its smooth field, on the same plane and its own grey scale.
-    checkerboard     the two panels beside it, cut into TILE_MM squares and interleaved. It is nothing else: the same two
-                     arrays on the same two grey scales, not inverted, not matched to each other, not masked. So a structure
-                     runs on across a square edge where the two agree and steps where they do not, and any square can be
-                     checked against the panel it came from.
+    checkerboard     the two panels beside it, cut into TILE_MM squares and interleaved, each on its own grey scale.
 
 The OCT is box-averaged to the MRI voxel size before it is sampled.
 
@@ -32,7 +29,7 @@ from scipy import ndimage
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the package of this repository
 from octreg import geometry as G, io  # noqa: E402
 
-TILE_MM = 8.0              # checkerboard square: wide enough that one square holds a structure to follow across its edge
+TILE_MM = 8.0              # checkerboard square (mm)
 
 
 def sample(vol, affine, world, order=1):

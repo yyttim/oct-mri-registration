@@ -3,9 +3,8 @@
 
 OCT      the DANDI OME-TIFF (627 x 1271 x 1230, plane y x, uint8) as the array (x, y, plane) with the header
          diag(0.012, 0.012, 0.01515) mm, multiplied by the specimen mask octmask_24um.nii.gz upsampled 2x (its last planes
-         repeated to the size of the OCT), the same file for every method. The mask was made from the OCT alone (24 um box
-         average above 40, then morphology). Only its array is used: its header is that of the 12 um isotropic grid it was
-         drawn on. -> oct_masked.nii.gz
+         repeated to the size of the OCT). The mask was made from the OCT (24 um box average above 40, then morphology).
+         Only its array is used, since its header is that of the 12 um isotropic grid it was drawn on. -> oct_masked.nii.gz
 Ref      the authors' affine in the frame of this OCT (common.reference_matrix) -> ref_T_oct2mri.txt
 Tissue   the OCT tissue points of the scores (common.tissue_points), OCT world mm -> tissue_oct.npy
 Crops    the MRI cut around the block, as octreg expects it: an axis-aligned box on the MRI voxel grid around the 0.5 and 99.5
@@ -22,7 +21,7 @@ Context  -> bench/results/I46/context.json:
                            and supragranular cortex), each eroded by one voxel (6-connected), inside the box of MRI voxels that
                            holds the OCT block placed by the reference, 54 voxels (8.1 mm) wider on every face
          oct_noise         the share of the 24 um blocks of the unmasked OCT more than 0.3 mm outside the specimen mask whose
-                           mean is non-zero: the block is not embedded, so the OCT is not zero around the tissue
+                           mean is non-zero (the block is not embedded)
 
     python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
 """

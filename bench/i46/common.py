@@ -11,30 +11,24 @@ b36e398c, expressed from the world of the test's OCT input to the world of the D
          their OCT -> LSFM fields results/oct2lsfm/svf.08 ... svf.23, one per 500 um slab of 33 OCT planes. With a8 the affine
          of svf.08 and ax its 3 x 3 part with unit columns, TIFF plane, y and x run along -ax[:, 2], -ax[:, 1] and -ax[:, 0] at
          12 um, and the mean of the 16 lattice centres (affine applied to (shape - 1) / 2) sits at TIFF index (263.5, 635,
-         614.5), the mean over the slabs of 33 (i - 8) + 16 and the centre of the plane. Along the plane axis the lattice
-         centres step 0.396 mm (33 planes of 12 um) except 0.488 mm between svf.12 and svf.13 (reference_check.py lattice), so
-         the mean centre may lie up to 0.06 mm from where equal steps would put it, well inside the 0.30 mm band of the
-         reference. The discrete choices (the three signs, and slab 08 = OCT planes 0..32) are those under which the OCT placed
-         by the reference matches the MRI: the intensity correlation with the 20 deg FLASH is 0.387 against at most 0.19 for any
-         other orientation, and of all slabs this one puts the most OCT vessels on the MRI vessel labels
-         (bench/i46/reference_check.py).
+         614.5), the mean over the slabs of 33 (i - 8) + 16 and the centre of the plane. The three signs are those under which
+         the OCT placed by the reference correlates best with the MRI, and slab 08 (OCT planes 0..32) is the slab that puts
+         the most OCT vessels on the MRI vessel labels (bench/i46/reference_check.py frame).
     Pz   the test's OCT index (x, y, plane) -> TIFF index (plane, y, x)
     S    the test's OCT header, diag(0.012, 0.012, 0.01515) mm: 12 um in the plane and, in depth, 500 um sections (Costantini
-         et al. 2023) of 33 planes each (one slab of the authors' OCT -> LSFM fields per section). The dataset's own metadata
-         give 12 um on every axis, and the authors' frame places the planes 12 um apart and leaves the depth scale to their
-         affine.
+         et al. 2023) of 33 planes each. The dataset's own metadata give 12 um on every axis. The authors' frame places the
+         planes 12 um apart and leaves the depth scale to their affine.
 
 Scores of an affine T (OCT world -> MRI world):
     error         the distance from the reference, |T x - R x| over the OCT tissue points (the specimen mask on a grid of every
-                  eighth OCT voxel, 96 um in the plane and 121 um in depth):
-                  mean, median, p95 and maximum, the rotation angle and axis of T R^-1 (of its polar rotation), the shift of the
-                  tissue centroid, the scale along each OCT axis (1 = size kept), the mean distance and rotation angle from the
-                  label-only fit L of reference_check.py (the vessels alone, A12), and the tier of the mean distance from R:
-                  "<= 0.30 mm" (the reference band), "<= 1 mm", "<= 2.5 mm and <= 10 deg" or "beyond"
+                  eighth OCT voxel, 96 um in the plane and 121 um in depth): mean, median, p95 and maximum, the rotation
+                  angle and axis of T R^-1 (of its polar rotation), the shift of the tissue centroid, the scale along each OCT
+                  axis (1 = size kept), the mean distance and rotation angle from the label-only fit L of reference_check.py
+                  (the vessels alone, A12), and the tier of the mean distance from R: "<= 0.30 mm" (the reference band),
+                  "<= 1 mm", "<= 2.5 mm and <= 10 deg" or "beyond"
     vessel_score  the MRI vessel labels (value 255) that T places inside the OCT tissue, at least 0.15 mm from its edge and
                   within the annotated planes 0..560, and their distance to the nearest OCT vessel (DANDI ves_seg), mean and
-                  median. It uses no output of the methods tested, but it is close to the vessel term the authors fitted R
-                  with, so it favours R, and it saturates near 0.25 mm: a check, not a ranking.
+                  median
 """
 from __future__ import annotations
 
@@ -215,9 +209,8 @@ def _vessels():
 
 
 def vessel_score(T):
-    """The vessel check of T (module docstring). A point x of the OCT world is looked up at block index x / (2 S) - 0.5, which
-    puts block i a quarter block (6 um in the plane, 7.6 um in depth) beyond the centre of its OCT voxels 2i and 2i + 1, far
-    below what the check resolves. Fewer than 50 labels inside the tissue give no distance."""
+    """The vessel check of T (module docstring). A point x of the OCT world is looked up at block index x / (2 S) - 0.5.
+    Fewer than 50 labels inside the tissue give no distance."""
     from scipy import ndimage
     mri_pts, dist, sp, shp, inner = _vessels()
     q = (np.linalg.inv(T) @ np.c_[mri_pts, np.ones(len(mri_pts))].T).T[:, :3] / sp - 0.5     # OCT world -> 24 um block index

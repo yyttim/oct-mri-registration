@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""Write bench/BENCHMARK.md for the I58 brainstem pair from the bench outputs (formatting only, no computation).
+"""Write bench/BENCHMARK.md for the I58 pair from the bench outputs (formatting only, no computation).
 
     python bench/report.py --main RUN --ablate ABL [--logs RUN_logs] [-o bench/BENCHMARK.md] [--figures bench/figures]
         [--store bench/results/I58]
 
-RUN: the CLI run (result.json, and eval.json from bench/evaluate.py). ABL: bench/ablate.py output (ablations.json, and
-starts.json when ablate.py ran with --starts).
-LOGS (optional): bench/run_i58.py step logs, adding the wall clock (register.time) and the nvidia-smi peak (register.gpu_mib)
-to the in-process time and memory of result.json. Missing values print n/a. Two hand-written parts of the existing file are
-kept: the '## Visual result' section before '## Main result', and the reading after the READING marker. The figures of
---figures are not tracked by git.
+RUN: the CLI run (result.json, and eval.json of bench/evaluate.py). ABL: the output of bench/ablate.py (ablations.json, and
+starts.json with --starts). RUN_logs: the step logs of bench/run_i58.py (register.time and register.gpu_mib), for the wall
+clock and the peak GPU memory of the device. Missing values print n/a. A rewrite keeps the hand-written '## Visual result'
+section and the text after the READING marker.
 """
 from __future__ import annotations
 
@@ -83,7 +81,7 @@ def arrow(pair, scale=1.0, nd=2):
 
 
 def deform_rows(d):
-    """Table rows of the smooth deformation (§6) read-outs (result.json 'deform'); none when the run has no such block."""
+    """Table rows of the smooth deformation (§6) read-outs (result.json 'deform'), none when the run has no such block."""
     if not d:
         return []
     r, f, cv = d.get("residual", {}), d.get("field", {}), d.get("cv", {})
@@ -135,10 +133,8 @@ def main_section(run, logs):
                                                  f"{num(gpu, 1)} GiB)" if wall else "")),
         ("time per step (s)", steps or "n/a"),
     ]
-    frame = ("passes" if fc["ok"] else "does not pass") if fc else "was not run"
-    verdict = ("bench/evaluate.py has not been run on this run yet." if not ev else
-               f"The raw-data frame check {frame}. The pair has no labels, so none of these numbers is a success criterion.")
-    return ["## Main result", "", "| | |", "|---|---|"] + [f"| {a} | {v} |" for a, v in rows] + ["", verdict, ""]
+    note = [] if ev else ["bench/evaluate.py has not been run on this run yet.", ""]
+    return ["## Main result", "", "| | |", "|---|---|"] + [f"| {a} | {v} |" for a, v in rows] + [""] + note
 
 
 def det3(T):
@@ -167,12 +163,10 @@ def ablation_section(abl):
             "| time (s) |")
     rule = "|---|---|---|---|---|---|---|---|---|"
     head = ["## Ablations", "",
-            "Each variant is the method with one explicit change, run from the same preprocessed grids (one per OCT mask source). "
-            "The pair has no reference, so the variants are not scored here: the table gives each variant's own values, "
-            "docs/METHOD.md shows the main variants in freeview, and bench/i46 scores seven of them (A4, A6p, A9, A10, A12, A13 "
-            "and A14) against the registration of Costantini et al. (2023). A11 and A11b cut the specimen mask at 70 % of its "
-            "extent along OCT axis 1, so their mask column is empty. The smooth deformation (§6) does not change the affine, "
-            "so no variant runs it. Its ablation is in bench/results/I58/deform_ablation.md.", "",
+            "Each variant is the method with one change, run from the same preprocessed grids (one per OCT mask source). "
+            "L is the loss of §4, 1 - S plus the scale and shear penalty (docs/METHOD.md). "
+            "A11 and A11b cut the specimen mask, so their mask column is empty. No variant runs the smooth deformation (§6), "
+            "which does not change the affine. Its ablation is in bench/results/I58/deform_ablation.md.", "",
             cols, rule]
     rows = [ablation_row(n, r) for n, r in V.items()]
     tail = [""]
@@ -189,12 +183,11 @@ def starts_section(st):
     if not st:
         return []
     out = ["## Start test", "",
-           "The method's consistency with itself. The OCT is turned by 90 and 180 degrees about each of its array axes, through "
-           "the centre of its image box, and the method runs from the image-centre start and from each turned start. Each cell "
-           "gives the mean displacement from the method's own result from the file orientation (base) over the points of the "
-           "base specimen mask, and the angle of the rotation between the two poses. The variant without the orientation search "
-           "(A14) also runs from each start. docs/METHOD.md shows it from the start turned by 90° about the sectioning axis, "
-           "and bench/i46 scores it against an independent reference.", "",
+           "The OCT is turned by 90 and 180 degrees about each of its array axes, through the centre of its image box, and the "
+           "method runs from the image-centre start and from each turned start. Each cell gives the mean displacement from the "
+           "base result (the method from the file orientation) over the base specimen mask, and the angle of the rotation "
+           "between the two poses. A14, the variant without the orientation search, also runs from each start, and "
+           "README.md shows it from the start turned by 90° about the sectioning axis.", "",
            "| start | start pose to base: mm / deg | method to base: mm / deg |", "|---|---|---|"]
     f = lambda d: f"{num(d.get('mean_mm'))} / {num(d.get('rotation_deg'), 1)}" if d else "n/a"
     for name, r in st["starts"].items():
@@ -243,22 +236,20 @@ def main():
     ap.add_argument("-o", "--out", type=Path, default=Path("bench/BENCHMARK.md"))
     ap.add_argument("--figures", type=Path, default=None, help="also write three qc figures of the run into this dir")
     ap.add_argument("--store", type=Path, default=None,
-                    help="also copy the run's result.json and eval.json and the ablations.json and starts.json into this dir "
-                         "(bench/results/I58), so the numbers the document quotes travel with it, with every absolute "
-                         "path cut to a file name or a bench_runs/ path")
+                    help="also copy result.json, eval.json, ablations.json and starts.json into this dir (bench/results/I58), "
+                         "absolute paths cut to a file name or a bench_runs/ path")
     a = ap.parse_args()
     abl = load(a.ablate / "ablations.json") if a.ablate else {}
     st = load(a.ablate / "starts.json") if a.ablate and (a.ablate / "starts.json").exists() else {}
     phash = load(a.main / "result.json").get("params_hash") or abl.get("params_hash")
+    stored = ["result.json", "eval.json", "ablations.json"] + (["starts.json"] if st else [])
     intro = ["# Benchmark: the I58 brainstem pair", "",
              "octreg registered the two original files as given (OCT 1457×2013×1595 at 20 µm, header LPI, and MRI crop 343×489×495 at "
              "0.08 mm, header RIA) with `octreg register OCT MRI -o OUT` and default parameters"
              + (f" (Params hash {phash})" if phash else "") + ". "
-             "The pair has no labels, so every number here is label-free. "
-             "The numbers are read from the run's result.json and eval.json and from ablations.json"
-             + (" and starts.json" if st else "") + " (copies in bench/results/I58/)"
-             + (", except the wall clock and the GPU memory of the whole device, which come from the step logs of "
-                "bench/run_i58.py and are not stored" if a.logs and (a.logs / "register.time").exists() else "") + ". "
+             f"The numbers come from {', '.join(stored[:-1])} and {stored[-1]}, stored in bench/results/I58/"
+             + (", except the wall clock and the GPU memory of the device, which come from the step logs of bench/run_i58.py"
+                if a.logs and (a.logs / "register.time").exists() else "") + ".", "",
              "Commands: `python bench/run_i58.py` (see bench/README.md).", ""]
     old = a.out.read_text(encoding="utf-8") if a.out.exists() else ""
     visual = re.search(r"^## Visual result\n.*?(?=^## Main result)", old, re.S | re.M)       # hand-written, kept

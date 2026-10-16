@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""octreg on the I58 brainstem pair, from the two original files. Any OS, any machine.
+"""octreg on the I58 brainstem pair, from the two original files, on any OS.
 
     python bench/run_i58.py                                                       # register + evaluate
     STEPS="ablate evaluate report" python bench/run_i58.py                        # bash
@@ -8,20 +8,20 @@
 Steps in order: register (python -m octreg register OCT MRI -o OUT), ablate (bench/ablate.py --starts), evaluate
 (bench/evaluate.py) and report (bench/report.py, which rewrites bench/BENCHMARK.md, bench/figures and bench/results/I58).
 Overrides, all optional: STEPS, OUT, ABL, PREV_MAIN, DEVICE, CODE. The roots come from bench/paths.py (OCTREG_PROJECT_ROOT,
-OCTREG_DATA_ROOT, OCTREG_I58_DIR) and CODE defaults to the repository of this file. The steps run with the interpreter that runs
-this file.
+OCTREG_DATA_ROOT, OCTREG_I58_DIR) and CODE defaults to the repository of this file. The steps run with the interpreter that
+runs this file.
 
-OUT and ABL default to bench_runs/I58/octreg and bench_runs/I58/octreg_ablate. PREV_MAIN has no default. When it names a second
-octreg run, the evaluate step also measures the pose distance to it (bench/evaluate.py --previous).
+OUT and ABL default to bench_runs/I58/octreg and bench_runs/I58/octreg_ablate. PREV_MAIN has no default. When it names a
+second octreg run, the evaluate step also measures the pose distance to it (bench/evaluate.py --previous).
 
-Each step writes NAME.log, NAME.time (wall time and exit status, the peak memory of a run is in its own result.json)
-and, when nvidia-smi is on the PATH, NAME.gpu_mib into ${OUT}_logs, with a start and a done line
-per step in chain.log. The runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid while it runs and
-refuses to start while another registration job is running, since one GPU takes one at a time. Each step runs with
-OMP_NUM_THREADS=8. The runner takes no arguments, and --help prints this text.
+Each step writes NAME.log, NAME.time (wall time and exit status) and, when nvidia-smi is on the PATH, NAME.gpu_mib into
+${OUT}_logs, with a start and a done line per step in chain.log. The peak memory of a run is in its own result.json. While it
+runs, the runner writes its PID (POSIX: its process group) to ${OUT}_logs/runner.pid. It does not start while another
+registration job runs, so that one job holds the GPU at a time. Each step runs with OMP_NUM_THREADS=8. The runner takes no
+arguments, and --help prints this text.
 
-register and ablate refuse a default OUT or ABL that already holds a run, so a second run needs a new OUT and a new ABL.
-The report step has no such guard. It rewrites bench/BENCHMARK.md from whatever OUT and ABL name.
+register and ablate refuse a default OUT or ABL that already holds a run, so a second run needs a new OUT and a new ABL. The
+report step rewrites bench/BENCHMARK.md from whatever OUT and ABL name.
 """
 from __future__ import annotations
 
@@ -84,8 +84,7 @@ def run(cmd, log, env):
 
 
 def step(name, args):
-    """python ARGS: output to NAME.log, wall time to NAME.time, GPU memory samples to NAME.gpu_mib. The peak memory of the
-    step is in the run's own result.json (octreg.register.peak_rss_gb), which is what bench/report.py prints."""
+    """python ARGS: output to NAME.log, wall time to NAME.time, GPU memory samples to NAME.gpu_mib."""
     say(f"{name} start: python {' '.join(str(a) for a in args)}")
     smi, sampler = shutil.which("nvidia-smi"), None
     if smi:

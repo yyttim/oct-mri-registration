@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""The standard registration tools on the I46 crops, each at one documented setting fixed before any run, with no masks
-(bench/baselines/standard_tools.py gives the settings, the commands, the conversions and the check). Every tool gets the masked
-OCT that octreg gets, box-averaged to the MRI voxel size with its own header, and the MRI crop.
+"""The standard registration tools on the I46 crops, each at one documented setting with no masks
+(bench/baselines/standard_tools.py gives the settings, the commands, the conversions and the check). Every tool gets the
+masked OCT that octreg gets, box-averaged to the MRI voxel size with its own header, and the MRI crop.
 
 Runs: every tool on the C3 crops k = 0..9 of the 10 deg FLASH and on the C3 k = 0 crops of the 20 and 30 deg FLASH.
 
-The other analyses each change one thing in the declared settings, on the C3 crops k = 0..9 of the 10 deg FLASH, and read the
-input files of the declared runs (<bench_runs>/I46/baselines/<crop>/inputs):
+Three variants each change one thing in those settings, on the C3 crops k = 0..9 of the 10 deg FLASH, and read the input
+files of the main runs (<bench_runs>/I46/baselines/<crop>/inputs):
 
 --search   the tools' own global searches (standard_tools.SEARCH: FLIRT over -180 to 180 deg about every axis, antsAI before
            ANTs, greedy -search), in <bench_runs>/I46/baselines_search.
@@ -19,13 +19,14 @@ input files of the declared runs (<bench_runs>/I46/baselines/<crop>/inputs):
 The near start of crop k is S_k(x) = R(c + Q(x - c)) + d: Q turns by 10 deg about a unit axis, d is a shift of 1 mm in the
 MRI world, both directions drawn as normalised standard normal vectors from numpy default_rng(4700 + k) (the axis first), and
 c is the centre of the OCT tissue points (common.tissue, OCT world). R has a shear (its columns are up to 2.5 deg from
-orthogonal), which the qform of a NIfTI header cannot hold: given a sform with a shear, ANTs, elastix and greedy (ITK) read
-the qform, NiftyReg, FSL and FreeSurfer the sform. So the start given to every tool, and to octreg's A14 (analyses.py near),
-is H_k, the start closest to S_k that a qform holds: a rotation with a scale per axis, the least squares fit over the tissue
-points with H_k(c) = S_k(c). The moving image is the declared one with the header H_k A (A its own header) in both sform and
-qform, and the crop and the x10 copies of both lie next to it (baselines_near/<crop>/inputs, with start.json: the draws, S_k,
-H_k and the distance between them over the tissue points). The transform T of a tool maps the world of that header, and
-T H_k the OCT world. Each row also holds the start (start_pose, common.error of H_k) and its distance from S_k (start_from_S).
+orthogonal), which a NIfTI qform cannot hold. Given a sform with a shear, ANTs, elastix and greedy (ITK) read the qform and
+NiftyReg, FSL and FreeSurfer the sform. So every tool, and octreg's A14 (analyses.py near), starts from H_k, the start
+closest to S_k that a qform holds: a rotation with a scale per axis, the least squares fit over the tissue points with
+H_k(c) = S_k(c). The moving image is that of the main runs with the header H_k A (A its own header) in both sform and
+qform, and the crop and the x10 copies of both lie next to it (baselines_near/<crop>/inputs, with start.json: the draws,
+S_k, H_k and the distance between them over the tissue points). The transform T of a tool maps the world of that header,
+and T H_k the OCT world. Each row also holds the start (start_pose, common.error of H_k) and its distance from S_k
+(start_from_S).
 
     python bench/i46/baselines.py prepare [--search | --mask | --near]   the inputs and run.sh of every run, and queue.sh
     bash <bench_runs>/I46/baselines/queue.sh           runs them one at a time (baselines_<search|mask|near>/queue.sh)
@@ -68,7 +69,7 @@ def runs(kind=None):
 
 
 def inputs(crop):
-    """The input directory of a crop, shared by the declared, search and mask runs (made once, kept if already there)."""
+    """The input directory of a crop, shared by the main, search and mask runs (made once, kept if already there)."""
     return H.prepare_inputs(BL / crop / "inputs", OCT, crop_file(crop))
 
 
@@ -111,8 +112,8 @@ def start_from_S(st):
 
 
 def near_inputs(crop):
-    """The inputs of the near runs of a crop in baselines_near/<crop>/inputs: oct.nii.gz (the declared moving image with the
-    header H_k A in sform and qform), mri.nii.gz, their x10 copies and start.json. Kept if already there."""
+    """The inputs of the near runs of a crop in baselines_near/<crop>/inputs: oct.nii.gz (the moving image of the main runs
+    with the header H_k A in sform and qform), mri.nii.gz, their x10 copies and start.json. Kept if already there."""
     d, src = BASE["near"] / crop / "inputs", inputs(crop)
     if (d / "start.json").is_file():
         return d
