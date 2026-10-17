@@ -1,4 +1,4 @@
-"""Grids, rotations, world-space sampling and the separable Gaussian filtering §5 and §6 share.
+"""Grids, rotations, world-space sampling and the separable Gaussian filtering of the score.
 
 Arrays are indexed (i, j, k); an affine maps voxel index -> world mm; a transform T is a 4x4 world -> world matrix (mm).
 """
@@ -21,13 +21,23 @@ def _np(A) -> np.ndarray:
     return A.detach().cpu().double().numpy() if isinstance(A, torch.Tensor) else np.asarray(A, float)
 
 
-def rotations(n, seed) -> np.ndarray:
-    """n rotations uniform on SO(3) from normalised Gaussian quaternions (w, x, y, z) of numpy default_rng(seed); R[0] = identity.
-    -> [n, 3, 3] float64."""
-    q = np.random.default_rng(seed).normal(size=(n, 4))
-    R = Rotation.from_quat(q[:, [1, 2, 3, 0]]).as_matrix()
-    R[0] = np.eye(3)
-    return R
+def rotations(n) -> np.ndarray:
+    """n rotations: the identity and n - 1 Super-Fibonacci rotations (Alexa, CVPR 2022), a deterministic near-uniform set on
+    SO(3). -> [n, 3, 3] float64."""
+    m = n - 1
+    s = np.arange(m) + 0.5
+    phi, psi = np.sqrt(2.0), 1.533751168755204288118041
+    r, R_ = np.sqrt(s / m), np.sqrt(1.0 - s / m)
+    a, b = 2 * np.pi * s / phi, 2 * np.pi * s / psi
+    q = np.stack([r * np.sin(a), r * np.cos(a), R_ * np.sin(b), R_ * np.cos(b)], 1)        # (x, y, z, w)
+    return np.concatenate([np.eye(3)[None], Rotation.from_quat(q).as_matrix()])
+
+
+def box(affine, shape):
+    """World centre (mm) and bounding-sphere radius (mm) of the voxel centres of a grid (affine 4x4, shape 3 ints)."""
+    ijk = np.array([[i, j, k] for i in (0, shape[0] - 1) for j in (0, shape[1] - 1) for k in (0, shape[2] - 1)], float)
+    xyz = apply_affine(np.asarray(affine, float), ijk)
+    return xyz.mean(0), float(np.linalg.norm(xyz - xyz.mean(0), axis=1).max())
 
 
 def apply_affine(T, pts):
@@ -40,11 +50,11 @@ def apply_affine(T, pts):
 
 
 def resample_iso(vol: io.Volume, level_mm, binary=False):
-    """Isotropic grid of spacing level_mm (mm) aligned with the volume axes, streamed plane by plane (memory: the output plus two
-    planes). Per axis box average over k = max(1, round(level_mm / spacing)) voxels (trailing remainder dropped), then trilinear
-    onto floor(pooled extent / level_mm) voxels from the first pooled voxel centre, blending with 0 beyond the last. k and the
-    grid size use the spacing to 6 significant digits (a float32 20 um header gives an exact 2^3 mean at 0.04 mm). binary:
-    average the indicator voxel > 0 (a mask file). -> (float32 [d, h, w], affine)."""
+    """Isotropic grid of spacing level_mm (mm) aligned with the volume axes, streamed plane by plane (memory: the output plus
+    two planes). Per axis box average over k = max(1, round(level_mm / spacing)) voxels (trailing remainder dropped), then
+    trilinear onto floor(pooled extent / level_mm) voxels from the first pooled voxel centre, blending with 0 beyond the last. k
+    and the grid size use the spacing to 6 significant digits (a float32 20 um header gives an exact 2^3 mean at 0.04 mm).
+    binary: average the indicator voxel > 0 (a mask file). -> (float32 [d, h, w], affine)."""
     planes = ((k, p > 0) for k, p in io.iter_planes(vol)) if binary else io.iter_planes(vol)
     return _iso(planes, vol.shape, vol.affine, level_mm)
 
@@ -128,7 +138,7 @@ def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world
     constant beyond its grid. CHUNK destination voxels at a time, so the memory does not grow with the destination grid."""
     arr = np.asarray(arr)
     src = arr.view(np.uint8) if arr.dtype == bool else arr
-    A_d, B = _np(affine_dst), np.linalg.inv(_np(affine_src)) @ _np(T_dst_world_to_src_world)   # B: destination world -> source voxel
+    A_d, B = _np(affine_dst), np.linalg.inv(_np(affine_src)) @ _np(T_dst_world_to_src_world)   # B: dst world -> src voxel
     M = B @ A_d                                                                                # destination -> source voxel
     shape = tuple(int(s) for s in shape_dst)
     out = np.zeros(shape, np.float32 if order else src.dtype)

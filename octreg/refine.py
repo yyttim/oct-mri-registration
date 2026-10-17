@@ -1,13 +1,9 @@
-"""Affine refinement (docs/METHOD.md §4): every search pose is fitted on the base grid with its polarity fixed, and the lowest loss
-wins.
+"""Affine refinement (docs/METHOD.md §4).
 
-Model x_mri = R(r) Sh(sh) diag(exp(ls)) (x_oct - c) + t, c = OCT grid box centre (mm); proper poses only.
-S = (2 S_class + S_outline) / 3 as in the search: S_class the mean over the two channel pairs of the NCC between the OCT channels
-at the specimen voxels (swapped for polarity -1) and the MRI channels sampled through the pose; S_outline the NCC between the
-specimen mask w and the MRI foreground M sampled through the pose at the measured OCT voxels q, weighted by q (1 - (1 - w) E),
-E = M inside the MRI grid and 1 outside: embedding over MRI tissue or outside the crop is left out (the MRI may hold tissue that
-is not in the block). L = 1 - S + lam (sum ls^2 + sum sh^2);
-after every Adam step (cosine schedule) |ls|, |sh| <= CLAMP (absolute).
+Model x_mri = R(r) Sh(sh) diag(exp(ls)) (x_oct - c) + t, c = OCT grid box centre (mm); proper poses only. Every search
+candidate is refined on the structure score F alone, coarse to fine (one Adam pass per sigma of Params.sigmas_mm), under the
+prior L = 1 - F + lam (sum ls^2 + sum sh^2), and the lowest final L wins: the search proposes the poses, and the finest scale,
+where the internal structure is most specific, decides between them.
 """
 from __future__ import annotations
 
@@ -18,15 +14,13 @@ import torch
 from scipy.spatial.transform import Rotation
 
 from . import geometry as G
+from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
-from .search import EPS, box, to_torch
-
-CLAMP = 0.15               # |log_scale|, |shear| <= CLAMP after every step: a guard, and a run that reaches it is flagged clamp_saturated
 
 
 def compose(r, t, ls, sh, c):
-    """Torch parameters (rotation vector r rad, t = image of c in mm, log-scales, shears Sh[0,1], Sh[0,2], Sh[1,2]; each [3]) and
-    c (mm, [3]) -> 4x4 OCT world -> MRI world (torch, differentiable; the rotation is exp([r]x), also at r = 0)."""
+    """Torch parameters (rotation vector r rad, t = image of c in mm, log-scales, shears Sh[0,1], Sh[0,2], Sh[1,2]; each [3])
+    and c (mm, [3]) -> 4x4 OCT world -> MRI world (torch, differentiable; the rotation is exp([r]x), also at r = 0)."""
     z, one = torch.zeros_like(r[0]), torch.ones_like(r[0])
     K = torch.stack([torch.stack([z, -r[2], r[1]]), torch.stack([r[2], z, -r[0]]), torch.stack([-r[1], r[0], z])])
     Sh = torch.stack([torch.stack([one, sh[0], sh[1]]), torch.stack([z, one, sh[2]]), torch.stack([z, z, one])])
@@ -35,7 +29,7 @@ def compose(r, t, ls, sh, c):
 
 
 def decompose(T, c):
-    """Inverse of compose for a 4x4 numpy affine: A = Q U (QR, diag U > 0) -> (r, t, ls, sh numpy [3]). A mirrored pose is refused."""
+    """Inverse of compose for a 4x4 numpy affine: A = Q U (QR, diag U > 0) -> (r, t, ls, sh numpy [3]); refuses a mirror."""
     A = np.asarray(T, float)[:3, :3]
     if np.linalg.det(A) <= 0:
         raise ValueError(f"mirrored or singular pose (det <= 0)\n{T}")
@@ -50,92 +44,55 @@ def decompose(T, c):
             np.array([Sh[0, 1], Sh[0, 2], Sh[1, 2]]))
 
 
-def masked_ncc(a, b, w):
-    """Mean over channels of the w-weighted NCC of a and b (torch [C, N], [C, N], [N])."""
-    N = w.sum() + EPS
-    da, db = a - (a * w).sum(1, keepdim=True) / N, b - (b * w).sum(1, keepdim=True) / N
-    return ((w * da * db).sum(1) / torch.sqrt(((w * da * da).sum(1) * (w * db * db).sum(1)).clamp(min=EPS))).mean()
-
-
-class BaseGrid:
-    """The base grid on the device: the measured OCT voxels (world points, measured fraction, specimen mask, channels) and the
-    MRI channels and foreground."""
-
-    def __init__(self, mri, oct, device="cuda", outline=True):
-        """mri = (v [2, D, H, W], mask [D, H, W], affine); oct = (u [2, d, h, w], w [d, h, w] specimen mask, measured fraction
-        [d, h, w], affine); numpy or torch. outline False: S_outline = 0 (register.outline_used)."""
-        (v, m, self.A_M), (u, w, q, A_O) = mri, oct
-        self.outline = outline
-        w, q = to_torch(w, device), to_torch(q, device)
-        idx = torch.nonzero(q > 0)
-        if not float(w.sum()) > 0:
-            raise ValueError("OCT specimen mask is empty on the base grid")
-        self.c = box(A_O, w.shape)[0]
-        self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
-        self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
-        self.u = to_torch(u, device)[(slice(None),) + tuple(idx.T)]
-        self.spec = self.w > 0
-        self.v = torch.cat([to_torch(v, device), to_torch(m, device)[None]])
-        self.not_m = 1 - self.v[2:]                                          # sampled with zeros outside the grid: E = 1 there
-
-    def score(self, T, polarity):
-        """(S, S_class signed, S_outline) of pose T (torch 4x4); S = (2 polarity S_class + S_outline) / 3."""
-        x = G.apply_affine(T, self.pts)
-        s = G.sample_world(self.v, self.A_M, x)
-        E = 1 - G.sample_world(self.not_m, self.A_M, x)[0]                                        # M inside the MRI grid, 1 outside
-        S_class = masked_ncc(s[:2, self.spec], self.u[:, self.spec], self.w[self.spec])
-        S_outline = masked_ncc(s[2:], self.w[None], self.q * (1 - (1 - self.w) * E)) if self.outline else torch.zeros_like(S_class)
-        return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
-
-
-def fit_adam(grid, T0, objective, iters, t_max, lr_scale, params: Params = Params()):
-    """Adam on L = 1 - objective(T)[0] + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4), over all twelve affine parameters
-    (r, t, 3 log-scales, 3 shears), with a cosine schedule to zero at t_max and learning rates lr_scale x (lr_rot rad, lr_t mm,
-    lr_ls, lr_sh); |ls| and |sh| are clamped to CLAMP after every step. iters and t_max are separate because §4 stops at
-    t_max, never scoring its last iterate, and §5 runs one iterate past it at learning rate 0.
-    objective(T) -> a tuple of scalar tensors, the first of which is the score. -> (T numpy 4x4, *those values, L) of the
-    iterate with the lowest L."""
-    P, dev = params, grid.w.device
-    f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=dev, requires_grad=True)
-    r, t, ls, sh = (f(x) for x in decompose(T0, grid.c))
-    c = torch.tensor(np.asarray(grid.c, float), dtype=torch.float32, device=dev)
-    k = lr_scale
-    opt = torch.optim.Adam([{"params": [r], "lr": k * P.lr_rot}, {"params": [t], "lr": k * P.lr_t},
-                            {"params": [ls], "lr": k * P.lr_ls}, {"params": [sh], "lr": k * P.lr_sh}])
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=t_max, eta_min=0.0)
-    best = (math.inf,)
-    for _ in range(iters):
+def fit_adam(objective, c, T0, iters, params: Params = Params(), device="cuda"):
+    """Adam on L = 1 - objective(T) + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4) over all twelve affine parameters (r,
+    t, 3 log-scales, 3 shears), cosine schedule to zero over iters, learning rates lr_rot rad, lr_t mm, lr_ls and lr_sh.
+    -> (T numpy 4x4, objective, L) of the iterate with the lowest L."""
+    P = params
+    f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=device, requires_grad=True)
+    r, t, ls, sh = (f(x) for x in decompose(T0, c))
+    cc = torch.tensor(np.asarray(c, float), dtype=torch.float32, device=device)
+    opt = torch.optim.Adam([{"params": [r], "lr": P.lr_rot}, {"params": [t], "lr": P.lr_t},
+                            {"params": [ls], "lr": P.lr_ls}, {"params": [sh], "lr": P.lr_sh}])
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=iters, eta_min=0.0)
+    best = (math.inf, None, None)
+    for i in range(iters + 1):
         opt.zero_grad(set_to_none=True)
-        T = compose(r, t, ls, sh, c)
+        T = compose(r, t, ls, sh, cc)
         v = objective(T)
-        L = 1.0 - v[0] + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
-        l, *s = torch.stack([L.detach(), *(x.detach() for x in v)]).tolist()
+        L = 1.0 - v + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
+        l, s = float(L.detach()), float(v.detach())
         if l < best[0]:
-            best = (l, T.detach().cpu().double().numpy(), *s)
+            best = (l, T.detach().cpu().double().numpy(), s)
+        if i == iters:
+            break
         L.backward()
         opt.step()
         sched.step()
-        with torch.no_grad():
-            ls.clamp_(-CLAMP, CLAMP)
-            sh.clamp_(-CLAMP, CLAMP)
-    return (*best[1:], best[0])
+    return best[1], best[2], best[0]
 
 
-def fit(grid, T0, polarity, params: Params = Params()):
-    """§4: fit_adam on the score of §2 at the given polarity. -> (T numpy 4x4, S, S_class, S_outline, L), lowest L."""
-    return fit_adam(grid, T0, lambda T: grid.score(T, polarity), params.iters, params.iters, 1.0, params)
-
-
-def refine(candidates, mri, oct, params: Params = Params(), device="cuda", outline=True):
-    """Fit every search pose (fit, its polarity fixed) on the base grid and sort by L. candidates: search output (T, polarity);
-    mri = (v [2, D, H, W], mask, affine), oct = (u [2, d, h, w], w, measured fraction, affine) on the base grid.
-    -> [{T, S, S_class, S_outline, L, polarity, log_scales, shears, search_rank}] lowest L first."""
-    if not candidates or any(c["polarity"] not in (1, -1) for c in candidates):
-        raise ValueError("refine needs candidates with polarity +1 or -1")
-    grid, poses = BaseGrid(mri, oct, device, outline), []
-    for i, c in enumerate(candidates):
-        T, S, S_class, S_outline, L = fit(grid, np.asarray(c["T"], float), int(c["polarity"]), params)
-        _, _, ls, sh = decompose(T, grid.c)
-        poses.append(dict(T=T, S=S, S_class=S_class, S_outline=S_outline, L=L, polarity=int(c["polarity"]),
-                          log_scales=ls.tolist(), shears=sh.tolist(), search_rank=i))
+def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
+    """Refine every pose of starts (numpy 4x4, the search candidates in rank order) on F alone, one pass per sigma in
+    params.sigmas_mm, coarse to fine. mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on
+    the base grid. The OCT points are the specimen mask eroded by round(erode_mm / h) 6-neighbourhood steps.
+    -> [{T, L, F: [{sigma_mm, start, end}], log_scales, shears, search_rank}], lowest final L first."""
+    P = params
+    (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
+    h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
+    inner = eroded(o_mask, P.erode_mm, h_o)
+    poses = [{"T": np.asarray(T, float), "F": [], "search_rank": i} for i, T in enumerate(starts)]
+    for s in P.sigmas_mm:
+        tpl = OCTTemplate(o_arr, o_mask, A_O, s, inner, device=device)
+        mt = MRITensors(m_arr, m_mask, A_M, s, device)
+        F = lambda x, tpl=tpl, mt=mt: score(x, tpl, mt)
+        for p in poses:
+            with torch.no_grad():
+                f0 = float(F(torch.tensor(p["T"], dtype=torch.float32, device=device)))
+            p["T"], f1, p["L"] = fit_adam(F, tpl.c, p["T"], P.iters, P, device)
+            p["F"].append({"sigma_mm": s, "start": round(f0, 5), "end": round(f1, 5)})
+        del tpl, mt, F
+    for p in poses:
+        _, _, ls, sh = decompose(p["T"], G.box(A_O, np.shape(o_arr))[0])
+        p.update(log_scales=ls.tolist(), shears=sh.tolist())
     return sorted(poses, key=lambda p: p["L"])

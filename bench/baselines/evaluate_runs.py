@@ -13,7 +13,7 @@ For every RUN (a directory made by rundir.py init, with a check.json that is ok)
      from RUN/threads.txt.
   4. With --shots: freeview screenshots at the shared sections, named <tool>_<variant>, by
      OCTREG_PROJECT_ROOT/baselines/shots/shots.sh in WSL, a local script that is not in the repository.
-With --octreg-run, a row "octreg" is added for that octreg run: its T_oct2mri.txt, the sum of its §1 to §5 step times in
+With --octreg-run, a row "octreg" is added for that octreg run: its T_oct2mri.txt, the sum of its §1 to §4 step times in
 result.json and its device. A row per run goes into --summary (default OCTREG_PROJECT_ROOT/baselines/summary_affine.json).
 The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT, OCTREG_I58_DIR). The inputs, summaries and
 screenshots of the comparison are under OCTREG_PROJECT_ROOT/baselines.
@@ -40,7 +40,7 @@ INPUTS = ROOT / "baselines" / "inputs"
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
 ENV = {**os.environ, "PYTHONPATH": str(REPO), "PYTHONIOENCODING": "utf-8", "CUDA_VISIBLE_DEVICES": ""}
-OCTREG_AFFINE_STEPS = ("mri", "oct_fine_grid", "oct_mask", "two_class", "search_refine_ngf")   # result.json seconds, §1 to §5
+OCTREG_AFFINE_STEPS = ("mri", "oct_fine_grid", "oct_mask", "search", "refine")   # result.json seconds, §1 to §4
 
 
 def wsl_path(p: Path) -> str:
@@ -108,7 +108,7 @@ def evaluate(run_dir: Path, shots: bool, force: bool, oct_affine):
 def octreg_row(run_dir: Path, oct_affine):
     res = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
     wall = sum(res["seconds"][k] for k in OCTREG_AFFINE_STEPS)
-    return row_of("octreg", "octreg", "§1 to §5", np.loadtxt(run_dir / "T_oct2mri.txt"), wall,
+    return row_of("octreg", "octreg", "§1 to §4", np.loadtxt(run_dir / "T_oct2mri.txt"), wall,
                   "GPU" if res["inputs"].get("device") == "cuda" else "CPU", oct_affine)
 
 

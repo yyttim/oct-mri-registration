@@ -1,5 +1,5 @@
-"""preprocess: histogram-valley status, a grey/white valley passed over, isotropic-texture specimen mask against the intensity rule (and chunk invariance),
-flattening, gain invariance and the channel pairs."""
+"""preprocess: histogram-valley status, a grey/white valley passed over, isotropic-texture specimen mask against the intensity
+rule (and chunk invariance), holes filled in the planes across a cut face."""
 import dataclasses
 
 import numpy as np
@@ -62,7 +62,7 @@ def _embedded_block(seed, n=96):
 @pytest.mark.parametrize("voxel_mm, min_dice", [(0.08, 0.9), (P.fine_mm, 0.85)])   # 0.04 mm: the default fine grid
 def test_specimen_mask_texture_not_intensity(monkeypatch, voxel_mm, min_dice):
     vol, truth = _embedded_block(0)
-    Q = dataclasses.replace(P, texture_smooth_mm=0.32)                  # a block of a few mm (the default 1.2 mm suits real blocks)
+    Q = dataclasses.replace(P, texture_smooth_mm=0.32)  # a block of a few mm (the default 1.2 mm suits real blocks)
     m, info = pp.specimen_mask(vol, voxel_mm, Q)
     assert _dice(m, truth) > min_dice and not m[vol == 0].any()
     assert info["volume_cm3"] == pytest.approx(m.sum() * voxel_mm ** 3 / 1e3) and info["threshold"] > 0
@@ -71,52 +71,8 @@ def test_specimen_mask_texture_not_intensity(monkeypatch, voxel_mm, min_dice):
     assert np.array_equal(pp.specimen_mask(vol, voxel_mm, Q)[0], m)      # chunked == unchunked
 
 
-def _classes(seed, n=96):
-    rng = np.random.default_rng(seed)
-    truth = ndimage.gaussian_filter(rng.standard_normal((n,) * 3), 4.0) > 0
-    img = 500 * np.where(truth, 1.6, 1.0) * (1 + 0.05 * rng.standard_normal((n,) * 3))
-    return img.astype(np.float32), truth, _ball(n, (n / 2 - 0.5,) * 3, 0.48 * n)
-
-
-def test_flattening_removes_linear_bias():
-    img, truth, mask = _classes(0)
-    biased = img * (1 + 0.6 * (np.arange(96) - 47.5) / 47.5)[None, None, :].astype(np.float32)
-    acc = lambda p: ((p > 0.5) == truth)[mask].mean()
-    flat = acc(pp.two_class(biased, mask, 0.6, P))
-    assert flat > 0.9 and flat > acc(pp.two_class(biased, mask, 0.6, P, flatten=False)) + 0.1
-
-
-@pytest.mark.parametrize("flatten", [True, False])
-def test_two_class_ignores_background(flatten):
-    img, _, mask = _classes(3, 48)
-    mask[20:24, 20:24, :] = False
-    expected = pp.two_class(np.where(mask, img, 0), mask, 0.15, P, flatten)
-    for background in (500, 5000):
-        actual = pp.two_class(np.where(mask, img, background), mask, 0.15, P, flatten)
-        np.testing.assert_allclose(actual[mask], expected[mask], atol=1e-6)
-
-
-@pytest.mark.parametrize("flatten", [True, False])
-def test_gain_invariance(flatten):
-    img, _, mask = _classes(1, 64)
-    p = pp.two_class(img, mask, 0.6, P, flatten)
-    assert p.dtype == np.float32 and 0 <= p.min() and p.max() <= 1
-    np.testing.assert_allclose(pp.two_class(img * 100, mask, 0.6, P, flatten), p, atol=1e-5)
-
-
-def test_channels():
-    img, _, mask = _classes(2, 32)
-    p = pp.two_class(img, mask, 0.6, P)
-    u, w = pp.oct_channels(p, mask)
-    v = pp.mri_channels(p, mask)
-    assert u.shape == v.shape == (2, 32, 32, 32) and u.dtype == v.dtype == w.dtype == np.float32
-    np.testing.assert_allclose(u.sum(0), 1, atol=1e-6)
-    assert np.array_equal(w, mask.astype(np.float32)) and not v[:, ~mask].any()
-    np.testing.assert_allclose(v.sum(0), mask, atol=1e-6)
-
-
 def test_fill_planes_fills_holes_open_to_a_face():
-    """A cavity that reaches a cut face is not enclosed in 3-D but is enclosed in the planes across it; outside stays outside."""
+    """A cavity that reaches a cut face is not enclosed in 3-D but is in the planes across it; outside stays outside."""
     m = np.zeros((12, 12, 12), bool)
     m[2:10, 2:10, :] = True
     m[5:7, 5:7, :] = False                                   # a tunnel through the block along axis 2, open at both faces

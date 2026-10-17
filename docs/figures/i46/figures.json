@@ -1,26 +1,26 @@
 {
- "enface/flip1_C3_k0_p102": {
+ "enface/flip1_C3_k1_p102": {
   "oct_window": [
    22.2072,
    234.4775
   ],
   "mri_window": [
-   22.0878,
-   44.3639
+   22.1292,
+   44.5199
   ],
   "plane_mm": [
    14.76,
    15.25
   ]
  },
- "enface/flip1_C3_k0_p300": {
+ "enface/flip1_C3_k1_p300": {
   "oct_window": [
    22.2072,
    234.4775
   ],
   "mri_window": [
-   22.0878,
-   44.3639
+   22.1292,
+   44.5199
   ],
   "plane_mm": [
    14.76,
@@ -28,19 +28,20 @@
   ],
   "no_line": [
    "flirt",
+   "greedy",
    "synthmorph",
    "flirt_search",
    "greedy_search"
   ]
  },
- "enface/flip1_C3_k0_p498": {
+ "enface/flip1_C3_k1_p498": {
   "oct_window": [
    22.2072,
    234.4775
   ],
   "mri_window": [
-   22.0878,
-   44.3639
+   22.1292,
+   44.5199
   ],
   "plane_mm": [
    14.76,

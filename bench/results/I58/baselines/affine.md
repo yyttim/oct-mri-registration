@@ -3,7 +3,7 @@
 The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. Scale per OCT axis: the
 length of the transform applied to a unit step along each array axis of the OCT header (1 = voxel size kept). det: the
 determinant of its 3x3 (1 = volume kept). Wall times as each run recorded them, on a 24-core machine shared with other jobs.
-octreg's is the sum of its §1 to §5 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule
+octreg's is the sum of its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule
 works in mm, and its run on the unscaled headers is flirt_search_native.
 
 ## Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)
@@ -11,7 +11,7 @@ works in mm, and its run on the unscaled headers is flirt_search_native.
 | method | run | setting | start | scale per OCT axis | det | wall time | hardware |
 |---|---|---|---|---|---|---|---|
 | image centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
-| octreg | `octreg` | §1 to §5 with default parameters | own orientation search (8000 orientations) inside the MRI crop | 0.99 / 0.96 / 0.98 | 0.94 | 10 min | GPU |
+| octreg | `octreg` | §1 to §4 with default parameters | own orientation search (8000 orientations) inside the MRI crop | 0.97 / 0.96 / 0.97 | 0.90 | 8 min | GPU |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
 | greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 63 s | CPU, 8 threads |
 | elastix 5.3.1 | `elastix_center` | model-zoo Parameters_Rigid then Parameters_Affine (AdvancedMattesMutualInformation), no mask | geometric centres (GeometricalCenter) | 0.92 / 0.84 / 0.97 | 0.74 | 26 s | CPU, 12 threads |
@@ -26,7 +26,7 @@ works in mm, and its run on the unscaled headers is flirt_search_native.
 | method | run | setting | start | scale per OCT axis | det | wall time | hardware |
 |---|---|---|---|---|---|---|---|
 | image centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
-| octreg | `octreg` | §1 to §5 with default parameters | own orientation search (8000 orientations) inside the MRI crop | 0.99 / 0.96 / 0.98 | 0.94 | 10 min | GPU |
+| octreg | `octreg` | §1 to §4 with default parameters | own orientation search (8000 orientations) inside the MRI crop | 0.97 / 0.96 / 0.97 | 0.90 | 8 min | GPU |
 | ANTs 2.6.5 | `ants_antsai` | antsAI rigid rotation search (Mattes MI, 0.15 mm copies), then the stages of ants_com | antsAI global rotation search | 1.03 / 1.00 / 1.03 | 1.07 | 4.9 h | CPU, 12 threads |
 | ANTs 2.6.5 | `ants_com` | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask | centres of mass (script default) | 0.86 / 0.62 / 0.92 | 0.49 | 45 s | CPU, 12 threads |
 | ANTs 2.6.5 | `ants_com_fov` | as ants_com, with the OCT field-of-view (FOV) mask | centres of mass | 1.28 / 1.01 / 1.10 | 1.39 | 68 s | CPU, 12 threads |
@@ -47,7 +47,7 @@ works in mm, and its run on the unscaled headers is flirt_search_native.
 | FreeSurfer 8.2.0 mri_coreg | `mri_coreg_default_movmask` | as mri_coreg_default, with --mov-mask (OCT FOV) | volume centres + brute-force search | 0.92 / 0.81 / 1.00 | 0.74 | 18 min | CPU, 20 threads |
 | FreeSurfer 8.2.0 mri_coreg | `mri_coreg_regheader` | as mri_coreg_default | header alignment (--regheader) | 1.05 / 1.06 / 1.02 | 1.14 | 19 min | CPU, 20 threads |
 | FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com` | --cost NMI, rigid then --affine --ixform, tool defaults | centres of mass (default) | 0.99 / 1.00 / 1.07 | 1.06 | 14 min | CPU, 20 threads |
-| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com_maskmov` | as default_com, with --maskmov (OCT FOV) | centres of mass | 0.99 / 1.00 / 1.07 | 1.06 | 18 min | CPU, 20 threads |
+| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com_maskmov` | as mri_robust_register_default_com, with --maskmov (OCT FOV) | centres of mass | 0.99 / 1.00 / 1.07 | 1.06 | 18 min | CPU, 20 threads |
 | FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_noinit_rigid_only` | --cost NMI, the rigid step only: the affine step found no overlap of the two images and made no iteration | header alignment (--noinit) | 1.00 / 1.00 / 1.00 | 1.00 | 5 min | CPU, 20 threads |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center_fov` | as niftyreg_center with -fmask (OCT FOV). This version ignores the mask, and the output equals niftyreg_center | image centres | 0.97 / 0.96 / 0.98 | 0.91 | 4 min | CPU, 8 threads |

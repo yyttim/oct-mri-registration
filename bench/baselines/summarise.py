@@ -7,7 +7,7 @@ Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) an
 evaluate_runs.py and evaluate_deform.py) and NOTES.json next to them. NOTES.json gives, for each run of each stage (keys
 affine and deform), the tool and its version, the setting and the start. Each table has a main section, one row per tool at
 the setting its documentation gives (MAIN_AFFINE, MAIN_DEFORM, the panels of bench/figures.py), and a supplement with every
-stored run.
+stored run when there are more than those.
 """
 from __future__ import annotations
 
@@ -74,9 +74,9 @@ def table(rows, notes, main, head, line, title, intro, main_title):
     first = ("reference_centres", "none")
     rest = sorted(rows.values(), key=lambda r: (r["run"] not in first, r["run"] != "octreg", r["tool"], r["run"]))
     intro = "\n".join(textwrap.wrap(intro, 124, break_on_hyphens=False, break_long_words=False))
-    out = [f"# {title}", "", intro, "", f"## {main_title}", "", *head,
-           *[line(rows[run], note(notes, run)) for _, run in main], "", "## Supplement: every stored run", "", *head,
-           *[line(r, note(notes, r["run"])) for r in rest]]
+    out = [f"# {title}", "", intro, "", f"## {main_title}", "", *head, *[line(rows[run], note(notes, run)) for _, run in main]]
+    if len(rows) > len(main):
+        out += ["", "## Supplement: every stored run", "", *head, *[line(r, note(notes, r["run"])) for r in rest]]
     return "\n".join(out) + "\n"
 
 
@@ -100,16 +100,16 @@ def main():
                "Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
                "of the OCT header (1 = voxel size kept). det: the determinant of its 3x3 (1 = volume kept). Wall times as each "
                "run recorded them, on a 24-core machine shared with other jobs. octreg's is the sum of "
-               "its §1 to §5 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule works in mm, "
+               "its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule works in mm, "
                "and its run on the unscaled headers is flirt_search_native.")
     intro_d = ("Every tool starts from octreg's affine: the OCT resampled through it onto the 0.08 mm MRI grid, and the "
                "identity as initial transform. The pair has no reference, and BASELINES.md shows the overlays. "
                "J is the Jacobian determinant of x + u(x), u the field, by finite differences on the field grid, "
                "over the MRI foreground of octreg's §1 (a mask of the MRI alone, on the 0.15 mm grid) sampled onto that grid. "
-               "folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J, with J clipped at 1e-6 "
-               "where it is not positive (Learn2Reg, Hering "
+               "folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J, with J clipped below "
+               "at 1e-6 (Learn2Reg, Hering "
                "et al., IEEE Trans. Med. Imaging 42:697, 2023). Wall times as each run recorded them, on a machine shared with "
-               "other jobs. octreg's is its §6 step time in result.json.")
+               "other jobs. octreg's is its §5 step time in result.json.")
     main_title = "Main: each tool at the setting its documentation gives"
     for name, rows, main_rows, head, line, title, intro, main_t in (
             ("affine", ra, MAIN_AFFINE, head_a, affine_line, "I58, affine stage", intro_a,
