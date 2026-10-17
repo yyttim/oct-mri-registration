@@ -1,12 +1,10 @@
-"""Preprocessing (docs/METHOD.md §1-2): the MRI foreground, the OCT specimen mask from isotropic texture, two-class maps and
-channels. numpy/scipy on the CPU; arrays [D, H, W] on isotropic grids of voxel_mm (mm). Exact zeros in
-the OCT are missing data (black tiles): never specimen."""
+"""Masks (docs/METHOD.md §1): the MRI foreground and the OCT specimen mask from isotropic texture. numpy/scipy on the CPU;
+arrays [D, H, W] on isotropic grids of voxel_mm (mm). Exact zeros in the OCT are missing data (black tiles): never specimen."""
 from __future__ import annotations
 
 import numpy as np
 from scipy import ndimage
 from scipy.signal import find_peaks
-from scipy.special import expit
 from skimage.filters import threshold_multiotsu, threshold_otsu
 
 from .params import Params
@@ -24,8 +22,8 @@ def _close(m, r):
 
 
 def _fill_planes(m):
-    """Holes filled in every array plane (union over the three axes): background enclosed by specimen within a plane is specimen,
-    also where the hole reaches a cut face of the block and so is not enclosed in 3-D."""
+    """Holes filled in every array plane (union over the three axes): background enclosed by specimen within a plane is
+    specimen, also where the hole reaches a cut face of the block and so is not enclosed in 3-D."""
     out = m.copy()
     for ax in range(3):
         s = np.zeros((3, 3, 3), bool)
@@ -157,49 +155,3 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
         out[z0:z1] = (_upsample(mc, k, fine.shape, (z0, z1)) > 0.5) & (np.asarray(fine[z0:z1]) > 0)
     return out, {"threshold": float(np.exp(lt)), "volume_cm3": float(out.sum()) * voxel_mm ** 3 / 1e3,
                  "n_components": n_comp}
-
-
-# ----------------------------------------------------------------------------- two-class maps and channels (§2)
-def flattened(arr, mask, voxel_mm, params: Params = Params()):
-    """arr / its local foreground mean G(arr M) / G(M), Gaussian sigma flatten_sigma_mm on blocks of ~sigma / 4 voxels, linearly
-    interpolated (removes slow multiplicative intensity changes). arr: [D, H, W]; mask: bool [D, H, W]. -> float32."""
-    x, s = np.asarray(arr, np.float32), params.flatten_sigma_mm / voxel_mm
-    k = max(1, int(s // 4))
-    gn = ndimage.gaussian_filter(_pool(np.where(mask, x, 0).astype(np.float64), k), s / k)
-    gd = ndimage.gaussian_filter(_pool(mask.astype(np.float64), k), s / k)
-    return x / _upsample(np.divide(gn, gd, out=np.ones_like(gn), where=gd > 0), k, x.shape)
-
-
-def masked_blur(arr, mask):
-    m = np.asarray(mask, bool)
-    weight = ndimage.gaussian_filter(m.astype(np.float32), 1.0)
-    x = ndimage.gaussian_filter(np.where(m, arr, 0), 1.0)
-    return np.divide(x, weight, out=x, where=weight > 0)
-
-
-def two_class(arr, mask, voxel_mm, params: Params = Params(), flatten=True):
-    """Soft bright-tissue map: flatten the foreground, blur it as G(xM)/G(M), then apply an Otsu-centred sigmoid.
-    mask is boolean or fractional (> 0.5 = foreground); return float32 [D, H, W] in [0, 1]."""
-    m = np.asarray(mask) > 0.5
-    if not m.any():
-        raise ValueError("two_class: empty foreground mask")
-    x = flattened(arr, m, voxel_mm, params) if flatten else np.asarray(arr, np.float32)
-    x = masked_blur(x, m)
-    vals = np.minimum(x[m], np.percentile(x[m], 99.5))
-    sd = float(vals.std())
-    if not sd > 0:
-        raise ValueError("two_class: the foreground has no intensity variation")
-    return expit((x - float(threshold_otsu(vals))) / (params.sigmoid_std * sd)).astype(np.float32)
-
-
-def oct_channels(p, mask):
-    """OCT channels u = (p, 1 - p), not masked, and weight w = mask (bool or [0, 1], [D, H, W]): swapping the channels negates
-    every weighted NCC against MRI channels, which is how the polarity is read. -> (u float32 [2, D, H, W], w float32 [D, H, W])."""
-    p = np.asarray(p, np.float32)
-    return np.stack([p, 1 - p]), np.asarray(mask, np.float32)
-
-
-def mri_channels(p, mask):
-    """MRI channels v = (p M, (1 - p) M); M (bool or [0, 1]) carries the specimen outline. -> float32 [2, D, H, W]."""
-    p, M = np.asarray(p, np.float32), np.asarray(mask, np.float32)
-    return np.stack([p * M, (1 - p) * M])

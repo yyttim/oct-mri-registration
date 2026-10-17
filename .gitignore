@@ -18,5 +18,3 @@ dist/
 /bench_runs/
 /baselines/
 /data/
-# qc figures written by bench/report.py --figures
-bench/figures/*.png

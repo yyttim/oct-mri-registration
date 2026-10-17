@@ -121,7 +121,7 @@ def iter_planes(vol: Volume):
         dt, off, slope, inter = img.header.get_data_dtype(), int(img.dataobj.offset), float(img.dataobj.slope), float(img.dataobj.inter)
         nbytes = ni * nj * dt.itemsize
         with (gzip.open if vol.path.lower().endswith(".gz") else open)(vol.path, "rb") as f:
-            f.read(off)                                        # nibabel resets vox_offset to 0 in .gz headers: use dataobj.offset
+            f.read(off)  # nibabel resets vox_offset to 0 in .gz headers: use dataobj.offset
             for k in range(nk):
                 buf = f.read(nbytes)
                 if len(buf) != nbytes:
@@ -213,9 +213,10 @@ def write_lta(T, src: Volume, dst: Volume, path) -> None:
 
 
 def write_itk(T, src: Volume, dst: Volume, path) -> None:
-    """ITK AffineTransform_double_3_3 text for resampling src onto dst with ITK / ANTs (antsApplyTransforms -i src -r dst -t path):
-    the physical point map dst -> src, F_src inv(T) F_dst, where F = diag(-1, -1, 1) for NIfTI (ITK reads RAS headers as LPS)
-    and the identity for TIFF / NPY (the array frame is ITK's physical frame)."""
+    """ITK AffineTransform_double_3_3 text for resampling src onto dst with ITK / ANTs
+    (antsApplyTransforms -i src -r dst -t path): the physical point map dst -> src, F_src inv(T) F_dst, where
+    F = diag(-1, -1, 1) for NIfTI (ITK reads RAS headers as LPS) and the identity for TIFF / NPY (the array frame is ITK's
+    physical frame)."""
     F_src, F_dst = (np.diag([-1.0, -1.0, 1.0, 1.0] if _kind(v.path) == "nii" else [1.0] * 4) for v in (src, dst))
     L = F_src @ np.linalg.inv(np.asarray(T, float)) @ F_dst
     q = " ".join(f"{v:.17g}" for v in [*L[:3, :3].ravel(), *L[:3, 3]])

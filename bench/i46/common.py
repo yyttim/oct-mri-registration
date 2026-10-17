@@ -29,6 +29,8 @@ Scores of an affine T (OCT world -> MRI world):
     vessel_score  the MRI vessel labels (value 255) that T places inside the OCT tissue, at least 0.15 mm from its edge and
                   within the annotated planes 0..560, and their distance to the nearest OCT vessel (DANDI ves_seg), mean and
                   median
+    vessel_field  the vessel check of T with and without the deformation of a run, on the labels both place inside: the MRI
+                  point x goes to the OCT world at T^-1 (x + u(x)), u the run's pull-back field
 """
 from __future__ import annotations
 
@@ -50,7 +52,7 @@ VESSELS_TIFF = SUB / "oct/ves_seg.tif"                                         #
 MRI_DIR = SUB / "mri"
 LABEL_DIR = SUB / "labels"
 AUTHORS = SUB / "costantini_repo/results"
-MASK = HERE / "octmask_24um.nii.gz"         # OCT specimen mask on 24 um blocks of the test's OCT array (README.md, Inputs)
+MASK = HERE / "octmask_24um.nii.gz"         # OCT specimen mask, one voxel per 2 x 2 x 2 OCT voxels (README.md, Inputs)
 
 FLIPS = {"flip1": ("sub-I46_ses-MRI_flip-1_VFA.nii.gz", 10), "flip2": ("sub-I46_ses-MRI_flip-2_VFA.nii.gz", 20),
          "flip3": ("sub-I46_ses-MRI_flip-3_VFA.nii.gz", 30)}
@@ -120,8 +122,9 @@ def reference_matrix():
 
 
 def tissue_points():
-    """The OCT tissue points (OCT world mm): every fourth 24 um block of the specimen mask, at the centre of its first 2 x 2 x 2
-    OCT voxels (24 um block 4i covers OCT voxels 8i and 8i + 1), a grid of every eighth OCT voxel (96 x 96 x 121 um)."""
+    """The OCT tissue points (OCT world mm): every fourth block (2 x 2 x 2 OCT voxels) of the specimen mask, at the centre of
+    its first 2 x 2 x 2 OCT voxels (block 4i covers OCT voxels 8i and 8i + 1), a grid of every eighth OCT voxel (96 x 96 x 121
+    um)."""
     m = np.asarray(nib.load(str(MASK)).dataobj) > 0
     idx = np.argwhere(m[::4, ::4, ::4]) * 8 + 0.5
     return (OCT_AFFINE @ np.c_[idx, np.ones(len(idx))].T).T[:, :3]
@@ -182,7 +185,7 @@ def error(T, R=None):
 
 @lru_cache(None)
 def _vessels():
-    """The MRI vessel label voxels (flip-1 header world), and on 24 um blocks of the OCT (2 x 2 x 2 voxels, the lattice of the
+    """The MRI vessel label voxels (flip-1 header world), and on blocks of 2 x 2 x 2 OCT voxels (the lattice of the
     specimen mask) the distance to the nearest OCT vessel block and the tissue at least 0.15 mm from the edge of the mask.
     Planes 0..559 of the 561 annotated planes form whole blocks."""
     import tifffile
@@ -208,18 +211,40 @@ def _vessels():
     return mri_pts, dist, sp, vb.shape, inner
 
 
-def vessel_score(T):
-    """The vessel check of T (module docstring). A point x of the OCT world is looked up at block index x / (2 S) - 0.5.
-    Fewer than 50 labels inside the tissue give no distance."""
+def _vessel_distances(T, moved=None):
+    """Distance (mm) of every MRI vessel label (moved to `moved` first, if given) placed in the OCT world by T^-1 to the nearest
+    OCT vessel block; NaN outside the inner tissue. A point x of the OCT world is looked up at block index x / (2 S) - 0.5."""
     from scipy import ndimage
     mri_pts, dist, sp, shp, inner = _vessels()
-    q = (np.linalg.inv(T) @ np.c_[mri_pts, np.ones(len(mri_pts))].T).T[:, :3] / sp - 0.5     # OCT world -> 24 um block index
+    x = mri_pts if moved is None else moved
+    q = (np.linalg.inv(T) @ np.c_[x, np.ones(len(x))].T).T[:, :3] / sp - 0.5     # OCT world -> mask block index
     inside = np.all((q >= 2) & (q <= np.array(shp) - 3), 1)
     qi = np.round(q[inside]).astype(int)
-    keep = inner[qi[:, 0], qi[:, 1], qi[:, 2]]
-    inside[np.flatnonzero(inside)[~keep]] = False
-    if inside.sum() < 50:
-        return {"vessel_n": int(inside.sum()), "vessel_mean_mm": None, "vessel_median_mm": None}
-    d = ndimage.map_coordinates(dist, q[inside].T, order=1)
-    return {"vessel_n": int(inside.sum()), "vessel_mean_mm": round(float(d.mean()), 4),
-            "vessel_median_mm": round(float(np.median(d)), 4)}
+    inside[np.flatnonzero(inside)[~inner[qi[:, 0], qi[:, 1], qi[:, 2]]]] = False
+    d = np.full(len(q), np.nan)
+    d[inside] = ndimage.map_coordinates(dist, q[inside].T, order=1)
+    return d
+
+
+def vessel_score(T):
+    """The vessel check of T (module docstring). Fewer than 50 labels inside the tissue give no distance."""
+    d = _vessel_distances(T)
+    d = d[~np.isnan(d)]
+    if len(d) < 50:
+        return {"vessel_n": len(d), "vessel_mean_mm": None, "vessel_median_mm": None}
+    return {"vessel_n": len(d), "vessel_mean_mm": round(float(d.mean()), 4), "vessel_median_mm": round(float(np.median(d)), 4)}
+
+
+def vessel_field(T, field, affine):
+    """vessel_field of the module docstring: field [3, D, H, W] (mm, MRI world axes) on the grid of `affine`, trilinear and 0
+    outside it. -> {n, affine_median_mm, field_median_mm} over the labels both place inside."""
+    from scipy import ndimage
+    mri_pts = _vessels()[0]
+    idx = (np.linalg.inv(affine) @ np.c_[mri_pts, np.ones(len(mri_pts))].T)[:3]
+    u = np.stack([ndimage.map_coordinates(field[c], idx, order=1, mode="constant", cval=0.0) for c in range(3)], 1)
+    da, df = _vessel_distances(T), _vessel_distances(T, mri_pts + u)
+    both = ~np.isnan(da) & ~np.isnan(df)
+    if both.sum() < 50:
+        return {"n": int(both.sum()), "affine_median_mm": None, "field_median_mm": None}
+    return {"n": int(both.sum()), "affine_median_mm": round(float(np.median(da[both])), 4),
+            "field_median_mm": round(float(np.median(df[both])), 4)}

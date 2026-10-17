@@ -1,13 +1,11 @@
-"""§6 smooth deformation (octreg/deform.py) and the interior evidence it is built on (octreg/blockmatch.py), CPU. The structure
-feature does not change when the intensities are inverted and hardly under a monotone remapping, and match finds a known shift.
-The stage itself runs on a synthetic specimen: smooth random structure inside an ellipsoid, bright on
-a zero background (the MRI); the OCT is an inverted, gamma-remapped copy on its own flipped grid with a bright rim as a layer
-below its surface, embedded in darker, textured agarose with bright parallel stripes across one OCT axis. The boundary
-evidence (the offset between the surface edges of the two volumes) measures a pure 0.5 mm shift and mostly drops the faces
-crossed by the stripes; smallest_lam finds the
-smallest membrane weight that keeps the strain limit; a known smooth displacement (a Gaussian bump of 1.0 mm and 8 mm width)
-is recovered; an aligned pair is left alone (status not_supported, zero field); a field written and read back reproduces the
-warped volume through geometry.resample_to."""
+"""§5 smooth deformation (octreg/deform.py), CPU. LatticeField is trilinear on its nodes (exact on linear fields) and its
+strains are first differences over the spacing. The stage runs on a synthetic specimen: smooth random structure inside an
+ellipsoid, bright on a zero background (the MRI); the OCT on its own flipped grid, a small rotation away, shows the MRI content
+at y = T x + d(T x), the interior contrast inverted, in darker agarose with a little noise. An exact copy and the aligned pair
+(d = 0) leave the field near zero (an exact copy everywhere); a smooth bump d of 0.8 mm is
+mostly recovered, within the strain bound (also a bound tighter than the bump); the pull-back field u inverts the fitted field,
+x + u(x) + d(x + u(x)) = x, and brings the OCT specimen onto the MRI one through geometry.resample_to; a field written and read
+back reproduces the warped volume."""
 import dataclasses
 
 import numpy as np
@@ -16,14 +14,13 @@ import torch
 from scipy import ndimage
 from scipy.spatial.transform import Rotation
 
-from octreg import blockmatch as bm, deform, geometry as G, io
+from octreg import deform, geometry as G, io
 from octreg.params import Params
 
-H = 0.2                                                           # isotropic grid of the two evidence tests
-PARAMS = Params.from_dict({"df_reach_mm": 1.5, "df_sigma_mm": 0.45, "df_block_mm": 3.6, "df_step_mm": 1.8, "df_erode_mm": 2.4})
-#     a 19 mm specimen on a 0.3 mm grid: a search range of 5 voxels, smaller blocks than the default and the feature sigma in
-#     proportion; the rim layer of pair() reaches 1.8 mm below the surface and a block may lie 30 % outside the core, so the
-#     erosion is 2.4 mm
+FAST = dataclasses.replace(Params(), df_iters=60)                 # 2 passes of 60 L-BFGS iterations (default 200)
+AMP, WIDTH = 0.8, 5.0                                              # the bump: 0.8 mm, Gaussian of 5 mm
+DIRECTION, CENTRE = np.array([0.6, -0.64, 0.48]), np.array([1.5, 1.0, -1.0])
+BUMP_STRAIN = AMP * np.abs(DIRECTION).max() / (WIDTH * np.sqrt(np.e))     # its largest |dd_i / dz_k|: 0.062
 
 
 def structure(shape, rng):
@@ -43,20 +40,19 @@ def world(shape, A):
     return G.apply_affine(A, np.indices(shape).reshape(3, -1).T.astype(float))
 
 
-def bump(y, amplitude):
-    """The displacement v at affinely registered positions y: the content of x sits at y = x + u(x), u(x) = v(y)."""
-    return amplitude * np.array([0.6, -0.64, 0.48]) * np.exp(-((y - np.array([2.0, 1.0, -1.0])) ** 2).sum(-1, keepdims=True) / (2 * 8.0 ** 2))
+def bump(z, amplitude=AMP):
+    """The displacement d at MRI world points z [N, 3] (mm)."""
+    return amplitude * DIRECTION * np.exp(-((z - CENTRE) ** 2).sum(-1, keepdims=True) / (2 * WIDTH ** 2))
 
 
-def pair(v, h=0.3, semi=(9.6, 8.7, 8.1), seed=0, period=6, stripe=1.5, rim=1.5):
-    """-> (mri, oct, T, stripe axis in the MRI world, semi-axes) on grids of spacing h for the displacement v(y) ([N, 3] ->
-    [N, 3]): an ellipsoid (semi-axes semi, MRI world mm) of smooth structure, zero outside (the MRI); the OCT with tissue at
-    0.55-1.45, a bright rim as a layer below the surface (amplitude rim at the surface, falling inwards with a Gaussian of 2
-    voxels), agarose at 0.3 with a little texture and, in the agarose, one bright plane every `period` voxels along the OCT
-    array axis 2 (amplitude stripe)."""
+def pair(d, h=0.3, semi=(6.0, 5.4, 5.0), seed=0):
+    """-> (mri, oct, T) as smooth_deformation takes them, grids of spacing h: an ellipsoid (semi-axes semi, MRI world mm) of
+    smooth structure at 1 +- 0.3, zero outside (the MRI); the OCT voxel x shows the MRI content at y = T x + d(T x) as
+    1.6 - 0.3 s (inverted) inside the ellipsoid and agarose at 0.3 with noise 0.05 outside, all measured, the specimen mask the
+    ellipsoid at y."""
     rng, semi = np.random.default_rng(seed), np.asarray(semi, float)
-    shape_m = tuple(int(np.ceil((2 * a + 6.0) / h)) for a in semi[[0, 2, 1]])              # array axes (R, I, A) of the MRI grid
-    shape_o = tuple(int(np.ceil((2 * a + 7.0) / h)) for a in semi)
+    shape_m = tuple(int(np.ceil((2 * a + 3.0) / h)) for a in semi[[0, 2, 1]])  # array axes (R, I, A) of the MRI grid
+    shape_o = tuple(int(np.ceil((2 * a + 4.0) / h)) for a in semi)
     A_M, A_O = grid(shape_m, h, False), grid(shape_o, h, True)
     s = structure(shape_m, rng)
     mask_m = (((world(shape_m, A_M) / semi) ** 2).sum(-1) <= 1).reshape(shape_m)
@@ -64,181 +60,151 @@ def pair(v, h=0.3, semi=(9.6, 8.7, 8.1), seed=0, period=6, stripe=1.5, rim=1.5):
     T = np.eye(4)
     T[:3, :3] = Rotation.from_rotvec([0.05, -0.08, 0.06]).as_matrix()
     T[:3, 3] = [0.3, -0.2, 0.25]
-    y = G.apply_affine(T, world(shape_o, A_O))
-    x = y - v(y)
-    f = np.sqrt(((x / semi) ** 2).sum(-1))
-    dist = (f - 1) * f / np.maximum(np.linalg.norm(x / semi ** 2, axis=1), 1e-9)          # signed distance to the surface, first order
-    so = G.sample_world(torch.as_tensor(s[None]), A_M, torch.as_tensor(x, dtype=torch.float32))[0].numpy()
-    tissue = 0.55 + 0.9 * (1 - np.clip((so + 3.5) / 7, 0, 1)) ** 0.6                        # inverted, gamma-remapped
-    agarose = 0.3 + 0.3 * ndimage.gaussian_filter(rng.standard_normal(shape_o), 1.0).ravel()  # darker than tissue, a little texture
-    stripes = stripe * (np.indices(shape_o)[2].ravel() % period == 0)
-    layer = rim * np.exp(-0.5 * (dist / (2 * h)) ** 2)                                     # the bright rim: a layer below the surface
-    oct_ = np.where(f <= 1, tissue + layer, agarose + stripes)
-    oct_ = (oct_ + 0.01 * rng.standard_normal(len(oct_))).reshape(shape_o).astype(np.float32)
-    return (mri, mask_m, A_M), (oct_, (f <= 1).reshape(shape_o), A_O), T, T[:3, :3] @ A_O[:3, 2] / h, semi
+    z = G.apply_affine(T, world(shape_o, A_O))
+    y = z + d(z)
+    so = G.sample_world(torch.as_tensor(s[None]), A_M, torch.as_tensor(y, dtype=torch.float32))[0].numpy()
+    tissue = ((y / semi) ** 2).sum(-1) <= 1
+    oct_ = np.where(tissue, 1.6 - 0.3 * so, 0.3 + 0.05 * rng.standard_normal(len(y))).reshape(shape_o).astype(np.float32)
+    return (mri, mask_m, A_M), (oct_, tissue.reshape(shape_o), np.ones(shape_o, np.float32), A_O), T
 
 
-def on_mri_grid(mri, oct_, T):
-    src = deform._on_grid(torch.stack([torch.as_tensor(oct_[0]), torch.as_tensor(oct_[1], dtype=torch.float32)]), oct_[2], mri[0].shape,
-                          mri[2], np.linalg.inv(T))
-    return src[0], (src[1] > deform.INSIDE).to(torch.float32)
+def fit(mri, oct_, T, params=FAST):
+    """smooth_deformation on CPU, also returning the LatticeField it fitted. -> (u, info, field)."""
+    made = []
+
+    class Recorded(deform.LatticeField):
+        def __init__(self, *args, **kw):
+            super().__init__(*args, **kw)
+            made.append(self)
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(deform, "LatticeField", Recorded)
+        u, info = deform.smooth_deformation(mri, oct_, T, params, "cpu")
+    assert len(made) == 1                                                                   # one lattice through all passes
+    return u, info, made[0]
 
 
-def lattice_of(mri):
-    corners = G.apply_affine(mri[2], np.array([[i, j, k] for i in (0, mri[0].shape[0] - 1) for j in (0, mri[0].shape[1] - 1)
-                                               for k in (0, mri[0].shape[2] - 1)], float))
-    return deform.Lattice(corners.min(0), corners.max(0), PARAMS.df_grid_mm)
+def pull_back(d, x):
+    """The pull-back u of d at points x: x + u + d(x + u) = x, by fixed-point iteration."""
+    u = np.zeros_like(x)
+    for _ in range(30):
+        u = -d(x + u)
+    return u
 
 
-# ------------------------------------------------------------------------------- interior evidence (octreg/blockmatch.py)
-def test_structure_feature_contrast_free():
+def lattice_strain(field):
+    return max(float(s.abs().max()) for s in field.strains())
+
+
+@pytest.fixture(scope="module")
+def bumped():
+    mri, oct_, T = pair(bump)
+    return (mri, oct_, T) + fit(mri, oct_, T)
+
+
+@pytest.fixture(scope="module")
+def exact_copy():
+    """An exact copy: the OCT is the MRI on its own grid, T = I, so F = 1 at the zero field."""
+    mri, _, _ = pair(lambda z: 0 * z)
+    oct_ = (mri[0], mri[1], np.ones(mri[0].shape, np.float32), mri[2])
+    return (mri, oct_) + fit(mri, oct_, np.eye(4))
+
+
+def test_lattice_field_interpolates_and_strains():
+    lo, hi, h = np.array([-3.0, 0.0, 1.0]), np.array([7.5, 9.9, 11.0]), 5.0
+    f = deform.LatticeField(lo, hi, h, "cpu")
+    assert f.n == [4, 3, 3] and tuple(f.c.shape) == (1, 3, 4, 3, 3) and not f.c.detach().any() and f.c.requires_grad
+    assert np.all(lo + h * (np.array(f.n) - 1) >= hi)                                       # the nodes cover lo..hi
     rng = np.random.default_rng(0)
-    shape = (40, 44, 36)
-    arr = 1.0 + 0.3 * structure(shape, rng)
-    mask = np.zeros(shape, bool)
-    mask[3:-3, 4:-4, 3:-3] = True
-    f = bm.structure_feature(arr, mask, H, 0.3, "cpu")
-    assert f.shape == (6, *shape) and f.dtype == torch.float32 and float(f[:, ~torch.as_tensor(mask)].abs().max()) == 0
-    assert float((f[0] + f[1] + f[2]).abs().max()) < 1e-6                              # trace-free
-    inverted = bm.structure_feature(7.0 - 3.0 * arr, mask, H, 0.3, "cpu")
-    assert float((f - inverted).abs().max()) < 1e-3
-    remapped = bm.structure_feature(np.exp(2.0 * arr), mask, H, 0.3, "cpu")             # monotone, strongly non-linear
-    ncc = float((f * remapped).sum() / torch.sqrt((f * f).sum() * (remapped * remapped).sum()))
-    assert ncc > 0.9, ncc
-    ramp = bm.structure_feature(5.0 + 0.1 * np.indices(shape)[0], mask, H, 0.3, "cpu")[:, torch.as_tensor(mask)]
-    assert float(ramp[0].min()) > 0.1 and float(ramp[3:].abs().max()) < 1e-3          # the gradient of a ramp along axis 0 ...
-    assert float((ramp[1] + ramp[0] / 2).abs().max()) < 1e-3 and float((ramp[2] + ramp[0] / 2).abs().max()) < 1e-3   # ... up to the mask edge
+    c = rng.standard_normal((3, 4, 3, 3))
+    with torch.no_grad():
+        f.c.copy_(torch.as_tensor(c[None]))
+        nodes = lo + h * np.indices(f.n).reshape(3, -1).T
+        assert np.abs(f(torch.as_tensor(nodes, dtype=torch.float32)).numpy() - c.reshape(3, -1).T).max() < 1e-5   # node values
+        y = rng.uniform(lo, lo + h * (np.array(f.n) - 1), (200, 3))
+        want = np.stack([ndimage.map_coordinates(ci, ((y - lo) / h).T, order=1) for ci in c], 1)      # trilinear in the lattice
+        assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - want).max() < 1e-5
+        out = torch.as_tensor(np.stack([lo - [2.0, 0, 0], lo + h * (np.array(f.n) - 1) + [0, 1.5, 3.0]]), dtype=torch.float32)
+        assert np.abs(f(out).numpy() - c[:, [0, -1], [0, -1], [0, -1]].T).max() < 1e-5                # the border value outside
+        strains = f.strains()
+        assert [tuple(s.shape) for s in strains] == [(3, 3, 3, 3), (3, 4, 2, 3), (3, 4, 3, 2)]
+        assert all(np.allclose(s.numpy(), np.diff(c, axis=a + 1) / h, atol=1e-6) for a, s in enumerate(strains))
+        J, b = np.array([[0.01, 0.02, -0.01], [0.0, -0.03, 0.02], [0.04, 0.0, 0.0]]), np.array([0.3, -0.1, 0.0])
+        f.c.copy_(torch.as_tensor((nodes @ J.T + b).T.reshape(1, 3, *f.n)))                  # a linear field d = J y + b
+        assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - (y @ J.T + b)).max() < 1e-5  # exact on linear fields
+        assert all(np.allclose(s.numpy(), J[:, a, None, None, None], atol=1e-6) for a, s in enumerate(f.strains()))
+        assert abs(lattice_strain(f) - 0.04) < 1e-6
 
 
-def test_match_finds_a_shift():
-    rng = np.random.default_rng(1)
-    shape = (48, 48, 48)
-    mask = np.ones(shape, bool)
-    f = bm.structure_feature(structure(shape, rng), mask, H, 0.3, "cpu")
-    shift = (2, -3, 1)
-    moved = torch.roll(f, shift, (1, 2, 3))
-    core = torch.zeros(shape)
-    core[8:-8, 8:-8, 8:-8] = 1
-    c, d, z, ncc0, ncc, tried = bm.match(f, moved, core, H, block_mm=3.2, step_mm=1.6, range_mm=1.0, z_min=4.0)   # 16, 8, +-5 vox
-    assert tried == 27 and len(c) >= 20 and np.abs(d - shift).max() < 0.05 and ncc.min() > 0.99 and np.median(ncc0) < 0.5 and z.min() >= 4
-    assert np.allclose(c.min(0), 15.5) and np.allclose(c.max(0), 31.5)                  # centres of the 16-voxel blocks inside the core
-    assert bm.match(f, moved, core, H, block_mm=12.8, step_mm=1.6, range_mm=1.0, z_min=4.0)[-1] == 0     # no block fits
+def test_identical_pair_leaves_the_field_near_zero(exact_copy):
+    mri, oct_, u, info, field = exact_copy
+    assert set(info) == {"passes", "strain_max", "seconds"} and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
+    assert all(p["F_start"] > 0.9999 and p["F_end"] > 0.9999 for p in info["passes"]), info
+    band = ndimage.binary_dilation(mri[1], iterations=round(FAST.df_band_mm / 0.3))       # where the score has points
+    assert np.linalg.norm(u, axis=0)[band].max() < 0.03, np.linalg.norm(u, axis=0)[band].max()     # a tenth of a voxel
+    mri, oct_, T = pair(lambda z: 0 * z)                       # the aligned pair: own grid, inverted interior, agarose
+    u, info, _ = fit(mri, oct_, T)
+    n = np.linalg.norm(u, axis=0)[mri[1]]
+    assert np.median(n) < 0.1 and np.percentile(n, 95) < 0.2, (np.median(n), np.percentile(n, 95))
 
 
-# ---------------------------------------------------------------------------------- smooth deformation (octreg/deform.py)
-def test_evidence_measures_a_shift_and_drops_striped_faces():
-    shift = np.array([0.3, -0.32, 0.24])                                                   # 0.5 mm
-    small = {"v": lambda y: np.broadcast_to(shift, y.shape), "h": 0.15, "semi": (5.0, 4.5, 4.2), "rim": 2.5}
-    mri, oct_, T, axis, semi = pair(stripe=0.0, **small)                                   # no stripes: the accuracy of the rule
-    points, normals = deform.surface(mri[1], mri[2])
-    assert len(points) > 5000 and np.allclose(np.linalg.norm(normals, axis=1), 1)
-    radial = points / semi ** 2
-    assert ((normals * radial).sum(1) / np.linalg.norm(radial, axis=1)).min() > 0.95       # outward, along the ellipsoid normal
-    f = np.sqrt(((points / semi) ** 2).sum(1))
-    depth = (1 - f) * f / np.linalg.norm(radial, axis=1)                                   # the outermost foreground voxels (0.15 mm)
-    assert depth.min() > 0 and depth.max() < 0.15 and 0.04 < np.median(depth) < 0.09
-    ev = deform.Evidence(mri, Params(), "cpu")
-    used_m, edge_m = ev.edge_m                                                             # the MRI edge: the ellipsoid surface
-    assert used_m.mean() > 0.65 and np.abs(np.median((edge_m - depth)[used_m])) < 0.03, (used_m.mean(), np.median((edge_m - depth)[used_m]))
-    vol = on_mri_grid(mri, oct_, T)[0]
-    P, n, delta = ev.boundary(vol)
-    error = delta - n @ shift
-    assert len(P) > 6000 and np.median(np.abs(error)) < 0.04 and abs(np.median(error)) < 0.01, (len(P), np.median(np.abs(error)), np.median(error))
-    used_o, edge_o = deform.edge_offsets(vol, mri[2], points, normals)                     # the offset is the difference of the two edges
-    assert np.array_equal(P, points[used_o & used_m]) and np.array_equal(delta, (edge_o - edge_m)[used_o & used_m])
-    assert not edge_o[~used_o].any() and not edge_m[~used_m].any()
-    assert not deform.edge_offsets(vol * 0, mri[2], points, normals)[0].any() and not len(ev.boundary(vol * 0)[0])
-    assert not deform.edge_offsets(vol, mri[2], points[:0], normals[:0])[0].size
-
-    mri, oct_, T, axis, semi = pair(stripe=3.0, period=4, **small)                         # stripes three times the tissue / agarose step
-    used, edge = deform.edge_offsets(on_mri_grid(mri, oct_, T)[0], mri[2], points, normals)
-    across = np.abs(normals @ axis)                                                        # 1 on the two faces the stripes cross
-    assert used[across > 0.9].mean() < 0.35 and used[across < 0.2].mean() > 0.7, (used[across > 0.9].mean(), used[across < 0.2].mean())
-    error = (edge - edge_m - normals @ shift)[used & used_m]                               # what is left: a stripe at the surface moves
-    assert np.median(np.abs(error)) < 0.06 and abs(np.median(error)) < 0.04, (np.median(np.abs(error)), np.median(error))  # the edge out
-
-    mri, oct_, T, *_ = pair(lambda y: np.broadcast_to(shift, y.shape))                     # interior matches: 0.3 mm voxels
-    W, D = deform.Evidence(mri, PARAMS, "cpu").interior(*on_mri_grid(mri, oct_, T))
-    assert len(W) > 100 and np.median(np.linalg.norm(D - shift, axis=1)) < 0.05, (len(W), np.median(np.linalg.norm(D - shift, axis=1)))
+def test_exact_copy_leaves_the_whole_field_at_zero(exact_copy):
+    """Nodes that no OCT point pulls stay at zero (L-BFGS does not rescale a round-off gradient into a step)."""
+    mri, oct_, u, info, field = exact_copy
+    assert np.abs(u).max() < 0.05 and info["strain_max"] < 0.01, (np.abs(u).max(), info["strain_max"])
 
 
-def test_measure_collects_both_kinds():
-    mri, oct_, T, *_ = pair(lambda y: bump(y, 1.0))
-    ev = deform.Evidence(mri, PARAMS, "cpu")
-    vol, inside = on_mri_grid(mri, oct_, T)
-    P, n, delta = ev.boundary(vol)
-    whole = ev.measure(vol, inside)
-    assert len(whole["W"]) > 100 and len(P) > 2000                                         # matches all over the specimen
-    assert all(np.array_equal(whole[k], a) for k, a in (("P", P), ("n", n), ("delta", delta)))   # every point with one edge
-    x = torch.as_tensor(world(mri[0].shape, mri[2])[:, 0].reshape(mri[0].shape))
-    half = ev.measure(vol, inside * (x < 0))                                               # the inside corresponds only where x < 0
-    assert len(half["W"]) >= 10 and half["W"][:, 0].max() < 0 and len(half["P"]) == len(P)
-    empty = ev.measure(vol, 0 * inside)                                                    # no interior match: the edges are still read
-    assert not len(empty["W"]) and len(empty["P"]) == len(P) and empty["interior_mm"] is None
-    for m in (whole, half, empty):                                                         # the read-outs: all boundary points
-        assert m["boundary_mm"] == np.median(np.abs(delta)) and m["within"] == (np.abs(delta) < 0.3).mean()
-    u, info = deform.smooth_deformation(mri, (oct_[0], oct_[1] & False, oct_[2]), T, PARAMS, "cpu")
-    assert info["status"] == "not_supported" and info["n_interior"] == 0 and not u.any()
-
-
-def test_smallest_lam_keeps_the_strain_limit():
-    mri, oct_, T, *_ = pair(lambda y: bump(y, 1.0))
-    ev, lat = deform.Evidence(mri, PARAMS, "cpu").measure(*on_mri_grid(mri, oct_, T)), lattice_of(mri)
-    strain = lambda lam: lat.strain(deform.fit(lat, ev, lam, PARAMS.df_huber_mm))
-    lo, hi = deform.LAM_RANGE
-    assert strain(lo) < PARAMS.df_max_strain                                               # the fit strains by 0.07
-    assert deform.smallest_lam(lat, ev, PARAMS) == lo
-    none = float(np.median(np.linalg.norm(ev["D"], axis=1)) + np.median(np.abs(ev["delta"])))
-    for limit in (0.05, 0.02):                                                             # a limit inside the range
-        P = dataclasses.replace(PARAMS, df_max_strain=limit)
-        lam = deform.smallest_lam(lat, ev, P)
-        assert lo < lam < hi and strain(lam) < limit <= strain(lam / deform.LAM_TOL), (lam, strain(lam), strain(lam / deform.LAM_TOL))
-        best, score = deform.choose(lat, ev, none, P)
-        assert best is not None and best[0] == lam and best[1] == score and sum(score) < deform.GAIN * none
-    P = dataclasses.replace(PARAMS, df_max_strain=1e-3)                                    # even the largest weight strains more
-    assert strain(hi) > 1e-3 and deform.smallest_lam(lat, ev, P) is None
-    assert deform.choose(lat, ev, 1.0, P) == (None, None)
-    u, info = deform.smooth_deformation(mri, oct_, T, P, "cpu")
-    assert info["status"] == "not_supported" and info["cv"]["field"] is None and info["cv"]["none"] and not u.any()
-
-
-def test_recovers_a_smooth_displacement():
-    v = lambda y: bump(y, 1.0)
-    mri, oct_, T, *_ = pair(v)
-    u, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
-    assert info["status"] == "applied" and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
-    assert set(info) == {"status", "grid_mm", "lam", "max_strain", "n_interior", "n_boundary", "cv", "residual", "field", "seconds"}
-    assert info["grid_mm"] == PARAMS.df_grid_mm and deform.LAM_RANGE[0] <= info["lam"] <= deform.LAM_RANGE[1]
-    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300 and sum(info["cv"]["field"]) < 0.2 * sum(info["cv"]["none"])
-    res = info["residual"]
-    assert res["interior_mm"][0] > 0.5 and res["interior_mm"][1] < 0.1 * res["interior_mm"][0], res
-    assert res["boundary_mm"][0] > 0.2 and res["boundary_mm"][1] < 0.4 * res["boundary_mm"][0], res
-    assert res["boundary_within_0.3mm"][1] > 0.97 and 0 < info["max_strain"] < PARAMS.df_max_strain, (res, info["max_strain"])
+def test_reduces_a_smooth_displacement(bumped):
+    mri, oct_, T, u, info, field = bumped
+    assert [p["sigma_mm"] for p in info["passes"]] == list(FAST.df_sigmas_mm)
+    assert all(p["F_end"] > p["F_start"] + 0.02 for p in info["passes"]), info              # the score rises in every pass
     x = world(mri[0].shape, mri[2])[mri[1].ravel()]
-    truth = np.zeros_like(x)
-    for _ in range(20):                                                                    # u(x) = v(x + u(x))
-        truth = v(x + truth)
-    err = np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
-    assert np.median(err) < 0.08 and np.percentile(err, 95) < 0.18 and err.max() < 0.32, (np.median(err), np.percentile(err, 95), err.max())
-    assert abs(info["field"]["max_mm"] - np.linalg.norm(truth, axis=1).max()) < 0.1
+    truth = pull_back(bump, x)                                                              # the u that undoes the bump
+    imposed, err = np.linalg.norm(truth, axis=1), np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
+    assert np.median(imposed) > 0.5 and np.median(err) < 0.25 * np.median(imposed), (np.median(imposed), np.median(err))
+    assert np.percentile(err, 95) < 0.25 and err.max() < 0.4, (np.percentile(err, 95), err.max())
+    assert abs(info["passes"][-1]["displacement_max_mm"] - imposed.max()) < 0.15, (info["passes"][-1], imposed.max())
+    assert info["strain_max"] == round(lattice_strain(field), 4) <= FAST.df_max_strain + 2e-3, info["strain_max"]
+    corners = G.apply_affine(mri[2], np.array([[0, 0, 0], np.array(mri[0].shape) - 1], float))
+    assert np.allclose(field.lo.numpy(), corners.min(0) - 2 * FAST.df_grid_mm) and field.h == FAST.df_grid_mm
+    # the registered OCT at the MRI point x is OCT(T^-1 (x + u(x))): its specimen mask lands on the MRI one
+    dice = lambda a: 2 * (a & mri[1]).sum() / (a.sum() + mri[1].sum())
+    spec = oct_[1].astype(np.float32)
+    affine = G.resample_to(spec, oct_[3], mri[0].shape, mri[2], np.linalg.inv(T)) > 0.5
+    warped = G.resample_to(spec, oct_[3], mri[0].shape, mri[2], np.linalg.inv(T), field=u, affine_field=mri[2]) > 0.5
+    assert dice(warped) > 0.975 and 1 - dice(warped) < 0.5 * (1 - dice(affine)), (dice(affine), dice(warped))
 
 
-def test_aligned_pair_is_left_alone(monkeypatch):
-    mri, oct_, T, *_ = pair(lambda y: np.zeros_like(y))
-    u, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
-    assert info["status"] == "not_supported" and not u.any() and info["grid_mm"] is None and info["lam"] is None, info
-    assert info["n_interior"] >= 100 and info["n_boundary"] >= 300
-    assert sum(info["cv"]["field"]) >= deform.GAIN * sum(info["cv"]["none"])        # the field was fitted and refused
-    assert info["max_strain"] == 0 and info["field"]["max_mm"] == 0
-    assert all(a == b for a, b in info["residual"].values()) and info["residual"]["interior_mm"][0] < 0.05
-    assert info["residual"]["boundary_mm"][0] < 0.1 and info["residual"]["boundary_within_0.3mm"][0] > 0.97
-    monkeypatch.setattr(deform, "MIN_BOUNDARY", 10 ** 6)
-    few, info = deform.smooth_deformation(mri, oct_, T, PARAMS, "cpu")
-    assert info["status"] == "not_supported" and not few.any() and info["cv"] == {"none": None, "field": None}
+def test_keeps_the_strain_bound(bumped):
+    """A bound below the bump's strain: the field reaches it, not beyond (a soft hinge), and still moves toward the bump."""
+    mri, oct_, T, u_free, *_ = bumped
+    P = dataclasses.replace(FAST, df_max_strain=0.04)
+    assert BUMP_STRAIN > 1.5 * P.df_max_strain
+    u, info, field = fit(mri, oct_, T, P)
+    assert 0.9 * P.df_max_strain < info["strain_max"] <= P.df_max_strain + 2e-3, info["strain_max"]
+    assert lattice_strain(field) <= P.df_max_strain + 2e-3
+    x = world(mri[0].shape, mri[2])[mri[1].ravel()]
+    truth = pull_back(bump, x)
+    imposed, err = np.linalg.norm(truth, axis=1), np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
+    err_free = np.linalg.norm(u_free[:, mri[1]].T - truth, axis=1)
+    assert np.median(err_free) < np.median(err) < 0.8 * np.median(imposed), (np.median(err_free), np.median(err), np.median(imposed))
+
+
+def test_pull_back_inverts_the_fitted_field(bumped):
+    mri, oct_, T, u, info, field = bumped
+    x = world(mri[0].shape, mri[2])
+    ux = u.reshape(3, -1).T
+    with torch.no_grad():
+        z = torch.as_tensor(x + ux, dtype=torch.float32)
+        residual = np.linalg.norm((z + field(z)).numpy() - x, axis=1)                       # x + u(x) + d(x + u(x)) - x
+        first_order = np.linalg.norm(ux + field(torch.as_tensor(x, dtype=torch.float32)).numpy(), axis=1)   # u = -d(x)
+    assert residual.max() < 1e-4 and first_order.max() > 0.01, (residual.max(), first_order.max())
+    with pytest.raises(ValueError):
+        dataclasses.replace(FAST, df_iters=0)                                               # --no-deform is the switch
 
 
 def test_field_file_and_resample(tmp_path):
-    """io.save_field / load_field and geometry.resample_to(field=...): out(x) = src(T^-1 (x + u(x)))."""
+    """save_field / load_field and resample_to(field=...): out(x) = src(T^-1 (x + u(x))), u constant beyond its grid."""
     rng = np.random.default_rng(0)
     shape_f, shape_s = (24, 22, 20), (40, 36, 44)
     A_F = np.array([[0.5, 0, 0, -6.0], [0, 0, 0.5, -5.0], [0, -0.5, 0, 5.5], [0, 0, 0, 1.0]])
@@ -259,44 +225,41 @@ def test_field_file_and_resample(tmp_path):
     io.save_nifti(src, A_S, tmp_path / "src.nii.gz")
     with pytest.raises(ValueError, match="displacement field"):
         io.load_field(tmp_path / "src.nii.gz")
+
+    def want(shape_d, A_D):
+        x = world(shape_d, A_D)
+        ijk = np.clip(G.apply_affine(np.linalg.inv(A_F), x), 0, np.array(shape_f) - 1)        # constant beyond the field grid
+        ux = G.sample_world(torch.as_tensor(field, dtype=torch.float64), A_F, torch.as_tensor(G.apply_affine(A_F, ijk))).T
+        y = torch.as_tensor(G.apply_affine(np.linalg.inv(T), x + ux.numpy()))
+        return G.sample_world(torch.as_tensor(src[None], dtype=torch.float64), A_S, y)[0].numpy().reshape(shape_d)
+
     # a finer destination grid inside the field grid, in the same world
     shape_d = (30, 28, 26)
     A_D = A_F.copy()
     A_D[:3, :3] *= 0.5
     A_D[:3, 3] = G.apply_affine(A_F, np.array([4.0, 4.0, 3.0]))
-    x = torch.as_tensor(world(shape_d, A_D), dtype=torch.float64)
-    ux = G.sample_world(torch.as_tensor(field, dtype=torch.float64), A_F, x).T
-    want = G.sample_world(torch.as_tensor(src[None], dtype=torch.float64), A_S, G.apply_affine(np.linalg.inv(T), x + ux))[0].numpy()
     got = G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T), field=back, affine_field=A_back)
-    assert got.dtype == np.float32 and np.abs(got.ravel() - want).max() < 1e-5 and np.abs(want).max() > 0.05
+    assert got.dtype == np.float32 and np.abs(got - want(shape_d, A_D)).max() < 1e-5 and np.abs(got).max() > 0.05
     plain = G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T))
     assert np.abs(got - plain).max() > 0.01                                                 # the field matters
     assert np.array_equal(G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T), field=0 * back, affine_field=A_back), plain)
-    # the stage's own warp of a volume already on the field grid
-    on_grid = G.resample_to(src, A_S, shape_f, A_F, np.linalg.inv(T))
-    warped = deform.warp(torch.as_tensor(on_grid[None]), A_F, torch.as_tensor(field))[0].numpy()
-    assert np.abs(warped - G.resample_to(on_grid, A_F, shape_f, A_F, np.eye(4), field=back, affine_field=A_back)).max() < 1e-5
+    # a destination grid reaching 3 voxels beyond the field grid on every side (the full MRI grid around the base grid)
+    shape_w = tuple(n + 6 for n in shape_f)
+    A_W = A_F.copy()
+    A_W[:3, 3] = G.apply_affine(A_F, np.array([-3.0, -3.0, -3.0]))
+    wide = G.resample_to(src, A_S, shape_w, A_W, np.linalg.inv(T), field=back, affine_field=A_back)
+    assert np.abs(wide - want(shape_w, A_W)).max() < 1e-5
 
 
-def test_lattice_and_fit():
-    lat = deform.Lattice([-3.0, 0.0, 1.0], [7.5, 9.9, 11.0], 5.0)
-    assert lat.n.tolist() == [4, 3, 3] and lat.K == 36
-    rng = np.random.default_rng(0)
-    X = rng.uniform([-3, 0, 1], [7.5, 9.9, 11], (50, 3))
-    N = lat.basis(X)
-    assert np.allclose(N.sum(1), 1) and N.nnz <= 8 * 50
-    nodes = np.stack(np.meshgrid(*[lat.lo[a] + 5.0 * np.arange(lat.n[a]) for a in range(3)], indexing="ij"), -1).reshape(-1, 3)
-    c = np.stack([nodes @ g + b for g, b in (([0.01, 0.02, -0.01], 0.3), ([0.0, -0.03, 0.02], -0.1), ([0.04, 0.0, 0.0], 0.0))])
-    linear = X @ np.array([[0.01, 0.02, -0.01], [0.0, -0.03, 0.02], [0.04, 0.0, 0.0]]).T + [0.3, -0.1, 0.0]
-    assert np.allclose(N @ c.T, linear)                                                    # trilinear: exact on linear fields
-    assert abs(lat.strain(c) - 0.04) < 1e-12
-    A = np.diag([0.5, 0.5, 0.5, 1.0])
-    A[:3, 3] = [-3, 0, 1]
-    dense = lat.on_grid(c, (21, 19, 20), A, "cpu").numpy()
-    assert np.allclose(dense.reshape(3, -1).T, lat.basis(world((21, 19, 20), A)) @ c.T, atol=1e-5)
-    assert (deform.folds(np.array([[0.0, 0, 0], [6.9, 0, 0], [7.0, 0, 0], [0, 7.0, 0], [0, 0, -0.1]])) == [0, 0, 1, 3, 3]).all()
-    n = rng.standard_normal((400, 3))                                                      # boundary rows alone (weight 1): a sphere
-    n /= np.linalg.norm(n, axis=1, keepdims=True)                                          # moved by u0 shows n . u0 along its normals
-    P, u0 = np.array([2.0, 5.0, 6.0]) + 3.0 * n, np.array([0.3, -0.2, 0.1])
-    c = deform.fit(lat, {"W": np.zeros((0, 3)), "D": np.zeros((0, 3)), "P": P, "n": n, "delta": n @ u0}, 0.3, 0.3)
-    assert np.abs(lat.basis(P) @ c.T - u0).max() < 1e-3 and lat.strain(c) < 1e-3
+def test_lattice_covers_an_oblique_mri_grid():
+    """The lattice spans all eight corners of the MRI grid (two spacings of margin), also when the MRI axes are oblique."""
+    mri, oct_, T = pair(lambda z: 0 * z)
+    R = Rotation.from_rotvec([0.3, -0.2, 0.25]).as_matrix()
+    A = mri[2].copy()
+    A[:3, :3] = R @ A[:3, :3]
+    _, _, field = fit((mri[0], mri[1], A), oct_, T, dataclasses.replace(FAST, df_iters=1))
+    n = np.array(mri[0].shape) - 1
+    corners = G.apply_affine(A, np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])], float))
+    lo = field.lo.numpy()
+    hi = lo + field.h * (np.array(field.n) - 1)
+    assert (corners >= lo + 2 * FAST.df_grid_mm - 1e-4).all() and (corners <= hi - 2 * FAST.df_grid_mm + 1e-4).all()

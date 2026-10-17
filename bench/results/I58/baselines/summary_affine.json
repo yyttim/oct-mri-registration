@@ -2,14 +2,14 @@
  "octreg": {
   "run": "octreg",
   "tool": "octreg",
-  "variant": "\u00a71 to \u00a75",
+  "variant": "\u00a71 to \u00a74",
   "scale_per_oct_axis": [
-   0.9925,
-   0.9644,
-   0.9799
+   0.9669,
+   0.9584,
+   0.973
   ],
-  "det": 0.9378683470324929,
-  "wall_s": 575.1089980602264,
+  "det": 0.9017049065356586,
+  "wall_s": 453.5343396663666,
   "hardware": "GPU"
  },
  "ants_com": {

@@ -7,10 +7,12 @@ run      Runs, in this order, with the default parameters: the C3 crops of the 1
          specimen mask on the same OCT), named <crop>_nomask. A run whose result.json is complete (it holds the run time) is
          not run again. Then collect.
 collect  Scores every run of that list in the runs folder against the reference (common.error and common.vessel_score): the
-         final affine T_oct2mri.txt, and in "s4" the affine of §4 (pose.T_before_ngf of result.json). Each entry also holds,
-         from its result.json, the version and parameter hash of the run, the scores of the pose, the flags, the evidence §6
-         found, the darker peaks of the MRI valleys passed over (as fractions of the brightest peak), the outside fraction of
-         each image and the run time. If a run is missing or incomplete, the script names it and stops before writing.
+         final affine T_oct2mri.txt, and in "search" the search pose it was refined from (pose.T_search of result.json).
+         "deform" holds the vessel check of the affine with and without the run's deformation (common.vessel_field) and the
+         read-outs of §5. Each entry also holds, from its result.json, the version and parameter hash of the run, the scores of
+         the pose, the flags, the darker peaks of the MRI valleys passed over (as fractions of the brightest peak), the outside
+         fraction of each image and the run time. If a run is missing or incomplete, the script names it and stops before
+         writing.
 -> <bench_runs>/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]
@@ -30,7 +32,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (CONDITIONS, FLIPS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, crop_file, crop_name, error,  # noqa: E402
-                    vessel_score)
+                    vessel_field, vessel_score)
 
 
 def jobs():
@@ -49,17 +51,19 @@ def done(run):
 
 
 def entry(name, crop, masked, run):
+    from octreg import io
     res = json.loads((run / "result.json").read_text(encoding="utf-8"))
     pose = res["pose"]
     image, cond, k = crop.split("_")
-    s4 = {**error(np.array(pose["T_before_ngf"], float)), **vessel_score(np.array(pose["T_before_ngf"], float))}
-    T = np.loadtxt(run / "T_oct2mri.txt")
+    T, T4 = np.loadtxt(run / "T_oct2mri.txt"), np.array(pose["T_search"], float)
+    s4 = {**error(T4), **vessel_score(T4)}
+    d = res["deform"]
+    deform = None if d is None else {**vessel_field(T, *io.load_field(run / "oct2mri_warp.nii.gz")),
+                                     "strain_max": d["strain_max"], "displacement_median_mm": d["passes"][-1]["displacement_median_mm"]}
     return {"name": name, "crop": crop, "image": image, "cond": cond, "k": int(k[1:]), "oct_mask": masked,
             "version": res["octreg_version"], "params_hash": res["params_hash"], **error(T), **vessel_score(T),
-            "s4": {x: s4[x] for x in ("mean_mm", "rotation_deg", "tier", "vessel_median_mm")},
-            **{x: pose[x] for x in ("S", "S_class", "S_outline", "polarity", "outline_used", "search_rank") if x in pose},
-            "flags": res["flags"], "deformation": res["deform"]["status"],
-            "deform_evidence": {k: res["deform"].get(k) for k in ("n_interior", "n_boundary")},
+            "search": {x: s4[x] for x in ("mean_mm", "rotation_deg", "tier", "vessel_median_mm")},
+            **{x: pose[x] for x in ("S", "L", "outline_used", "search_rank")}, "deform": deform, "flags": res["flags"],
             "mri_valleys_passed": [round(v["darker_peak_of_brightest"], 3)
                                    for v in res["foreground"]["mri"].get("tissue_valleys_passed", [])],
             "outside_fraction": {k: res["foreground"][k].get("outside_fraction") for k in ("oct", "mri")},
@@ -75,7 +79,8 @@ def collect(runs, out):
         rows.append(entry(name, crop, masked, runs / name))
         r = rows[-1]
         print(f"{name}: mean {r['mean_mm']:.3f} mm, rotation {r['rotation_deg']:.1f} deg, {r['tier']} "
-              f"(s4 {r['s4']['mean_mm']:.3f} mm), vessels {r['vessel_median_mm']}", flush=True)
+              f"(search pose {r['search']['mean_mm']:.3f} mm), vessels {r['vessel_median_mm']}"
+              + (f", with §5 {r['deform']['field_median_mm']}" if r["deform"] else ""), flush=True)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(len(rows), "runs ->", out)

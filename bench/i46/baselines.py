@@ -20,13 +20,12 @@ The near start of crop k is S_k(x) = R(c + Q(x - c)) + d: Q turns by 10 deg abou
 MRI world, both directions drawn as normalised standard normal vectors from numpy default_rng(4700 + k) (the axis first), and
 c is the centre of the OCT tissue points (common.tissue, OCT world). R has a shear (its columns are up to 2.5 deg from
 orthogonal), which a NIfTI qform cannot hold. Given a sform with a shear, ANTs, elastix and greedy (ITK) read the qform and
-NiftyReg, FSL and FreeSurfer the sform. So every tool, and octreg's A14 (analyses.py near), starts from H_k, the start
-closest to S_k that a qform holds: a rotation with a scale per axis, the least squares fit over the tissue points with
-H_k(c) = S_k(c). The moving image is that of the main runs with the header H_k A (A its own header) in both sform and
-qform, and the crop and the x10 copies of both lie next to it (baselines_near/<crop>/inputs, with start.json: the draws,
-S_k, H_k and the distance between them over the tissue points). The transform T of a tool maps the world of that header,
-and T H_k the OCT world. Each row also holds the start (start_pose, common.error of H_k) and its distance from S_k
-(start_from_S).
+NiftyReg, FSL and FreeSurfer the sform. So every tool starts from H_k, the start closest to S_k that a qform holds: a
+rotation with a scale per axis, the least squares fit over the tissue points with H_k(c) = S_k(c). The moving image is that of
+the main runs with the header H_k A (A its own header) in both sform and qform, and the crop and the x10 copies of both lie next
+to it (baselines_near/<crop>/inputs, with start.json: the draws, S_k, H_k and the distance between them over the tissue points).
+The transform T of a tool maps the world of that header, and T H_k the OCT world. Each row also holds the start (start_pose,
+common.error of H_k) and its distance from S_k (start_from_S).
 
     python bench/i46/baselines.py prepare [--search | --mask | --near]   the inputs and run.sh of every run, and queue.sh
     bash <bench_runs>/I46/baselines/queue.sh           runs them one at a time (baselines_<search|mask|near>/queue.sh)

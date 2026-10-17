@@ -3,22 +3,22 @@
 
     python bench/baselines/rundir.py init RUN --T T.txt [--template RESULT.json]
     python bench/baselines/rundir.py check RUN --warped WARPED.nii.gz [--oct OCT.nii.gz] [--mri MRI.nii.gz]
-    python bench/baselines/rundir.py check-field RUN --warped WARPED.nii.gz [--moving MOVING.nii.gz] [--mri MRI.nii.gz]
+    python bench/baselines/rundir.py check-field RUN --warped WARPED.nii.gz --moving MOVING.nii.gz [--mri MRI.nii.gz]
 
 init         makes RUN a run directory in octreg's layout: T_oct2mri.txt (the given 4x4, moving world -> fixed world in
              NIfTI RAS mm, which is octreg's convention), its inverse T_mri2oct.txt, and a result.json that holds only the
              inputs block of a template octreg run (default OCTREG_PROJECT_ROOT/bench_runs/I58/octreg/result.json), so that
-             `octreg apply --run RUN --affine-only` and bench/evaluate.py work on it. A mirrored transform (det <= 0) is
-             refused.
+             `octreg apply --run RUN --affine-only` works on it. A mirrored transform (det <= 0) is refused.
 check        tests the convention of a converted affine. The OCT resampled through RUN/T_oct2mri.txt onto the MRI grid by
              octreg's own resampler is compared with the image the tool itself wrote on that grid (WARPED), by the Pearson
              correlation over the voxels where either is non-zero and the Dice of the two non-zero supports. A correct
              conversion gives a correlation near 1, and the check passes when both exceed 0.95. Writes RUN/check.json.
 check-field  the same test for a tool's displacement field after its conversion to octreg's convention
              (RUN/oct2mri_warp.nii.gz, made by the commands of the run), with the affine-aligned OCT on the MRI grid
-             (MOVING) sent through it. Writes RUN/check_field.json.
+             (MOVING, DEFORM/inputs/oct_affine_0.08mm.nii.gz of the octreg run the deformable runs started from) sent
+             through it. Writes RUN/check_field.json.
 Defaults: the inputs of bench/baselines/README.md under OCTREG_PROJECT_ROOT/baselines/inputs (oct_0.08mm.nii.gz,
-mri_0.08mm.nii.gz, oct_affine_0.08mm.nii.gz).
+mri_0.08mm.nii.gz).
 """
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def init(run: Path, T_file: Path, template: Path | None):
     src = json.loads(Path(template).read_text(encoding="utf-8"))
     res = {"octreg_version": src.get("octreg_version"), "inputs": src["inputs"], "baseline": run.name,
            "note": "run directory of a baseline transform: T_oct2mri.txt is the converted baseline affine, "
-                   "the inputs block is copied from the octreg run so that octreg apply and bench/evaluate.py work"}
+                   "the inputs block is copied from the octreg run so that octreg apply works"}
     (run / "result.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
     print(f"{run}: T_oct2mri.txt written, det {np.linalg.det(T[:3, :3]):.4f}, translation {T[:3, 3].round(2).tolist()} mm")
 
@@ -109,7 +109,7 @@ def main():
     c.add_argument("--oct", type=Path, default=INPUTS / "oct_0.08mm.nii.gz")
     c.add_argument("--mri", type=Path, default=INPUTS / "mri_0.08mm.nii.gz")
     f = sub.add_parser("check-field"); f.add_argument("run", type=Path); f.add_argument("--warped", required=True, type=Path)
-    f.add_argument("--moving", type=Path, default=INPUTS / "oct_affine_0.08mm.nii.gz")
+    f.add_argument("--moving", type=Path, required=True)
     f.add_argument("--mri", type=Path, default=INPUTS / "mri_0.08mm.nii.gz")
     a = ap.parse_args()
     if a.cmd == "init":

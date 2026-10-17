@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Properties of the deformable baseline runs that need no reference.
 
-    python bench/baselines/evaluate_deform.py RUN [RUN ...] [--octreg-run DIR] [--cache CACHE.npz] [--shots]
+    python bench/baselines/evaluate_deform.py RUN [RUN ...] [--octreg-run DIR] [--shots]
                                               [--summary OUT.json] [--force]
 
 Every RUN holds octreg's affine (T_oct2mri.txt), the tool's field converted to octreg's convention (oct2mri_warp.nii.gz) and
@@ -10,14 +10,14 @@ a check_field.json that is ok (bench/baselines/rundir.py). For each RUN:
      bench/figures.py).
   2. The Jacobian determinant J of x + u(x), u the field, by finite differences on the field's own grid: its minimum, the
      share of voxels with J <= 0 (folded) and the standard deviation of log J (the smoothness measure of Learn2Reg, Hering et
-     al., IEEE Trans. Med. Imaging 42:697, 2023), over the MRI foreground of --cache (octreg's MRI foreground on the 0.15 mm
-     base grid) sampled onto the field's grid.
+     al., IEEE Trans. Med. Imaging 42:697, 2023), over octreg's MRI foreground on the 0.15 mm base grid (register.prepare_mri)
+     sampled onto the field's grid.
   3. The wall time of the registration from RUN/time.txt (seconds, written by the tool's own command), the hardware from
      RUN/threads.txt and the spacing of the field grid.
   4. With --shots: freeview screenshots at the shared sections, named deform_<tool>_<variant>, by
      OCTREG_PROJECT_ROOT/baselines/shots/shots.sh in WSL, a local script that is not in the repository.
-With --octreg-run, the rows "none" (octreg's affine, no field) and "octreg" (its §6 field oct2mri_warp.nii.gz, wall time
-the §6 step time of result.json) are added. A row per run goes into --summary (default
+With --octreg-run, the rows "none" (octreg's affine, no field) and "octreg" (its §5 field oct2mri_warp.nii.gz, wall time
+the §5 step time of result.json) are added. A row per run goes into --summary (default
 OCTREG_PROJECT_ROOT/baselines/summary_deform.json). The roots come from bench/paths.py.
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench"), str(REPO / "bench" / "baselines")]
 from octreg import geometry as G, io  # noqa: E402
 from evaluate_runs import hardware  # noqa: E402
-from paths import BENCH_RUNS, MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
 
 SHOTS = ROOT / "baselines" / "shots"
 PY = sys.executable
@@ -87,15 +87,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("runs", nargs="*", type=Path)
     ap.add_argument("--octreg-run", type=Path, default=None, help="add the rows 'none' and 'octreg' of this octreg run")
-    ap.add_argument("--cache", type=Path, default=BENCH_RUNS / "I58" / "cache.npz",
-                    help="base grids of bench/ngf_lam.py cache, for the MRI foreground (mri_mask, mri_affine)")
     ap.add_argument("--shots", action="store_true")
     ap.add_argument("--force", action="store_true", help="redo octreg apply when oct_in_mri.nii.gz exists")
     ap.add_argument("--summary", type=Path, default=ROOT / "baselines" / "summary_deform.json")
     a = ap.parse_args()
     t0 = time.time()
-    z = np.load(a.cache)
-    fg, A_m = np.asarray(z["mri_mask"], bool), np.asarray(z["mri_affine"], float)
+    from octreg.register import prepare_mri
+    (_, fg, A_m), _ = prepare_mri(io.load_volume(str(MRI)))
 
     def merge(row):
         rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}   # merge with other runs
@@ -106,9 +104,9 @@ def main():
         res = json.loads((a.octreg_run / "result.json").read_text(encoding="utf-8"))
         dev = "GPU" if res["inputs"].get("device") == "cuda" else "CPU"
         merge({"run": "none", "tool": "none", "variant": "no deformation"})
-        merge({"run": "octreg", "tool": "octreg", "variant": "§6", **stats_of(a.octreg_run / "oct2mri_warp.nii.gz", fg, A_m),
+        merge({"run": "octreg", "tool": "octreg", "variant": "§5", **stats_of(a.octreg_run / "oct2mri_warp.nii.gz", fg, A_m),
                "wall_s": res["seconds"].get("deform"), "hardware": dev})
-        print(f"octreg §6 and no deformation added [{time.time() - t0:.0f} s]", flush=True)
+        print(f"octreg §5 and no deformation added [{time.time() - t0:.0f} s]", flush=True)
     for r in (r for r in a.runs if r.is_dir()):
         chk = r / "check_field.json"
         if not chk.is_file() or not json.loads(chk.read_text())["ok"]:

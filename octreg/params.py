@@ -12,9 +12,9 @@ class Params:
     """Method constants (no switches); a variant via dataclasses.replace or from_dict (a partial dict)."""
     # grids
     search_mm: float = 0.6                    # isotropic grid of the orientation search, an integer multiple of base_mm
-    base_mm: float = 0.15                     # isotropic grid of the two-class maps and the affine refinement
+    base_mm: float = 0.15                     # isotropic grid of the refinement and the deformation
     fine_mm: float = 0.04                     # OCT grid of the specimen mask
-    # foreground and specimen mask (§1)
+    # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
     medium_fraction: float = 0.5              # ... and its darker peak below this x the brightest peak (medium, not tissue)
     min_component: float = 0.01               # keep MRI foreground components >= this fraction of the foreground volume
@@ -23,58 +23,56 @@ class Params:
     texture_grid_mm: float = 0.16             # block grid of the texture field
     texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its two-class (Otsu) threshold
     texture_close_mm: float = 0.48            # closing radius of the specimen mask
-    # two-class maps (§2)
-    flatten_sigma_mm: float = 10.0            # Gaussian sigma of the local foreground mean used for flattening
-    sigmoid_std: float = 0.25                 # p = sigmoid((I - t) / (sigmoid_std * std of foreground values))
+    # score (§2)
+    erode_mm: float = 0.8                     # erosion of the OCT points of F, in round(mm / h) steps of the 6-neighbourhood
     outline_min_outside: float = 0.01         # the outline is used when both images have this measured share outside the tissue
     # orientation search (§3)
-    n_rot: int = 8000                         # uniform proper rotations, R[0] = identity
-    seed: int = 0                             # rotation set seed
-    topk: int = 24                            # poses kept after non-maximum suppression, each one refined
+    search_sigma_mm: float = 1.2              # Gaussian sigma of the gradients in the search
+    n_rot: int = 8000                         # rotations (identity + Super-Fibonacci)
+    topk: int = 24                            # poses kept after non-maximum suppression, each one refined (§4)
     nms_mm: float = 3.0                       # same pose if centres closer than nms_mm ...
     nms_deg: float = 20.0                     # ... and rotations closer than nms_deg
     # affine refinement (§4)
-    iters: int = 200                          # Adam iterations per pose
-    lam: float = 2.0                          # L = 1 - S + lam (sum log_scale^2 + sum shear^2), the prior of §4 and §5
-    lr_rot: float = 0.02                      # rad
-    lr_t: float = 0.3                         # mm
-    lr_ls: float = 0.01                       # log-scale
-    lr_sh: float = 0.01                       # shear
-    # fine-structure refinement (§5)
-    ngf_sigmas_mm: tuple = (0.6, 0.4, 0.3)    # Gaussian sigma of the gradients, one pass each, coarse to fine
-    ngf_erode_mm: float = 0.8                 # both masks eroded by this, so the outlines are left out
-    ngf_iters: int = 150                      # Adam iterations per pass (the prior of §4, lam and clamp, is shared)
-    # smooth deformation (§6)
-    df_sigma_mm: float = 0.24                 # Gaussian sigma of the gradients of the structure feature
-    df_block_mm: float = 4.5                  # edge of the matched blocks
-    df_step_mm: float = 1.5                   # grid step of the block centres
-    df_reach_mm: float = 1.35                 # reach of the local evidence: the search range (+- per axis) of the interior
-                                              # matches, and the largest distance of a surface edge from the MRI surface
-    df_z_min: float = 4.0                     # a match is confident this many SDs above the mean of its score map
-    df_erode_mm: float = 0.6                  # both masks eroded by this; a block needs 0.7 of it in the core, so it can hang 30 % outside
-    df_edge_mad: float = 5.0                  # a prominent fall: this many MADs above the median of the fall along the profile
-    df_huber_mm: float = 0.3                  # Huber threshold of both residual types
+    sigmas_mm: tuple = (0.6, 0.4, 0.3)        # Gaussian sigmas of the passes, coarse to fine
+    iters: int = 150                          # Adam iterations per pass
+    lam: float = 2.0                          # L = 1 - F + lam (sum log_scale^2 + sum shear^2), the scale and shear prior
+    lr_rot: float = 0.004                     # rad
+    lr_t: float = 0.06                        # mm
+    lr_ls: float = 0.002                      # log-scale
+    lr_sh: float = 0.002                      # shear
+    # smooth deformation (§5)
     df_grid_mm: float = 5.0                   # spacing of the control lattice
-    df_max_strain: float = 0.15               # largest first difference of the lattice / spacing must stay below this
+    df_max_strain: float = 0.08               # largest first difference of the lattice / spacing
+    df_band_mm: float = 0.6                   # dilation of the OCT points of §5, in round(mm / h) 6-neighbourhood steps
+    df_sigmas_mm: tuple = (0.6, 0.3)          # Gaussian sigmas of the deformation passes
+    df_iters: int = 200                       # most L-BFGS iterations per pass
 
     def __post_init__(self):
+        for f in dataclasses.fields(self):                    # ints given for float fields become floats (equality = hash)
+            v = getattr(self, f.name)
+            if isinstance(f.default, float) and type(v) is int:
+                object.__setattr__(self, f.name, float(v))
+            elif isinstance(f.default, tuple) and isinstance(v, tuple):
+                object.__setattr__(self, f.name, tuple(float(x) if type(x) is int else x for x in v))
         ok = 0 < self.fine_mm <= self.base_mm < self.search_mm
         if not (ok and abs(self.search_mm / self.base_mm - round(self.search_mm / self.base_mm)) < 1e-6):
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm, search_mm an integer multiple of base_mm")
-        if not (self.ngf_sigmas_mm and all(isinstance(x, float) and 0 < x < float("inf") for x in self.ngf_sigmas_mm)):
-            raise ValueError("Params: ngf_sigmas_mm must be a non-empty tuple of positive finite floats")
-        if not (self.ngf_erode_mm > 0 and self.ngf_iters >= 1):
-            raise ValueError("Params: need ngf_erode_mm > 0 and ngf_iters >= 1")
-        if not min(self.df_sigma_mm, self.df_block_mm, self.df_step_mm, self.df_reach_mm, self.df_z_min, self.df_erode_mm,
-                   self.df_huber_mm, self.df_max_strain, self.df_edge_mad, self.df_grid_mm) > 0:
-            raise ValueError("Params: all df_ lengths, df_z_min, df_edge_mad and df_max_strain must be positive")
+        for name in ("sigmas_mm", "df_sigmas_mm"):
+            v = getattr(self, name)
+            if not (isinstance(v, tuple) and v and all(isinstance(x, float) and 0 < x < float("inf") for x in v)):
+                raise ValueError(f"Params: {name} must be a non-empty tuple of positive finite floats")
+        if not min(self.erode_mm, self.search_sigma_mm, self.df_grid_mm, self.df_max_strain, self.df_band_mm) > 0 or min(
+                self.iters, self.df_iters, self.n_rot, self.topk) < 1:
+            raise ValueError("Params: lengths and the strain bound must be positive, iterations, n_rot and topk >= 1")
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict) -> "Params":
-        """Params from a partial dict (e.g. JSON); ints are accepted for floats; unknown keys or wrong types raise ValueError."""
+        """Params from a partial dict (JSON); ints are accepted for floats; unknown keys or wrong types raise ValueError."""
+        if not isinstance(d, dict):
+            raise ValueError(f"Params: overrides must be a JSON object, not {type(d).__name__}")
         base, kw = cls(), {}
         for k, v in d.items():
             dv = getattr(base, k, None)

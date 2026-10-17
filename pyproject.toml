@@ -30,3 +30,4 @@ version = { attr = "octreg.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
