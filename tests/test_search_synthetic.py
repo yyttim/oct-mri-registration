@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 
 from octreg import geometry as G
-from octreg.features import tracefree
+from octreg.features import orientation_tensor
 from octreg.params import Params
 from octreg.search import Outline, Searcher, angle_deg, search
 
@@ -69,11 +69,11 @@ def direct_F(s, mri, R, index):
     I, M = (torch.as_tensor(x, dtype=torch.float32) for x in mri[:2])
     Mb = (M > 0.5).float()
     g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(I * Mb, Mb, s.sig))
-    TM = F.pad(tracefree(g / torch.sqrt((g * g).sum(0) + g.norm(dim=0)[Mb > 0].median() ** 2))[None], [pad] * 6)[0]
+    TM = F.pad(orientation_tensor(g / torch.sqrt((g * g).sum(0) + g.norm(dim=0)[Mb > 0].median() ** 2))[None], [pad] * 6)[0]
     v, w, _, inner = G.sample_world(s.src, s.A_src, s.c_t + s.tgrid @ torch.as_tensor(R, dtype=torch.float32)).reshape(4, n, n, n)
     wb = (w > 0.5).float()
     g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(v * wb, wb, s.sig))
-    a, wt = tracefree(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2)), (inner > 0.5).float()
+    a, wt = orientation_tensor(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2)), (inner > 0.5).float()
     i, j, k = np.unravel_index(index, s.shape)
     b = TM[:, i:i + n, j:j + n, k:k + n]
     N = wt.sum()
@@ -105,7 +105,7 @@ def test_maps_are_the_direct_sums():
             assert abs(float(Fm.reshape(-1)[idx]) - direct_F(s, m, R, idx)) < 1e-3
             P = s.pose(np.eye(3), idx)
             assert abs(float(Om.reshape(-1)[idx]) - float(out(torch.as_tensor(P, dtype=torch.float32)))) < 1e-4
-            assert (beyond(s.pose(R, idx)) > 0.1 and beyond(P) > 0.1) == (u[0] < t[0] - 5)
+            assert (beyond(s.pose(R, idx)) > 0.05 and beyond(P) > 0.05) == (u[0] < t[0] - 5)
         assert float(Fm.reshape(-1)[index_of(s, T)]) > 0.8
 
 

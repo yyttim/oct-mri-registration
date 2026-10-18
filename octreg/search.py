@@ -20,7 +20,7 @@ import torch
 import torch.nn.functional as F
 
 from . import geometry as G
-from .features import eroded, to_torch, tracefree
+from .features import eroded, orientation_tensor, to_torch
 from .params import Params
 
 EPS = 1e-6          # numerical guard of weight sums and NCC denominators
@@ -60,7 +60,7 @@ class Searcher:
         Mb = (M > 0.5).float()  # the gradients of F inside the binary masks, as in features
         gM = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(I * Mb, Mb, self.sig))
         eps_M = gM.norm(dim=0)[Mb > 0].median()
-        TM = tracefree(gM / torch.sqrt((gM * gM).sum(0) + eps_M ** 2))
+        TM = orientation_tensor(gM / torch.sqrt((gM * gM).sum(0) + eps_M ** 2))
         wb = (w > 0.5).float()
         gO = G.nc_gradient(o * wb, wb, sigma_mm / h_o)
         self.eps_O = gO.norm(dim=0)[wb > 0].median() / h_o            # per mm, as the template gradients (rotation-free norm)
@@ -105,7 +105,7 @@ class Searcher:
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)
         wb = (w > 0.5).float()
         g = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(v * wb, wb, self.sig))
-        T = tracefree(g / torch.sqrt((g * g).sum(0) + self.eps_O ** 2))
+        T = orientation_tensor(g / torch.sqrt((g * g).sum(0) + self.eps_O ** 2))
         wt = (inner > 0.5).float()
         N = wt.sum() + EPS
         Fw, FwT = self._ft(wt), self._ft(wt[None] * T)

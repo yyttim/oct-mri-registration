@@ -1,6 +1,7 @@
-"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the trace-free tensor ignores
+"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the orientation tensor ignores
 the gradient sign; F is 1 for identical volumes and does not change when the OCT contrast is inverted; OCT points over MRI
-background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; and the prior holds the scale where the data do not decide it."""
+background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; and the prior holds the scale where
+the data do not decide it."""
 import dataclasses
 
 import numpy as np
@@ -9,7 +10,7 @@ from scipy import ndimage
 from scipy.spatial.transform import Rotation
 
 from octreg import geometry as G
-from octreg.features import MRITensors, OCTTemplate, correlation, eroded, gradient_field, score, tensors, tracefree
+from octreg.features import MRITensors, OCTTemplate, correlation, eroded, gradient_field, score, orientation_tensor, tensors
 from octreg.params import Params
 from octreg.refine import compose, decompose, refine
 
@@ -53,14 +54,12 @@ def test_gradient_field_ramp():
     assert np.abs(flat).max() < 1e-3                                                  # the mask edge adds no gradient
 
 
-def test_tracefree_ignores_the_sign():
-    """P(n) = P(-n), trace 0, and <P(n), P(m)> = (n . m)^2 - |n|^2 |m|^2 / 3 over the six channels."""
+def test_orientation_tensor_ignores_the_sign():
+    """P(n) = P(-n) and <P(n), P(m)> = (n . m)^2 over the six channels."""
     n, m = torch.as_tensor(np.random.default_rng(0).normal(size=(2, 3, 200)), dtype=torch.float32)
-    P, Q = tracefree(n), tracefree(m)
-    assert P.shape == (6, 200) and torch.equal(P, tracefree(-n))
-    assert float((P[0] + P[1] + P[2]).abs().max()) < 1e-5
-    dot = (n * m).sum(0) ** 2 - (n * n).sum(0) * (m * m).sum(0) / 3
-    assert torch.allclose((P * Q).sum(0), dot, atol=1e-4)
+    P, Q = orientation_tensor(n), orientation_tensor(m)
+    assert P.shape == (6, 200) and torch.equal(P, orientation_tensor(-n))
+    assert torch.allclose((P * Q).sum(0), (n * m).sum(0) ** 2, atol=1e-4)
 
 
 def pair(seed=0):

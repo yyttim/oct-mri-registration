@@ -2,9 +2,9 @@
 
 Each volume I with mask m is smoothed and differentiated inside the mask by normalised convolution, g = grad(G_s(I m) / G_s(m)),
 so the mask edge adds no gradient, and g is taken to world coordinates. The normalised gradient is n = g / sqrt(|g|^2 + eps^2)
-(Haber and Modersitzki 2007), eps the median |g| over the mask, and its trace-free tensor P(n) = n n^T - |n|^2 I / 3 is stored
-as six channels whose dot product is <P(n), P(n')> = (n . n')^2 - |n|^2 |n'|^2 / 3. The tensor does not change when the gradient
-changes sign, so the score needs neither an intensity mapping nor the contrast polarity.
+(Haber and Modersitzki 2007), eps the median |g| over the mask, and its orientation tensor P(n) = n n^T is stored as six
+channels whose dot product is <P(n), P(n')> = (n . n')^2, the squared product of normalised gradient fields. The tensor does not
+change when the gradient changes sign, so the score needs neither an intensity mapping nor the contrast polarity.
 
 The score is computed in template form, as the orientation search computes it: over the OCT points x_i, the correlation of the
 OCT tensors, their gradients taken through the pose (g' = A^-T g for the linear part A, and (I - grad u^T) g' under a small
@@ -28,13 +28,11 @@ def to_torch(x, device):
     return torch.as_tensor(x if torch.is_tensor(x) else np.asarray(x, np.float32)).to(device=device, dtype=torch.float32)
 
 
-def tracefree(n):
-    """Trace-free orientation tensor of vectors n [3, ...] (torch) as six channels (xx, yy, zz, sqrt2 xy, sqrt2 xz, sqrt2 yz).
-    -> torch [6, ...]."""
+def orientation_tensor(n):
+    """Orientation tensor n n^T of vectors n [3, ...] (torch) as six channels (xx, yy, zz, sqrt2 xy, sqrt2 xz, sqrt2 yz), whose
+    dot product is (n . n')^2. -> torch [6, ...]."""
     r2 = math.sqrt(2.0)
-    P = torch.stack([n[0] * n[0], n[1] * n[1], n[2] * n[2], r2 * n[0] * n[1], r2 * n[0] * n[2], r2 * n[1] * n[2]])
-    P[:3] -= (P[0] + P[1] + P[2]) / 3
-    return P
+    return torch.stack([n[0] * n[0], n[1] * n[1], n[2] * n[2], r2 * n[0] * n[1], r2 * n[0] * n[2], r2 * n[1] * n[2]])
 
 
 def gradient_field(arr, mask, affine, sigma_mm, device="cuda"):
@@ -53,8 +51,8 @@ def median_norm(g, mask):
 
 
 def tensors(g, eps):
-    """Trace-free tensors of the normalised gradients g / sqrt(|g|^2 + eps^2). -> torch [6, ...]."""
-    return tracefree(g / torch.sqrt((g * g).sum(0) + eps * eps))
+    """Orientation tensors of the normalised gradients g / sqrt(|g|^2 + eps^2). -> torch [6, ...]."""
+    return orientation_tensor(g / torch.sqrt((g * g).sum(0) + eps * eps))
 
 
 class MRITensors:

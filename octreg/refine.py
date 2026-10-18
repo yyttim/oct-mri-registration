@@ -1,20 +1,18 @@
-"""Affine refinement (docs/METHOD.md §4).
-
-Model x_mri = R(r) Sh(sh) diag(exp(ls)) (x_oct - c) + t, c = OCT grid box centre (mm); proper poses only. Every search
-candidate is refined on the structure score F alone, coarse to fine (one Adam pass per sigma of Params.sigmas_mm), under the
-prior L = 1 - F + lam (sum ls^2 + sum sh^2), and the lowest final L wins: the search proposes the poses, and the finest scale,
-where the internal structure is most specific, decides between them.
+"""Affine refinement (docs/METHOD.md §4): every search candidate refined on F under a scale and shear prior, coarse to fine.
+The lowest final L wins, a tie (within TIE) going to the better search rank. Model x_mri = R(r) Sh(sh) diag(exp(ls)) (x_oct - c)
++ t, c the OCT grid box centre (mm).
 """
 from __future__ import annotations
-
-import math
 
 import numpy as np
 import torch
 from scipy.spatial.transform import Rotation
 
+from . import geometry as G
 from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
+
+TIE = 1e-5          # final L closer than this to the lowest count as equal (the round-off of the fit)
 
 
 def compose(r, t, ls, sh, c):
@@ -39,34 +37,29 @@ def decompose(T, c):
             np.array([Sh[0, 1], Sh[0, 2], Sh[1, 2]]))
 
 
-def fit_adam(objective, c, T0, iters, params: Params = Params(), device="cuda"):
-    """Adam on L = 1 - objective(T) + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4) over all twelve affine parameters (r,
-    t, 3 log-scales, 3 shears), cosine schedule to zero over iters, learning rates lr_rot rad, lr_t mm, lr_ls and lr_sh.
-    -> (T numpy 4x4, objective, L) of the iterate with the lowest L, and the objective at T0."""
+def fit_adam(objective, c, rho, T0, params: Params = Params(), device="cuda"):
+    """Adam on L = 1 - objective(T) + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4) over all twelve affine parameters,
+    cosine schedule to zero over params.iters; one step size in mm of corner motion: lr_mm for t, lr_mm / rho for r, ls and sh
+    (rho the radius of the OCT box). -> (T numpy 4x4, objective, L) of the last iterate, and the objective at T0."""
     P = params
     f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=device, requires_grad=True)
     r, t, ls, sh = (f(x) for x in decompose(T0, c))
     cc = torch.tensor(np.asarray(c, float), dtype=torch.float32, device=device)
-    opt = torch.optim.Adam([{"params": [r], "lr": P.lr_rot}, {"params": [t], "lr": P.lr_t},
-                            {"params": [ls], "lr": P.lr_ls}, {"params": [sh], "lr": P.lr_sh}])
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=iters, eta_min=0.0)
-    best = (math.inf, None, None)
-    for i in range(iters + 1):
+    opt = torch.optim.Adam([{"params": [r, ls, sh], "lr": P.lr_mm / rho}, {"params": [t], "lr": P.lr_mm}])
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=P.iters, eta_min=0.0)
+    for i in range(P.iters + 1):
         opt.zero_grad(set_to_none=True)
         T = compose(r, t, ls, sh, cc)
         v = objective(T)
         L = 1.0 - v + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
-        l, s = float(L.detach()), float(v.detach())
         if i == 0:
-            start = s
-        if l < best[0]:
-            best = (l, T.detach().cpu().double().numpy(), s)
-        if i == iters:
+            start = float(v.detach())
+        if i == P.iters:
             break
         L.backward()
         opt.step()
         sched.step()
-    return best[1], best[2], best[0], start
+    return T.detach().cpu().double().numpy(), float(v.detach()), float(L.detach()), start
 
 
 def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
@@ -78,13 +71,15 @@ def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
     (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
     inner = eroded(o_mask, P.erode_mm, h_o)
+    rho = G.box(A_O, np.shape(o_arr))[1]
     poses = [{"T": np.asarray(T, float), "F": [], "search_rank": i} for i, T in enumerate(starts)]
     for s in P.sigmas_mm:
         tpl = OCTTemplate(o_arr, o_mask, A_O, s, inner, device=device)
         mt = MRITensors(m_arr, m_mask, A_M, s, device)
         F = lambda x, tpl=tpl, mt=mt: score(x, tpl, mt)
         for p in poses:
-            p["T"], f1, p["L"], f0 = fit_adam(F, tpl.c, p["T"], P.iters, P, device)
+            p["T"], f1, p["L"], f0 = fit_adam(F, tpl.c, rho, p["T"], P, device)
             p["F"].append({"sigma_mm": s, "start": round(f0, 5), "end": round(f1, 5)})
         del tpl, mt, F
-    return sorted(poses, key=lambda p: p["L"])
+    lo = min(p["L"] for p in poses)                 # within TIE of the lowest L the better search rank wins
+    return sorted(poses, key=lambda p: (0, p["search_rank"]) if p["L"] <= lo + TIE else (1, p["L"]))

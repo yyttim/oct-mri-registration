@@ -24,7 +24,7 @@ class Params:
     outline_min_outside: float = 0.01         # the outline is used when both images have this measured share outside the tissue
     # orientation search (§3)
     search_sigma_mm: float = 1.2              # Gaussian sigma of the gradients in the search
-    n_rot: int = 8000                         # rotations (identity + Super-Fibonacci)
+    n_rot: int = 8000                         # Super-Fibonacci rotations
     topk: int = 24                            # poses kept after non-maximum suppression, each one refined (§4)
     nms_mm: float = 3.0                       # same pose if centres closer than nms_mm ...
     nms_deg: float = 20.0                     # ... and rotations closer than nms_deg
@@ -32,10 +32,7 @@ class Params:
     sigmas_mm: tuple = (0.6, 0.4, 0.3)        # Gaussian sigmas of the passes, coarse to fine
     iters: int = 150                          # Adam iterations per pass
     lam: float = 2.0                          # L = 1 - F + lam (sum log_scale^2 + sum shear^2), the scale and shear prior
-    lr_rot: float = 0.004                     # rad
-    lr_t: float = 0.06                        # mm
-    lr_ls: float = 0.002                      # log-scale
-    lr_sh: float = 0.002                      # shear
+    lr_mm: float = 0.06                       # Adam step, in mm of motion of the OCT box corners
     # smooth deformation (§5)
     df_grid_mm: float = 5.0                   # spacing of the control lattice
     df_max_strain: float = 0.08               # largest first difference of the lattice / spacing

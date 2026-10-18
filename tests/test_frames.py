@@ -213,12 +213,12 @@ def _nearest_deg(q, probes):
 
 
 def test_rotation_set():
-    """The rotation set every search uses: the identity first, n proper rotations, deterministic, near-uniform on SO(3)
+    """The rotation set every search uses: n proper rotations, deterministic, near-uniform on SO(3)
     (covering radius from 20000 uniform probes below 12 degrees for n = 8000; n iid uniform rotations give about 16-17), the
     share within an angle of the identity that of the Haar measure, (t - sin t) / pi, and no two rotations within 3 degrees."""
-    assert [len(g.rotations(n)) for n in (1, 2, 100)] == [1, 2, 100] and np.array_equal(g.rotations(1)[0], np.eye(3))
+    assert [len(g.rotations(n)) for n in (1, 2, 100)] == [1, 2, 100]
     R = g.rotations(8000)
-    assert R.shape == (8000, 3, 3) and R.dtype == np.float64 and np.array_equal(R[0], np.eye(3))
+    assert R.shape == (8000, 3, 3) and R.dtype == np.float64
     assert np.allclose(R @ R.transpose(0, 2, 1), np.eye(3), atol=1e-12) and np.allclose(np.linalg.det(R), 1.0, atol=1e-12)
     assert np.array_equal(g.rotations(8000), R)
     q = Rotation.from_matrix(R).as_quat()
