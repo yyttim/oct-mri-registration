@@ -1,8 +1,4 @@
-"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp, the orientation tensor
-ignores the gradient sign, F is 1 for identical volumes and does not change when the OCT contrast is inverted, OCT points over
-MRI background lower F (template form), a displacement field moves the points and a linear one turns their gradients as the
-affine it equals, the refinement recovers a pose 1 mm and 3
-degrees off, the tie rule of the selection, and the prior holds the scale where the data do not decide it."""
+"""The §2 structure similarity (octreg.features) and the §4 refinement on synthetic volumes."""
 import dataclasses
 
 import numpy as np
@@ -19,13 +15,13 @@ H = 0.15
 
 
 def refine_one(T0, mri, oct_, params, device):
-    """refine.refine from one start -> (T, its record)."""
+    """Refine from one start. -> (T, its record)."""
     r = refine([T0], mri, oct_, params, device)[0]
     return r["T"], r
 
 
 def grid(shape, perm=True):
-    """Base-grid affine centred on the world origin: permuted axes with a flip (perm) or two flipped axes."""
+    """Base-grid affine centred on the world origin, with permuted axes and a flip if perm, else two flipped axes."""
     A = np.zeros((4, 4))
     A[3, 3] = 1
     if perm:
@@ -48,9 +44,9 @@ def test_gradient_field_ramp():
     mask = np.zeros(shape, bool)
     mask[4:-4, 4:-4, 4:-4] = True
     g = gradient_field(arr, mask, A, 0.3, "cpu").numpy()
-    inner = ndimage.binary_erosion(mask, iterations=9)                                # beyond the kernel radius (8 voxels)
+    inner = ndimage.binary_erosion(mask, iterations=9)                                # beyond the kernel radius of 8 voxels
     assert np.abs(g[:, inner] - np.array([2, 0, -3])[:, None]).max() < 2e-3
-    assert np.abs(g[:, ~mask]).max() == 0                                            # zero outside the mask
+    assert np.abs(g[:, ~mask]).max() == 0
     flat = gradient_field(np.where(mask, 5.0, 0.0).astype(np.float32), mask, A, 0.3, "cpu").numpy()
     assert np.abs(flat).max() < 1e-3                                                  # the mask edge adds no gradient
 
@@ -64,9 +60,8 @@ def test_orientation_tensor_ignores_the_sign():
 
 
 def pair(seed=0):
-    """MRI: 1 + 0.3 s inside an ellipsoid on 64^3 voxels (s a smoothed Gaussian field). OCT: 60 x 62 x 58 voxels on a
-    differently flipped grid showing 2 - tanh(1.5 s) at T x (inverted, non-linear contrast), specimen mask the ellipsoid at
-    T x. -> ((mri, mask, A_M), (oct, mask, A_O), T)."""
+    """A synthetic MRI and an OCT showing it at T x with inverted non-linear contrast on a differently flipped grid.
+    -> ((mri, mask, A_M), (oct, mask, A_O), T)."""
     rng = np.random.default_rng(seed)
     shape_m = (64, 64, 64)
     A_M = grid(shape_m)
@@ -98,7 +93,7 @@ def test_score_identical_and_contrast_free():
 
 
 def test_score_of_the_pair():
-    """At the true pose of the pair (inverted, non-linear contrast) F is high, 0.5 mm off it is much lower."""
+    """F is high at the true pose of the pair and much lower 0.5 mm off it."""
     mri, (o, mo, A_O), T = pair()
     tpl, mt = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu"), MRITensors(*mri, 0.3, "cpu")
     off = np.eye(4)
@@ -108,8 +103,8 @@ def test_score_of_the_pair():
 
 
 def test_background_lowers_the_score():
-    """Template form: with the MRI foreground cut in half, the OCT points over the MRI background (tensors 0) stay in the sum
-    and lower F, while the correlation over the points that remain over MRI tissue stays high."""
+    """With the MRI foreground cut in half, the OCT points over MRI background (tensors 0) stay in the sum and lower F, while
+    F over the points still on tissue stays high."""
     (mri, mask, A), _, _ = pair()
     tpl = OCTTemplate(mri, mask, A, 0.3, eroded(mask, 0.8, H), device="cpu")
     half = mask & (world(mask.shape, A)[..., 0] < 0.5)
@@ -122,8 +117,8 @@ def test_background_lowers_the_score():
 
 
 def test_no_overlap_gives_a_finite_gradient():
-    """A pose that puts every OCT point beyond the MRI grid scores 0 with a zero, finite gradient (no NaN): its fit stays at
-    L = 1 and the candidate loses the selection by the lowest final L instead of breaking it."""
+    """A pose with every OCT point beyond the MRI grid scores 0 with a zero, finite gradient, so its candidate stays at L = 1
+    and loses the selection instead of breaking it."""
     mri, (o, mo, A_O), T = pair(seed=3)
     far = np.eye(4)
     far[:3, 3] = [200.0, 0.0, 0.0]
@@ -148,8 +143,8 @@ def test_refine_recovers_offset_pose():
 
 
 def test_refine_selects_the_lowest_final_L():
-    """Of several starts, refine returns every pose sorted by its final L, and the start near the truth wins even when it is not
-    the first (the search rank of a start is its position in the list)."""
+    """refine sorts the poses by final L, and the start near the truth wins even when it is not first. The search rank of a
+    start is its index in the list."""
     mri, oct_, T = pair()
     wrong = np.eye(4)
     wrong[:3, :3] = Rotation.from_rotvec(np.radians(60.0) * np.array([0.0, 0.0, 1.0])).as_matrix()
@@ -164,15 +159,14 @@ def test_refine_selects_the_lowest_final_L():
 
 
 def test_refine_tie_rule(monkeypatch):
-    """A final L within TIE (1e-5) of the lowest is a tie, which the better search rank wins: with fit_adam replaced by a stub
-    that sets the final L of each start, rank 0 at 0.2 + 5e-6 still comes first, at 0.2 + 5e-4 it falls behind rank 1."""
+    """A final L within TIE of the lowest is a tie, which the better search rank wins."""
     shape = (20, 20, 20)
     A = grid(shape)
     vol = ndimage.gaussian_filter(np.random.default_rng(0).standard_normal(shape), 1.5).astype(np.float32)
     box = np.ones(shape, bool)
     starts = [np.eye(4) for _ in range(3)]
     for i, T in enumerate(starts):
-        T[0, 3] = i                                                                  # the start of search rank i
+        T[0, 3] = i                                                                  # marks the start of search rank i
     for L, ranks in (((0.2 + 5e-6, 0.2, 0.3), [0, 1, 2]), ((0.2 + 5e-4, 0.2, 0.3), [1, 0, 2])):
         stub = lambda objective, c, rho, T0, params, device, L=L: (T0, 0.5, L[int(T0[0, 3])], 0.4)
         monkeypatch.setattr("octreg.refine.fit_adam", stub)
@@ -181,9 +175,7 @@ def test_refine_tie_rule(monkeypatch):
 
 
 def test_prior_holds_the_scale_the_data_do_not_decide():
-    """F does not reward a smaller block: refined from the true pose with lam 0 the size is kept (|log-scale| < 0.01). A
-    structure that does not vary along world z gives the same F at every OCT scale along z, so the data do not decide that
-    scale. Refined from a 10 % stretch along z, the prior (lam) brings it back to 1."""
+    """The prior restores a scale that F does not decide, and with lam 0 the size of the block is kept."""
     mri, oct_, T = pair(seed=3)
     c = G.box(oct_[2], oct_[0].shape)[0]
     T1 = refine_one(T, mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]
@@ -210,9 +202,8 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
 
 
 def test_a_linear_field_carries_the_gradients(monkeypatch):
-    """A field d(y) = M y acts as the affine (I + M) T to first order in M: score moves the points by it and turns their
-    gradients by I - M^T, which lies close to the gradients through that affine, ((I + M) A)^-T g, and far closer than the
-    unturned gradients or the gradients turned by I - M (J in place of its transpose). F then scores as the affine."""
+    """A linear field d(y) = M y turns the OCT gradients and scores as the affine (I + M) T to first order. The gradients
+    are turned by I - M^T, much closer to those of the affine than unturned or turned by I - M."""
     from octreg import features
     from octreg.deform import LatticeField
     mri, (o, mo, A_O), T = pair(seed=2)
@@ -240,8 +231,7 @@ def test_a_linear_field_carries_the_gradients(monkeypatch):
 
 
 def test_a_field_moves_the_points():
-    """score(T, ..., field) moves the OCT points by the field after T and keeps their gradients: a constant field v scores as
-    the translation by v after T."""
+    """A constant field v scores as the translation by v after T."""
     from octreg.deform import LatticeField
     mri, (o, mo, A_O), T = pair(seed=1)
     tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")

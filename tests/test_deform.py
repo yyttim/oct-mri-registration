@@ -1,11 +1,4 @@
-"""§5 smooth deformation (octreg/deform.py), CPU. LatticeField is trilinear on its nodes (exact on linear fields) and its
-strains are first differences over the spacing. The stage runs on a synthetic specimen: smooth random structure inside an
-ellipsoid, bright on a zero background (the MRI), and the OCT on its own flipped grid, a small rotation away, showing the MRI
-content at y = T x + d(T x), the interior contrast inverted, in darker agarose with a little noise. An exact copy and the
-aligned pair (d = 0) leave the field near zero (an exact copy everywhere). A smooth bump d of 0.8 mm is mostly recovered,
-within the strain bound (also a bound tighter than the bump). The pull-back field u inverts the fitted field,
-x + u(x) + d(x + u(x)) = x, and brings the OCT specimen onto the MRI one through geometry.resample_to. A field written and read
-back reproduces the warped volume."""
+"""§5 smooth deformation (octreg.deform) on a synthetic ellipsoid, CPU only."""
 import dataclasses
 
 import numpy as np
@@ -17,10 +10,10 @@ from scipy.spatial.transform import Rotation
 from octreg import deform, geometry as G, io
 from octreg.params import Params
 
-FAST = dataclasses.replace(Params(), df_evals=75)                 # 2 passes of 75 score evaluations (default 250)
-AMP, WIDTH = 0.8, 5.0                                              # the bump: 0.8 mm, Gaussian of 5 mm
+FAST = dataclasses.replace(Params(), df_evals=75)
+AMP, WIDTH = 0.8, 5.0                                              # bump amplitude and Gaussian width, mm
 DIRECTION, CENTRE = np.array([0.6, -0.64, 0.48]), np.array([1.5, 1.0, -1.0])
-BUMP_STRAIN = AMP * np.abs(DIRECTION).max() / (WIDTH * np.sqrt(np.e))     # its largest |dd_i / dz_k|: 0.062
+BUMP_STRAIN = AMP * np.abs(DIRECTION).max() / (WIDTH * np.sqrt(np.e))     # largest |dd_i / dz_k| of the bump, 0.062
 
 
 def structure(shape, rng):
@@ -41,17 +34,16 @@ def world(shape, A):
 
 
 def bump(z, amplitude=AMP):
-    """The displacement d at MRI world points z [N, 3] (mm)."""
+    """The bump displacement d at MRI world points z [N, 3], in mm."""
     return amplitude * DIRECTION * np.exp(-((z - CENTRE) ** 2).sum(-1, keepdims=True) / (2 * WIDTH ** 2))
 
 
 def pair(d, h=0.3, semi=(6.0, 5.4, 5.0), seed=0):
-    """-> (mri, oct, T) as smooth_deformation takes them, grids of spacing h: an ellipsoid (semi-axes semi, MRI world mm) of
-    smooth structure at 1 +- 0.3, zero outside (the MRI). The OCT voxel x shows the MRI content at y = T x + d(T x) as
-    1.6 - 0.3 s (inverted) inside the ellipsoid and agarose at 0.3 with noise 0.05 outside, the specimen mask the ellipsoid
-    at y."""
+    """A synthetic MRI and OCT related by T and the displacement d, on grids of spacing h mm, the specimen an ellipsoid of
+    semi-axes semi mm in the MRI world. -> ((mri, mask, A), (oct, mask, A), T). The OCT voxel x shows the MRI at
+    y = T x + d(T x), contrast inverted."""
     rng, semi = np.random.default_rng(seed), np.asarray(semi, float)
-    shape_m = tuple(int(np.ceil((2 * a + 3.0) / h)) for a in semi[[0, 2, 1]])  # array axes (R, I, A) of the MRI grid
+    shape_m = tuple(int(np.ceil((2 * a + 3.0) / h)) for a in semi[[0, 2, 1]])  # MRI array axes are R, I, A
     shape_o = tuple(int(np.ceil((2 * a + 4.0) / h)) for a in semi)
     A_M, A_O = grid(shape_m, h, False), grid(shape_o, h, True)
     s = structure(shape_m, rng)
@@ -69,7 +61,7 @@ def pair(d, h=0.3, semi=(6.0, 5.4, 5.0), seed=0):
 
 
 def fit(mri, oct_, T, params=FAST):
-    """smooth_deformation on CPU, also returning the LatticeField it fitted. -> (u, info, field)."""
+    """Run smooth_deformation on the CPU. -> (u, info, the LatticeField it fitted)."""
     made = []
 
     class Recorded(deform.LatticeField):
@@ -80,12 +72,12 @@ def fit(mri, oct_, T, params=FAST):
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(deform, "LatticeField", Recorded)
         u, info = deform.smooth_deformation(mri, oct_, T, params, "cpu")
-    assert len(made) == 1                                                                   # one lattice through all passes
+    assert len(made) == 1                                                                   # one lattice for all passes
     return u, info, made[0]
 
 
 def pull_back(d, x):
-    """The pull-back u of d at points x: x + u + d(x + u) = x, by fixed-point iteration."""
+    """Solve x + u + d(x + u) = x for u by fixed-point iteration."""
     u = np.zeros_like(x)
     for _ in range(30):
         u = -d(x + u)
@@ -104,41 +96,42 @@ def bumped():
 
 @pytest.fixture(scope="module")
 def exact_copy():
-    """An exact copy: the OCT is the MRI on its own grid, T = I, so F = 1 at the zero field."""
+    """The MRI as its own OCT with T = I, so F = 1 at the zero field."""
     mri, _, _ = pair(lambda z: 0 * z)
     oct_ = mri
     return (mri, oct_) + fit(mri, oct_, np.eye(4))
 
 
 def test_lattice_field_interpolates_and_strains():
+    """LatticeField is trilinear on its nodes, exact on linear fields and takes its border value beyond the lattice.
+    Its strains are first differences over the spacing."""
     lo, hi, h = np.array([-3.0, 0.0, 1.0]), np.array([7.5, 9.9, 11.0]), 5.0
     f = deform.LatticeField(lo, hi, h, "cpu")
     assert f.n == [4, 3, 3] and tuple(f.c.shape) == (3, 36) and not f.c.detach().any() and f.c.requires_grad
-    assert np.all(lo + h * (np.array(f.n) - 1) >= hi)                                       # the nodes cover lo..hi
+    assert np.all(lo + h * (np.array(f.n) - 1) >= hi)
     rng = np.random.default_rng(0)
     c = rng.standard_normal((3, 4, 3, 3))
     with torch.no_grad():
         f.c.copy_(torch.as_tensor(c.reshape(3, -1)))
         nodes = lo + h * np.indices(f.n).reshape(3, -1).T
-        assert np.abs(f(torch.as_tensor(nodes, dtype=torch.float32)).numpy() - c.reshape(3, -1).T).max() < 1e-5   # node values
+        assert np.abs(f(torch.as_tensor(nodes, dtype=torch.float32)).numpy() - c.reshape(3, -1).T).max() < 1e-5
         y = rng.uniform(lo, lo + h * (np.array(f.n) - 1), (200, 3))
-        want = np.stack([ndimage.map_coordinates(ci, ((y - lo) / h).T, order=1) for ci in c], 1)      # trilinear in the lattice
+        want = np.stack([ndimage.map_coordinates(ci, ((y - lo) / h).T, order=1) for ci in c], 1)
         assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - want).max() < 1e-5
         out = torch.as_tensor(np.stack([lo - [2.0, 0, 0], lo + h * (np.array(f.n) - 1) + [0, 1.5, 3.0]]), dtype=torch.float32)
-        assert np.abs(f(out).numpy() - c[:, [0, -1], [0, -1], [0, -1]].T).max() < 1e-5                # the border value outside
+        assert np.abs(f(out).numpy() - c[:, [0, -1], [0, -1], [0, -1]].T).max() < 1e-5  # the border value outside the lattice
         strains = f.strains()
         assert [tuple(s.shape) for s in strains] == [(3, 3, 3, 3), (3, 4, 2, 3), (3, 4, 3, 2)]
         assert all(np.allclose(s.numpy(), np.diff(c, axis=a + 1) / h, atol=1e-6) for a, s in enumerate(strains))
         J, b = np.array([[0.01, 0.02, -0.01], [0.0, -0.03, 0.02], [0.04, 0.0, 0.0]]), np.array([0.3, -0.1, 0.0])
-        f.c.copy_(torch.as_tensor((nodes @ J.T + b).T))                                        # a linear field d = J y + b
-        assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - (y @ J.T + b)).max() < 1e-5  # exact on linear fields
+        f.c.copy_(torch.as_tensor((nodes @ J.T + b).T))
+        assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - (y @ J.T + b)).max() < 1e-5
         assert all(np.allclose(s.numpy(), J[:, a, None, None, None], atol=1e-6) for a, s in enumerate(f.strains()))
         assert abs(lattice_strain(f) - 0.04) < 1e-6
 
 
 def test_lattice_gradient_is_the_sum_of_the_weights():
-    """The gradient of the lattice values is the sum of the trilinear weights of the points times their output gradients (the
-    sorted segment sum of the backward pass, deterministic on the GPU), as autograd gives it through a plain gather."""
+    """The backward pass of LatticeField matches autograd through a plain trilinear gather."""
     f = deform.LatticeField(np.zeros(3), np.array([10.0, 12.0, 8.0]), 2.0, "cpu")
     rng = np.random.default_rng(1)
     y = torch.as_tensor(rng.uniform(-1.0, 13.0, (500, 3)), dtype=torch.float32)
@@ -167,14 +160,14 @@ def test_identical_pair_leaves_the_field_near_zero(exact_copy):
     assert set(info) == {"passes"} and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
     assert all(p["F_start"] > 0.9999 and p["F_end"] > 0.9999 for p in info["passes"]), info
     assert np.linalg.norm(u, axis=0)[mri[1]].max() < 0.03, np.linalg.norm(u, axis=0)[mri[1]].max()   # a tenth of a voxel
-    mri, oct_, T = pair(lambda z: 0 * z)                       # the aligned pair: own grid, inverted interior, agarose
+    mri, oct_, T = pair(lambda z: 0 * z)                       # the aligned pair, d = 0
     u, info, _ = fit(mri, oct_, T)
     n = np.linalg.norm(u, axis=0)[mri[1]]
     assert np.median(n) < 0.1 and np.percentile(n, 95) < 0.2, (np.median(n), np.percentile(n, 95))
 
 
 def test_exact_copy_leaves_the_whole_field_at_zero(exact_copy):
-    """Nodes that no OCT point pulls stay at zero (L-BFGS does not rescale a round-off gradient into a step)."""
+    """Lattice nodes that no OCT point pulls stay at zero: L-BFGS does not rescale a round-off gradient into a step."""
     mri, oct_, u, info, field = exact_copy
     assert np.abs(u).max() < 0.05 and lattice_strain(field) < 0.01, (np.abs(u).max(), lattice_strain(field))
 
@@ -182,10 +175,10 @@ def test_exact_copy_leaves_the_whole_field_at_zero(exact_copy):
 def test_reduces_a_smooth_displacement(bumped):
     mri, oct_, T, u, info, field = bumped
     assert [p["sigma_mm"] for p in info["passes"]] == list(FAST.df_sigmas_mm)
-    assert info["passes"][0]["F_end"] > info["passes"][0]["F_start"] + 0.02, info          # the first pass raises the score,
-    assert all(p["F_end"] >= p["F_start"] - 1e-3 for p in info["passes"]), info             # no pass lowers it
+    assert info["passes"][0]["F_end"] > info["passes"][0]["F_start"] + 0.02, info
+    assert all(p["F_end"] >= p["F_start"] - 1e-3 for p in info["passes"]), info
     x = world(mri[0].shape, mri[2])[mri[1].ravel()]
-    truth = pull_back(bump, x)                                                              # the u that undoes the bump
+    truth = pull_back(bump, x)
     imposed, err = np.linalg.norm(truth, axis=1), np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
     assert np.median(imposed) > 0.5 and np.median(err) < 0.25 * np.median(imposed), (np.median(imposed), np.median(err))
     assert np.percentile(err, 95) < 0.25 and err.max() < 0.4, (np.percentile(err, 95), err.max())
@@ -193,7 +186,7 @@ def test_reduces_a_smooth_displacement(bumped):
     assert lattice_strain(field) <= FAST.df_max_strain + 2e-3, lattice_strain(field)
     corners = G.apply_affine(mri[2], np.array([[0, 0, 0], np.array(mri[0].shape) - 1], float))
     assert np.allclose(field.lo.numpy(), corners.min(0) - 2 * FAST.df_grid_mm) and field.h == FAST.df_grid_mm
-    # the registered OCT at the MRI point x is OCT(T^-1 (x + u(x))): its specimen mask lands on the MRI one
+    # the registered OCT at x is OCT(T^-1 (x + u(x)))
     dice = lambda a: 2 * (a & mri[1]).sum() / (a.sum() + mri[1].sum())
     spec = oct_[1].astype(np.float32)
     affine = G.resample_to(spec, oct_[2], mri[0].shape, mri[2], np.linalg.inv(T)) > 0.5
@@ -202,7 +195,7 @@ def test_reduces_a_smooth_displacement(bumped):
 
 
 def test_keeps_the_strain_bound(bumped):
-    """A bound below the bump's strain: the field reaches it, not beyond (a soft hinge), and still moves toward the bump."""
+    """With a bound below the bump's strain the field reaches the bound, not beyond, and still moves toward the bump."""
     mri, oct_, T, u_free, *_ = bumped
     P = dataclasses.replace(FAST, df_max_strain=0.04)
     assert BUMP_STRAIN > 1.5 * P.df_max_strain
@@ -221,15 +214,15 @@ def test_pull_back_inverts_the_fitted_field(bumped):
     ux = u.reshape(3, -1).T
     with torch.no_grad():
         z = torch.as_tensor(x + ux, dtype=torch.float32)
-        residual = np.linalg.norm((z + field(z)).numpy() - x, axis=1)                       # x + u(x) + d(x + u(x)) - x
+        residual = np.linalg.norm((z + field(z)).numpy() - x, axis=1)
         first_order = np.linalg.norm(ux + field(torch.as_tensor(x, dtype=torch.float32)).numpy(), axis=1)   # u = -d(x)
     assert residual.max() < 1e-4 and first_order.max() > 0.01, (residual.max(), first_order.max())
     with pytest.raises(ValueError):
-        dataclasses.replace(FAST, df_evals=0)                                               # --no-deform is the switch
+        dataclasses.replace(FAST, df_evals=0)                                         # §5 is turned off by --no-deform
 
 
 def test_field_file_and_resample(tmp_path):
-    """save_field / load_field and resample_to(field=...): out(x) = src(T^-1 (x + u(x))), u constant beyond its grid."""
+    """Field files round trip, and resample_to with a field gives src(T^-1 (x + u(x))) with u constant beyond its grid."""
     rng = np.random.default_rng(0)
     shape_f, shape_s = (24, 22, 20), (40, 36, 44)
     A_F = np.array([[0.5, 0, 0, -6.0], [0, 0, 0.5, -5.0], [0, -0.5, 0, 5.5], [0, 0, 0, 1.0]])
@@ -253,12 +246,12 @@ def test_field_file_and_resample(tmp_path):
 
     def want(shape_d, A_D):
         x = world(shape_d, A_D)
-        ijk = np.clip(G.apply_affine(np.linalg.inv(A_F), x), 0, np.array(shape_f) - 1)        # constant beyond the field grid
+        ijk = np.clip(G.apply_affine(np.linalg.inv(A_F), x), 0, np.array(shape_f) - 1)
         ux = G.sample_world(torch.as_tensor(field, dtype=torch.float64), A_F, torch.as_tensor(G.apply_affine(A_F, ijk))).T
         y = torch.as_tensor(G.apply_affine(np.linalg.inv(T), x + ux.numpy()))
         return G.sample_world(torch.as_tensor(src[None], dtype=torch.float64), A_S, y)[0].numpy().reshape(shape_d)
 
-    # a finer destination grid inside the field grid, in the same world
+    # a finer destination grid inside the field grid
     shape_d = (30, 28, 26)
     A_D = A_F.copy()
     A_D[:3, :3] *= 0.5
@@ -266,9 +259,9 @@ def test_field_file_and_resample(tmp_path):
     got = G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T), field=back, affine_field=A_back)
     assert got.dtype == np.float32 and np.abs(got - want(shape_d, A_D)).max() < 1e-5 and np.abs(got).max() > 0.05
     plain = G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T))
-    assert np.abs(got - plain).max() > 0.01                                                 # the field matters
+    assert np.abs(got - plain).max() > 0.01
     assert np.array_equal(G.resample_to(src, A_S, shape_d, A_D, np.linalg.inv(T), field=0 * back, affine_field=A_back), plain)
-    # a destination grid reaching 3 voxels beyond the field grid on every side (the full MRI grid around the base grid)
+    # a destination grid 3 voxels wider than the field grid on every side
     shape_w = tuple(n + 6 for n in shape_f)
     A_W = A_F.copy()
     A_W[:3, 3] = G.apply_affine(A_F, np.array([-3.0, -3.0, -3.0]))
@@ -277,7 +270,7 @@ def test_field_file_and_resample(tmp_path):
 
 
 def test_lattice_covers_an_oblique_mri_grid():
-    """The lattice spans all eight corners of the MRI grid (two spacings of margin), also when the MRI axes are oblique."""
+    """The lattice spans all eight corners of an oblique MRI grid with a margin of two spacings."""
     mri, oct_, T = pair(lambda z: 0 * z)
     R = Rotation.from_rotvec([0.3, -0.2, 0.25]).as_matrix()
     A = mri[2].copy()

@@ -1,13 +1,5 @@
-"""Roots of the bench scripts, relative to the repository by default. Four environment variables move them:
-
-    OCTREG_PROJECT_ROOT     where the runs live (bench_runs/... and, for the baseline comparison, baselines/...), by default
-                            the repository root
-    OCTREG_DATA_ROOT        where the data live, by default <repository>/data
-    OCTREG_I58_DIR          the folder that holds the two I58 input files, by default <data root>/I58
-    OCTREG_DANDI000026_DIR  the download of DANDI:000026 sub-I46 and the authors' registration files (bench/i46/fetch.sh), by
-                            default <data root>/dandi-000026
-
-bench_runs/, baselines/ and data/ of the repository are in .gitignore.
+"""Roots of the bench scripts, inside the repository unless the OCTREG_* environment variables below move them.
+The runs go to <project root>/bench_runs and the baseline comparison to <project root>/baselines.
 """
 from __future__ import annotations
 

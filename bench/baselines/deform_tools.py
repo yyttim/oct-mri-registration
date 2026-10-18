@@ -3,31 +3,21 @@
 
     python bench/baselines/deform_tools.py --run RUN --inputs DIR [-o OUT] [TOOL ...] [--post-only]
 
-RUN is the octreg run the stage starts from (T_oct2mri.txt, result.json) and DIR its inputs from prepare_inputs.py: the fixed
-image mri_0.08mm.nii.gz and the moving image oct_affine_0.08mm.nii.gz, the OCT already on the MRI grid through octreg's
-affine, so that every tool starts from the identity and writes its field on the MRI grid. Each TOOL given (all five when
-none is) gets the run directory OUT/<tool>/<setting> (default OUT: the folder deform next to DIR) with cmd.sh, its command:
+RUN is the octreg run to start from and DIR its inputs from prepare_inputs.py, where the moving OCT is already on the MRI
+grid through octreg's affine. Each TOOL given, or all five when none is, gets its command in OUT/<tool>/<setting>/cmd.sh
+(default OUT: the folder deform next to DIR):
 
-    ants/syn_cc         antsRegistrationSyN.sh -t so (SyN, CC radius 2) -n 8 -p f (single precision), ANTS_RANDOM_SEED=1
-    elastix/default     the model-zoo Parameters_BSpline.txt (Mattes MI, 16 mm final grid, BSPLINE), -threads 8
-    niftyreg/default    reg_f3d with its defaults (NMI 64 bins, control points every 5 voxels), -omp 8
-    convexadam/default  convex_adam_pt (MIND-SSC) with the defaults of convex_adam_MIND.py, float16 on the GPU, seed 0
-    greedy/wncc         greedy's quick-start deformable command, -m WNCC 2x2x2 -n 100x50x10 -s 1.732vox 0.707vox -sv,
-                        -threads 8 -seed 42 (picsl_greedy)
+    ants/syn_cc         antsRegistrationSyN.sh -t so -n 8 -p f, ANTS_RANDOM_SEED=1
+    elastix/default     the model-zoo Parameters_BSpline.txt, -threads 8
+    niftyreg/default    reg_f3d with its defaults, -omp 8
+    convexadam/default  convex_adam_pt with the defaults of convex_adam_MIND.py, float16 on the GPU, seed 0
+    greedy/wncc         greedy's quick-start command, -m WNCC 2x2x2 -n 100x50x10 -s 1.732vox 0.707vox -sv -threads 8 -seed 42
 
-Each TOOL given then runs, one at a time in the order given: ANTs, elastix and NiftyReg in WSL on Windows (in bash
-elsewhere) with ~/baselines/tools/env.sh (INSTALL.md), ConvexAdam and greedy in this Python. A run writes log.txt, time.txt
-(seconds of the registration alone), threads.txt and the tool's own linear resampling of the moving image through its field
-(CHECKED). The field is converted to octreg's convention, oct2mri_warp.nii.gz: the pull-back field u on the MRI grid in mm
-along the MRI world axes (octreg.io.save_field), the moving image at x being moving(x + u(x)). The run directory then gets
-octreg's affine (rundir.py init), and the conversion is checked against the tool's own resampling (rundir.py check-field).
---post-only does these last steps on the outputs on disk.
-
-The fields of the tools lie on the fixed grid and map fixed points to moving points:
-    ANTs ants_1Warp.nii.gz, elastix deformationField.nii.gz (transformix -def all) and greedy warp.nii.gz are ITK displacement
-    images with LPS components d, so u = (-d_0, -d_1, d_2). ANTs' ants_0GenericAffine.mat must be the identity.
-    NiftyReg def.nii.gz (reg_transform -def) holds the floating-space position p of each reference voxel in world mm: u = p - x.
-    ConvexAdam disp.nii.gz holds the displacement d in voxels along the array axes of the common grid A: u = A[:3, :3] d.
+The tools given then run one at a time: ANTs, elastix and NiftyReg in WSL on Windows (bash elsewhere) with
+~/baselines/tools/env.sh (INSTALL.md), ConvexAdam and greedy in this Python. time.txt holds the seconds of the registration
+alone. Each field is converted to octreg's oct2mri_warp.nii.gz, the run gets octreg's affine (rundir.py init) and the
+conversion is checked against the tool's own resampling (rundir.py check-field). --post-only does these last steps on the
+outputs on disk.
 """
 from __future__ import annotations
 
@@ -90,7 +80,7 @@ BSPLINE = """\
 
 
 def wsl_script(tool, run, inp):
-    """The lines of cmd.sh for ANTs, elastix or NiftyReg: the registration, time.txt, the tool's own resampling and field."""
+    """The lines of cmd.sh for ANTs, elastix or NiftyReg."""
     R, I = wsl(run), wsl(inp)
     f, m, t = f"{I}/{FIXED}", f"{I}/{MOVING}", "/usr/bin/time -f %e -o time.txt"
     head = ["#!/bin/bash", "set -euo pipefail", "source ~/baselines/tools/env.sh", f"cd {R}", "echo 8 > threads.txt"]
@@ -99,7 +89,7 @@ def wsl_script(tool, run, inp):
                        "antsRegistration --version > version.txt",
                        f"{t} antsRegistrationSyN.sh -d 3 -f {f} -m {m} -o {R}/ants_ -t so -n 8 -p f > log.txt 2>&1",
                        "cp ants_Warped.nii.gz warped_tool.nii.gz"]
-    if tool == "elastix":       # transformix: the field, and the moving image with linear in place of cubic interpolation
+    if tool == "elastix":       # transformix: the field, and the moving image resampled linearly for rundir.py check-field
         lin = "transformix_linear/TransformParameters.0.linear.txt"
         return head + ["elastix --version > version.txt",
                        f"{t} elastix -f {f} -m {m} -p {R}/bspline.txt -out {R} -threads 8 > log.txt 2>&1",
@@ -120,13 +110,12 @@ def wsl_script(tool, run, inp):
 
 
 def python_call(tool, run, inp):
-    """The Python code that runs ConvexAdam or greedy (the functions below) on a run directory."""
+    """Python source that runs convexadam() or greedy() below on a run directory."""
     return (f"import sys; sys.path.insert(0, {HERE.as_posix()!r}); import deform_tools; "
             f"deform_tools.{tool}({Path(run).as_posix()!r}, {Path(inp).as_posix()!r})")
 
 
 def write(tool, run, inp):
-    """The run directory of a tool: cmd.sh, and bspline.txt for elastix."""
     run.mkdir(parents=True, exist_ok=True)
     if tool == "elastix":
         (run / "bspline.txt").write_text(BSPLINE, encoding="utf-8", newline="\n")
@@ -137,7 +126,7 @@ def write(tool, run, inp):
 
 
 def launch(tool, run, inp):
-    """Run a tool on its run directory, as its cmd.sh does. -> exit code."""
+    """Run a tool as its cmd.sh does and return the exit code."""
     if tool in IN_PYTHON:
         with open(run / "log.txt", "w") as log:
             return subprocess.run([sys.executable, "-u", "-c", python_call(tool, run, inp)], stdout=log,
@@ -146,8 +135,8 @@ def launch(tool, run, inp):
 
 
 def convexadam(run, inputs):
-    """ConvexAdam as `python -m convexAdam.convex_adam_MIND -f FIXED -m MOVING` runs it (CONVEXADAM), timed after a warm-up
-    call: disp.nii.gz (as that command writes it), warped_tool.nii.gz (its apply_convex), time.txt, threads.txt."""
+    """ConvexAdam as `python -m convexAdam.convex_adam_MIND` runs it, timed after a warm-up call.
+    Writes disp.nii.gz, warped_tool.nii.gz, time.txt and threads.txt."""
     import importlib.metadata
     import torch
     from convexAdam.apply_convex import apply_convex
@@ -172,7 +161,7 @@ def convexadam(run, inputs):
 
 
 def greedy(run, inputs):
-    """greedy (GREEDY) from the identity, timed, then its own resampling through warp.nii.gz: warped_tool.nii.gz, time.txt."""
+    """greedy with the GREEDY options from the identity, then its own resampling through the field."""
     import importlib.metadata
     import picsl_greedy
     r, f, m = Path(run).as_posix(), (Path(inputs) / FIXED).as_posix(), (Path(inputs) / MOVING).as_posix()
@@ -198,21 +187,23 @@ def vectors(path, mri):
 
 
 def field(tool, run, mri):
-    """The field of a finished run in octreg's convention (module docstring): u float32 [3, X, Y, Z] on the MRI grid."""
-    if tool in ITK_FIELD:
+    """The field of a finished run in octreg's convention, float32 [3, X, Y, Z] in mm on the MRI grid.
+    The warped image at x is moving(x + u(x)), with u along the MRI world axes."""
+    if tool in ITK_FIELD:       # ITK displacements, fixed -> moving, with LPS components
         if tool == "ants" and not np.allclose(C.ants_mat_to_mov2fix_ras(run / "ants_0GenericAffine.mat"), np.eye(4), atol=1e-6):
             raise ValueError(f"{run / 'ants_0GenericAffine.mat'}: not the identity, so the warp alone is not the transform")
         d = vectors(run / ITK_FIELD[tool], mri)
         return np.stack([-d[..., 0], -d[..., 1], d[..., 2]])
-    if tool == "niftyreg":      # x = A (i, j, k) in float32, as NiftyReg computes it
+    if tool == "niftyreg":      # positions, not displacements, and x in float32 as NiftyReg computes it
         p, A = vectors(run / "def.nii.gz", mri), mri.affine.astype(np.float32)
         ijk = np.meshgrid(*[np.arange(n, dtype=np.float32) for n in mri.shape[:3]], indexing="ij")
         return np.stack([p[..., c] - (A[c, 0] * ijk[0] + A[c, 1] * ijk[1] + A[c, 2] * ijk[2] + A[c, 3]) for c in range(3)])
+    # ConvexAdam: displacements in voxels along the array axes of the MRI grid
     return np.einsum("ab,ijkb->aijk", mri.affine[:3, :3], vectors(run / "disp.nii.gz", mri)).astype(np.float32)
 
 
 def post(tool, run, inp, octreg_run):
-    """oct2mri_warp.nii.gz, rundir.py init with octreg's affine, rundir.py check-field. -> True when the check passes."""
+    """Convert the field, add octreg's affine and check the field. True when the check passes."""
     mri = nib.load(str(inp / FIXED))
     io.save_field(field(tool, run, mri), mri.affine, run / "oct2mri_warp.nii.gz")
     rundir.init(run, octreg_run / "T_oct2mri.txt", octreg_run / "result.json")
@@ -240,7 +231,7 @@ def main():
     for tool in a.tools:
         run = out / tool / TOOLS[tool]
         for f in ("check_field.json", "oct2mri_warp.nii.gz", "oct_in_mri.nii.gz") + (() if a.post_only else ("time.txt",)):
-            (run / f).unlink(missing_ok=True)                   # the results of an earlier run
+            (run / f).unlink(missing_ok=True)
         if not a.post_only:
             print(f"{time.strftime('%F %T')} {tool}: start", flush=True)
             rc = launch(tool, run, inp)
@@ -250,7 +241,7 @@ def main():
                 continue
         try:
             ok = post(tool, run, inp, octreg_run)
-        except Exception as e:                                 # a missing or malformed output of the tool
+        except Exception as e:                                 # a missing or malformed output
             print(f"{tool}: {type(e).__name__}: {e}", flush=True)
             ok = False
         if not ok:

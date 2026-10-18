@@ -1,7 +1,5 @@
-"""Grids, rotations, world-space sampling and the separable Gaussian filtering of the score.
-
-Arrays are indexed (i, j, k). An affine maps voxel index -> world mm, and a transform T is a 4x4 world -> world matrix (mm).
-"""
+"""Grids, rotations, world-space sampling and separable Gaussian filtering.
+An affine maps voxel index (i, j, k) -> world mm, and a transform T is a 4x4 world -> world matrix (mm)."""
 from __future__ import annotations
 
 import math
@@ -14,7 +12,7 @@ from scipy.spatial.transform import Rotation
 
 from . import io
 
-CHUNK = 1 << 22                                  # destination voxels per resample_to chunk (memory only)
+CHUNK = 1 << 22                                  # destination voxels per resample_to chunk, memory only
 
 
 def _np(A) -> np.ndarray:
@@ -22,7 +20,7 @@ def _np(A) -> np.ndarray:
 
 
 def rotations(n) -> np.ndarray:
-    """n Super-Fibonacci rotations (Alexa, CVPR 2022), a deterministic near-uniform set on SO(3). -> [n, 3, 3] float64."""
+    """n Super-Fibonacci rotations (Alexa, CVPR 2022), a deterministic near-uniform set on SO(3). -> [n, 3, 3]"""
     s = np.arange(n) + 0.5
     phi, psi = np.sqrt(2.0), 1.533751168755204288118041
     r, R_ = np.sqrt(s / n), np.sqrt(1.0 - s / n)
@@ -32,14 +30,14 @@ def rotations(n) -> np.ndarray:
 
 
 def box(affine, shape):
-    """World centre (mm) and bounding-sphere radius (mm) of the voxel centres of a grid (affine 4x4, shape 3 ints)."""
+    """World centre and bounding-sphere radius (mm) of the voxel centres of a grid."""
     ijk = np.array([[i, j, k] for i in (0, shape[0] - 1) for j in (0, shape[1] - 1) for k in (0, shape[2] - 1)], float)
     xyz = apply_affine(np.asarray(affine, float), ijk)
     return xyz.mean(0), float(np.linalg.norm(xyz - xyz.mean(0), axis=1).max())
 
 
 def apply_affine(T, pts):
-    """T [4, 4], pts [..., 3] (numpy or torch, the result of the same kind) -> T applied to the points [..., 3]."""
+    """T [4, 4] applied to points [..., 3], numpy or torch as pts."""
     if isinstance(pts, torch.Tensor):
         T = torch.as_tensor(T, dtype=pts.dtype, device=pts.device)
         return pts @ T[:3, :3].T + T[:3, 3]
@@ -48,18 +46,14 @@ def apply_affine(T, pts):
 
 
 def resample_iso(vol: io.Volume, level_mm, binary=False):
-    """Isotropic grid of spacing level_mm (mm) aligned with the volume axes, streamed plane by plane (memory: the output plus
-    two planes). Per axis box average over k = max(1, round(level_mm / spacing)) voxels (trailing remainder dropped), then
-    trilinear onto floor(pooled extent / level_mm) voxels from the first pooled voxel centre, blending with 0 beyond the last. k
-    and the grid size use the spacing to 6 significant digits (a float32 20 um header gives an exact 2^3 mean at 0.04 mm).
-    binary: average the indicator voxel > 0 (a mask file). -> (float32 [d, h, w], affine)."""
+    """Isotropic grid of spacing level_mm aligned with the volume axes, streamed plane by plane: box average, then trilinear.
+    binary: average the indicator voxel > 0 of a mask file. -> (float32 [d, h, w], affine)"""
     planes = ((k, p > 0) for k, p in io.iter_planes(vol)) if binary else io.iter_planes(vol)
     return _iso(planes, vol.shape, vol.affine, level_mm)
 
 
 def pool_iso(arr, affine, level_mm):
-    """resample_iso for an in-memory array [D, H, W] on the grid `affine`, whose column norms are its voxel edge.
-    -> (float32 array, affine)."""
+    """resample_iso for an in-memory array [D, H, W] on the grid `affine`. -> (float32 array, affine)"""
     arr = np.asarray(arr)
     return _iso(((k, arr[:, :, k]) for k in range(arr.shape[2])), arr.shape, affine, level_mm)
 
@@ -88,7 +82,7 @@ def _iso(planes, shape, affine, level_mm):
     for m, (q, f) in enumerate(zip(*taps[2])):
         while have < min(q + 1, n[2] - 1):
             lo, hi, have = hi, next(stream), have + 1
-        plane = lo * (1 - f) + hi * f if have > q else hi * (1 - f)            # past the last pooled plane: blend with 0
+        plane = lo * (1 - f) + hi * f if have > q else hi * (1 - f)            # past the last pooled plane, blend with 0
         out[:, :, m] = _lin(_lin(plane, 0, *taps[0]), 1, *taps[1])
     return out, A_out
 
@@ -113,8 +107,7 @@ def _lin(x, axis, i0, f):
 
 
 def sample_world(field, affine, pts):
-    """Trilinear sample of field (torch [C, D, H, W], voxel -> world affine) at world points pts (torch [..., 3], mm),
-    by torch grid_sample with align_corners=True, blending with 0 outside. -> torch [C, ...]."""
+    """Trilinear sample of field [C, D, H, W] (voxel -> world affine) at world points pts [..., 3], 0 outside. -> [C, ...]"""
     C, D, H, W = field.shape
     Ainv = torch.as_tensor(np.linalg.inv(_np(affine)), dtype=pts.dtype, device=pts.device)
     ijk = pts @ Ainv[:3, :3].T + Ainv[:3, 3]
@@ -125,21 +118,18 @@ def sample_world(field, affine, pts):
 
 
 def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world, order=1, field=None, affine_field=None):
-    """Resample arr (numpy [D, H, W], voxel -> world affine_src) onto the grid (shape_dst, affine_dst): every destination
-    voxel goes to world, through T to the source world and is sampled there, order 1 (trilinear, float32 out) or 0 (nearest,
-    arr dtype out), 0 outside (scipy map_coordinates 'grid-constant', the same values as sample_world). -> numpy shape_dst.
-    field (numpy [3, d, h, w], mm along the destination world axes, on the grid affine_field in the destination world): a
-    pull-back displacement (octreg.deform): the destination point x is sampled at T (x + u(x)), u trilinear in the field and
-    constant beyond its grid. CHUNK destination voxels at a time, so the memory does not grow with the destination grid."""
+    """Resample arr (affine_src) onto the grid (shape_dst, affine_dst) through T, order 1 (float32) or 0 (arr dtype), 0 outside.
+    field [3, d, h, w]: a pull-back displacement u in mm along the destination world axes on the grid affine_field, constant
+    beyond it. The destination point x is sampled at T (x + u(x))."""
     src = np.asarray(arr)
     A_d, B = _np(affine_dst), np.linalg.inv(_np(affine_src)) @ _np(T_dst_world_to_src_world)   # B: dst world -> src voxel
-    M = B @ A_d                                                                                # destination -> source voxel
+    M = B @ A_d                                                                                # dst voxel -> src voxel
     shape = tuple(int(s) for s in shape_dst)
     out = np.zeros(shape, np.float32 if order else src.dtype)
     jk = np.stack(np.meshgrid(np.arange(shape[1]), np.arange(shape[2]), indexing="ij"), 0).reshape(2, -1).astype(float)
     step = max(1, (CHUNK // (1 if field is None else 4)) // jk.shape[1])
     if field is not None:
-        field, Fm = np.asarray(field, np.float32), np.linalg.inv(_np(affine_field)) @ A_d      # destination -> field voxel
+        field, Fm = np.asarray(field, np.float32), np.linalg.inv(_np(affine_field)) @ A_d
     for i0 in range(0, shape[0], step):
         i = np.repeat(np.arange(i0, min(shape[0], i0 + step), dtype=float), jk.shape[1])
         c = M[:3, :1] * i + np.tile(M[:3, 1:3] @ jk + M[:3, 3:], len(i) // jk.shape[1])
@@ -152,14 +142,14 @@ def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world
 
 
 def gauss_1d(sigma_vox, order, device):
-    """1-D Gaussian of sigma_vox voxels, or its first derivative scaled to be exact on a ramp (torch, on device)."""
+    """1-D Gaussian of sigma_vox voxels, or its first derivative scaled to be exact on a ramp."""
     r = int(math.ceil(4 * sigma_vox))
     x = torch.arange(-r, r + 1, dtype=torch.float32, device=device)
     g = torch.exp(-0.5 * (x / sigma_vox) ** 2)
     g = g / g.sum()
     if order == 0:
         return g
-    d = x * g                                          # -G'(x) up to a factor (conv3d correlates), scaled to be exact on ramps
+    d = x * g                                          # -G'(x) up to a factor, since conv3d correlates
     return d / (x * d).sum()
 
 
@@ -177,8 +167,8 @@ def filter_sep(vol, sigma_vox, orders):
 
 
 def nc_gradient(xm, m, sigma_vox):
-    """Gradient of the normalised convolution G(x m) / G(m) at sigma_vox voxels, in array axes, zero outside the mask: the
-    quotient rule on filter_sep, so that the edge of the mask adds no gradient. xm is x already multiplied by m (torch)."""
+    """Gradient in array axes of the normalised convolution G(x m) / G(m) at sigma_vox voxels, zero outside the mask.
+    xm is x already multiplied by m."""
     num, den = filter_sep(xm, sigma_vox, (0, 0, 0)), filter_sep(m, sigma_vox, (0, 0, 0)).clamp(min=1e-3)
     return torch.stack([(filter_sep(xm, sigma_vox, o) * den - num * filter_sep(m, sigma_vox, o)) / (den * den)
                         for o in ((1, 0, 0), (0, 1, 0), (0, 0, 1))]) * m

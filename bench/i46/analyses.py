@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
-"""The I46 analyses beyond the main runs (bench/i46/README.md): the ablation and the start test. Every run uses the checkout's
-octreg and bench/ablate.py on the released OCT with octreg's own masks, as the main runs of run.py.
+"""The I46 ablation and start test (bench/i46/README.md), through bench/ablate.py on the released OCT with octreg's own masks.
 
-ablate   the variants of bench/ablate.py in VARIANTS on the C3 crops k = 0..9 of the 10 deg FLASH, into
-         <bench_runs>/I46/ablation/<crop>/<variant>/. The outline and deformation variants are shown on I58 only.
-starts   the method on flip1_C3_k0 from the OCT turned by 90 and 180 deg about each of its array axes and by 10 rotations drawn
-         uniformly (scipy Rotation.random, seed 4646), about the centre of the OCT image box
-         (bench/ablate.py --only base --turn), into <bench_runs>/I46/starts/<start>/base/
-collect  scores the affine of every result against the reference (common.error and common.vessel_score)
-         -> bench/results/I46/ablation.json and starts.json, each row with the octreg version and code (bench/ablate.py
-         code_id) of its run. The start of a turned run is bench/ablate.py header_start of the turned OCT and the crop,
-         composed with the turn. Every run must have been made by the checkout's octreg code, or collect stops with the list
-         of the others and writes nothing.
+ablate   the variants of bench/ablate.py except the outline and deformation ones (shown on I58 only), on the C3 crops
+         k = 0..9 of the 10 deg FLASH, into <bench_runs>/I46/ablation/<crop>/<variant>/
+starts   the method on flip1_C3_k0 from the OCT turned about the centre of its image box by 90 and 180 deg about each array
+         axis and by 10 uniform random rotations (seed 4646), into <bench_runs>/I46/starts/<start>/base/
+collect  scores the affine of every run against the reference -> bench/results/I46/ablation.json and starts.json. It stops
+         and writes nothing if a run was not made by the checkout's octreg code.
 
-ablate and starts skip the runs made by the checkout's octreg code, run the others and exit with an error that lists the runs
-that failed.
+ablate and starts skip the runs already made by the checkout's octreg code and exit with an error listing the runs that
+failed.
 
     python bench/i46/analyses.py ablate | starts | collect
 """
@@ -63,13 +58,12 @@ def ablate_one(crop, out, only, extra=()):
 
 
 def scored(run):
-    """Scores of the affine of a run directory."""
     T = np.loadtxt(run / "T_oct2mri.txt")
     return {**error(T), **vessel_score(T)}
 
 
 def turned_start(turn):
-    """The start of a turned run as a pose of the original OCT world (module docstring)."""
+    """Start of a turned run in the original OCT world: header_start of the turned OCT and the crop, composed with the turn."""
     from bench.ablate import header_start
     from octreg import io
     vo, vm = io.load_volume(OCT), io.load_volume(crop_file(START_CROP))

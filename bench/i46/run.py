@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
-"""octreg on the I46 crops (bench/i46/README.md), one run at a time, and the stored scores of a folder of runs.
+"""octreg on the I46 crops (bench/i46/README.md), and the scores of the runs.
 
-run      Runs, in this order, with the default parameters: the C3 crops of the 10, 20 and 30 deg FLASH, then the C6 and C12
-         crops of the 10 deg FLASH, each as `octreg register OCT CROP -o RUN` on the released OCT (prepare.py, oct.nii.gz).
-         Then the C3 crops of the 10 deg FLASH with the test's specimen mask (common.MASK) as --oct-mask, named
-         <crop>_mask. A finished run gets code.txt, the identity of the octreg code it ran (bench/ablate.py code_id), and a
-         run made by the checkout's code is not run again. Then collect.
-collect  Scores every run of that list in the runs folder against the reference (common.error and common.vessel_score): the
-         final affine T_oct2mri.txt, and in "search" the search pose it was refined from (pose.T_search of result.json).
-         "deform" holds the vessel check of the affine with and without the run's deformation (common.vessel_field) and the
-         median displacement of the last pass of §5. Each entry also holds, from its result.json, the version of the run, the
-         search rank and the search scores F and O of the chosen candidate, its L after §4, whether the outline was used, the
-         outside fraction of each image and the run time. If a run is missing, incomplete or made by other code, the script
-         names it and stops before writing.
+run      octreg register at the default parameters on the released OCT and the C3 crops of the 10, 20 and 30 deg FLASH,
+         the C6 and C12 crops of the 10 deg FLASH, and the C3 crops of the 10 deg FLASH with the test's specimen mask as
+         --oct-mask (<crop>_mask). A run already made by the checkout's octreg code is skipped. Then collect.
+collect  scores the final affine and the search pose of every run against the reference, with the vessel check of the
+         deformation. It stops before writing if a run is missing, incomplete or made by other code.
 -> <bench_runs>/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]
@@ -44,7 +37,7 @@ def jobs():
 
 
 def done(run):
-    """Whether the run was made by the checkout's octreg code (bench/ablate.py made_by)."""
+    """Whether the run was finished by the checkout's octreg code."""
     from bench.ablate import code_id, made_by
     return made_by(run) == code_id()
 

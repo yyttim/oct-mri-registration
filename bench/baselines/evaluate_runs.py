@@ -3,17 +3,13 @@
 
     python bench/baselines/evaluate_runs.py [RUN ...] [--octreg-run DIR] [--oct-grid OCT] [--summary OUT.json] [--force]
 
-For every RUN (a directory made by rundir.py init, with a check.json that is ok):
+For every RUN made by rundir.py init with a check.json that is ok:
   1. octreg apply --affine-only: the 20 um OCT through RUN/T_oct2mri.txt onto the MRI grid -> RUN/oct_in_mri_affine.nii.gz,
-     with the same resampler for every method (the panels of bench/figures.py).
-  2. The scale along each OCT array axis (the length of T applied to a unit step along that axis of the OCT header, 1 = voxel
-     size kept) and the determinant of its 3x3 (1 = volume kept).
-  3. The wall time of the registration, from RUN/time.txt (seconds, written by the tool's own command), and the hardware,
-     from RUN/threads.txt.
-With --octreg-run, a row "octreg" is added for that octreg run: its T_oct2mri.txt, pose.scale_per_oct_axis, the sum of its
-§1 to §4 step times in result.json and its device. A row per run goes into --summary (default
-<project root>/baselines/summary_affine.json). The roots come from bench/paths.py (OCTREG_PROJECT_ROOT, OCTREG_DATA_ROOT,
-OCTREG_I58_DIR). The inputs and summaries of the comparison are under <project root>/baselines.
+     with the same resampler for every method, kept when it exists unless --force is given.
+  2. The scale along each OCT array axis (1 = voxel size kept) and the determinant of the 3x3 of T (1 = volume kept).
+  3. The wall time of the registration in seconds from RUN/time.txt and the hardware from RUN/threads.txt.
+With --octreg-run, a row "octreg" is added for that run, timed by the sum of its §1 to §4 steps in result.json. A row per
+run goes into --summary (default <project root>/baselines/summary_affine.json). The roots come from bench/paths.py.
 """
 from __future__ import annotations
 
@@ -30,7 +26,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench")]
-from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402
 
 INPUTS = ROOT / "baselines" / "inputs"
 PY = sys.executable
@@ -47,15 +43,14 @@ def run(cmd, log=None):
 
 
 def scales(T, oct_affine):
-    """Scale of the transform along each OCT array axis (as octreg's pose.scale_per_oct_axis): the length of T applied to a
-    unit step along each axis of the OCT header, so 1 means the voxel size is kept."""
+    """Scale of T along each OCT array axis as in octreg's pose.scale_per_oct_axis, 1 where the voxel size is kept."""
     A = np.asarray(oct_affine, float)
     sp = np.linalg.norm(A[:3, :3], axis=0)
     return np.linalg.norm(T[:3, :3] @ (A[:3, :3] / sp), axis=0).round(4).tolist()
 
 
 def hardware(run_dir: Path, tool: str) -> str:
-    """The device and thread count a run recorded in threads.txt ('' when there is none, as for the start)."""
+    """The device and thread count a run recorded in threads.txt, '' when there is none."""
     f = run_dir / "threads.txt"
     t = f.read_text(encoding="utf-8", errors="replace") if f.is_file() else ""
     if not t.strip():
@@ -109,7 +104,7 @@ def main():
     oct_affine = nib.load(str(a.oct_grid)).affine
     new = [octreg_row(a.octreg_run)] if a.octreg_run else []
     new += [row for row in (evaluate(r, a.force, oct_affine) for r in a.runs if r.is_dir()) if row]
-    rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}     # merged with earlier rows
+    rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}
     rows.update({row["run"]: row for row in new})
     a.summary.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(f"{len(rows)} rows in {a.summary}")

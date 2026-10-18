@@ -5,19 +5,15 @@
     python bench/baselines/rundir.py check RUN --warped WARPED.nii.gz [--oct OCT.nii.gz] [--mri MRI.nii.gz]
     python bench/baselines/rundir.py check-field RUN --warped WARPED.nii.gz --moving MOVING.nii.gz [--mri MRI.nii.gz]
 
-init         makes RUN a run directory in octreg's layout: T_oct2mri.txt (the given 4x4, moving world -> fixed world in
-             NIfTI RAS mm, which is octreg's convention) and a result.json that holds only the inputs block of a template
-             octreg run (default <project root>/bench_runs/I58/octreg/result.json), so that `octreg apply --run RUN` works on
-             it. A mirrored transform (det <= 0) is refused.
-check        tests the convention of a converted affine. The OCT resampled through RUN/T_oct2mri.txt onto the MRI grid by
-             octreg's own resampler is compared with the image the tool itself wrote on that grid (WARPED), by the Pearson
-             correlation over the voxels where either is non-zero and the Dice of the two non-zero supports. A correct
-             conversion gives a correlation near 1, and the check passes when both exceed 0.95. Writes RUN/check.json.
-check-field  the same test for a tool's displacement field after its conversion to octreg's convention
-             (RUN/oct2mri_warp.nii.gz, deform_tools.py), with the affine-aligned OCT on the MRI grid (MOVING,
-             oct_affine_0.08mm.nii.gz of prepare_inputs.py) sent through it. Writes RUN/check_field.json.
-Defaults: the inputs of bench/baselines/README.md under <project root>/baselines/inputs (oct_0.08mm.nii.gz,
-mri_0.08mm.nii.gz), the project root of bench/paths.py.
+init         writes T_oct2mri.txt (moving world -> fixed world, NIfTI RAS mm) and a result.json with the inputs block of a
+             template octreg run (default <project root>/bench_runs/I58/octreg/result.json), so that `octreg apply --run RUN`
+             works on RUN. A mirrored transform is refused.
+check        compares the OCT resampled by octreg through RUN/T_oct2mri.txt with the tool's own image WARPED on the MRI grid.
+             It passes when the Pearson correlation over the voxels where either is non-zero and the Dice of the two non-zero
+             supports both exceed 0.95. Writes RUN/check.json.
+check-field  the same for RUN/oct2mri_warp.nii.gz, with MOVING the affine-aligned OCT of prepare_inputs.py. Writes
+             RUN/check_field.json.
+Defaults: the inputs under <project root>/baselines/inputs, the project root of bench/paths.py.
 """
 from __future__ import annotations
 
@@ -32,7 +28,7 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench")]
 from octreg import geometry as G, io  # noqa: E402
-from paths import PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+from paths import PROJECT_ROOT as ROOT  # noqa: E402
 
 INPUTS = ROOT / "baselines" / "inputs"
 
@@ -55,8 +51,7 @@ def init(run: Path, T_file: Path, template: Path | None = None):
 
 
 def _compare(run, name, warped, mri, ours, extra=None):
-    """octreg's resampling `ours` against the tool's own image `warped` on the MRI grid -> RUN/name, True when both measures
-    exceed 0.95."""
+    """octreg's resampling `ours` against the tool's image `warped`, written to RUN/name. True when both exceed 0.95."""
     w = nib.load(str(warped))
     if w.shape != mri.shape or not np.allclose(w.affine, mri.affine, atol=1e-3):
         raise ValueError(f"{warped}: not on the MRI grid ({w.shape} vs {mri.shape})")
@@ -80,7 +75,7 @@ def check(run: Path, warped: Path, oct_path: Path, mri_path: Path):
 
 
 def check_field(run: Path, warped: Path, moving: Path, mri_path: Path):
-    """The affine-aligned OCT on the MRI grid sent through RUN/oct2mri_warp.nii.gz by octreg's resampler (moving(x + u(x)))."""
+    """check for a field: the moving image sent through RUN/oct2mri_warp.nii.gz by octreg's resampler."""
     field, A_f = io.load_field(Path(run) / "oct2mri_warp.nii.gz")
     mv, m = nib.load(str(moving)), nib.load(str(mri_path))
     ours = G.resample_to(np.asarray(mv.dataobj, np.float32), mv.affine, m.shape, m.affine, np.eye(4), order=1,

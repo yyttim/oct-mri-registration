@@ -8,7 +8,7 @@
   "octreg": {
    "tool": "octreg",
    "setting": "§1 to §4 with default parameters",
-   "start": "own orientation search (8000 orientations) inside the MRI crop"
+   "start": "own orientation search (8,000 rotations) inside the MRI crop"
   },
   "ants_com": {
    "tool": "ANTs 2.6.5",
@@ -47,7 +47,7 @@
   },
   "flirt_search_x10": {
    "tool": "FSL FLIRT 6.0.7.23",
-   "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule works in mm (an adaptation FSL does not document)",
+   "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document)",
    "start": "FLIRT default rotation search (±90°, coarse 60°, fine 18°)"
   },
   "flirt_fullsearch_x10": {
@@ -137,7 +137,7 @@
   },
   "synthmorph_affine": {
    "tool": "FreeSurfer 8.2.0 mri_synthmorph",
-   "setting": "register -m affine as documented. A 1 mm whole-brain model, outside its domain on a 0.08 mm block",
+   "setting": "register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block",
    "start": "none (the network predicts the affine)"
   }
  },
@@ -149,7 +149,7 @@
   },
   "octreg": {
    "tool": "octreg",
-   "setting": "§5: strain-limited field on a 5 mm lattice, default parameters",
+   "setting": "§5: displacement field on a 5 mm lattice under a strain bound, default parameters",
    "start": "octreg's affine"
   },
   "deform_ants_syn_cc": {

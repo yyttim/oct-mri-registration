@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""The standard registration tools on the I46 crops (bench/i46/README.md), each at one documented setting with no masks
-(bench/baselines/standard_tools.py: the settings, commands, conversions and convention check). The moving image is the
-released OCT box-averaged to the MRI voxel size (0.15 mm), the fixed image the MRI crop: the C3 crops k = 0..9 of the 10 deg
-FLASH and the C3 k = 0 crops of the 20 and 30 deg FLASH. Each supplement changes one thing, on the C3 crops k = 0..9 of the
-10 deg FLASH with the input files of those runs, into <bench_runs>/I46/baselines_<kind>:
+"""Standard registration tools on the I46 crops (bench/i46/README.md), one documented setting each and no mask.
 
---search   the tools' own global searches (standard_tools.SEARCH)
---mask     the test's specimen mask as the moving mask of the tools that take one (standard_tools.MASK and prepare_mask)
---near     a start near R as the header of the moving image, with each tool's header start (standard_tools.NEAR, near_start)
+The settings and commands are in bench/baselines/standard_tools.py. The moving image is the OCT box-averaged to 0.15 mm, the
+fixed image the C3 crops k = 0..9 of the 10 deg FLASH and k = 0 of the 20 and 30 deg FLASH. Each option changes one thing on
+the 10 deg C3 crops, into <bench_runs>/I46/baselines_<kind>:
+
+--search   the tools' own global searches
+--mask     the test's specimen mask as the moving mask of the tools that take one
+--near     a start near R as the header of the moving image, each tool started from the header
 
     python bench/i46/baselines.py prepare [--search | --mask | --near]   the inputs, the run.sh of every run and queue.sh
     bash <bench_runs>/I46/baselines/queue.sh                             runs them one at a time (baselines_<kind>/queue.sh)
     python bench/i46/baselines.py collect [--search | --mask | --near]   -> bench/results/I46/baselines[_<kind>].json
 
-collect converts every transform (-> <run>/T_oct2mri.txt), scores it against R (common.error and common.vessel_score) and
-checks the conversion on the k = 0 crops (standard_tools.collect). A run without a readable transform is a "tool error".
+collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion on the k = 0 crops. A run without a
+readable transform is a tool error.
 """
 from __future__ import annotations
 
@@ -48,16 +48,14 @@ def runs(kind=None):
 
 
 def inputs(crop):
-    """The input directory of a crop, shared by the main, search and mask runs (standard_tools.prepare_inputs, made once)."""
+    """The input directory of a crop, shared by the main, search and mask runs."""
     return H.prepare_inputs(BL / crop / "inputs", OCT, crop_file(crop))
 
 
 def near_start(k, A):
-    """The near start of crop k for a moving image with the header A. S_k(x) = R(c + Q(x - c)) + d: Q turns by NEAR_DEG about
-    a random axis, d shifts by NEAR_MM in a random direction (numpy default_rng(4700 + k), the axis first), c is the centre of
-    the OCT tissue points. A qform cannot hold the shear of R (ANTs, elastix and greedy read the qform), so the tools start
-    from H_k, the rotation with a scale per axis closest to S_k over the tissue points with H_k(c) = S_k(c), stored as float32
-    in the header H_k A. -> dict: axis, shift_mm, centre_mm, S and H (4x4, OCT world -> MRI world)."""
+    """Start S_k of crop k, R turned by NEAR_DEG about the tissue centre and shifted by NEAR_MM, and its header pose H_k.
+    A: the moving header. H_k is the rotation with a scale per axis closest to S_k, as the qform that ANTs, elastix and
+    greedy read cannot hold a shear. S and H map OCT world -> MRI world."""
     from scipy.optimize import least_squares
     from scipy.spatial.transform import Rotation
     g = np.random.default_rng(NEAR_SEED + k)
@@ -86,16 +84,14 @@ def near_start(k, A):
 
 
 def start_from_S(st):
-    """The distance between H_k and S_k over the OCT tissue points (mm): mean and max."""
+    """Mean and max distance (mm) of H_k from S_k over the tissue points."""
     X = np.c_[tissue(), np.ones(len(tissue()))].T
     e = np.linalg.norm(((np.array(st["H"]) - np.array(st["S"])) @ X)[:3], axis=0)
     return {"mean_mm": round(float(e.mean()), 4), "max_mm": round(float(e.max()), 4)}
 
 
 def near_inputs(crop):
-    """The inputs of the near runs of a crop in baselines_near/<crop>/inputs: oct.nii.gz (the moving image of the main runs
-    with the header H_k A in sform and qform), mri.nii.gz, their x10 copies, start.json and inputs.json, the record of the
-    main inputs they were made from (standard_tools.made_from)."""
+    """Inputs of the near runs of a crop: the main inputs with the OCT header H_k A, their x10 copies and start.json."""
     d, src = BASE["near"] / crop / "inputs", inputs(crop)
     record = json.loads((src / "inputs.json").read_text(encoding="utf-8"))
     if H.made_from(d / "inputs.json", record):
@@ -138,8 +134,7 @@ def prepare(kind=None):
 
 
 def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
-    """The rows of every finished run under base (module docstring). A near run also holds its start (start_pose, common.error
-    of H_k) and the distance of H_k from S_k (start_from_S)."""
+    """Score every finished run under base and write the rows to out. A near run also scores its start H_k."""
     def score(crop, T):
         row = {**error(T), **vessel_score(T)}
         if kind == "near":

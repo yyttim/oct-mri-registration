@@ -1,9 +1,5 @@
-"""`octreg register` (docs/METHOD.md §1-5 on two files, then the outputs) and `octreg apply`.
-
-A transform T is a 4x4 matrix (mm) from the OCT world to the MRI world. The worlds are the NIfTI header frames (array frame
-for TIFF / NPY). The OCT is only ever streamed: its largest array in memory is the fine grid (Params.fine_mm). The smooth
-deformation of §5 is a pull-back field u on the MRI base grid (octreg.deform): the registered OCT at the MRI point x is
-OCT(T^-1 (x + u(x))). T stays the primary result, and all transform files hold T alone.
+"""`octreg register` and `octreg apply`. T is the 4x4 affine (mm) from the OCT world to the MRI world.
+With the field u of §5 the registered OCT at the MRI point x is OCT(T^-1 (x + u(x))).
 """
 from __future__ import annotations
 
@@ -25,21 +21,14 @@ from .search import search
 OUTPUTS = ("T_oct2mri.txt", "oct2mri.lta", "oct2mri_itk.txt", "oct_in_mri.nii.gz", "oct_in_mri_affine.nii.gz",
            "mri_in_oct.nii.gz", "qc.png", "qc_montage.png", "result.json")
 WARP = "oct2mri_warp.nii.gz"
-OUTPUTS_DEFORM = (WARP, "qc_deform.png")       # written with the smooth deformation (§5)
+OUTPUTS_DEFORM = (WARP, "qc_deform.png")
 
 
 def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mri_mask=None, params: Params = Params(),
              device="cuda", deform=True) -> dict:
-    """Register an OCT block to an MRI cropped around it and write OUTPUTS into out_dir.
-
-    oct_path: NIfTI, or TIFF / OME-TIFF / NPY with spacing. mri_path: NIfTI. oct_spacing_um: (z, y, x) um (io.load_volume).
-    oct_mask, mri_mask: optional mask files (voxels > 0, in the world and frame of their image, oct_spacing_um applies to an OCT
-    mask of the OCT's array shape too) replacing the specimen mask and the MRI foreground of §1. device: 'cuda' | 'cpu'. deform:
-    run §5. oct_in_mri.nii.gz: the OCT box-averaged from the fine grid to the MRI voxel size (not finer than fine_mm), as apply
-    does from the file, trilinear through T and the field of §5 onto the MRI grid. oct_in_mri_affine.nii.gz: the same through T
-    alone. mri_in_oct.nii.gz: the MRI through T onto the OCT base grid. qc.png, qc_montage.png: the visual QC of the affine.
-    With §5 also OUTPUTS_DEFORM: oct2mri_warp.nii.gz, the field on the MRI base grid (io.save_field, convention in
-    octreg.deform), and qc_deform.png. -> the result.json dict. Raises ValueError for a refused input."""
+    """Register an OCT block to an MRI cropped around it and write OUTPUTS, and OUTPUTS_DEFORM with deform, into out_dir.
+    oct_spacing_um: (z, y, x) um. oct_mask, mri_mask: files with voxels > 0 in the world of their image. -> result.json dict.
+    Raises ValueError for a refused input."""
     P, out, t0, sec = params, Path(out_dir), time.time(), {}
     cuda = str(device).startswith("cuda")
     if cuda and not torch.cuda.is_available():
@@ -68,7 +57,6 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
         sec[name] = time.time() - t0 - sum(sec.values())
         print(f"octreg [{time.time() - t0:6.0f} s] {name} done in {sec[name]:.0f} s", flush=True)
 
-    # §1: base grids and masks
     (mri_h, mask_m, A_m), fg_m = prepare_mri(vm, P, mm)
     lap("mri")
     fine, A_f = G.resample_iso(vo, P.fine_mm)
@@ -79,7 +67,6 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     lap("oct_mask")
     mri_b, oct_b = (mri_h, mask_m, A_m), (oct_h, mask_o, A_o)
     outline, outside = outline_used(mask_o, valid_o, mask_m, P)
-    # §3: orientation search on the search grid, §4: every candidate refined on the structure score, the lowest L wins
     pool = lambda x, A: G.pool_iso(np.asarray(x, np.float32), A, P.search_mm)
     (ms, A_ms), (os_, A_os) = pool(mri_h, A_m), pool(oct_h, A_o)
     candidates = search(ms, pool(mask_m, A_m)[0], A_ms, os_, pool(mask_o, A_o)[0], pool(valid_o, A_o)[0], A_os, P,
@@ -89,10 +76,9 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     best = poses[0]
     T = best["T"]
     lap("refine")
-    io.write_transform_txt(T, out / "T_oct2mri.txt")            # the affine, the primary result: written before §5 runs
+    io.write_transform_txt(T, out / "T_oct2mri.txt")            # before §5, so a failure there keeps the affine
     io.write_lta(T, vo, vm, out / "oct2mri.lta")
     io.write_itk(T, vo, vm, out / "oct2mri_itk.txt")
-    # §5: smooth deformation on top of the affine, in the MRI world
     field, info_deform = smooth_deformation(mri_b, oct_b, T, P, device) if deform else (None, None)
     lap("deform")
 
@@ -129,8 +115,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
 
 
 def display_polarity(oct_b, mri_b, T):
-    """The sign of the correlation of the OCT and MRI intensities inside the OCT specimen mask at the pose T: for the display of
-    the QC figures only (the method does not use the polarity)."""
+    """Sign of the OCT and MRI intensity correlation inside the OCT specimen mask at T, for the QC display only."""
     (o, mo, A_o), (m, mm, A_m) = oct_b, mri_b
     vals = G.resample_to(m, A_m, o.shape, A_o, T)
     inside = np.asarray(mo, bool) & (G.resample_to(np.asarray(mm, np.float32), A_m, o.shape, A_o, T) > 0.5)
@@ -140,8 +125,8 @@ def display_polarity(oct_b, mri_b, T):
 
 
 def prepare_mri(vol, params: Params = Params(), mask=None):
-    """§1 for the MRI (io.Volume): base grid and foreground, the mask file `mask` (io.Volume) if given, else the histogram
-    valley (preprocess.foreground). -> ((mri_h float32 [D, H, W], foreground bool [D, H, W], affine), info)."""
+    """§1 for the MRI: base grid and foreground, from the mask file if given, else from the histogram valley.
+    -> ((mri_h float32 [D, H, W], foreground bool, affine), info)."""
     h = params.base_mm
     arr, A = G.resample_iso(vol, h)
     fg, info = pp.foreground(arr, h, params) if mask is None else (_mask_on(mask, arr.shape, A, h), {"source": mask.path})
@@ -149,8 +134,7 @@ def prepare_mri(vol, params: Params = Params(), mask=None):
 
 
 def prepare_oct(fine, affine, params: Params = Params(), mask=None):
-    """§1 for the OCT fine grid (fine [D, H, W] of spacing params.fine_mm, affine): specimen mask (fine_mask), then the
-    OCT, the mask and the measured fraction box-averaged to base_mm, the last two > 0.5.
+    """§1 for the OCT: specimen mask on the fine grid, then OCT, mask and measured fraction box-averaged to base_mm.
     -> ((oct_h float32, mask bool, base affine), measured bool, info)."""
     P = params
     mask_f, info = fine_mask(fine, affine, P, mask)
@@ -160,9 +144,8 @@ def prepare_oct(fine, affine, params: Params = Params(), mask=None):
 
 
 def fine_mask(fine, affine, params: Params = Params(), mask=None):
-    """OCT specimen mask on the fine grid (fine [D, H, W] of spacing params.fine_mm, voxel -> world affine): the mask file
-    `mask` (io.Volume) if given, else preprocess.specimen_mask, AND fine > 0 (voxels <= 0 are missing data).
-    -> (bool [D, H, W], info). Raises ValueError when no voxel is left."""
+    """OCT specimen mask on the fine grid: the mask file if given, else preprocess.specimen_mask, AND fine > 0.
+    Voxels <= 0 are missing data. -> (bool [D, H, W], info)."""
     if mask is not None:
         m, info = _mask_on(mask, fine.shape, affine, params.fine_mm), {"source": mask.path}
     else:
@@ -176,26 +159,18 @@ def fine_mask(fine, affine, params: Params = Params(), mask=None):
 
 
 def outline_used(mask_o, valid_o, mask_m, params: Params = Params()):
-    """§2: the outline compares what lies outside the tissue in both images, so it is used only when both have a measured
-    outside: measured OCT voxels outside the specimen mask, and MRI voxels outside the foreground, each eroded by one base voxel
-    (which removes the resampling shell of a mask), at least outline_min_outside of the measured OCT voxels and of the MRI grid.
-    An OCT given as tissue only (exactly zero outside, its own --oct-mask) or an MRI crop that is all tissue has none, and the
-    correlation would then rest on a handful of voxels. -> (bool, {'oct': fraction, 'mri': fraction})."""
+    """§2: use the outline only if both images have at least outline_min_outside measured outside the tissue.
+    -> (bool, {'oct': fraction, 'mri': fraction})."""
+    # the erosion removes the resampling shell of a mask
     out_o = float(ndimage.binary_erosion(np.asarray(valid_o, bool) & ~np.asarray(mask_o, bool)).sum() / max(np.sum(valid_o), 1))
     out_m = float(ndimage.binary_erosion(~np.asarray(mask_m, bool)).sum() / np.asarray(mask_m).size)
     return min(out_o, out_m) >= params.outline_min_outside, {"oct": round(out_o, 5), "mri": round(out_m, 5)}
 
 
 def apply(run_dir, moving, reference, out, inverse=False, affine_only=False, oct_spacing_um=None) -> Path:
-    """Resample the volume `moving` (in the OCT frame, or the MRI frame with inverse) onto the grid of `reference` through
-    run_dir/T_oct2mri.txt (its inverse with inverse): streamed box average to the reference voxel size (never finer than the
-    moving voxel size), then trilinear, 0 outside. When the run holds oct2mri_warp.nii.gz (§5), an OCT-frame volume goes through
-    T and that field onto the MRI-frame reference, as for oct_in_mri.nii.gz, and affine_only leaves the field out. The field is
-    not inverted: with inverse the affine alone is used and a note is printed. moving, reference: image files (io.load_volume,
-    the run's OCT file at its recorded path with the run's oct_spacing_um from result.json). oct_spacing_um: (z, y, x) um for
-    the file in the OCT frame (`moving`, or `reference` with inverse), overriding the recorded spacing. A run made with
-    oct_spacing_um needs it again once its OCT file has moved: without it a plain TIFF or an NPY file is refused, and a NIfTI
-    or OME-TIFF file takes the spacing of its own header. out: NIfTI path. -> out. Raises ValueError for a refused input."""
+    """Resample `moving` onto the grid of `reference` through the run's T and §5 field, T alone with affine_only, or T^-1
+    alone with inverse. oct_spacing_um: (z, y, x) um of the OCT-frame file, by default the run's for its own OCT file at
+    its recorded path. -> out. Raises ValueError for a refused input."""
     run = Path(run_dir)
     for f in (run / "T_oct2mri.txt", run / "result.json"):
         if not f.is_file():
@@ -216,21 +191,21 @@ def apply(run_dir, moving, reference, out, inverse=False, affine_only=False, oct
 
 
 def deform_label(d):
-    """One line of the §5 read-outs (info of deform.smooth_deformation)."""
+    """One line of the §5 read-outs from the info of deform.smooth_deformation."""
     f = d["passes"][-1]
     F = ", ".join(f"{p['F_start']:.4f} -> {p['F_end']:.4f} at {p['sigma_mm']:g} mm" for p in d["passes"])
     return f"§5: F {F}. Displacement median {f['displacement_median_mm']:.2f}, max {f['displacement_max_mm']:.2f} mm"
 
 
 def pose_label(pose):
-    """One line of the §3 and §4 read-outs (the pose of result.json)."""
+    """One line of the §3 and §4 read-outs from the pose of result.json."""
     F = ", ".join(f"{p['start']:.4f} -> {p['end']:.4f} at {p['sigma_mm']:g} mm" for p in pose["F"])
     O = "" if pose["search_O"] is None else f", O {pose['search_O']:.4f}"
     return f"§3: rank {pose['search_rank']} (F {pose['search_F']:.4f}{O}). §4: F {F}"
 
 
 def _mm(x):
-    """A length to 6 significant digits (float32 header noise)."""
+    """A length to 6 significant digits, dropping float32 header noise."""
     return float(f"{x:.6g}")
 
 
@@ -239,8 +214,7 @@ def _abs(path):
 
 
 def _mask_on(vol, shape, affine, voxel_mm):
-    """A mask file (io.Volume, voxels > 0) on a grid (shape, affine, spacing voxel_mm) in the same world: its indicator
-    streamed and box-averaged to max(voxel_mm, mask voxel), trilinear onto the grid, > 0.5. -> bool array."""
+    """A mask file (voxels > 0) box-averaged and resampled onto a grid of spacing voxel_mm in the same world. -> bool array."""
     frac, A = G.resample_iso(vol, max(voxel_mm, _mm(vol.spacing_mm.min())), binary=True)
     return G.resample_to(frac, A, shape, affine, np.eye(4)) > 0.5
 
@@ -249,8 +223,7 @@ QC_COLOURS, QC_CELL_IN, QC_HEAD_IN, QC_DPI = ("#ff3030", "#30d0ff"), 2.8, 0.4, 1
 
 
 def _match(x, y, where, n=256):
-    """x mapped by rank onto the grey scale of y over the voxels where both show tissue, so that the two columns can be read
-    against each other. Display only."""
+    """x mapped by rank onto the grey scale of y over the voxels `where`, for display."""
     if where.sum() < 100:
         return x
     q = np.linspace(0, 1, n)
@@ -258,17 +231,8 @@ def _match(x, y, where, n=256):
 
 
 def qc_figures(prefix, oct_grid, mri_grid, T, polarity, oct_file_affine, label=""):
-    """Visual QC, the primary evaluation: prefix.png, one plane per OCT array axis through the specimen mask centroid, and
-    prefix_montage.png, 4 evenly spaced planes per axis inside the specimen. Columns: OCT | MRI through T | checkerboard of the
-    two (~2 mm squares) | OCT with the outlines of the MRI foreground through T (red) and of the OCT specimen mask (cyan). Grey
-    levels p1-p99 inside the OCT mask (MRI: inside the mask and its foreground). Inside its foreground the MRI (inverted first
-    with polarity -1) is mapped by rank onto the grey scale of the OCT in the tissue both show (_match), so that a structure
-    keeps its grey level from one tile of the checkerboard to the next. The checkerboard is drawn wherever the specimen mask or
-    the MRI foreground reaches. Rows are titled by the plane position (mm from the first voxel of the OCT file along that axis)
-    and are QC_CELL_IN inches high at QC_DPI. The lower remaining OCT axis runs to the right, the higher one up, and the first
-    column has a scale bar. oct_grid = (oct_h, mask, affine) on the base grid. mri_grid = (mri_h, foreground, affine).
-    T: OCT world -> MRI world. oct_file_affine: that of the OCT file.
-    -> (prefix.png, prefix_montage.png) Paths."""
+    """Visual QC of the affine: one plane per OCT axis through the mask centroid in prefix.png, 4 per axis in the montage.
+    oct_grid, mri_grid: (array, mask, affine) on the base grids. -> (prefix.png, prefix_montage.png) Paths."""
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure
     from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
@@ -324,14 +288,8 @@ def qc_figures(prefix, oct_grid, mri_grid, T, polarity, oct_file_affine, label="
 
 
 def qc_deform_figure(path, oct_grid, mri_grid, T, field, polarity, label=""):
-    """Visual QC of the smooth deformation (§5), on the MRI base grid: one plane per MRI array axis through the centroid of the
-    OCT specimen mask through T inside the MRI foreground (of the MRI foreground alone if they do not meet). Columns: MRI | OCT
-    through T | OCT through T and the field | field magnitude inside the MRI foreground (mm, colour bar), each with the outline
-    of the MRI foreground (red). Grey levels as in qc_figures: p1-p99 inside the masks, and inside its foreground the MRI
-    (inverted first with polarity -1) is mapped by rank onto the grey scale of the OCT through T in the tissue both show. Rows
-    are titled by the plane position (mm from the first voxel of the MRI base grid), QC_CELL_IN inches high at QC_DPI.
-    oct_grid, mri_grid: (array, mask, affine) on the base grids. field: [3, D, H, W] on the MRI base grid (octreg.deform).
-    -> Path."""
+    """Visual QC of §5: one plane per MRI axis through the OCT mask in the MRI foreground, on the MRI base grid.
+    oct_grid, mri_grid: (array, mask, affine) on the base grids. field: [3, D, H, W] on the MRI base grid. -> Path."""
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure
     from PIL import Image

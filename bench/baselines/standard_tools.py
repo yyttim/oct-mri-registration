@@ -1,74 +1,6 @@
-"""The standard registration tools on the I46 test data, each at one setting from its own documentation with no masks, and
-three sets of variants that each make one change. For each run it gives the inputs, the command of the tool, the conversion
-of its transform and the check of that conversion. The caller (bench/i46/baselines.py) passes its own files and scorer.
-
-    reg_aladin           NiftyReg reg_aladin with its defaults: rigid then affine block matching from the image centres
-    greedy               greedy NMI, -dof 6 then -dof 12 from the rigid result, -ia-image-centers
-    elastix              the model-zoo rigid and affine parameter files with the geometric-centre start (elastix_defaults/)
-    ants                 antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, its own centre-of-mass start
-    mri_robust_register  --cost NMI rigid, then --affine from the rigid result, its default start
-    mri_coreg            --dof 6, then --dof 12 from the rigid result, its brute-force start
-    flirt                -dof 6 then -dof 12, normmi, default search, headers scaled x10 for its pyramid in mm
-    synthmorph           mri_synthmorph register -m affine, which registers in its own space of 256 voxels of 1 mm, where the
-                         block spans about 15 x 15 x 9.5 voxels (FLIRT, whose schedule is also in mm, gets headers scaled x10)
-
-The tools' own global searches, each a setting above with the search option of the I58 comparison added (SEARCH):
-
-    flirt_search         flirt with -searchrx -180 180 -searchry -180 180 -searchrz -180 180 in the rigid step
-    ants_antsai          antsAI rotation search (Mattes MI with 32 bins and 20 % regular sampling, Rigid[0.1], the full circle
-                         about each axis in 20 deg steps, no principal axes, 10 iterations per start, seed 1) on the run
-                         inputs, then ants with its result as the initial transform (-i) in place of the centre of mass
-    greedy_search        greedy with -search 1000 any 20 in the rigid step: 1000 random rigid candidates around the image
-                         centres, any rotation and a 20 mm standard deviation of the offset
-
-The tools that take a mask of the moving image, each setting above with that mask added (MASK). The mask is a specimen mask
-file of the OCT that the caller gives, on the grid of the moving image (prepare_mask: oct_mask.nii.gz next to the inputs, and
-oct_mask_x10.nii.gz for FLIRT), and it goes to both steps of the two-step tools:
-
-    reg_aladin_mask           -fmask, which NiftyReg 2.1.2 does not use (bench/baselines/INSTALL.md)
-    greedy_mask               -mm
-    elastix_mask              -mMask, with ErodeMask "false" as in the parameter files
-    ants_mask                 -x NULL,<mask>: no fixed mask and the moving mask in both stages, the script's documented form
-    mri_robust_register_mask  --maskmov
-    mri_coreg_mask            --mov-mask
-    flirt_mask                -inweight
-
-mri_synthmorph register has no mask option (NO_MASK).
-
-The settings above started from the header alignment of the two images instead of their own start (NEAR), for a moving
-image whose header carries the start (bench/i46/baselines.py, the near start):
-
-    reg_aladin_near           -nac
-    greedy_near               -ia-identity in place of -ia-image-centers
-    elastix_near              AutomaticTransformInitialization "false" in both parameter files
-    ants_near                 -i Identity in place of the script's centre-of-mass start
-    mri_robust_register_near  --noinit in the rigid step
-    mri_coreg_near            --regheader in the rigid step, its brute-force search kept
-    flirt_near                -usesqform in the rigid step, its default search kept
-    synthmorph_near           unchanged
-
-Inputs of a run (prepare_inputs): the fixed image is the MRI crop, the moving image the OCT file the caller gives, box-averaged
-to the MRI voxel size with its own header (octreg.geometry.resample_iso). FLIRT gets copies of both with headers scaled x10.
-An input directory records the files it was made from (inputs.json, mask.json) and refuses to be made again from others.
-
-Every transform is converted to OCT world -> MRI world (NIfTI RAS mm) by bench/baselines/convert_affines.py. A run whose
-transform cannot be read, because the tool stopped, is kept as tier "tool error" with the last lines of its log and the first
-log line that names the error (log_error). The convention check (as bench/baselines/rundir.py check on I58) compares the tool's
-own resampling of the OCT onto the crop with octreg's resampling through the converted transform: Pearson r over the voxels
-where either is non-zero, and the Dice of the two supports. reg_aladin resamples with reg_resample, the LTA tools with
-mri_vol2vol, FLIRT with flirt -applyxfm, greedy with greedy -r, elastix and ANTs write their own result image. A variant writes
-the same files as the setting it extends, and is converted and checked the same way, on the files it ran on.
-
-collect(base, score, checked, tools, inputs, start) converts every finished run (it holds time.txt) of tools under
-base/<crop>/<tool>, writes <run>/T_oct2mri.txt and the row score(crop, T), with the convention check on the crops where
-checked(crop) is true. inputs(crop) is the input directory of a crop (default base/<crop>/inputs). start(crop), if given, is
-the start S that the moving header of the crop carries: the check runs on the converted transform T, which maps the world of
-that header, and T S, which maps the OCT world of the original header, is written and scored.
-
-The tools run in WSL on Windows (greedy with the Windows Python) and in the shell elsewhere. They need ~/baselines/tools/env.sh
-and ~/baselines/fs_env.sh (bench/baselines/INSTALL.md). The two-step tools (greedy, mri_robust_register, mri_coreg, FLIRT) are
-timed over both steps, and ants_antsai over the search and the registration.
-"""
+"""The standard registration tools on the I46 test data, each at one setting from its own documentation, and variants
+that each make one change (SEARCH, MASK, NEAR). For each run: the inputs, the tool's script, the conversion of its
+transform to OCT world -> MRI world and the check of that conversion against the tool's own resampling."""
 from __future__ import annotations
 
 import json
@@ -100,7 +32,7 @@ NEAR = {"reg_aladin_near": "defaults, -nac", "greedy_near": "NMI, -ia-identity",
         "ants_near": "antsRegistrationSyN -t a, -i Identity", "mri_robust_register_near": "NMI, --noinit",
         "mri_coreg_near": "defaults, --regheader", "flirt_near": "normmi, default search, -usesqform, x10 headers",
         "synthmorph_near": "-m affine"}
-EXTENDS = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "greedy",      # the setting each variant extends
+EXTENDS = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "greedy",
            **{t: t.removesuffix("_mask") for t in MASK}, **{t: t.removesuffix("_near") for t in NEAR}}
 ELASTIX = HERE / "elastix_defaults"
 PY = sys.executable
@@ -114,7 +46,7 @@ def wsl(p):
 
 
 def made_from(record, sources):
-    """True if the record file exists and holds these sources, False if it does not exist, ValueError for other sources."""
+    """Whether the record file exists with these sources. ValueError if it holds other sources."""
     if not record.is_file():
         return False
     if json.loads(record.read_text(encoding="utf-8")) != sources:
@@ -123,7 +55,7 @@ def made_from(record, sources):
 
 
 def prepare_inputs(d, oct_path, mri_path):
-    """d/oct.nii.gz (oct_path box-averaged to the MRI voxel size), d/mri.nii.gz (mri_path) and their x10 copies -> d."""
+    """Write d/oct.nii.gz, the OCT box-averaged to the MRI voxel size, d/mri.nii.gz and their x10 copies. Returns d."""
     from octreg import geometry as G, io
     from convert_affines import scale_header
     d, src = Path(d), {"oct": str(Path(oct_path).resolve()), "mri": str(Path(mri_path).resolve())}
@@ -141,14 +73,14 @@ def prepare_inputs(d, oct_path, mri_path):
 
 
 def prepare_mask(d, mask):
-    """d/oct_mask.nii.gz: the mask file (voxels > 0, OCT world) on the grid of d/oct.nii.gz, uint8, and its x10 copy -> d."""
+    """Write d/oct_mask.nii.gz, the mask file on the grid of d/oct.nii.gz, and its x10 copy. Returns d."""
     from octreg import geometry as G, io
     from convert_affines import scale_header
     d, src = Path(d), {"mask": str(Path(mask).resolve())}
     if made_from(d / "mask.json", src):
         return d
     o, v = nib.load(str(d / "oct.nii.gz")), io.load_volume(mask)
-    # the indicator box-averaged to the moving voxel size, trilinear onto the moving grid, > 0.5 (as octreg's --oct-mask)
+    # the same resampling as octreg's --oct-mask
     frac, A = G.resample_iso(v, max(float(np.linalg.norm(o.affine[:3, 0])), float(v.spacing_mm.min())), binary=True)
     m = G.resample_to(frac, A, o.shape, o.affine, np.eye(4)) > 0.5
     io.save_nifti(m.astype(np.uint8), o.affine, d / "oct_mask.nii.gz")
@@ -158,7 +90,7 @@ def prepare_mask(d, mask):
 
 
 def script(tool, run, inp):
-    """The lines of run.sh for one tool or variant: the registration, time.txt and the tool's own resampling for the check."""
+    """The lines of run.sh for one tool or variant."""
     R, I = wsl(run), wsl(inp)
     fs, tl = "source ~/baselines/fs_env.sh", "source ~/baselines/tools/env.sh"
     t = "/usr/bin/time -f %e -o time.txt"
@@ -167,15 +99,15 @@ def script(tool, run, inp):
     total = times("time_rigid.txt", "time_affine.txt")
     head = ["#!/bin/bash", "set -o pipefail", f"cd {R} || exit 1"]
     base, mask, near = EXTENDS.get(tool, tool), tool in MASK, tool in NEAR
-    if base == "reg_aladin":
+    if base == "reg_aladin":    # NiftyReg 2.1.2 ignores -fmask (INSTALL.md)
         x = f" -fmask {I}/oct_mask.nii.gz" if mask else " -nac" if near else ""
         return head + [tl, f"{t} reg_aladin -ref {I}/mri.nii.gz -flo {I}/oct.nii.gz{x} -aff {R}/aff.txt -res {R}/warped_tool.nii.gz -omp 8 > log.txt 2>&1",
                        f"reg_resample -ref {I}/mri.nii.gz -flo {I}/oct.nii.gz -trans {R}/aff.txt -inter 1 -pad 0 -res {R}/warped_check.nii.gz -omp 8 >> log.txt 2>&1"]
-    if base == "elastix":       # the start of elastix_near is in its parameter files (prepare)
+    if base == "elastix":       # elastix_near differs only in its parameter files (prepare)
         x = f" -mMask {I}/oct_mask.nii.gz" if mask else ""
         return head + [tl, f"{t} elastix -f {I}/mri.nii.gz -m {I}/oct.nii.gz{x} -p {R}/rigid.txt -p {R}/affine.txt "
                            f"-out {R} -threads 12 > log.txt 2>&1", "cp result.1.nii.gz warped_check.nii.gz"]
-    if tool == "ants_antsai":    # with --collapse-output-transforms 1 the script's ants_0GenericAffine.mat holds init.mat
+    if tool == "ants_antsai":    # ants_0GenericAffine.mat includes init.mat (--collapse-output-transforms 1)
         return head + [tl, "export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=12",
                        f"/usr/bin/time -f %e -o time_antsai.txt antsAI -d 3 -m Mattes[ {I}/mri.nii.gz,{I}/oct.nii.gz,32,"
                        f"Regular,0.2 ] -t Rigid[ 0.1 ] -s [ 20,1 ] -p 0 -c 10 -o {R}/init.mat --random-seed 1 -v 1 "
@@ -217,7 +149,7 @@ def script(tool, run, inp):
     if base == "synthmorph":
         return head + [fs, f"{t} mri_synthmorph register -m affine -j 20 -t aff.lta {I}/oct.nii.gz {I}/mri.nii.gz > log.txt 2>&1",
                        f"mri_vol2vol --mov {I}/oct.nii.gz --targ {I}/mri.nii.gz --lta aff.lta --o warped_check.nii.gz --trilin >> log.txt 2>&1"]
-    if base == "greedy":     # picsl_greedy under the Windows Python, as on I58
+    if base == "greedy":     # picsl_greedy with this Python, not in WSL
         Iw, Rw, Pw = (str(x).replace("\\", "/") for x in (inp, run, PY))
         g = lambda a: f'"{Pw}" -c "import picsl_greedy; picsl_greedy.Greedy3D().execute(\'{a}\')"'
         s = " -search 1000 any 20" if tool == "greedy_search" else ""
@@ -233,7 +165,7 @@ def script(tool, run, inp):
 
 
 def prepare(base, runs, inputs):
-    """base/<crop>/<tool>/run.sh for every (crop, tool) in runs (inputs(crop): its input directory), and base/queue.sh."""
+    """Write base/<crop>/<tool>/run.sh for every (crop, tool) in runs, and base/queue.sh that runs them."""
     lines = ["#!/bin/bash", "# every prepared baseline run without time.txt, one at a time"]
     order = TOOLS + list(SEARCH) + list(MASK) + list(NEAR)
     for crop, tool in sorted(runs, key=lambda r: (order.index(r[1]), r[0])):
@@ -243,7 +175,7 @@ def prepare(base, runs, inputs):
         if EXTENDS.get(tool, tool) == "elastix":
             for f in ("rigid.txt", "affine.txt"):
                 shutil.copy(ELASTIX / f, run / f)
-                if tool in NEAR:        # the header start: no automatic initialisation in either stage
+                if tool in NEAR:
                     b, on = (run / f).read_bytes(), b'(AutomaticTransformInitialization "true")'
                     if b.count(on) != 1:
                         raise ValueError(f"{ELASTIX / f}: not one AutomaticTransformInitialization line")
@@ -260,7 +192,7 @@ def convert(tool, run, inp):
     """The tool's transform as a 4x4 OCT world -> MRI world (NIfTI RAS mm)."""
     import convert_affines as C
     tool = EXTENDS.get(tool, tool)
-    if tool == "elastix":                 # the parameter files name each other by the path elastix saw (WSL on Windows)
+    if tool == "elastix":                 # on Windows the files name each other by WSL paths
         for n in (0, 1):
             txt = (run / f"TransformParameters.{n}.txt").read_text()
             txt = re.sub(r"/mnt/([a-z])/", lambda m: m.group(1).upper() + ":/", txt) if WIN else txt
@@ -279,8 +211,8 @@ def convert(tool, run, inp):
 
 
 def check(tool, run, inp, T):
-    """The convention check of a converted transform T: check_r and check_dice (None where neither image holds OCT inside
-    the crop) and check_voxels, the non-zero voxels of the tool's own resampling and of the converted one."""
+    """The convention check of a converted transform T: check_r, check_dice and the non-zero voxel counts check_voxels.
+    check_r and check_dice are None where neither image holds OCT inside the crop."""
     from octreg import geometry as G
     tool = EXTENDS.get(tool, tool)
     f = run / ("warped_check_x10.nii.gz" if tool == "flirt" else "warped_check.nii.gz")
@@ -300,14 +232,14 @@ def check(tool, run, inp, T):
 
 
 def tool_error(e, run):
-    """The message of a run without a readable transform: the exception (a missing file by name), the last 4 log lines."""
+    """The exception and the last 4 log lines of a run without a readable transform."""
     msg = f"{type(e).__name__}: {e.strerror}: {Path(e.filename).name}" if isinstance(e, OSError) and e.filename else \
         f"{type(e).__name__}: {e}"
     log = run / "log.txt"
     return [msg] + (log.read_text(errors="replace").strip().splitlines()[-4:] if log.is_file() else [])
 
 
-LOG_ERROR = re.compile(r"ITK ERROR|Internal Error|ERROR:")       # a log line where a tool names its error
+LOG_ERROR = re.compile(r"ITK ERROR|Internal Error|ERROR:")
 
 
 def log_error(run):
@@ -318,7 +250,8 @@ def log_error(run):
 
 
 def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
-    """Every finished run of tools under base, converted, written and scored (module docstring) -> list of rows."""
+    """Convert, write and score every finished run base/<crop>/<tool>, with the check where checked(crop). -> list of rows.
+    start(crop) is the start S that the moving header carries: the check runs on T, and T S is written and scored."""
     rows, setting = [], {**SETTING, **SEARCH, **MASK, **NEAR}
     for crop in sorted(p for p in Path(base).iterdir() if p.is_dir()):
         inp = Path(inputs(crop.name)) if inputs else crop / "inputs"

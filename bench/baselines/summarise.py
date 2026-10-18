@@ -3,11 +3,10 @@
 
     python bench/baselines/summarise.py [--affine SUMMARY.json] [--deform SUMMARY.json] [--notes NOTES.json] [--out DIR]
 
-Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the two summaries (of
-evaluate_runs.py and evaluate_deform.py) and NOTES.json next to them. NOTES.json gives, for each run of each stage (keys
-affine and deform), the tool and its version, the setting and the start. Each table has a main section, one row per tool at
-the setting its documentation gives (MAIN_AFFINE, MAIN_DEFORM, the panels of bench/figures.py), and a supplement with every
-stored run when there are more than those.
+Writes DIR/affine.md and DIR/deform.md (default bench/results/I58/baselines/) and copies the summaries of evaluate_runs.py
+and evaluate_deform.py and NOTES.json next to them. NOTES.json gives the tool, version, setting and start of each run of each
+stage (keys affine and deform). Each table has the main runs, one per tool at the setting its documentation gives
+(MAIN_AFFINE, MAIN_DEFORM), and, when there are more, a supplement with every stored run.
 """
 from __future__ import annotations
 
@@ -21,7 +20,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 ROOT = Path(os.environ.get("OCTREG_PROJECT_ROOT") or REPO)
 
-# panel of bench/figures.py -> run, in the order of its figures
+# (panel of bench/figures.py, run) in figure order
 MAIN_AFFINE = [("start", "reference_centres"), ("octreg", "octreg"), ("reg_aladin", "niftyreg_center"),
                ("greedy", "greedy_centers"), ("elastix", "elastix_center"),
                ("mri_robust_register", "mri_robust_register_default_com"), ("ants", "ants_com"),
@@ -100,16 +99,15 @@ def main():
                "Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
                "of the OCT header (1 = voxel size kept). det: the determinant of its 3x3 (1 = volume kept). Wall times as each "
                "run recorded them, on a 24-core machine shared with other jobs. octreg's is the sum of "
-               "its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, as its schedule works in mm, "
-               "and its run on the unscaled headers is flirt_search_native.")
+               "its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, because its schedule "
+               "resamples the images to fixed voxel sizes in mm, and its run on the unscaled headers is flirt_search_native.")
     intro_d = ("Every tool starts from octreg's affine: the OCT resampled through it onto the 0.08 mm MRI grid, and the "
                "identity as initial transform. The pair has no reference, and BASELINES.md shows the overlays. "
                "J is the Jacobian determinant of x + u(x), u the field, by finite differences on the field grid, "
-               "over the MRI foreground of octreg's §1 (a mask of the MRI alone, on the 0.15 mm grid) sampled onto that grid. "
-               "folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J, with J clipped below "
-               "at 1e-6 (Learn2Reg, Hering "
-               "et al., IEEE Trans. Med. Imaging 42:697, 2023). Wall times as each run recorded them, on a machine shared with "
-               "other jobs. octreg's is its §5 step time in result.json.")
+               "over the MRI foreground of octreg's §1 (a mask of the MRI alone, computed on the 0.15 mm base grid) sampled "
+               "onto the field grid. folded: the share of those voxels with J <= 0. SD log J: the standard deviation of log J, "
+               "with J clipped below at 1e-6 (Learn2Reg, Hering et al., IEEE Trans. Med. Imaging 42:697, 2023). Wall times as "
+               "each run recorded them, on a machine shared with other jobs. octreg's is its §5 step time in result.json.")
     main_title = "Main: each tool at the setting its documentation gives"
     for name, rows, main_rows, head, line, title, intro, main_t in (
             ("affine", ra, MAIN_AFFINE, head_a, affine_line, "I58, affine stage", intro_a,

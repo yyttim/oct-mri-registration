@@ -1,5 +1,5 @@
-"""Masks (docs/METHOD.md §1): the MRI foreground and the OCT specimen mask from isotropic texture. numpy/scipy on the CPU,
-arrays [D, H, W] on isotropic grids of voxel_mm (mm). OCT voxels <= 0 are missing data (black tiles): never specimen."""
+"""The MRI foreground and the OCT specimen mask (docs/METHOD.md §1), on the CPU.
+Arrays are [D, H, W] on isotropic grids of voxel_mm. OCT voxels <= 0 are missing data and never specimen."""
 from __future__ import annotations
 
 import numpy as np
@@ -9,12 +9,11 @@ from skimage.filters import threshold_otsu
 
 from .params import Params
 
-_CHUNK = 64          # planes per chunk along axis 0: memory only, results do not depend on it
+_CHUNK = 64          # planes per chunk along axis 0, memory only
 
 
 def _fill_planes(m):
-    """Holes filled in every array plane (union over the three axes): background enclosed by specimen within a plane is
-    specimen, also where the hole reaches a cut face of the block and so is not enclosed in 3-D."""
+    """Fill holes in every array plane along each axis, so a hole open at a cut face of the block is filled too."""
     out = m.copy()
     for ax in range(3):
         s = np.zeros((3, 3, 3), bool)
@@ -33,15 +32,15 @@ def _components(m, min_fraction):
 
 
 def _pool(a, k):
-    """Sums over k^3 blocks of a [D, H, W] zero-padded to multiples of k (block j covers voxels j k .. j k + k - 1)."""
+    """Sums over k^3 blocks of a [D, H, W], zero-padded to multiples of k."""
     a = np.pad(a, [(0, -s % k) for s in a.shape])
     D, H, W = (s // k for s in a.shape)
     return a.reshape(D, k, H, k, W, k).sum(axis=(1, 3, 5))
 
 
 def _upsample(a, k, shape, rows=None):
-    """Linear interpolation of a block grid a (block centres at j k + (k - 1) / 2 voxels, clamped beyond the outer centres) at
-    the voxels of a grid of `shape`. rows = (lo, hi) returns only rows lo:hi along axis 0. -> float32."""
+    """Linear interpolation of the block grid a onto a voxel grid of `shape`, clamped beyond the outer block centres.
+    rows = (lo, hi) returns only rows lo:hi along axis 0. -> float32"""
     x = np.asarray(a, np.float32)
     for ax, n in enumerate(shape):
         c = np.clip((np.arange(n) - (k - 1) / 2) / k, 0, a.shape[ax] - 1)[slice(*rows) if ax == 0 and rows else slice(None)]
@@ -51,26 +50,18 @@ def _upsample(a, k, shape, rows=None):
     return x
 
 
-# ----------------------------------------------------------------------------- MRI foreground (§1)
 def foreground(arr, voxel_mm, params: Params = Params()):
-    """The MRI foreground: the voxels above the first histogram valley, walking down from the brightest peak, that holds less
-    than valley_ratio of the smaller of its two peaks and whose darker class lies mostly outside the brighter side: less than
-    half of the voxels between the next lower valley (or zero) and this one lie inside the convex hull of the candidate
-    foreground (medium lies outside the specimen, while a darker tissue class such as white matter lies within the hull of
-    cortex). Without such a valley, every positive voxel. Histogram of 256 bins of the positive values up to their 99.5th
-    percentile (a few hot voxels cannot squeeze the tissue into a few bins), counts averaged over 5 bins (an integer-valued
-    image gives no comb of empty bins), peaks of the square root of the counts with an empty bin added at each end (so a peak
-    in an end bin counts, and a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the maximum
-    and >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
-    arr: [D, H, W], voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
+    """MRI foreground: the voxels above the brightest deep histogram valley whose darker class lies mostly outside the convex
+    hull of the voxels above it, else every positive voxel. -> (bool [D, H, W], {threshold, volume_cm3})"""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
     if s.size == 0:
         raise ValueError("MRI foreground: the image has no positive values")
+    # clip hot voxels, smooth the empty bins of integer images, pad so that find_peaks sees a peak in an end bin
     h, e = np.histogram(s[s <= np.percentile(s, 99.5)], bins=256)
     c, h = 0.5 * (e[1:] + e[:-1]), ndimage.uniform_filter1d(h.astype(float), 5)
     pk = find_peaks(np.sqrt(np.pad(h, 1)), prominence=0.05 * np.sqrt(h.max()), distance=5)[0] - 1
-    vals = [lo + int(np.argmin(h[lo:hi + 1])) for lo, hi in zip(pk[:-1], pk[1:])]          # between neighbouring peaks
+    vals = [lo + int(np.argmin(h[lo:hi + 1])) for lo, hi in zip(pk[:-1], pk[1:])]
     for i in range(len(vals) - 1, -1, -1):
         val = vals[i]
         if h[val] < params.valley_ratio * min(h[pk[i]], h[pk[i + 1]]):
@@ -84,8 +75,7 @@ def foreground(arr, voxel_mm, params: Params = Params()):
 
 
 def _enclosed(m, sel):
-    """The share of the voxels of sel (every second voxel along each axis) that lie inside the convex hull of the mask m.
-    1.0 when m has fewer than four surface voxels or they span a flat hull, 0.0 when sel has no sampled voxel."""
+    """Share of the voxels of sel, sampled every second voxel, that lie inside the convex hull of the mask m."""
     from scipy.spatial import ConvexHull, Delaunay
     pts = np.argwhere(m & ~ndimage.binary_erosion(m))
     q = np.argwhere(sel[::2, ::2, ::2]) * 2
@@ -95,16 +85,13 @@ def _enclosed(m, sel):
         return 0.0
     try:
         hull = Delaunay(pts[ConvexHull(pts).vertices])
-    except RuntimeError:                                     # qhull refuses a flat point set (QhullError)
+    except RuntimeError:                                     # QhullError for a flat point set
         return 1.0
     return float((hull.find_simplex(q) >= 0).mean())
 
 
-# ----------------------------------------------------------------------------- specimen mask (§1)
 def threshold(counts, centres):
-    """t = min(Otsu, low-side triangle) of a histogram (counts, bin centres). With two modes Otsu falls between them. With one
-    main mode Otsu would split it, and the foot of that mode on its low side (the triangle threshold of Zack et al. 1977, taken
-    on the low side) lies lower."""
+    """min(Otsu, low-side triangle threshold of Zack et al. 1977) of a histogram given as counts and bin centres."""
     h = np.asarray(counts, np.float64)
     p, lo = int(np.argmax(h)), int(np.flatnonzero(h)[0])
     w = p - lo
@@ -113,7 +100,7 @@ def threshold(counts, centres):
 
 
 def _hist(chunks, nbins=256):
-    """Histogram of the values of the arrays from chunks() (called twice) over their range. -> (counts, bin centres)."""
+    """Histogram over the common range of the arrays from chunks(), which is called twice. -> (counts, bin centres)"""
     r = [(float(x.min()), float(x.max())) for x in chunks() if x.size]
     if not r:
         raise ValueError("specimen mask: the OCT has no positive voxels, octreg needs positive OCT intensities on a linear "
@@ -125,16 +112,8 @@ def _hist(chunks, nbins=256):
 
 
 def specimen_mask(fine, voxel_mm, params: Params = Params()):
-    """§1 specimen mask: a voxel is specimen when it has signal and isotropic texture, each decided by `threshold`.
-    Signal: log intensity of the measured voxels (fine > 0) above t. Voxels below t have no signal: they are left out of the
-    texture and become specimen only where the hole filling encloses them. Every voxel fine > 0 counts as measured.
-    Texture on the signal voxels m: the normalised Gaussian smoothing b = G(x m) / G(m) (sigma texture_bandpass_mm), per array
-    axis the running coefficient of variation of b over texture_window_mm (counted where >= half the window has signal),
-    C = the minimum over the axes, averaged over blocks of ~texture_grid_mm (blocks >= half signal), log C smoothed over the
-    blocks (normalised Gaussian, sigma texture_smooth_mm), above t, linearly interpolated to the fine grid > 0.5. Signal AND
-    texture, components >= min_component of the mask kept, holes filled in every array plane, AND measured.
-    fine: [D, H, W] OCT intensities. voxel_mm: spacing (mm).
-    -> (bool [D, H, W], {signal_threshold (intensity), texture_threshold (C), volume_cm3})."""
+    """OCT specimen mask: the voxels with signal and isotropic texture, each above its `threshold`, holes filled.
+    fine: [D, H, W] OCT intensities. -> (bool [D, H, W], {signal_threshold, texture_threshold, volume_cm3})"""
     P, D = params, fine.shape[0]
     logs = lambda: (np.log(x[x > 0]) for x in (np.asarray(fine[z:z + _CHUNK], np.float32) for z in range(0, D, _CHUNK)))
     ts = float(np.exp(threshold(*_hist(logs))))
@@ -150,6 +129,7 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
             x = np.asarray(fine[a:min(D, z1 + pad)], np.float32)
             m = (x > ts).astype(np.float32)
             x = np.divide(ndimage.gaussian_filter(x * m, sig), ndimage.gaussian_filter(m, sig), out=np.zeros_like(x), where=m > 0)
+            # C: the least coefficient of variation over the array axes, low for stripes and seams that vary along one axis
             C = np.full(x.shape, np.inf, np.float32)
             for ax in range(3):
                 n = ndimage.uniform_filter1d(m, win, axis=ax)

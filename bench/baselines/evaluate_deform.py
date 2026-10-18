@@ -3,19 +3,15 @@
 
     python bench/baselines/evaluate_deform.py RUN [RUN ...] [--octreg-run DIR] [--summary OUT.json] [--force]
 
-Every RUN holds octreg's affine (T_oct2mri.txt), the tool's field converted to octreg's convention (oct2mri_warp.nii.gz) and
-a check_field.json that is ok (deform_tools.py, rundir.py check-field). For each RUN:
-  1. octreg apply: the 20 um OCT through affine and field onto the MRI grid -> RUN/oct_in_mri.nii.gz (the overlays of
-     bench/figures.py).
-  2. The Jacobian determinant J of x + u(x), u the field, by finite differences on the field's own grid: its minimum, the
-     share of voxels with J <= 0 (folded) and the standard deviation of log J (the smoothness measure of Learn2Reg, Hering et
-     al., IEEE Trans. Med. Imaging 42:697, 2023), over octreg's MRI foreground on the 0.15 mm base grid (register.prepare_mri)
-     sampled onto the field's grid.
-  3. The wall time of the registration from RUN/time.txt (seconds, written by the tool's own command), the hardware from
-     RUN/threads.txt and the spacing of the field grid.
-With --octreg-run, the rows "none" (octreg's affine, no field) and "octreg" (its §5 field oct2mri_warp.nii.gz, the §5 passes
-of result.json, wall time the §5 step time of result.json) are added. A row per run goes into --summary (default
-<project root>/baselines/summary_deform.json). The roots come from bench/paths.py.
+Every RUN needs a check_field.json that is ok (deform_tools.py). For each RUN:
+  1. octreg apply: the 20 um OCT through affine and field onto the MRI grid -> RUN/oct_in_mri.nii.gz
+  2. The Jacobian determinant J of x + u(x) over octreg's MRI foreground: its minimum, the share of voxels with J <= 0 and
+     the standard deviation of log J (Learn2Reg, Hering et al., IEEE Trans. Med. Imaging 42:697, 2023).
+  3. The wall time of the registration in seconds from RUN/time.txt, the hardware from RUN/threads.txt and the spacing of
+     the field grid.
+With --octreg-run, the rows "none" (octreg's affine alone) and "octreg" (its §5 field, timed by its §5 step in result.json)
+are added. A row per run goes into --summary (default <project root>/baselines/summary_deform.json). The roots come from
+bench/paths.py.
 """
 from __future__ import annotations
 
@@ -31,24 +27,23 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench"), str(REPO / "bench" / "baselines")]
 from octreg import geometry as G, io  # noqa: E402
 from evaluate_runs import PY, hardware, run  # noqa: E402
-from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402  (bench/paths.py)
+from paths import MRI_I58 as MRI, OCT_I58 as OCT, PROJECT_ROOT as ROOT  # noqa: E402
 
 
 def field_stats(field, A_f, fg_mask, A_m):
-    """The Jacobian determinant of x + u(x) on the field grid, over the MRI foreground sampled onto that grid.
-    field: [3, D, H, W] mm along the world axes, A_f its grid. -> {jac_min, jac_folding_fraction, sd_log_jac, n_foreground}."""
+    """Jacobian determinant statistics of x + u(x) over the MRI foreground sampled onto the field grid.
+    field: [3, D, H, W] in mm along the world axes on the grid A_f. fg_mask lies on the grid A_m."""
     shape = field.shape[1:]
     fg = G.resample_to(fg_mask.astype(np.uint8), A_m, shape, A_f, np.eye(4), order=0) > 0
     h = np.linalg.norm(A_f[:3, :3], axis=0)
     J = np.zeros(shape + (3, 3), np.float32)
-    for i in range(3):                                   # d u_i / d s_j, s_j the distance in mm along grid axis j
+    for i in range(3):                                   # d u_i / d s_j, s_j in mm along grid axis j
         g = np.gradient(field[i], *h)
         for j in range(3):
             J[..., i, j] = g[j]
-    # the field components follow the world axes, while the grid axes may be permuted or flipped, so the derivative is
-    # expressed in world coordinates
-    R = A_f[:3, :3] / h                                  # voxel step -> world direction (orthonormal for an axis-aligned grid)
-    Jw = J @ np.linalg.inv(R)[None, None, None]           # d u / d x_world
+    # u follows the world axes, which the grid axes may permute or flip
+    R = A_f[:3, :3] / h
+    Jw = J @ np.linalg.inv(R)[None, None, None]
     det = np.linalg.det(np.eye(3)[None, None, None] + Jw)
     sel = fg & np.isfinite(det)
     d = det[sel]
@@ -73,7 +68,7 @@ def main():
     (_, fg, A_m), _ = prepare_mri(io.load_volume(str(MRI)))
 
     def merge(row):
-        rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}   # merge with other runs
+        rows = json.loads(a.summary.read_text(encoding="utf-8")) if a.summary.is_file() else {}
         rows[row["run"]] = row
         a.summary.write_text(json.dumps(rows, indent=1, ensure_ascii=False), encoding="utf-8")
 

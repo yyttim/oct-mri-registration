@@ -1,24 +1,7 @@
-"""The label-only fit of the I46 reference check (bench/i46/reference_check.py): an affine from the test's OCT world to the MRI
-world fitted to the vessels alone, the dataset's OCT vessel segmentation against the authors' MRI vessel labels.
+"""Label-only fit of the I46 reference check: an affine from the OCT vessel segmentation to the MRI vessel labels.
 
-Points
-    OCT        the voxels of the vessel segmentation (ves_seg, OCT planes 0..560) whose local radius, the largest distance to
-               the background within the 5 x 5 x 5 voxels around them, is at least 2 voxels (the thicker vessels). One point
-               per cell of 4 x 4 x 4 voxels, at the centroid of those voxels.
-    footprint  the region the OCT vessels cover: the cells that hold any vessel voxel, dilated by 14 cells, holes filled,
-               eroded by 14 cells, the largest component. It says where an MRI label should have an OCT partner.
-    MRI        the vessel label voxels in a box around the labels, with their distance map on that box
-Objective, with the Geman-McClure rho(d) = d^2 / (d^2 + c^2)
-    E(T) = mean of rho(distance to the nearest T-mapped OCT point) over the MRI labels whose preimage lies at least 0.15 mm
-           inside the footprint + mean of rho(distance to the nearest MRI label) over the OCT points that T maps into the box
-Fit    robust symmetric ICP: nearest points, Geman-McClure weights and a weighted least-squares update, with c lowered in
-       stages to 0.15 mm, for two models
-    S9   a rotation (its handedness kept from the start), a scale along each OCT axis between 0.75 and 1.40 times the test's
-         OCT spacing, and a translation
-    A12  a full affine
-Global search  the masked normalised cross-correlation of the OCT point density inside the footprint with the MRI label
-       density, both on a 0.6 mm grid smoothed by 0.6 mm, for quasi-uniform rotations (super-Fibonacci spirals, Alexa 2022) of
-       both handednesses and all translations at once (FFT). The best distinct candidates are then fitted with S9 and A12.
+Robust symmetric ICP with Geman-McClure weights for S9 (rotation, scale per OCT axis, shift) and A12 (full affine), and an
+FFT global search over the rotations of both handednesses.
 """
 from __future__ import annotations
 
@@ -29,17 +12,17 @@ from scipy.optimize import least_squares
 from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation
 
-RADIUS = 2.0                                # OCT vessel voxels kept: local radius >= 2 voxels
-CELL = 4                                    # OCT cell, voxels per axis
-CLOSING = 14                                # footprint closing, cells
-MARGIN = 0.15                               # MRI labels count only this far (mm) inside the footprint
-NEAR = 2.0                                  # OCT points within this distance (mm) of the label box enter the first term
-SCALE_BOUNDS = (np.log(0.75), np.log(1.40))
-C_START = (1.2, 0.8, 0.5, 0.3, 0.2, 0.15)   # c (mm) from a search candidate
+RADIUS = 2.0                                # OCT voxels, smallest local vessel radius kept
+CELL = 4                                    # OCT voxels per cell and axis
+CLOSING = 14                                # cells
+MARGIN = 0.15                               # mm inside the footprint for an MRI label to count
+NEAR = 2.0                                  # mm around the label box for the OCT partners of the labels
+SCALE_BOUNDS = (np.log(0.75), np.log(1.40))  # S9 scale per OCT axis, relative to the test's OCT spacing
+C_START = (1.2, 0.8, 0.5, 0.3, 0.2, 0.15)   # Geman-McClure c (mm) from a search candidate
 C_LOCAL = (0.6, 0.4, 0.25, 0.15)            # c from a close start
 C_A12 = (0.25, 0.15)                        # c of A12 from an S9 fit
-GRID = 0.6                                  # global search grid and smoothing (mm)
-COARSE = 3                                  # footprint cells per template cell of the global search, per axis
+GRID = 0.6                                  # mm, search grid and smoothing
+COARSE = 3                                  # footprint cells per search template cell and axis
 
 
 def apply(T, p):
@@ -47,9 +30,8 @@ def apply(T, p):
 
 
 def oct_points(ves_tiff, spacing, chunk=48, overlap=8):
-    """The OCT points and the footprint of the module docstring from the segmentation (plane, y, x) in ves_tiff, read one
-    chunk of planes at a time. Points in the test's OCT world (axes x, y, plane, times spacing), footprint on the cells
-    (x, y, plane). Cells that do not fit whole in the array are left out."""
+    """OCT vessel points (OCT world, mm) and the footprint on cells (x, y, plane) from the segmentation ves_tiff (plane, y, x).
+    A point is the centroid per cell of the voxels of local radius >= RADIUS."""
     import tifffile
     with tifffile.TiffFile(str(ves_tiff)) as tf:
         pages = tf.pages
@@ -82,8 +64,7 @@ def oct_points(ves_tiff, spacing, chunk=48, overlap=8):
 
 
 def footprint(occ, r=CLOSING):
-    """The footprint of the module docstring from the cell occupancy, in the TIFF order (plane, y, x): the holes are filled
-    in the planes of each axis in that order, then in 3D."""
+    """The region the OCT vessels cover: occupied cells (plane, y, x) closed by r, holes filled, the largest component."""
     b = ndimage.iterate_structure(ndimage.generate_binary_structure(3, 1), 2)
     pad = r + 2
     d = ndimage.binary_dilation(np.pad(occ, pad), structure=b, iterations=r // 2)
@@ -108,8 +89,8 @@ def cell_affine(spacing, n=CELL):
 
 
 class Problem:
-    """The objective of the module docstring. O: OCT points (OCT world mm), foot and foot_aff: the footprint and its cell ->
-    OCT world affine, box and box_aff: the MRI label box (bool) and its voxel -> MRI world affine, cell: the OCT cell (mm)."""
+    """E(T): mean Geman-McClure rho of the MRI labels to the T-mapped OCT points plus that of the OCT points to the labels.
+    O: OCT points (mm). foot, box: footprint and MRI label box (bool), with their index -> world affines. cell: mm."""
 
     def __init__(self, O, foot, foot_aff, box, box_aff, cell):
         self.O = np.asarray(O, float)
@@ -122,11 +103,12 @@ class Problem:
         self.shape = np.array(box.shape)
         self.fin = ndimage.distance_transform_edt(foot, sampling=np.linalg.norm(foot_aff[:3, :3], axis=0)).astype(np.float32)
         self.ifoot = np.linalg.inv(foot_aff)
-        self.mlab = ndimage.label(box, structure=np.ones((3, 3, 3)))[0][box]       # MRI label components (26-connected)
+        # components of the MRI labels and of the OCT points, for the split halves
+        self.mlab = ndimage.label(box, structure=np.ones((3, 3, 3)))[0][box]
         c = np.round((self.O - self.O.min(0)) / np.asarray(cell)).astype(int)
         g = np.zeros(c.max(0) + 1, bool)
         g[tuple(c.T)] = True
-        self.olab = ndimage.label(g, structure=np.ones((3, 3, 3)))[0][tuple(c.T)]  # OCT point components (26-connected)
+        self.olab = ndimage.label(g, structure=np.ones((3, 3, 3)))[0][tuple(c.T)]
 
     def sets(self, T, idxM=None, idxO=None):
         M = self.M if idxM is None else self.M[idxM]
@@ -197,8 +179,8 @@ def solve_s9(src, dst, w, x0, H):
 
 
 def fit(P, T0, model, cs=C_LOCAL, iters=25, tol=1e-4, idxM=None, idxO=None):
-    """The ICP fit of the module docstring from T0, model "S9" or "A12". Returns T and its energy and residuals at the last c,
-    with "plausible": all singular values of the 3 x 3 part between 0.7 and 1.5."""
+    """ICP fit of model "S9" (keeping the handedness of T0) or "A12" from T0 over the c stages cs.
+    -> T and its energy and residuals at the last c, "plausible" when all singular values of T lie between 0.7 and 1.5."""
     T = T0.copy()
     if model == "S9":
         H = np.diag([1.0, 1.0, np.sign(np.linalg.det(T0[:3, :3]))])
@@ -233,8 +215,7 @@ def super_fibonacci(n):
 
 
 def template_cells(foot, spacing, n=COARSE):
-    """The footprint on cells of n x n x n footprint cells (those at least half covered), as their centres in the OCT world,
-    and the volume of one such cell (mm^3)."""
+    """Centres (OCT world) of the n x n x n footprint cells at least half covered, and the volume of one (mm^3)."""
     s = np.array(foot.shape) // n * n
     f = foot[:s[0], :s[1], :s[2]].reshape(s[0] // n, n, s[1] // n, n, s[2] // n, n).mean((1, 3, 5)) >= 0.5
     m = n * CELL
@@ -242,9 +223,8 @@ def template_cells(foot, spacing, n=COARSE):
 
 
 class Search:
-    """The global search of the module docstring on the MRI label box (bool, voxel size vs). Its frame W' is the box voxel
-    index times vs, B is the template size in grid cells. The label density is padded by B - 1 empty cells on every face, so
-    that every translation that keeps the footprint inside the box is scored, wherever the template's cube lies."""
+    """FFT search over all shifts of the masked NCC of the OCT point density with the MRI label density, one rotation at a time.
+    box: MRI label box (bool) with voxel size vs. B: template size in grid cells. Poses are in W', the box index times vs."""
 
     def __init__(self, box, vs, B, g=GRID, sigma=GRID):
         self.g, self.sigma, self.B, self.pad = g, sigma, B, B - 1
@@ -253,6 +233,7 @@ class Search:
         cells = np.ravel_multi_index(np.floor(np.argwhere(box) * vs / g + 0.5).astype(int).T, n)
         D = np.bincount(cells, minlength=int(np.prod(n))).reshape(n).astype(np.float32) * np.float32(np.prod(vs) / g ** 3)
         self.n = n
+        # B - 1 empty cells on every face, so that every shift keeping the footprint inside the box is scored
         image = np.pad(ndimage.gaussian_filter(D, sigma / g), self.pad)
         self.sI = np.array(image.shape)
         self.fshape = [next_fast_len(int(a + B)) for a in self.sI]
@@ -265,8 +246,8 @@ class Search:
         return c[o:self.sI[0], o:self.sI[1], o:self.sI[2]]
 
     def run(self, O, F, L, cen, fcell, fthr=0.5):
-        """The correlation over all shifts (index s + pad: template cell 0 at label cell s) for the linear map L about cen,
-        and the template origin tlo."""
+        """NCC over all shifts for the linear map L about cen, and the template origin tlo.
+        Index s + pad puts template cell 0 at label cell s."""
         g, B = self.g, self.B
         tlo = -g * (B - 1) / 2.0
         io = np.floor(((O - cen) @ L.T - tlo) / g + 0.5).astype(int)

@@ -1,25 +1,8 @@
 #!/usr/bin/env python3
-"""Inputs of the I46 test (bench/i46/README.md), from the download of bench/i46/fetch.sh, into <bench_runs>/I46/inputs.
+"""Inputs of the I46 test (bench/i46/README.md) from the download of fetch.sh, into <bench_runs>/I46/inputs.
 
-OCT      the DANDI OME-TIFF (627 x 1271 x 1230, plane y x, uint8), its voxels unchanged, as the array (x, y, plane) with the
-         header diag(0.012, 0.012, 0.01515) mm -> oct.nii.gz
-Ref      the authors' affine in the frame of this OCT (common.reference_matrix) -> ref_T_oct2mri.txt
-Tissue   the OCT tissue points of the scores (common.tissue_points), OCT world mm -> tissue_oct.npy
-Crops    the MRI cut around the block, as octreg expects it: an axis-aligned box on the MRI voxel grid around the 0.5 and 99.5
-         percentiles of the tissue placed by the reference, a margin m on every face, then shifted by d, each d_i uniform in
-         [-s, s] (numpy default_rng(4600 + k)): C3 (m 3, s 2 mm), C6 (6, 5) and C12 (12, 10), k = 0..9. C3 on the 10, 20 and
-         30 deg FLASH, C6 and C12 on the 10 deg FLASH. flip-2 carries a header that is a 120 deg rotation (a cyclic permutation
-         of the axes) of the same voxel grid as flip-1, so every crop is written with the flip-1 header (the arrays are voxel
-         aligned). -> crops/<name>.nii.gz and crops.json, also as bench/results/I46/crops.json
-Context  -> bench/results/I46/context.json:
-         reference         determinant and singular values of its 3 x 3 part, and its own vessel check (common.vessel_score)
-         tissue_points     the number of OCT tissue points
-         grey_white_cnr    the grey/white contrast of each MRI image, which chose the primary image: (mean grey - mean white) /
-                           sqrt((var grey + var white) / 2), white matter = layer label 1, grey matter = labels 2 and 3 (infra-
-                           and supragranular cortex), each eroded by one voxel (6-connected), inside the box of MRI voxels that
-                           holds the OCT block placed by the reference, 54 voxels (8.1 mm) wider on every face
-         oct_noise         the 2 x 2 x 2 voxel blocks of the OCT more than 0.3 mm outside the specimen mask: their number and
-                           the share whose mean is not zero
+Writes oct.nii.gz, ref_T_oct2mri.txt, tissue_oct.npy, the crops (crops/<name>.nii.gz and crops.json, also in
+bench/results/I46) and bench/results/I46/context.json: the reference, the grey/white contrast of each image and the OCT noise.
 
     python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
 """
@@ -37,7 +20,7 @@ from common import (CONDITIONS, FLIPS, INPUTS, LABELS, MASK, OCT, OCT_AFFINE, OC
                     RESULTS, SEED0, SEEDS, SPACING, T1MAP, TIFF_SHAPE, crop_file, crop_name, mri_file, reference_matrix,
                     tissue_points, vessel_score)
 
-MARGIN_BOX = 54                                 # MRI voxels around the block for the grey/white contrast
+MARGIN_BOX = 54                                 # MRI voxels (8.1 mm) around the block for the grey/white contrast
 MASK_AFFINE = OCT_AFFINE @ np.array([[2, 0, 0, 0.5], [0, 2, 0, 0.5], [0, 0, 2, 0.5], [0, 0, 0, 1]])   # voxel i: OCT 2i, 2i + 1
 
 
@@ -66,7 +49,7 @@ def save(arr, affine, path):
 
 
 def oct_input():
-    """oct.nii.gz of the module docstring, kept if already there."""
+    """Check the mask and write oct.nii.gz, the TIFF voxels as (x, y, plane), unless it exists."""
     read_mask(TIFF_SHAPE[::-1])
     if not OCT.is_file():
         save(read_oct(), OCT_AFFINE, OCT)
@@ -79,7 +62,7 @@ def cnr(a, white, grey):
 
 
 def contrast_box(R, f1):
-    """The box of MRI voxels (flip-1 grid, slices) that holds the corners of the OCT array placed by R, MARGIN_BOX wider."""
+    """Slices of the flip-1 grid around the OCT array placed by R, MARGIN_BOX voxels wider on every face."""
     n = np.array(TIFF_SHAPE[::-1]) - 1
     corners = np.array([[x, y, z, 1] for x in (0, n[0]) for y in (0, n[1]) for z in (0, n[2])], float).T
     v = (np.linalg.inv(f1.affine) @ R @ OCT_AFFINE @ corners)[:3]
@@ -135,7 +118,7 @@ def main():
         if arr.shape[:3] != tuple(shape):
             sys.exit(f"{fname}: {arr.shape}, the flip-1 image {tuple(shape)}")
         contrast[im] = cnr(arr[box], white, grey)
-        img = nib.Nifti1Image(arr, A, f1.header)
+        img = nib.Nifti1Image(arr, A, f1.header)    # flip-1 header: the arrays are voxel aligned, flip-2's own is rotated
         for cond, k, c_lo, c_hi, images in boxes:
             if im in images and not crop_file(crop_name(im, cond, k)).is_file():
                 nib.save(img.slicer[c_lo[0]:c_hi[0], c_lo[1]:c_hi[1], c_lo[2]:c_hi[2]], str(crop_file(crop_name(im, cond, k))))

@@ -17,7 +17,8 @@ Two behaviours of these versions affect the runs. NiftyReg 2.1.2 ignores the flo
 equals the unmasked run. In this FreeSurfer build `mri_coreg --ras2ras` writes a voxel matrix under a RAS label, so `mri_coreg`
 runs with its default VOX2VOX output, which `lta_convert` then converts.
 
-The run scripts of `bench/i46`, written by `bench/baselines/standard_tools.py`, source two small files in the WSL home that put
-the tools on the path. `~/baselines/tools/env.sh` adds ANTs, elastix and NiftyReg (their `bin` and `lib`) and sources FSL's
-`etc/fslconf/fsl.sh`. `~/baselines/fs_env.sh` sets `FREESURFER_HOME`, sources `SetUpFreeSurfer.sh` and sets `FS_LICENSE`. Any
-setup that puts the same programs on the path serves as well.
+The scripts that run ANTs, elastix, NiftyReg, FSL and FreeSurfer, written by `bench/baselines/standard_tools.py` for `bench/i46`
+and by `bench/baselines/deform_tools.py` for the deformable stage, source small files in the WSL home that put the tools on the
+path. `~/baselines/tools/env.sh` adds ANTs, elastix and NiftyReg (their `bin` and `lib`) and sources FSL's `etc/fslconf/fsl.sh`.
+`~/baselines/fs_env.sh` sets `FREESURFER_HOME`, sources `SetUpFreeSurfer.sh` and sets `FS_LICENSE`. Any setup that puts the same
+programs on the path serves as well.

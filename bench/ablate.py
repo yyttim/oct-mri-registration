@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
-"""Ablations of octreg: the method with one change per variant, each run through octreg.register.register on one pair.
+"""Ablations of octreg: the method with one change per variant, run on one pair.
 
     python bench/ablate.py OCT MRI -o OUT [--oct-mask MASK] [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ]
                            [--device cuda]
 
-A variant replaces one function or constant of the package for its run, or one value of Params:
+Each variant changes one function, constant or Params value for its run:
 
 {variants}
 
-OUT/<variant>/ holds the outputs of octreg register, variant.json (the change) and code.txt (code_id, the identity of the
-octreg code of the run). A variant finished by the same code is skipped (made_by), and one made by other code runs again.
+OUT/<variant>/ holds the octreg register outputs, variant.json (the change, the Params and the turn) and code.txt (the
+code_id of the octreg code that made it). A variant already finished by the same octreg code is skipped.
 
---turn starts every run from the OCT world turned by the rotation vector (RX, RY, RZ) in degrees about the centre of the OCT
-image box: the OCT and its mask file are read with the turned header. T_oct2mri.txt is then rewritten for the original OCT
-world (T @ turn), and result.json with it (T_oct2mri, pose.T_search, the OCT header affine in inputs, and the turn). The files
-tied to the turned OCT header (oct2mri.lta, oct2mri_itk.txt, mri_in_oct.nii.gz) are removed, and variant.json holds the turn.
-The no_search run also writes T_start.txt, the pose it is refined from, in the original OCT world.
+--turn starts every run from the OCT and its mask turned by the rotation vector RX,RY,RZ in degrees about the centre of the
+OCT image box. T_oct2mri.txt and result.json are then rewritten for the original OCT world (T @ turn), the files tied to the
+turned header (oct2mri.lta, oct2mri_itk.txt, mri_in_oct.nii.gz) are removed, and no_search also writes its start to T_start.txt.
 """
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import dataclasses
 import hashlib
 import json
 import sys
+import tokenize
+from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -38,14 +39,14 @@ from octreg import deform as D, features as Fe, geometry as G, io, refine as Rf,
 from octreg.params import Params                                                                              # noqa: E402
 
 VARIANTS = {
-    "no_outline": "the outline never used (outline_min_outside 2): every candidate proposed by F",
-    "outline_decides": "every candidate proposed by S = (F + O) / 2 where the outline is used",
+    "no_outline": "the outline never used (outline_min_outside 2): every pose proposed by F",
+    "outline_decides": "every pose proposed by S = (F + O) / 2 where the outline is used",
     "no_search": "no orientation search: the refinement from the header orientation with the image box centres aligned",
-    "no_refine": "no refinement: the first search candidate",
-    "first_choice": "only the first search candidate refined",
+    "no_refine": "no refinement: the first search pose",
+    "first_choice": "only the first search pose refined",
     "no_prior": "no scale and shear prior (lam 0)",
-    "signed": "the signed normalised gradient n instead of its tensor n n^T, OCT polarity +1",
-    "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, OCT intensities negated (polarity -1)",
+    "signed": "the signed normalised gradient n instead of its tensor n n^T",
+    "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, with the OCT intensities negated",
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
     "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
     "df_free": "the deformation without the strain bound (deform.STRAIN_WEIGHT 0)",
@@ -55,21 +56,19 @@ REFINE, TENSOR, PREPARE_OCT = Rf.refine, Fe.orientation_tensor, Reg.prepare_oct
 
 
 def header_start(mri_affine, mri_shape, oct_affine, oct_shape):
-    """The pose with the header orientation and the centres of the two image boxes (geometry.box) aligned.
-    -> 4x4 OCT world -> MRI world."""
+    """Pose with the header orientation and the two image box centres aligned, 4x4 OCT world to MRI world."""
     T = np.eye(4)
     T[:3, 3] = G.box(mri_affine, mri_shape)[0] - G.box(oct_affine, oct_shape)[0]
     return T
 
 
 def fixed_start(T):
-    """A stand-in for search.search that proposes the one pose T, with no search score."""
+    """Stand-in for search.search that proposes only the pose T."""
     return lambda *args, **kwargs: [dict(T=np.asarray(T, float), F=float("nan"), O=None)]
 
 
 def search_by_S(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params=Params(), device="cuda", outline=True):
-    """In place of search.search: with the outline, every rotation keeps its best translation by S = (F + O) / 2 and the same
-    non-maximum suppression keeps the best topk by S. Without the outline it is search.search. -> candidates [{T, F, O}]."""
+    """search.search with the translations and the topk chosen by S = (F + O) / 2 when the outline is used."""
     if not outline:
         return Se.search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params, device, outline)
     P = params
@@ -93,12 +92,10 @@ def search_by_S(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, p
 
 
 def no_refine(starts, mri, oct_, params, device):
-    """In place of refine.refine: the first search candidate unchanged."""
     return [{"T": np.asarray(starts[0], float), "L": float("nan"), "F": [], "search_rank": 0}]
 
 
 def first_choice(starts, mri, oct_, params, device):
-    """In place of refine.refine: only the first search candidate refined."""
     return REFINE(starts[:1], mri, oct_, params, device)
 
 
@@ -109,7 +106,7 @@ def tracefree(n):
 
 
 def negated_oct(fine, affine, params, mask=None):
-    """register.prepare_oct with the OCT intensities of the base grid negated (the masks are those of the method)."""
+    """register.prepare_oct with the base grid OCT intensities negated and the masks of the method."""
     (arr, m, A), valid, info = PREPARE_OCT(fine, affine, params, mask)
     return (-arr, m, A), valid, info
 
@@ -137,8 +134,8 @@ def whole_mask_searcher():
 
 
 def turned(oct_paths, rotvec_deg, spacing_um=None):
-    """A turn about the OCT image box centre (4x4, OCT world -> turned OCT world) and a stand-in for io.load_volume that reads
-    the files of oct_paths with the turned header. spacing_um: as for io.load_volume of the OCT."""
+    """Turn about the OCT image box centre and an io.load_volume that reads oct_paths with the turned header.
+    -> (4x4 OCT world to turned OCT world, loader)"""
     load = io.load_volume
     vo = load(oct_paths[0], spacing_um)
     c = G.box(vo.affine, vo.shape)[0]
@@ -154,8 +151,8 @@ def turned(oct_paths, rotvec_deg, spacing_um=None):
 
 @contextlib.contextmanager
 def variant(name, oct_path, mri_path, oct_spacing_um=None):
-    """The change of variant `name` in force ('base': none). oct_path, mri_path and oct_spacing_um give no_search its start,
-    read through io.load_volume as the run reads them. -> Params of the run."""
+    """Context with the change of variant `name` in force, yielding the Params of the run.
+    oct_path, mri_path and oct_spacing_um give no_search its start."""
     P = Params()
     with contextlib.ExitStack() as st:
         patch = lambda obj, attr, new: st.enter_context(mock.patch.object(obj, attr, new))
@@ -240,17 +237,49 @@ def main():
         print(f"{name}: search rank {res['pose']['search_rank']}, L {res['pose']['L']:.4f} -> {out}", flush=True)
 
 
+def _tokens(src):
+    """The tokens of src, an f-string as one STRING token as Python 3.11 and older give it."""
+    off = [0]
+    for line in StringIO(src):                         # line starts as tokenize counts them
+        off.append(off[-1] + len(line))
+    depth, fs, fe = 0, getattr(tokenize, "FSTRING_START", None), getattr(tokenize, "FSTRING_END", None)
+    for t in tokenize.generate_tokens(StringIO(src).readline):
+        if fs is not None and t.type == fs:
+            depth += 1
+            if depth == 1:
+                start, line = t.start, t.line
+        elif depth:
+            if t.type == fe:
+                depth -= 1
+                if not depth:
+                    text = src[off[start[0] - 1] + start[1]:off[t.end[0] - 1] + t.end[1]]
+                    yield tokenize.TokenInfo(tokenize.STRING, text, start, t.end, line)
+        else:
+            yield t
+
+
 def code_id():
-    """The identity of the octreg code this process imports: the first 12 hex digits of the sha256 of the octreg/*.py
-    sources, line ends normalised. A bench run writes it to code.txt when it has finished."""
+    """Identity of the imported octreg code: the sha256 of its tokens without comments and docstrings, 12 hex digits."""
     h = hashlib.sha256()
     for f in sorted(Path(octreg.__file__).parent.glob("*.py")):
-        h.update(f.name.encode() + b"\0" + f.read_bytes().replace(b"\r\n", b"\n") + b"\0")
+        src = f.read_text(encoding="utf-8")
+        docs = {(n.body[0].value.lineno, n.body[0].value.col_offset) for n in ast.walk(ast.parse(src))
+                if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.body
+                and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)
+                and isinstance(n.body[0].value.value, str)}
+        toks, skip = [], False
+        for t in _tokens(src):
+            if t.type == tokenize.STRING and (t.start[0], len(t.line[:t.start[1]].encode())) in docs:   # ast counts bytes
+                skip = True
+            elif not (t.type in (tokenize.COMMENT, tokenize.NL) or skip and t.type == tokenize.NEWLINE):
+                toks.append(t.string)
+                skip = False
+        h.update(f.name.encode() + b"\0" + "\x1f".join(toks).encode() + b"\0")
     return h.hexdigest()[:12]
 
 
 def made_by(out):
-    """The code_id in out/code.txt of a finished bench run (with a complete result.json), else None."""
+    """code_id in out/code.txt if out holds a finished run with a complete result.json, else None."""
     try:
         res = json.loads((Path(out) / "result.json").read_text(encoding="utf-8"))
         return (Path(out) / "code.txt").read_text(encoding="utf-8").strip() if "seconds" in res else None

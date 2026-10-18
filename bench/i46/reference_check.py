@@ -1,42 +1,16 @@
 #!/usr/bin/env python3
-"""Checks of the I46 reference (bench/i46/README.md, Reference), from the download of bench/i46/fetch.sh and the inputs of
-bench/i46/prepare.py. -> bench/results/I46/reference_check.json
+"""Checks of the I46 reference R (bench/i46/README.md), on the inputs of prepare.py -> bench/results/I46/reference_check.json.
 
-lattice  The centres of the 16 lattices of the authors' OCT -> LSFM fields (svf.08 ... svf.23, affine applied to (shape -
-         1) / 2) on the depth axis of common.authors_oct_header (-ax[:, 2] of svf.08): the 15 steps between consecutive
-         slabs, against 33 planes of 12 um, and the signed offset along that axis of their mean, which places the rebuilt
-         header, from the mean of equal steps started from the first slab and from the last.
-frame    The authors' OCT header (common.authors_oct_header) leaves discrete choices open: the sign of the depth axis, the
-         OCT slab of 33 planes that is LSFM slab 08 (every placement of the 16 LSFM slabs within the 19 OCT slabs, and one
-         slab beyond either end), which LSFM lattice axis runs along TIFF y and which along TIFF x, and the signs of those
-         two: 96 headers. Each places the OCT on the MRI through the authors' affine (recon2raw A M) and is scored by
-           correlation   the Pearson correlation of the OCT intensity with each FLASH image (trilinear) over 120,000 random
-                         96 um blocks of the OCT (8 x 8 x 8 voxels) at least 90 % non-zero, each OCT plane divided by the
-                         median of its non-zero voxels first, as the OCT intensity falls with depth and changes by section
-           vessel share  the share of 100,000 random OCT vessel voxels (ves_seg) within 0.15 mm of an MRI vessel label
-         Reported: both for every header, the correlations of the header of common.py against the highest of the headers of
-         another orientation (depth sign, axis order or an axis sign differs, any slab), its vessel share against the
-         highest of all other headers, and both for the headers that differ from it only in the slab.
-labels   The label-only fit of labelfit.py from the reference R, on the MRI vessel labels (value 255) in their bounding box
-         1 mm wider on every face: S9 with c from 0.6 to 0.15 mm, then A12 from the S9 fit with c 0.25 and 0.15 mm. Both are
-         compared with R as in common.error, over the OCT tissue points, and by thirds of the OCT depth (planes 0..208,
-         209..417 and 418..626). Split halves: the connected components of the MRI labels, or of the OCT points, split at
-         random into two halves (numpy default_rng(100 + k), k = 0..9), each half fitted from the full fit with the same
-         settings. The spread of a split is the mean distance between the two halves' fits over the tissue points. Both fits
-         are stored (T_oct2mri, the test's OCT world -> MRI world).
-search   The global search of labelfit.py, with no transform of the authors: 20,000 rotations of both handednesses, the three
-         highest correlation peaks of each, then the 40 best candidates that lie at least 1.5 mm apart (mean distance over
-         every 400th tissue point) fitted with S9 (c from 1.2 to 0.15 mm) and A12. The lowest S9 energy among the plausible
-         fits wins and is fitted again as in labels. Reported: its distance from the fits started from R, the energy of the
-         next distinct solution (the lowest more than 1.5 mm away) and of the best one of the other handedness, and the run
-         time, about an hour on 12 processes.
-vessels  The vessel check of common.vessel_score at R and at R shifted in the MRI world by 0.5 and 1 mm along 12 random
-         directions (numpy default_rng(5)), the mean over the directions.
+lattice  the steps between the 16 lattice centres of the authors' OCT -> LSFM fields, against 33 planes of 12 um
+frame    the 96 choices of the rebuilt OCT header (depth sign, slab, order and signs of the plane axes), each scored by
+         the correlation of the OCT with each FLASH image and the share of OCT vessels within 0.15 mm of an MRI vessel label
+labels   the label-only fits S9 and A12 of labelfit.py from R, compared with R, by thirds of the depth and on split halves
+search   the global search of labelfit.py with no transform of the authors, about an hour on 12 processes
+vessels  the vessel check of common.vessel_score at R and at R shifted by 0.5 and 1 mm in 12 random directions
 
     python bench/i46/reference_check.py [--jobs N] [--only STAGE ...]
 
---only runs the named stages (lattice, frame, labels, search, vessels) and keeps the others from an existing
-reference_check.json.
+--only runs the named stages and keeps the others from an existing reference_check.json.
 """
 from __future__ import annotations
 
@@ -58,7 +32,7 @@ from common import (AUTHORS, FLIPS, LABELS, OCT_TIFF, RESULTS, SPACING, TIFF_SHA
                     authors_oct_header, error, lta_matrix, mri_file, reference, tissue, vessel_score)
 
 SLAB = 33                                   # OCT planes per 500 um section
-DS = 8                                      # OCT blocks of the correlation, voxels per axis
+DS = 8                                      # OCT voxels per block and axis for the correlation
 OCT_BLOCKS, VESSEL_VOXELS = 120_000, 100_000
 NEAR_VESSEL = 0.15                          # mm
 LABEL_BOX = 1.0                             # mm around the MRI vessel labels
@@ -84,8 +58,6 @@ def compare(T, R):
     return {k: e[k] for k in ("mean_mm", "median_mm", "p95_mm", "max_mm", "rotation_deg")}
 
 
-# frame ---------------------------------------------------------------------------------------------------------------------
-
 @lru_cache(None)
 def lattices():
     """The mean of the 16 lattice centres of the authors' OCT -> LSFM fields and the unit axes of the lattice of svf.08."""
@@ -99,7 +71,7 @@ def lattices():
 
 
 def lattice_steps():
-    """The lattice stage of the module docstring."""
+    """Steps between consecutive slab centres along the depth axis, and the offset of their mean from equal steps."""
     centres, ax = [], None
     for i in range(8, 24):
         img = nib.load(str(AUTHORS / f"oct2lsfm/svf.{i:02d}.nii.gz"))
@@ -115,9 +87,8 @@ def lattice_steps():
 
 
 def oct_header(depth_sign, slab08, swap, sign_y, sign_x):
-    """The authors' OCT header (TIFF index (plane, y, x) -> their OCT world) for one choice, built as common.authors_oct_header,
-    whose header is CHOSEN: LSFM slab i lies at OCT slab slab08 + depth_sign (i - 8), TIFF y runs along sign_y times lattice
-    axis 1 (axis 0 if not swap) and TIFF x along sign_x times lattice axis 0 (axis 1 if not swap)."""
+    """The authors' OCT header for one choice, built like common.authors_oct_header, which is the choice CHOSEN.
+    LSFM slab i lies at OCT slab slab08 + depth_sign (i - 8). swap puts lattice axis 1 along TIFF y and axis 0 along TIFF x."""
     centre, ax = lattices()
     ey, ex = (ax[:, 1], ax[:, 0]) if swap else (ax[:, 0], ax[:, 1])
     M = np.eye(4)
@@ -139,8 +110,7 @@ def headers():
 
 
 def oct_blocks():
-    """OCT_BLOCKS random blocks of DS^3 OCT voxels at least 90 % non-zero: TIFF index of their centres and their mean, each
-    plane divided by the median of its non-zero voxels."""
+    """OCT_BLOCKS random DS^3 OCT blocks at least 90 % non-zero: TIFF index of their centres and their mean intensity."""
     import tifffile
     n = np.array(TIFF_SHAPE) // DS
     val, frac = np.zeros(n), np.zeros(n)
@@ -149,7 +119,7 @@ def oct_blocks():
             a = np.stack([tf.pages[z].asarray()[:n[1] * DS, :n[2] * DS] for z in range(b * DS, (b + 1) * DS)]).astype(float)
             nz = a > 0
             med = np.array([np.median(p[m]) if m.sum() > 1000 else 1.0 for p, m in zip(a, nz)])
-            a /= med[:, None, None]
+            a /= med[:, None, None]                 # the OCT intensity falls with depth and changes by section
             val[b] = a.reshape(DS, n[1], DS, n[2], DS).mean((0, 2, 4))
             frac[b] = nz.reshape(DS, n[1], DS, n[2], DS).mean((0, 2, 4))
     idx = np.argwhere(frac > 0.9)
@@ -224,11 +194,8 @@ def frame_check(box, box_aff):
     return out
 
 
-# label fit ----------------------------------------------------------------------------------------------------------------
-
 def label_box():
-    """The MRI vessel labels (value 255) in their bounding box, LABEL_BOX wider on every face, and its voxel -> world affine
-    (the flip-1 header)."""
+    """The MRI vessel labels in their bounding box, LABEL_BOX wider on every face, its voxel -> flip-1 world affine, lo, hi."""
     A = nib.load(str(mri_file("flip1"))).affine
     lab = np.asarray(nib.load(str(LABELS["vessels"])).dataobj) == 255
     v = np.argwhere(lab)
@@ -260,7 +227,6 @@ def _fit(job):
 
 
 def _refine(job):
-    """A search candidate: S9 from the start, then A12 from the S9 fit."""
     key, T0 = job
     Ts, ds = lf.fit(G["P"], T0, "S9", cs=lf.C_START)
     Ta, da = lf.fit(G["P"], Ts, "A12", cs=lf.C_A12)
@@ -295,7 +261,6 @@ def energy_info(info):
 
 
 def reference_fits(pool, R):
-    """S9 from R, then A12 from the S9 fit, as in the module docstring."""
     (_, Ts, ds), = pool.map(_fit, [("S9", R, "S9", lf.C_LOCAL, None, None)])
     (_, Ta, da), = pool.map(_fit, [("A12", Ts, "A12", lf.C_A12, None, None)])
     print(f"labels: S9 {compare(Ts, R)}, A12 {compare(Ta, R)}", flush=True)
@@ -333,11 +298,9 @@ def _energy(T):
 
 
 def _count():
-    """The number of connected components of the MRI labels and of the OCT points, plus one (label 0)."""
+    """The number of components of the MRI labels and of the OCT points, plus one for label 0."""
     return int(G["P"].mlab.max()) + 1, int(G["P"].olab.max()) + 1
 
-
-# global search ------------------------------------------------------------------------------------------------------------
 
 def search(pool, data, Ts, Ta):
     t0 = time.time()
@@ -388,8 +351,6 @@ def search(pool, data, Ts, Ta):
           f"next {out['next_distinct']}, other handedness {out['best_other_handedness']}, {out['seconds']} s", flush=True)
     return out
 
-
-# vessels ------------------------------------------------------------------------------------------------------------------
 
 def vessel_shifts(R):
     U = np.random.default_rng(5).normal(size=(DIRECTIONS, 3))

@@ -6,9 +6,9 @@
    0.9929,
    0.9421
   ],
-  "vessel_n": 2955,
-  "vessel_mean_mm": 0.1304,
-  "vessel_median_mm": 0.1012
+  "vessel_n": 2952,
+  "vessel_mean_mm": 0.1299,
+  "vessel_median_mm": 0.0998
  },
  "tissue_points": 843465,
  "grey_white_cnr": {

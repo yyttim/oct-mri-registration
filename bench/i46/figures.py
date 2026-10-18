@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
-"""freeview panels of the I46 test (bench/i46/README.md, Pictures), made like the I58 panels of bench/figures.py, into
--o/enface (default docs/figures/i46/enface).
+"""freeview panels of the I46 test (bench/i46/README.md, Pictures), made like the I58 panels of bench/figures.py.
 
-The panels show the C3 crop of the 10 deg FLASH with the lower median distance from the reference under octreg among
-k = 0..9 (bench/results/I46/octreg.json, or --scores) on OCT planes ENFACE_PLANES of the released 12 um OCT that octreg
-receives, at one screen pixel per two OCT voxels: the OCT alone (<crop>_p<plane>_oct.png), with the line placed through the
-reference and through octreg (<crop>_p<plane>_oct_line_<tag>.png), and the MRI crop placed through each
-(<crop>_p<plane>_mri_<tag>.png). On plane TOOL_PLANE also the line through each standard tool with a transform, at its
-documented setting (--baselines) and with its own search (--search). The red line is the white-matter boundary of the
-authors' manual MRI layer labels, made a surface by FreeSurfer's mri_mc and mris_smooth -n 3 -nw. lta_convert writes each
-transform as an LTA, and freeview moves the surface (:reg=) and resamples the MRI (nearest neighbour) through it. Grey levels
-are linear, at freeview's default windows (bench.figures.freeview_window). figures.json in -o holds, for each plane, the
-windows, the plane size and the tags whose line does not cross the plane inside the OCT field of view (no_line).
-
-Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
+The crop is the C3 crop of the 10 deg FLASH at the lower median distance from R under octreg (--scores, default
+bench/results/I46/octreg.json). On OCT planes 102, 300 and 498 the panels show the OCT, the OCT with the white-matter boundary
+placed through R and octreg, and the MRI crop placed through each. Plane 300 also has the boundary through each standard tool
+(--baselines, --search). The panels go to -o/enface and figures.json to -o. Needs FreeSurfer 8.2 with its licence (in WSL on
+Windows).
 
     python bench/i46/figures.py [-o docs/figures/i46] [--octreg RUNS] [--baselines DIR] [--search DIR] [--scores FILE]
 """
@@ -34,9 +26,9 @@ from common import (INPUTS, LABELS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, WO
                     reference)
 from bench.figures import WSL, freeview_window, host_path, view  # noqa: E402
 
-ENFACE_PLANES = (102, 300, 498)                 # OCT planes: the fourth plane of sections 3, 9 and 15
-TOOL_PLANE = 300                                # the plane with the lines of the standard tools
-INFO = {}                                       # figures.json: enface/<crop>_p<plane> -> what its panels are drawn with
+ENFACE_PLANES = (102, 300, 498)                 # the fourth plane of sections 3, 9 and 15
+TOOL_PLANE = 300
+INFO = {}                                       # figures.json: enface/<crop>_p<plane> -> windows, plane size, no_line
 
 
 def tkr(img):
@@ -47,8 +39,7 @@ def tkr(img):
 
 
 def crosses(surf, m, T, o, plane):
-    """Whether the boundary surface (made on the crop grid m), placed in the OCT world by T, crosses OCT plane `plane` inside
-    the OCT field of view."""
+    """Whether the surface made on the crop grid m, placed by T, crosses OCT plane `plane` inside the OCT field of view."""
     v, f = nib.freesurfer.read_geometry(str(surf))
     v = (np.linalg.inv(o.affine) @ np.linalg.inv(T) @ m.affine @ np.linalg.inv(tkr(m)) @ np.c_[v, np.ones(len(v))].T)[:3].T
     z, xy = v[f, 2], v[f, :2].mean(1)
@@ -57,8 +48,8 @@ def crosses(surf, m, T, o, plane):
 
 
 def enface(crop, main, tools, wm, out_dir, prefix, work):
-    """The panels of the module docstring: main {tag: 4 x 4 OCT world -> MRI world} on every plane of ENFACE_PLANES with the
-    MRI panels, tools {tag: 4 x 4} as lines on TOOL_PLANE, wm the white-matter label on the crop grid. -> the panel files"""
+    """Draw the panels and return their files: main on every plane with MRI panels, tools as lines on TOOL_PLANE only.
+    main, tools: {tag: 4 x 4 OCT world -> MRI world}. wm: the white-matter label on the crop grid."""
     out_dir.mkdir(parents=True, exist_ok=True)
     work.mkdir(parents=True, exist_ok=True)
     m, o = nib.load(str(crop)), nib.load(str(OCT))
@@ -66,7 +57,7 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
     hdr = m.header.copy()
     hdr.set_data_dtype(np.uint8)
     nib.save(nib.Nifti1Image(np.asarray(wm, np.uint8), m.affine, hdr), str(work / "boundary.nii.gz"))
-    for tag, T in transforms.items():               # lta_convert reads NiftyReg's direction, here MRI world -> OCT world
+    for tag, T in transforms.items():               # lta_convert --inniftyreg reads MRI world -> OCT world
         np.savetxt(work / f"{tag}_niftyreg.txt", np.linalg.inv(np.asarray(T, float)), fmt="%.10f")
     go, gm = freeview_window(OCT), freeview_window(crop)      # freeview's defaults, explicit so no remembered window wins
     ss = lambda name: f"-ss {host_path(out_dir / name)} 1 0"

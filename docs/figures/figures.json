@@ -11,11 +11,11 @@
  ],
  "planes_through_ras_mm": [
   1.7515,
-  0.3752,
+  0.2952,
   22.1768
  ],
  "mri_tissue": {
-  "threshold": 0.546812,
-  "volume_cm3": 13.5193
+  "threshold": 0.549359,
+  "volume_cm3": 13.3279
  }
 }

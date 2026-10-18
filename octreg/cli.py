@@ -1,9 +1,4 @@
-"""Command line.
-
-    octreg register OCT MRI -o OUT [--oct-spacing-um Z,Y,X] [--oct-mask F] [--mri-mask F] [--device cuda|cpu] [--params F]
-                    [--no-deform]
-    octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--affine-only] [--oct-spacing-um Z,Y,X]
-"""
+"""Command line: `octreg register` and `octreg apply`."""
 from __future__ import annotations
 
 import argparse
@@ -23,7 +18,7 @@ def _zyx(text):
 
 
 def main(argv=None) -> int:
-    """Run a subcommand (argv default sys.argv[1:]). -> exit code: 0 done, 2 input refused (ValueError, message on stderr)."""
+    """Run a subcommand. -> exit code: 0 done, 2 input refused with the message on stderr."""
     ap = argparse.ArgumentParser(prog="octreg", description="Label-free registration of an OCT block to an MRI crop: an affine and a "
                                  "small smooth deformation on top.")
     sub = ap.add_subparsers(dest="command", required=True)

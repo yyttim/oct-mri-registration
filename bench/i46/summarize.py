@@ -9,8 +9,6 @@ inputs of bench/i46/prepare.py.
     baselines_mask.json, baselines_near.json    the tools with the test's specimen mask as moving mask, and from a start near R
     ablation.json, starts.json                  analyses.py collect
     reference_check.json, context.json          the reference and the contrast of the images
-
-The distances come from common.error.
 """
 from __future__ import annotations
 
@@ -62,7 +60,6 @@ def para(text):
 
 
 def trim(lines):
-    """lines without the empty lines at their end"""
     while lines and lines[-1] == "":
         lines = lines[:-1]
     return lines
@@ -135,13 +132,18 @@ def octreg_section(rows):
         f"{rng(sc[:, 0], 3)}, "
         f"{rng(sc[:, 1], 3)} and {rng(sc[:, 2], 3)}, and that of R "
         f"{', '.join(f'{x:.3f}' for x in np.linalg.norm(reference()[:3, :3], axis=0))}.")
-    dv = [x["deform"] for x in near if x["deform"] and x["deform"]["field_median_mm"] is not None]
+    def vessels(runs):
+        dv = [x["deform"] for x in runs if x["deform"] and x["deform"]["field_median_mm"] is not None]
+        return (len(dv), sum(v["field_median_mm"] < v["affine_median_mm"] for v in dv),
+                fmt(med([v["affine_median_mm"] for v in dv]), 3), fmt(med([v["field_median_mm"] for v in dv]), 3))
+    n, lower, a, f = vessels(near)
+    nm, lower_m, am, fm = vessels([x for x in rows if x["oct_mask"] and x["mean_mm"] <= TIERS[1]])
     out += para(
         "The deformation of §5, scored by the vessel check on the labels that the affine and the affine with the field both "
-        f"place inside (common.vessel_field), over the {len(dv)} of those runs with at least 50 such labels: the "
-        f"median distance is lower with the field on {sum(v['field_median_mm'] < v['affine_median_mm'] for v in dv)} of them, "
-        f"median over the runs {fmt(med([v['affine_median_mm'] for v in dv]), 3)} mm through the affine and "
-        f"{fmt(med([v['field_median_mm'] for v in dv]), 3)} mm with the field.")
+        f"place inside (common.vessel_field), over the {n} of those runs with at least 50 such labels: the median distance "
+        f"is lower with the field on {lower} of them, median over the runs {a} mm through the affine and {f} mm with the "
+        f"field. Over the {nm} runs with the test's specimen mask as --oct-mask it is lower on {lower_m}, {am} mm through "
+        f"the affine and {fm} mm with the field.")
     return trim(out)
 
 
@@ -291,7 +293,8 @@ def ablation_section(abl, rows):
         "bench/ablate.py: the method with one change, on the C3 crops of the 10° FLASH, on the released OCT with octreg's own "
         "masks as in the main runs (analyses.py). The difference is the variant's distance from R minus the method's on the "
         "same crop. The variants of the outline and of the deformation are shown on I58 (bench/README.md). The vessel column "
-        "gives the median distance of the MRI vessel labels to the nearest OCT vessel through the affine (common.vessel_score), "
+        "gives the median distance of the MRI vessel labels to the nearest OCT vessel through the affine "
+        "(common.vessel_score), "
         "median over the crops.")
     out += ["| variant | change | <= 1 mm | distance from R, median (range) (mm) | difference, median (range) (mm) "
             "| vessels (mm) |", "|---|---|---|---|---|---|"]

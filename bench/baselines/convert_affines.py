@@ -1,20 +1,8 @@
-"""Transform-file conventions of the baseline tools, converted to one common object:
-a 4x4 matrix T that maps MOVING-image world coordinates to FIXED-image world coordinates,
-both in NIfTI RAS mm (nibabel's img.affine convention).
+"""Transform files of the baseline tools as one 4x4 matrix T: moving world -> fixed world, NIfTI RAS mm.
+The conventions follow ITK ComputeOffset, the ANTs wiki, the reg_aladin usage text, the FLIRT FAQ with fslpy, FreeSurfer
+include/transform.h and the greedy reference docs.
 
-Sources for each convention (quoted in the function docstrings):
-  ITK/ANTs  : itkMatrixOffsetTransformBase.hxx ComputeOffset(): offset = t + c - M c, GetFixedParameters() = center.
-              ITK is LPS (Slicer coordinate-systems page). ANTs wiki: "forward warps ... transform points from fixed to
-              moving space". lta_convert: "--initk ... ITK transform (inverse LPS2LPS)", inverse = target->source.
-  elastix   : same ITK affine (TransformParameters = 9 matrix entries then translation, CenterOfRotationPoint in world mm).
-  NiftyReg  : reg_aladin/reg_f3d usage "(Affine*Reference=Floating)". lta_convert "--inniftyreg ... (inverse RAS2RAS)".
-  FSL FLIRT : FLIRT FAQ: scaled-mm coordinates, x -> N-1-x when det(sform) > 0. fslpy fsl.transform.flirt:
-              src voxels -> src scaled voxels -> ref scaled voxels (the FLIRT matrix) -> ref voxels -> ref world.
-  FreeSurfer: mri_robust_register "--lta ... transform from mov to dst", "--vox2vox ... (default is RAS2RAS)".
-              include/transform.h: LINEAR_RAS_TO_RAS 1. A VOX2VOX LTA (mri_coreg) goes through lta_convert first.
-  greedy    : reference docs: matrix "maps voxels in fixed image space to voxels in moving image space" via ras().
-
-Command line:  python bench/baselines/convert_affines.py scale-header in.nii.gz out.nii.gz 10
+    python bench/baselines/convert_affines.py scale-header in.nii.gz out.nii.gz 10
 """
 import re
 import sys
@@ -22,7 +10,7 @@ import sys
 import numpy as np
 import nibabel as nib
 
-D_LPS_RAS = np.diag([-1.0, -1.0, 1.0, 1.0])  # LPS <-> RAS, its own inverse
+D_LPS_RAS = np.diag([-1.0, -1.0, 1.0, 1.0])  # its own inverse
 
 
 def _homog(M, t):
@@ -32,10 +20,9 @@ def _homog(M, t):
     return A
 
 
-# ----------------------------------------------------------------------------------------------- ITK / ANTs / elastix
 def itk_affine_fixed2moving_lps(params, center):
-    """ITK MatrixOffsetTransformBase: y = M x + offset with offset = t + c - M c  (ComputeOffset in the .hxx).
-    params = 9 matrix entries row-major then 3 translations, center = FixedParameters.  Maps fixed -> moving, LPS mm."""
+    """An ITK affine (MatrixOffsetTransformBase) as a 4x4 map fixed -> moving in LPS mm.
+    params: 9 matrix entries row-major then 3 translations. center: the FixedParameters."""
     p = np.asarray(params, float)
     M = p[:9].reshape(3, 3)
     t = p[9:12]
@@ -44,15 +31,14 @@ def itk_affine_fixed2moving_lps(params, center):
 
 
 def lps_to_ras_matrix(A_lps):
-    """Conjugate a point map by the LPS->RAS axis flip: A_ras = D A_lps D."""
     return D_LPS_RAS @ A_lps @ D_LPS_RAS
 
 
 def ants_mat_to_mov2fix_ras(path):
-    """ANTs *0GenericAffine.mat (ITK MATLAB-v4 transform file).  Returns T (moving world -> fixed world, RAS)."""
+    """T from an ANTs *0GenericAffine.mat, an ITK transform in MATLAB format."""
     from scipy.io import loadmat
     d = loadmat(path)
-    key = [k for k in d if k.startswith("AffineTransform")][0]  # e.g. AffineTransform_double_3_3 / _float_3_3
+    key = [k for k in d if k.startswith("AffineTransform")][0]  # AffineTransform_double_3_3 or _float_3_3
     params = np.asarray(d[key], float).ravel()
     center = np.asarray(d["fixed"], float).ravel()
     A_fm_ras = lps_to_ras_matrix(itk_affine_fixed2moving_lps(params, center))
@@ -60,7 +46,7 @@ def ants_mat_to_mov2fix_ras(path):
 
 
 def _euler3d_matrix(rx, ry, rz, compute_zyx=False):
-    """itk::Euler3DTransform::ComputeMatrix: Rz*Ry*Rx if ComputeZYX else Rz*Rx*Ry (ITK default ComputeZYX = false)."""
+    """The rotation of itk::Euler3DTransform, Rz Rx Ry by default."""
     cx, sx, cy, sy, cz, sz = np.cos(rx), np.sin(rx), np.cos(ry), np.sin(ry), np.cos(rz), np.sin(rz)
     Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
     Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
@@ -74,9 +60,7 @@ def _elastix_param(txt, name):
 
 
 def elastix_tp_fixed2moving_lps(path):
-    """One TransformParameters.N.txt (AffineTransform or EulerTransform), following InitialTransformParameterFileName.
-    elastix composes T(x) = T_last(... T_initial(x)), so the homogeneous product is A_last @ ... @ A_initial.
-    Returns fixed -> moving in LPS mm (elastix works in ITK physical coordinates)."""
+    """An affine or Euler elastix TransformParameters file with its initial transforms, as a map fixed -> moving in LPS mm."""
     txt = open(path).read()
     kind = _elastix_param(txt, "Transform")[0]
     p = np.array(_elastix_param(txt, "TransformParameters"), float)
@@ -91,7 +75,7 @@ def elastix_tp_fixed2moving_lps(path):
         raise ValueError("not an affine or Euler elastix transform: " + kind)
     init = _elastix_param(txt, "InitialTransformParameterFileName")
     if init and init[0] not in ("NoInitialTransform", ""):
-        A = A @ elastix_tp_fixed2moving_lps(init[0])
+        A = A @ elastix_tp_fixed2moving_lps(init[0])  # elastix applies the initial transform first
     return A
 
 
@@ -99,21 +83,18 @@ def elastix_tp_to_mov2fix_ras(path):
     return np.linalg.inv(lps_to_ras_matrix(elastix_tp_fixed2moving_lps(path)))
 
 
-# ----------------------------------------------------------------------------------------------- NiftyReg / greedy
 def niftyreg_txt_to_mov2fix_ras(path):
-    """reg_aladin -aff text: 4x4, NIfTI world (RAS) mm, reference -> floating ("Affine*Reference=Floating")."""
+    """T from a reg_aladin -aff file, which maps reference to floating in RAS mm."""
     return np.linalg.inv(np.loadtxt(path))
 
 
 def greedy_mat_to_mov2fix_ras(path):
-    """greedy -a -o: 4x4, fixed -> moving in RAS physical coordinates (greedy reference docs)."""
+    """T from a greedy -a -o file, which maps fixed to moving in RAS mm."""
     return np.linalg.inv(np.loadtxt(path))
 
 
-# ----------------------------------------------------------------------------------------------- FSL FLIRT
 def fsl_scaled_voxel_matrix(img):
-    """voxel index -> FSL scaled-voxel (mm) coordinates: flip x -> N-1-x when det(voxel->mm) > 0, then scale by pixdim
-    (FLIRT FAQ 'What is the format of the matrix used by FLIRT', fslpy 'fsl' coordinate system)."""
+    """Voxel index -> FSL scaled-voxel coordinates in mm, as in the FLIRT FAQ."""
     pix = np.asarray(img.header.get_zooms()[:3], float)
     S = np.diag([pix[0], pix[1], pix[2], 1.0])
     if np.linalg.det(img.affine[:3, :3]) > 0:
@@ -125,16 +106,14 @@ def fsl_scaled_voxel_matrix(img):
 
 
 def flirt_mat_to_mov2fix_world(mat_path, src_img, ref_img):
-    """FLIRT -omat maps src scaled-voxel -> ref scaled-voxel.  Chain (fslpy flirtMatrixToSform):
-    src world -> src voxel -> src scaled -> ref scaled -> ref voxel -> ref world."""
+    """T from a FLIRT -omat matrix, which maps source scaled voxels to reference scaled voxels."""
     M = np.loadtxt(mat_path)
     SFs, SFr = fsl_scaled_voxel_matrix(src_img), fsl_scaled_voxel_matrix(ref_img)
     return ref_img.affine @ np.linalg.inv(SFr) @ M @ SFs @ np.linalg.inv(src_img.affine)
 
 
-# ----------------------------------------------------------------------------------------------- FreeSurfer LTA
 def lta_to_mov2fix_ras(path):
-    """LTA 'type = 1' LINEAR_RAS_TO_RAS: the matrix maps src (mov) RAS -> dst RAS."""
+    """T from an LTA of type 1, LINEAR_RAS_TO_RAS, which maps src to dst."""
     txt = open(path).read()
     t = int(re.search(r'^\s*type\s*=\s*(\d+)', txt, re.M).group(1))
     if t != 1:
@@ -143,10 +122,9 @@ def lta_to_mov2fix_ras(path):
     return np.array([[float(v) for v in l.split()] for l in m.group(1).strip().splitlines()])
 
 
-# ----------------------------------------------------------------------------------------------- header scaling
 def scale_header(img, s):
-    """Multiply the voxel->world map by s about the world origin (A' = S A, S = diag(s,s,s,1)), voxel data unchanged.
-    For tools whose internal scales are in mm (FLIRT's 8/4/2/1 mm schedule, SynthMorph's 1-mm 256-voxel space)."""
+    """The image with its voxel -> world map scaled by s about the world origin, voxel data unchanged.
+    For tools whose schedule is in mm, as FLIRT's."""
     S = np.diag([s, s, s, 1.0])
     A = S @ img.affine
     out = nib.Nifti1Image(np.asanyarray(img.dataobj), A, img.header)
@@ -157,8 +135,7 @@ def scale_header(img, s):
 
 
 def unscale_world_transform(T_scaled, s):
-    """If both headers were scaled by S and T' maps scaled moving world -> scaled fixed world, then T' = S T S^-1,
-    so T = S^-1 T' S maps the original worlds."""
+    """The transform between the original worlds from one between headers both scaled by s."""
     S = np.diag([s, s, s, 1.0])
     return np.linalg.inv(S) @ T_scaled @ S
 

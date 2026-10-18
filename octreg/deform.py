@@ -1,11 +1,5 @@
 """Smooth deformation (docs/METHOD.md §5): a displacement d on top of the affine T, fitted to F under a strain bound.
-
-The OCT point x goes to y = T x + d(T x), d in mm along the MRI world axes, trilinear on a lattice of spacing Params.df_grid_mm
-over the MRI grid (two spacings of margin). F is that of §2, over the same OCT points, their gradients carried through the
-field to first order (features.score). Minimised by L-BFGS: -F + STRAIN_WEIGHT
-sum max(0, |dc| / df_grid_mm - df_max_strain)^2 over the components dc of the first differences of the lattice along its axes.
-Output: the pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), so the registered OCT at the MRI point x is
-OCT(T^-1 (x + u(x))).
+The OCT point x goes to T x + d(T x). The output is the pull-back field u, x + u(x) = (id + d)^-1(x), on the MRI base grid.
 """
 from __future__ import annotations
 
@@ -18,14 +12,14 @@ from . import geometry as G
 from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
 
-STRAIN_WEIGHT = 1e3       # weight of the strain hinge (a soft form of the bound)
+STRAIN_WEIGHT = 1e3       # weight of the strain hinge, a soft form of the bound
 INVERSE_ITERS = 20        # fixed-point iterations of the pull-back field
 HISTORY = 10              # L-BFGS memory
 
 
 class _Trilinear(torch.autograd.Function):
-    """d = sum over the 8 lattice corners of w c[:, idx]. Its gradient is a segment sum over the corners sorted by node,
-    which is deterministic on the GPU (an atomic scatter, as in the backward pass of grid_sample, is not)."""
+    """d = sum over the 8 lattice corners of w c[:, idx], with a segment-sum gradient.
+    The segment sum is deterministic on the GPU, the atomic scatter of the grid_sample backward is not."""
 
     @staticmethod
     def forward(ctx, c, idx, w):
@@ -43,8 +37,7 @@ class _Trilinear(torch.autograd.Function):
 
 
 class LatticeField(torch.nn.Module):
-    """Displacement d(y) (mm, MRI world axes) at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi
-    (constant beyond it)."""
+    """Displacement d(y) in mm at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi, constant beyond."""
 
     def __init__(self, lo, hi, h, device):
         super().__init__()
@@ -72,7 +65,7 @@ class LatticeField(torch.nn.Module):
 
 
 def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
-    """mri = (arr, foreground, affine), oct = (arr, specimen mask, affine) on the base grids, T the affine.
+    """Fit the smooth deformation on top of the affine T. mri, oct: (arr, mask, affine) on the base grids.
     -> (pull-back field u numpy [3, D, H, W] on the MRI base grid, info)."""
     P = params
     (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct
@@ -110,7 +103,7 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     with torch.no_grad():
         u = np.zeros((3,) + shape, np.float32)
         ijk = torch.stack(torch.meshgrid(*[torch.arange(n, device=device, dtype=torch.float32) for n in shape[1:]], indexing="ij"), -1)
-        for i in range(shape[0]):                                    # plane by plane: memory independent of the grid
+        for i in range(shape[0]):                                    # plane by plane to bound memory
             p = torch.cat([torch.full_like(ijk[..., :1], float(i)), ijk], -1).reshape(-1, 3)
             x = G.apply_affine(torch.tensor(np.asarray(A_M, float), dtype=torch.float32, device=device), p)
             z = x.clone()

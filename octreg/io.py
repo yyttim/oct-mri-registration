@@ -1,11 +1,6 @@
 """Volumes in their file frames, read plane by plane, and the output writers.
-
-An affine maps voxel index (i, j, k) -> world mm, and a transform T is a 4x4 world -> world matrix (mm).
-Volume axes follow the file's storage order so that the last axis k is always the plane axis the file is streamed along:
-NIfTI (i, j, k) as in the header, TIFF and NPY (x, y, z), the numpy axes (z, y, x) reversed (the ITK / SimpleITK index order).
-NIfTI world = sform, else qform (frame 'header'), else diag(pixdim) when neither is coded (frame 'array').
-TIFF / OME-TIFF / NPY world = diag(spacing_x, spacing_y, spacing_z) (frame 'array'), the physical frame ITK gives such files.
-"""
+Axes follow the storage order with the plane axis last: NIfTI (i, j, k), TIFF and NPY (x, y, z), the numpy axes reversed.
+World: NIfTI sform, else qform, else diag(pixdim). TIFF and NPY diag(spacing), the physical frame ITK gives them."""
 from __future__ import annotations
 
 import dataclasses
@@ -22,8 +17,8 @@ UNIT_MM = {"nm": 1e-6, "um": 1e-3, "µm": 1e-3, "μm": 1e-3, "micron": 1e-3, "mm
 
 @dataclasses.dataclass(eq=False)
 class Volume:
-    """A 3-D image on disk (header only, voxels are read with iter_planes). shape: voxels along (i, j, k). affine: 4x4
-    voxel -> world mm. spacing_mm: voxel edges along (i, j, k), the affine column norms. frame: 'header' | 'array'."""
+    """A 3-D image on disk, header only, its voxels read with iter_planes.
+    shape and spacing_mm along (i, j, k), affine 4x4 voxel -> world mm, frame 'header' (NIfTI sform or qform) or 'array'."""
     path: str
     shape: tuple
     affine: np.ndarray
@@ -48,13 +43,9 @@ def _shape3(path, shape, trailing_ok) -> tuple:
 
 
 def load_volume(path, spacing_um=None) -> Volume:
-    """Open a 3-D image without reading voxels.
-
-    spacing_um: (z, y, x) um, i.e. along (k, j, i) (numpy order for TIFF / NPY, the CLI's Z,Y,X), overrides every other
-    source (a NIfTI header keeps its directions and origin). Otherwise NIfTI: sform / qform / pixdim in the header's length
-    unit ('unknown' = mm). OME-TIFF: PhysicalSize X / Y / Z (unit absent = um). Plain TIFF / NPY need spacing_um.
-    Numpy axes are (z, y, x) unless the TIFF series names them.
-    Raises ValueError for a missing file, an unsupported format, a non-3-D image, missing spacing or a singular affine."""
+    """Open a 3-D image without reading voxels. Raises ValueError for a file octreg cannot use.
+    spacing_um: (z, y, x) um along (k, j, i), as the CLI's Z,Y,X. It replaces the file's spacing, a NIfTI keeping its
+    directions and origin, and is needed for plain TIFF and NPY."""
     p = Path(path)
     if not p.is_file():
         raise ValueError(f"{p}: no such file")
@@ -111,9 +102,8 @@ def _ome_spacing(xml):
 
 
 def iter_planes(vol: Volume):
-    """Yield (k, plane float32 [shape_i, shape_j]) for every plane along the last axis, one plane in memory at a time, in
-    file order (NIfTI: the (gzip) byte stream, TIFF: pages or memmap, NPY: memmap). NIfTI scl_slope / scl_inter are applied,
-    and non-finite voxels are yielded as 0."""
+    """Yield (k, float32 plane [shape_i, shape_j]) along the last axis, one plane in memory at a time.
+    NIfTI scl_slope and scl_inter are applied, and non-finite voxels become 0."""
     kind, (ni, nj, nk) = _kind(vol.path), vol.shape
     if kind == "nii":
         import nibabel as nib
@@ -121,7 +111,7 @@ def iter_planes(vol: Volume):
         dt, off, slope, inter = img.header.get_data_dtype(), int(img.dataobj.offset), float(img.dataobj.slope), float(img.dataobj.inter)
         nbytes = ni * nj * dt.itemsize
         with (gzip.open if vol.path.lower().endswith(".gz") else open)(vol.path, "rb") as f:
-            f.read(off)  # nibabel resets vox_offset to 0 in .gz headers: use dataobj.offset
+            f.read(off)  # nibabel resets vox_offset to 0 in .gz headers, dataobj.offset is right
             for k in range(nk):
                 buf = f.read(nbytes)
                 if len(buf) != nbytes:
@@ -134,7 +124,7 @@ def iter_planes(vol: Volume):
         import tifffile
         try:
             arr = tifffile.memmap(vol.path, series=0, mode="r").reshape(nk, nj, ni)
-        except ValueError:                                     # compressed or non-contiguous: one page per plane
+        except ValueError:                                     # compressed or non-contiguous, read one page per plane
             with tifffile.TiffFile(vol.path) as tif:
                 pages = tif.series[0].pages
                 if len(pages) != nk:
@@ -166,15 +156,14 @@ def save_nifti(arr, affine, path, intent=None) -> None:
 
 
 def save_field(field, affine, path) -> None:
-    """A displacement field (numpy [3, D, H, W], mm along the world axes of `affine`, the grid's voxel -> world) as a NIfTI-1
-    vector image: float32 of shape [D, H, W, 1, 3], intent 'vector', sform = qform = affine. The components follow the NIfTI
-    world axes (RAS+ for a standard header). ITK and ANTs read displacement components as LPS, the first two negated."""
+    """Displacement field [3, D, H, W] in mm along the world axes of `affine` as a NIfTI-1 vector image [D, H, W, 1, 3].
+    The components follow the NIfTI world axes (RAS+). ITK and ANTs read them as LPS, the first two negated."""
     save_nifti(np.ascontiguousarray(np.moveaxis(np.asarray(field, np.float32), 0, -1)[:, :, :, None, :]), affine, path,
                "vector")
 
 
 def load_field(path):
-    """A displacement field written by save_field -> (float32 [3, D, H, W], affine 4x4). Raises ValueError for another shape."""
+    """A displacement field written by save_field -> (float32 [3, D, H, W], affine 4x4)."""
     import nibabel as nib
     img = nib.load(str(path))
     if len(img.shape) != 5 or img.shape[3:] != (1, 3):
@@ -190,7 +179,7 @@ def _write_text(text, path) -> None:
 
 
 def write_transform_txt(T, path) -> None:
-    """4x4 matrix as plain text, one row per line, 17 significant digits (exact float64 round trip with np.loadtxt)."""
+    """4x4 matrix as plain text, one row per line, with 17 significant digits for an exact float64 round trip."""
     _write_text("".join(" ".join(f"{v:.17g}" for v in r) + "\n" for r in np.asarray(T, float)), path)
 
 
@@ -213,10 +202,8 @@ def write_lta(T, src: Volume, dst: Volume, path) -> None:
 
 
 def write_itk(T, src: Volume, dst: Volume, path) -> None:
-    """ITK AffineTransform_double_3_3 text for resampling src onto dst with ITK / ANTs
-    (antsApplyTransforms -i src -r dst -t path): the physical point map dst -> src, F_src inv(T) F_dst, where
-    F = diag(-1, -1, 1) for NIfTI (ITK reads RAS headers as LPS) and the identity for TIFF / NPY (the array frame is ITK's
-    physical frame)."""
+    """ITK AffineTransform_double_3_3 text for antsApplyTransforms -i src -r dst -t path, the point map dst -> src.
+    It is F_src inv(T) F_dst, F = diag(-1, -1, 1) for NIfTI as ITK reads RAS as LPS, and the identity for TIFF and NPY."""
     F_src, F_dst = (np.diag([-1.0, -1.0, 1.0, 1.0] if _kind(v.path) == "nii" else [1.0] * 4) for v in (src, dst))
     L = F_src @ np.linalg.inv(np.asarray(T, float)) @ F_dst
     q = " ".join(f"{v:.17g}" for v in [*L[:3, :3].ravel(), *L[:3, 3]])
