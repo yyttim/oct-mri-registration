@@ -1,7 +1,7 @@
 """§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the orientation tensor ignores
 the gradient sign; F is 1 for identical volumes and does not change when the OCT contrast is inverted; OCT points over MRI
-background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; and the prior holds the scale where
-the data do not decide it."""
+background lower F (template form); a displacement field moves the points; the refinement recovers a pose 1 mm and 3 degrees
+off; and the prior holds the scale where the data do not decide it."""
 import dataclasses
 
 import numpy as np
@@ -191,29 +191,19 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 
 
-def test_gradient_transport_under_a_displacement():
-    """score(T, ..., field) carries the OCT gradient through the map y = T x + d(T x) as (I - grad d^T) A^-T g: for a linear d
-    the score equals that of the affine (I + B) T to first order in B, and leaving the transport out moves it much more."""
+def test_a_field_moves_the_points():
+    """score(T, ..., field) moves the OCT points by the field after T and keeps their gradients: a constant field v scores as
+    the translation by v after T."""
     from octreg.deform import LatticeField
     mri, (o, mo, _, A_O), T = pair(seed=1)
     tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
     mt = MRITensors(*mri, 0.3, "cpu")
-    B = 0.05 * np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.5], [0.0, -0.5, 0.0]])       # a small turn: it reorients the edges
-    y0 = G.apply_affine(T, G.box(A_O, o.shape)[0])
-    field = LatticeField(y0 - 12.0, y0 + 12.0, 2.0, "cpu")
+    v = np.array([0.2, -0.15, 0.1])
+    field = LatticeField(np.full(3, -20.0), np.full(3, 20.0), 4.0, "cpu")
     with torch.no_grad():
-        n = field.n
-        nodes = (field.lo + 2.0 * torch.stack(torch.meshgrid(*[torch.arange(k, dtype=torch.float32) for k in n], indexing="ij"), -1))
-        d = (nodes - torch.as_tensor(y0, dtype=torch.float32)) @ torch.as_tensor(B.T, dtype=torch.float32)
-        field.c.copy_(d.permute(3, 0, 1, 2).reshape(3, -1))
-    Ta = np.eye(4)
-    Ta[:3, :3] = np.eye(3) + B
-    Ta[:3, 3] = -B @ y0
+        field.c.copy_(torch.as_tensor(np.repeat(v[:, None], field.c.shape[1], 1), dtype=torch.float32))
+    Tv = np.eye(4)
+    Tv[:3, 3] = v
     t = lambda X: torch.tensor(X, dtype=torch.float32)
     with torch.no_grad():
-        F_field = float(score(t(T), tpl, mt, field))
-        F_affine = float(score(t(Ta @ T), tpl, mt))
-        y = G.apply_affine(t(T), tpl.pts)
-        g = torch.linalg.inv(t(T)[:3, :3]).T @ tpl.g
-        F_plain = float(correlation(tensors(g, tpl.eps), mt.at(y + field(y))))           # positions moved, gradients not
-    assert abs(F_plain - F_affine) > 1e-3 and abs(F_field - F_affine) < 0.1 * abs(F_plain - F_affine), (F_field, F_affine, F_plain)
+        assert abs(float(score(t(T), tpl, mt, field)) - float(score(t(Tv @ T), tpl, mt))) < 1e-5

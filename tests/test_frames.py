@@ -58,15 +58,15 @@ def stack(vol):
 def test_params_defaults_and_dict():
     p = Params()
     assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam) == (0.6, 0.15, 0.04, 8000, 24, 150, 2.0)
-    assert (p.df_grid_mm, p.df_max_strain, p.df_band_mm, p.df_sigmas_mm, p.df_evals) == (5.0, 0.08, 0.6, (0.6, 0.3), 250)
-    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_band_mm=0.9, df_evals=50)
+    assert (p.df_grid_mm, p.df_max_strain, p.df_sigmas_mm, p.df_evals) == (5.0, 0.08, (0.6, 0.3), 250)
+    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_max_strain=0.1, df_evals=50)
     assert Params.from_dict(json.loads(json.dumps(v.to_dict()))) == v                 # JSON lists back to tuples
     assert Params.from_dict({"lam": 1, "sigmas_mm": [1, 0.5]}) == dataclasses.replace(p, lam=1.0, sigmas_mm=(1.0, 0.5))
     with pytest.raises(ValueError, match="unknown keys"):
         Params.from_dict({"no_such_field": 0.8})
     with pytest.raises(ValueError, match="must be a JSON object"):
         Params.from_dict([0.5])
-    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_band_mm": -0.6}, {"df_evals": 0}):
+    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0}):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
 

@@ -1,9 +1,7 @@
 """Smooth deformation (docs/METHOD.md §5): a displacement d on top of the affine T, fitted to F under a strain bound.
 
 The OCT point x goes to y = T x + d(T x), d in mm along the MRI world axes, trilinear on a lattice of spacing Params.df_grid_mm
-over the MRI grid (two spacings of margin); its gradient goes through the linear part of the map, (I - grad d^T) A^-T g. F is
-taken over the OCT points within Params.df_band_mm of the specimen mask, with the OCT gradients over all measured voxels and
-the MRI gradients over the whole crop, so the tissue surface is an edge in both volumes. Minimised by L-BFGS: -F + STRAIN_WEIGHT
+over the MRI grid (two spacings of margin); F is that of §2, over the same OCT points. Minimised by L-BFGS: -F + STRAIN_WEIGHT
 sum max(0, |dc| / df_grid_mm - df_max_strain)^2 over the components dc of the first differences of the lattice along its axes.
 Output: the pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), so the registered OCT at the MRI point x is
 OCT(T^-1 (x + u(x))).
@@ -14,10 +12,9 @@ import math
 
 import numpy as np
 import torch
-from scipy import ndimage
 
 from . import geometry as G
-from .features import MRITensors, OCTTemplate, score
+from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
 
 STRAIN_WEIGHT = 1e3       # weight of the strain hinge (a soft form of the bound)
@@ -77,10 +74,8 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     """mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on the base grids, T the affine.
     -> (pull-back field u numpy [3, D, H, W] on the MRI base grid, info)."""
     P = params
-    (m_arr, m_mask, A_M), (o_arr, o_mask, o_valid, A_O) = mri, oct
-    h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
-    valid = np.asarray(o_valid) > 0.5
-    band = (ndimage.distance_transform_edt(~np.asarray(o_mask, bool), sampling=h_o) <= P.df_band_mm) & valid
+    (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
+    inner = eroded(o_mask, P.erode_mm, float(np.linalg.norm(np.asarray(A_O)[:3, 0])))
     n = np.array(np.shape(m_arr)) - 1
     corners = G.apply_affine(np.asarray(A_M, float), np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])],
                                                               float))
@@ -89,8 +84,8 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     Tt = torch.tensor(np.asarray(T, float), dtype=torch.float32, device=device)
     passes = []
     for s in P.df_sigmas_mm:
-        tpl = OCTTemplate(o_arr, valid.astype(np.float32), A_O, s, band, device=device, eps_mask=o_mask)
-        mt = MRITensors(m_arr, None, A_M, s, device, eps_mask=m_mask)
+        tpl = OCTTemplate(o_arr, o_mask, A_O, s, inner, device=device)
+        mt = MRITensors(m_arr, m_mask, A_M, s, device)
         opt = torch.optim.LBFGS(field.parameters(), lr=1.0, max_iter=P.df_evals, max_eval=P.df_evals, history_size=HISTORY,
                                 line_search_fn="strong_wolfe", tolerance_grad=1e-12, tolerance_change=1e-12)
 

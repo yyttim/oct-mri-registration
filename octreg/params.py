@@ -36,7 +36,6 @@ class Params:
     # smooth deformation (§5)
     df_grid_mm: float = 5.0                   # spacing of the control lattice
     df_max_strain: float = 0.08               # largest first difference of the lattice / spacing
-    df_band_mm: float = 0.6                   # the OCT points of §5 lie within this of the specimen mask
     df_sigmas_mm: tuple = (0.6, 0.3)          # Gaussian sigmas of the deformation passes
     df_evals: int = 250                       # most score evaluations of L-BFGS per pass
 
@@ -51,7 +50,7 @@ class Params:
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm")
         if not (self.sigmas_mm and self.df_sigmas_mm and min(self.sigmas_mm + self.df_sigmas_mm) > 0):
             raise ValueError("Params: sigmas_mm and df_sigmas_mm must be non-empty and positive")
-        if not min(self.erode_mm, self.search_sigma_mm, self.df_grid_mm, self.df_max_strain, self.df_band_mm) > 0 or min(
+        if not min(self.erode_mm, self.search_sigma_mm, self.df_grid_mm, self.df_max_strain) > 0 or min(
                 self.iters, self.df_evals, self.n_rot, self.topk) < 1:
             raise ValueError("Params: lengths and the strain bound must be positive, iterations, n_rot and topk >= 1")
 

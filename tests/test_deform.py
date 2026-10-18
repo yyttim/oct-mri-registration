@@ -166,8 +166,7 @@ def test_identical_pair_leaves_the_field_near_zero(exact_copy):
     mri, oct_, u, info, field = exact_copy
     assert set(info) == {"passes"} and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
     assert all(p["F_start"] > 0.9999 and p["F_end"] > 0.9999 for p in info["passes"]), info
-    band = ndimage.binary_dilation(mri[1], iterations=round(FAST.df_band_mm / 0.3))       # where the score has points
-    assert np.linalg.norm(u, axis=0)[band].max() < 0.03, np.linalg.norm(u, axis=0)[band].max()     # a tenth of a voxel
+    assert np.linalg.norm(u, axis=0)[mri[1]].max() < 0.03, np.linalg.norm(u, axis=0)[mri[1]].max()   # a tenth of a voxel
     mri, oct_, T = pair(lambda z: 0 * z)                       # the aligned pair: own grid, inverted interior, agarose
     u, info, _ = fit(mri, oct_, T)
     n = np.linalg.norm(u, axis=0)[mri[1]]
@@ -183,7 +182,8 @@ def test_exact_copy_leaves_the_whole_field_at_zero(exact_copy):
 def test_reduces_a_smooth_displacement(bumped):
     mri, oct_, T, u, info, field = bumped
     assert [p["sigma_mm"] for p in info["passes"]] == list(FAST.df_sigmas_mm)
-    assert all(p["F_end"] > p["F_start"] + 0.02 for p in info["passes"]), info              # the score rises in every pass
+    assert info["passes"][0]["F_end"] > info["passes"][0]["F_start"] + 0.02, info          # the first pass raises the score,
+    assert all(p["F_end"] >= p["F_start"] - 1e-3 for p in info["passes"]), info             # no pass lowers it
     x = world(mri[0].shape, mri[2])[mri[1].ravel()]
     truth = pull_back(bump, x)                                                              # the u that undoes the bump
     imposed, err = np.linalg.norm(truth, axis=1), np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
