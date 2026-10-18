@@ -25,7 +25,7 @@ Scores of an affine T (OCT world -> MRI world):
                   angle and axis of T R^-1 (of its polar rotation), the shift of the tissue centroid, the scale along each OCT
                   axis (1 = size kept), the mean distance and rotation angle from the label-only fit L of reference_check.py
                   (the vessels alone, A12), and the tier of the mean distance from R: "<= 0.30 mm" (the reference band),
-                  "<= 1 mm", "<= 2.5 mm and <= 10 deg" or "beyond"
+                  "<= 1 mm" or "beyond"
     vessel_score  the MRI vessel labels (value 255) that T places inside the OCT tissue, at least 0.15 mm from its edge and
                   within the annotated planes 0..560, and their distance to the nearest OCT vessel (DANDI ves_seg), mean and
                   median
@@ -52,7 +52,7 @@ VESSELS_TIFF = SUB / "oct/ves_seg.tif"                                         #
 MRI_DIR = SUB / "mri"
 LABEL_DIR = SUB / "labels"
 AUTHORS = SUB / "costantini_repo/results"
-MASK = HERE / "octmask_24um.nii.gz"         # OCT specimen mask, one voxel per 2 x 2 x 2 OCT voxels (README.md, Inputs)
+MASK = HERE / "octmask_24um.nii.gz"         # specimen mask of the test, one voxel per 2 x 2 x 2 OCT voxels (README.md, Inputs)
 
 FLIPS = {"flip1": ("sub-I46_ses-MRI_flip-1_VFA.nii.gz", 10), "flip2": ("sub-I46_ses-MRI_flip-2_VFA.nii.gz", 20),
          "flip3": ("sub-I46_ses-MRI_flip-3_VFA.nii.gz", 30)}
@@ -63,9 +63,8 @@ LABELS = {"vessels": LABEL_DIR / "sub-I46_ses-MRI_space-EPIC_label-vessels_dseg.
 CONDITIONS = {"C3": (3.0, 2.0), "C6": (6.0, 5.0), "C12": (12.0, 10.0)}                       # margin, shift bound (mm)
 SEEDS = 10
 SEED0 = 4600                                # crop k of every condition: numpy default_rng(4600 + k)
-TIERS = (0.30, 1.0)                         # mean distance from R (mm) of the first two tiers
-BASIN = (2.5, 10.0)                         # the third tier: mean distance (mm) and rotation (deg)
-TIER_NAMES = ("<= 0.30 mm", "<= 1 mm", "<= 2.5 mm and <= 10 deg", "beyond")
+TIERS = (0.30, 1.0)                         # mean distance from R (mm) of the two tiers
+TIER_NAMES = ("<= 0.30 mm", "<= 1 mm", "beyond")
 
 SPACING = np.array([0.012, 0.012, 500 / 33 / 1000])     # mm
 OCT_AFFINE = np.diag([*SPACING, 1.0])
@@ -73,10 +72,10 @@ VESSEL_PLANES = 561
 TIFF_SHAPE = (627, 1271, 1230)
 
 WORK = BENCH_RUNS / "I46"
-INPUTS = WORK / "inputs"                    # masked OCT, reference, tissue points, crops
+INPUTS = WORK / "inputs"                    # OCT, reference, tissue points, crops (prepare.py)
 RUNS = WORK / "runs"                        # octreg runs
 RESULTS = REPO / "bench/results/I46"
-OCT = INPUTS / "oct_masked.nii.gz"
+OCT = INPUTS / "oct.nii.gz"                 # the released OCT with the test's header
 
 
 def mri_file(image):
@@ -158,8 +157,8 @@ def rotation(T, R):
     return float(np.degrees(np.arccos(np.clip((np.trace(Q) - 1) / 2, -1, 1)))), (ax / n if n > 1e-12 else ax)
 
 
-def tier(mean, ang):
-    return TIER_NAMES[0 if mean <= TIERS[0] else 1 if mean <= TIERS[1] else 2 if mean <= BASIN[0] and ang <= BASIN[1] else 3]
+def tier(mean):
+    return TIER_NAMES[0 if mean <= TIERS[0] else 1 if mean <= TIERS[1] else 2]
 
 
 def error(T, R=None):
@@ -175,7 +174,7 @@ def error(T, R=None):
            "p95_mm": round(float(np.percentile(e, 95)), 4), "max_mm": round(float(e.max()), 4), "rotation_deg": round(ang, 3),
            "rotation_axis": ax.round(3).tolist(), "centroid_mm": round(float(np.linalg.norm((T @ c - R @ c)[:3])), 4),
            "scales": np.linalg.norm(T[:3, :3], axis=0).round(4).tolist(),
-           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(), "tier": tier(mean, ang)}
+           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(), "tier": tier(mean)}
     L = label_fit()
     if L is not None:
         out["mean_L_mm"] = round(float(np.linalg.norm((T @ X - L @ X)[:3], axis=0).mean()), 4)
@@ -213,11 +212,12 @@ def _vessels():
 
 def _vessel_distances(T, moved=None):
     """Distance (mm) of every MRI vessel label (moved to `moved` first, if given) placed in the OCT world by T^-1 to the nearest
-    OCT vessel block; NaN outside the inner tissue. A point x of the OCT world is looked up at block index x / (2 S) - 0.5."""
+    OCT vessel block; NaN outside the inner tissue. Block b covers OCT voxels 2b and 2b + 1, so a point x of the OCT world is
+    looked up at block index x / (2 S) - 0.25."""
     from scipy import ndimage
     mri_pts, dist, sp, shp, inner = _vessels()
     x = mri_pts if moved is None else moved
-    q = (np.linalg.inv(T) @ np.c_[x, np.ones(len(x))].T).T[:, :3] / sp - 0.5     # OCT world -> mask block index
+    q = (np.linalg.inv(T) @ np.c_[x, np.ones(len(x))].T).T[:, :3] / sp - 0.25    # OCT world -> mask block index
     inside = np.all((q >= 2) & (q <= np.array(shp) - 3), 1)
     qi = np.round(q[inside]).astype(int)
     inside[np.flatnonzero(inside)[~inner[qi[:, 0], qi[:, 1], qi[:, 2]]]] = False

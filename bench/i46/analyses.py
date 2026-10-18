@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """The I46 analyses beyond the main runs (bench/i46/README.md): the ablation and the start test. Every run uses the checkout's
-octreg and bench/ablate.py, the masked OCT given as its own specimen mask (--oct-mask).
+octreg and bench/ablate.py on the released OCT with octreg's own masks, as the main runs of run.py.
 
 ablate   the variants of bench/ablate.py in VARIANTS on the C3 crops k = 0..9 of the 10 deg FLASH, into
-         <bench_runs>/I46/ablation/<crop>/<variant>/. The outline variants are left out: the OCT is given as tissue only
-         and the MRI of these crops is all tissue, so the outline is never used. The deformation variants are shown on I58.
+         <bench_runs>/I46/ablation/<crop>/<variant>/. The outline and deformation variants are shown on I58 only.
 starts   the method on flip1_C3_k0 from the OCT turned by 90 and 180 deg about each of its array axes and by 10 rotations drawn
          uniformly (scipy Rotation.random, seed 4646), about the centre of the OCT image box
          (bench/ablate.py --only base --turn), into <bench_runs>/I46/starts/<start>/base/
 collect  scores every result against the reference: common.error and common.vessel_score of the affine, and for the ablation
-         common.vessel_field of the deformation -> bench/results/I46/ablation.json and starts.json
+         common.vessel_field of the deformation -> bench/results/I46/ablation.json and starts.json. The start of a turned
+         run is bench/ablate.py header_start of the turned OCT and the crop, composed with the turn.
 
     python bench/i46/analyses.py ablate | starts | collect
 """
@@ -31,7 +31,7 @@ from common import (OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_na
                     vessel_score)
 
 ABL, STARTS = WORK / "ablation", WORK / "starts"
-VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "full_tensor"]
+VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "tracefree"]
 START_CROP = crop_name(PRIMARY, "C3", 0)
 SEED, N_RANDOM = 4646, 10
 
@@ -45,8 +45,8 @@ def starts():
 
 
 def ablate_one(crop, out, only, extra=()):
-    cmd = [sys.executable, str(REPO / "bench" / "ablate.py"), str(OCT), str(crop_file(crop)), "-o", str(out), "--oct-mask",
-           str(OCT), "--only", only, *extra]
+    cmd = [sys.executable, str(REPO / "bench" / "ablate.py"), str(OCT), str(crop_file(crop)), "-o", str(out), "--only", only,
+           *extra]
     out.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     with open(out / f"{only}.log", "w") as log:
@@ -55,12 +55,23 @@ def ablate_one(crop, out, only, extra=()):
     print(f"{out.name} {only}: rc {rc}, {time.time() - t0:.0f} s", flush=True)
 
 
-def scored(run, T=None):
-    """Scores of a run directory (its affine, or T) and of its deformation."""
+def scored(run, deform=False):
+    """Scores of the affine of a run directory and, with deform, of its deformation."""
     from octreg import io
-    T = np.loadtxt(run / "T_oct2mri.txt") if T is None else np.asarray(T, float)
-    f = run / "oct2mri_warp.nii.gz"
-    return {**error(T), **vessel_score(T), "deform": vessel_field(T, *io.load_field(f)) if f.is_file() else None}
+    T = np.loadtxt(run / "T_oct2mri.txt")
+    row = {**error(T), **vessel_score(T)}
+    if deform:
+        f = run / "oct2mri_warp.nii.gz"
+        row["deform"] = vessel_field(T, *io.load_field(f)) if f.is_file() else None
+    return row
+
+
+def turned_start(turn):
+    """The start of a turned run as a pose of the original OCT world (module docstring)."""
+    from bench.ablate import header_start
+    from octreg import io
+    vo, vm = io.load_volume(OCT), io.load_volume(crop_file(START_CROP))
+    return header_start(vm.affine, vm.shape, turn @ vo.affine, vo.shape) @ turn
 
 
 def collect():
@@ -72,7 +83,7 @@ def collect():
             if not (run / "variant.json").is_file():
                 print("missing", run)
                 continue
-            rows.append({"crop": crop, "variant": v, **scored(run)})
+            rows.append({"crop": crop, "variant": v, **scored(run, deform=True)})
     (RESULTS / "ablation.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(len(rows), "ablation rows")
     st = []
@@ -82,20 +93,9 @@ def collect():
             print("missing", run)
             continue
         turn = np.array(json.loads((run / "variant.json").read_text(encoding="utf-8"))["turn"])
-        st.append({"start": name, "turn_deg": rv, "start_pose": error(_centres(turn)),
-                   **{x: v for x, v in scored(run).items() if x != "deform"}})
+        st.append({"start": name, "turn_deg": rv, "start_pose": error(turned_start(turn)), **scored(run)})
     (RESULTS / "starts.json").write_text(json.dumps(st, indent=1), encoding="utf-8")
     print(len(st), "start rows")
-
-
-def _centres(turn):
-    """The start of a turned run as a pose of the original OCT world: the header orientation of the turned OCT with the centres
-    of the two image boxes aligned, composed with the turn."""
-    from octreg import geometry as G, io
-    vo, vm = io.load_volume(str(OCT)), io.load_volume(str(crop_file(START_CROP)))
-    T = np.eye(4)
-    T[:3, 3] = G.box(vm.affine, vm.shape)[0] - G.box(turn @ vo.affine, vo.shape)[0]
-    return T @ turn
 
 
 def main():

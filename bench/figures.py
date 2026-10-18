@@ -57,10 +57,10 @@ DEFORM = [  # the same for the deformable stage, under --deform-baselines
     ("elastix", "deform/elastix/default"), ("reg_f3d", "deform/niftyreg/default"), ("convexadam", "deform/convexadam/default"),
     ("greedy", "deform/greedy/wncc")]
 ABLATION = [  # panel name, under --ablation: a run directory of bench/ablate.py (its oct_in_mri.nii.gz) or a 4x4 text file
-    ("no_outline", "no_outline"), ("outline_refine", "outline_refine"), ("no_search", "no_search"), ("no_refine", "no_refine"),
-    ("first_choice", "first_choice"), ("no_prior", "no_prior"),
-    ("signed", "signed"), ("signed_neg", "signed_neg"), ("full_tensor", "full_tensor"), ("df_interior", "df_interior"),
-    ("df_free", "df_free"), ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
+    ("no_outline", "no_outline"), ("outline_decides", "outline_decides"), ("no_search", "no_search"),
+    ("no_refine", "no_refine"), ("first_choice", "first_choice"), ("no_prior", "no_prior"), ("signed", "signed"),
+    ("signed_neg", "signed_neg"), ("tracefree", "tracefree"), ("df_free", "df_free"),
+    ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
     ("turned_octreg", "turned/base")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
 STAGES = ("result", "affine", "deformable", "ablation")
@@ -129,7 +129,6 @@ def overlays(abl, run, oct_path, mri):
         if not made_from.is_file() or json.loads(made_from.read_text(encoding="utf-8")) != res:
             d.mkdir(parents=True, exist_ok=True)              # written only when the affine changes, so its time dates it
             io.write_transform_txt(T, d / "T_oct2mri.txt")
-            io.write_transform_txt(np.linalg.inv(T), d / "T_mri2oct.txt")
             io.write_json(res, made_from)
         if not (d / f).is_file() or (d / f).stat().st_mtime < made_from.stat().st_mtime:
             apply(d, oct_path, mri, d / f, affine_only=True)
@@ -137,31 +136,20 @@ def overlays(abl, run, oct_path, mri):
     return out
 
 
-def figure_info(mri, window_from, tissue, threshold, middle):
-    """What the panels are drawn with, for figures.json: the grey windows, the plane centre and the MRI tissue of the line."""
-    img = nib.load(str(mri))
-    return {"mri": Path(mri).name, "mri_window": [round(x, 6) for x in freeview_window(mri)],
-            "oct_window_from": Path(window_from).name, "oct_window": [round(x, 6) for x in freeview_window(window_from)],
-            "planes_through_ras_mm": [round(x, 4) for x in middle],
-            "mri_tissue": {"threshold": round(float(threshold), 6),
-                           "volume_cm3": round(float(tissue.sum() * np.prod(np.linalg.norm(img.affine[:3, :3], axis=0)) / 1e3), 4)}}
-
-
 def mri_tissue(img):
-    """The MRI tissue of the red line: octreg's MRI foreground rule on the grid of the crop. -> (bool array, threshold)."""
+    """The MRI tissue of the red line: octreg's MRI foreground rule on the grid of the crop.
+    -> (bool array, {threshold, volume_cm3})."""
     from octreg import preprocess as pp
     from octreg.params import Params
-    tissue, info = pp.foreground(np.asarray(img.dataobj, np.float32), float(np.linalg.norm(img.affine[:3, :3], axis=0).min()),
-                                 Params())
-    return tissue, info["threshold"]
+    return pp.foreground(np.asarray(img.dataobj, np.float32), float(np.linalg.norm(img.affine[:3, :3], axis=0).min()), Params())
 
 
-def sessions(mri, run, baselines, out, surf, middle, window_from, ablation=None, deform_baselines=None, stages=STAGES):
-    """freeview -cmd sessions, one per panel size, for the folders in stages. middle: RAS mm of the three planes. ablation:
-    {panel: overlay} or None. -> [(name, lines)], {png path: (W, H)}."""
+def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, deform_baselines=None, stages=STAGES):
+    """freeview -cmd sessions, one per panel size, for the folders in stages. middle: RAS mm of the three planes. windows: the
+    grey windows (lo, hi) of the MRI and of every OCT panel. ablation: {panel: overlay} or None.
+    -> [(name, lines)], {png path: (W, H)}."""
     img = nib.load(str(mri))
-    grey_mri, grey_oct = freeview_window(mri), freeview_window(window_from)
-    print("grey windows: MRI {:.4g} to {:.4g}, OCT {:.4g} to {:.4g}".format(*grey_mri, *grey_oct))
+    grey_mri, grey_oct = windows
     v_mri = "-v {}:grayscale={!r},{!r}".format(host_path(mri), *grey_mri)
     f_line = f"-f {host_path(surf)}:edgecolor=red:edgethickness=2"
     oct_v = lambda f: "-v {}:grayscale={!r},{!r}".format(host_path(f), *grey_oct)
@@ -223,11 +211,16 @@ def main():
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
-    tissue, t = mri_tissue(mi)
+    tissue, fg = mri_tissue(mi)
     c = np.floor(np.argwhere(tissue).mean(0) + 0.5)                       # the voxel centre nearest the tissue centroid
     middle = tuple(float(x) for x in (mi.affine @ np.r_[c, 1])[:3])
-    vol = tissue.sum() * np.prod(np.linalg.norm(mi.affine[:3, :3], axis=0)) / 1e3
-    print(f"MRI tissue: threshold {t:.4f}, {vol:.2f} cm3, planes through RAS " + "{:.2f} {:.2f} {:.2f}".format(*middle))
+    print(f"MRI tissue: threshold {fg['threshold']:.4f}, {fg['volume_cm3']:.2f} cm3, planes through RAS "
+          + "{:.2f} {:.2f} {:.2f}".format(*middle))
+    windows = freeview_window(a.mri), freeview_window(a.window_from)
+    print("grey windows: MRI {:.4g} to {:.4g}, OCT {:.4g} to {:.4g}".format(*windows[0], *windows[1]))
+    info = {"mri": a.mri.name, "mri_window": [round(x, 6) for x in windows[0]], "oct_window_from": a.window_from.name,
+            "oct_window": [round(x, 6) for x in windows[1]], "planes_through_ras_mm": [round(x, 4) for x in middle],
+            "mri_tissue": {"threshold": round(fg["threshold"], 6), "volume_cm3": round(fg["volume_cm3"], 4)}}
     hdr = mi.header.copy()
     hdr.set_data_dtype(np.uint8)
     nib.save(nib.Nifti1Image(tissue.astype(np.uint8), mi.affine, hdr), str(a.work / "mri_tissue.nii.gz"))
@@ -238,7 +231,7 @@ def main():
     if abl is None:
         print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again"
               if "ablation" in stages else "the ablation panels are not made (--stages)")
-    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, a.window_from, abl, a.deform_baselines, stages)
+    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, windows, abl, a.deform_baselines, stages)
     sh = ["#!/bin/bash", "set -e", 'if [ -n "$FREESURFER_HOME" ] || [ -d /usr/local/freesurfer/8.2.0 ]; then',
           '  export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}',
           '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi',
@@ -258,8 +251,7 @@ def main():
            if not p.is_file() or Image.open(p).size != wh]
     if bad:
         sys.exit("\n".join(bad))
-    (a.out / "figures.json").write_text(json.dumps(figure_info(a.mri, a.window_from, tissue, t, middle), indent=1) + "\n",
-                                    encoding="utf-8")
+    (a.out / "figures.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8")
     print(f"{len(expect)} panels in {a.out}")
 
 

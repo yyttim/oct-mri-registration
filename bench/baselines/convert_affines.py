@@ -11,7 +11,7 @@ Sources for each convention (quoted in the function docstrings):
   FSL FLIRT : FLIRT FAQ: scaled-mm coordinates, x -> N-1-x when det(sform) > 0. fslpy fsl.transform.flirt:
               src voxels -> src scaled voxels -> ref scaled voxels (the FLIRT matrix) -> ref voxels -> ref world.
   FreeSurfer: mri_robust_register "--lta ... transform from mov to dst", "--vox2vox ... (default is RAS2RAS)".
-              include/transform.h: LINEAR_VOX_TO_VOX 0, LINEAR_RAS_TO_RAS 1.
+              include/transform.h: LINEAR_RAS_TO_RAS 1. A VOX2VOX LTA (mri_coreg) goes through lta_convert first.
   greedy    : reference docs: matrix "maps voxels in fixed image space to voxels in moving image space" via ras().
 
 Command line:  python bench/baselines/convert_affines.py scale-header in.nii.gz out.nii.gz 10
@@ -60,8 +60,7 @@ def ants_mat_to_mov2fix_ras(path):
 
 
 def _euler3d_matrix(rx, ry, rz, compute_zyx=False):
-    """itk::Euler3DTransform::ComputeMatrix: Rz*Ry*Rx if ComputeZYX else Rz*Rx*Ry (ITK default ComputeZYX = false).
-    Check numerically with transformix (verify_against_transformix) before relying on a rigid-stage parse."""
+    """itk::Euler3DTransform::ComputeMatrix: Rz*Ry*Rx if ComputeZYX else Rz*Rx*Ry (ITK default ComputeZYX = false)."""
     cx, sx, cy, sy, cz, sz = np.cos(rx), np.sin(rx), np.cos(ry), np.sin(ry), np.cos(rz), np.sin(rz)
     Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
     Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
@@ -88,10 +87,8 @@ def elastix_tp_fixed2moving_lps(path):
         zyx = (_elastix_param(txt, "ComputeZYX") or ["false"])[0].lower() == "true"
         M = _euler3d_matrix(*p[:3], compute_zyx=zyx)
         A = itk_affine_fixed2moving_lps(np.r_[M.ravel(), p[3:6]], c)
-    elif kind == "TranslationTransform":
-        A = _homog(np.eye(3), p[:3])
     else:
-        raise ValueError("not a linear elastix transform: " + kind)
+        raise ValueError("not an affine or Euler elastix transform: " + kind)
     init = _elastix_param(txt, "InitialTransformParameterFileName")
     if init and init[0] not in ("NoInitialTransform", ""):
         A = A @ elastix_tp_fixed2moving_lps(init[0])
@@ -100,20 +97,6 @@ def elastix_tp_fixed2moving_lps(path):
 
 def elastix_tp_to_mov2fix_ras(path):
     return np.linalg.inv(lps_to_ras_matrix(elastix_tp_fixed2moving_lps(path)))
-
-
-def verify_against_transformix(A_fixed2moving_lps, outputpoints_txt, tol=1e-3):
-    """transformix -def inputpoints.txt writes 'InputPoint = [ x y z ] ... OutputPoint = [ x y z ]' (LPS mm).
-    Returns the max abs error between A @ InputPoint and OutputPoint."""
-    err = 0.0
-    for line in open(outputpoints_txt):
-        ip = re.search(r'InputPoint = \[([^\]]*)\]', line)
-        op = re.search(r'OutputPoint = \[([^\]]*)\]', line)
-        if ip and op:
-            x = np.r_[np.array(ip.group(1).split(), float), 1.0]
-            y = np.array(op.group(1).split(), float)
-            err = max(err, np.abs((A_fixed2moving_lps @ x)[:3] - y).max())
-    return err
 
 
 # ----------------------------------------------------------------------------------------------- NiftyReg / greedy
@@ -143,26 +126,21 @@ def fsl_scaled_voxel_matrix(img):
 
 def flirt_mat_to_mov2fix_world(mat_path, src_img, ref_img):
     """FLIRT -omat maps src scaled-voxel -> ref scaled-voxel.  Chain (fslpy flirtMatrixToSform):
-    src world -> src voxel -> src scaled -> ref scaled -> ref voxel -> ref world.  Cross-check with
-    fsl.transform.flirt.fromFlirt(mat, src, ref, 'world', 'world')."""
+    src world -> src voxel -> src scaled -> ref scaled -> ref voxel -> ref world."""
     M = np.loadtxt(mat_path)
     SFs, SFr = fsl_scaled_voxel_matrix(src_img), fsl_scaled_voxel_matrix(ref_img)
     return ref_img.affine @ np.linalg.inv(SFr) @ M @ SFs @ np.linalg.inv(src_img.affine)
 
 
 # ----------------------------------------------------------------------------------------------- FreeSurfer LTA
-def lta_to_mov2fix_ras(path, src_img=None, dst_img=None):
-    """LTA: 'type = 1' LINEAR_RAS_TO_RAS maps src (mov) RAS -> dst RAS directly.  'type = 0' VOX2VOX needs the two
-    vox2ras matrices (pass the images, or first run lta_convert --inlta x.lta --outlta x_ras.lta, default RAS2RAS)."""
+def lta_to_mov2fix_ras(path):
+    """LTA 'type = 1' LINEAR_RAS_TO_RAS: the matrix maps src (mov) RAS -> dst RAS."""
     txt = open(path).read()
     t = int(re.search(r'^\s*type\s*=\s*(\d+)', txt, re.M).group(1))
+    if t != 1:
+        raise ValueError(f"{path}: LTA type {t}, not RAS2RAS (lta_convert --inlta {path} --outlta OUT.lta converts it)")
     m = re.search(r'^\s*1 4 4\s*\n((?:.*\n){4})', txt, re.M)
-    M = np.array([[float(v) for v in l.split()] for l in m.group(1).strip().splitlines()])
-    if t == 1:
-        return M
-    if t == 0:
-        return dst_img.affine @ M @ np.linalg.inv(src_img.affine)
-    raise ValueError("unsupported LTA type %d (convert with lta_convert --outlta)" % t)
+    return np.array([[float(v) for v in l.split()] for l in m.group(1).strip().splitlines()])
 
 
 # ----------------------------------------------------------------------------------------------- header scaling
@@ -183,34 +161,6 @@ def unscale_world_transform(T_scaled, s):
     so T = S^-1 T' S maps the original worlds."""
     S = np.diag([s, s, s, 1.0])
     return np.linalg.inv(S) @ T_scaled @ S
-
-
-# ----------------------------------------------------------------------------------------------- apply for QC
-def resample_moving_to_fixed(moving_img, fixed_img, T_mov2fix_world, order=1, slab=32):
-    """Resample moving onto the fixed grid with T (moving world -> fixed world), linear interpolation, 0 outside."""
-    from scipy.ndimage import map_coordinates
-    mov = np.asanyarray(moving_img.dataobj).astype(np.float32)
-    fix2movvox = np.linalg.inv(moving_img.affine) @ np.linalg.inv(T_mov2fix_world) @ fixed_img.affine
-    nx, ny, nz = fixed_img.shape[:3]
-    out = np.zeros((nx, ny, nz), np.float32)
-    jj, kk = np.meshgrid(np.arange(ny), np.arange(nz), indexing="ij")
-    for i0 in range(0, nx, slab):
-        ii = np.arange(i0, min(nx, i0 + slab))
-        I, J, K = np.meshgrid(ii, np.arange(ny), np.arange(nz), indexing="ij")
-        vox = np.stack([I.ravel(), J.ravel(), K.ravel(), np.ones(I.size)], 0).astype(np.float64)
-        mv = fix2movvox @ vox
-        out[ii[0]:ii[-1] + 1] = map_coordinates(mov, mv[:3], order=order, cval=0.0, mode="constant").reshape(I.shape)
-    return nib.Nifti1Image(out, fixed_img.affine)
-
-
-def apply_convexadam_displacement(moving_on_fixed_grid, disp_vox, order=1):
-    """convex_adam_pt returns (H,W,D,3) displacements in voxels of the shared grid (fixed-grid, pull/backward warp)."""
-    from scipy.ndimage import map_coordinates
-    mov = np.asanyarray(moving_on_fixed_grid.dataobj).astype(np.float32)
-    grid = np.stack(np.meshgrid(*[np.arange(n) for n in mov.shape], indexing="ij"), 0).astype(np.float32)
-    coords = grid + np.moveaxis(disp_vox.astype(np.float32), -1, 0)
-    out = map_coordinates(mov, coords, order=order, cval=0.0, mode="constant")
-    return nib.Nifti1Image(out, moving_on_fixed_grid.affine)
 
 
 if __name__ == "__main__":

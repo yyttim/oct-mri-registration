@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
-"""The shared inputs of the baseline comparison.
+"""The shared inputs of the I58 baseline comparison.
 
     python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN -o DIR
 
-Writes into DIR: oct_0.08mm.nii.gz and oct_0.15mm.nii.gz (the OCT box-averaged to isotropic grids, original world header),
-mri_0.08mm.nii.gz (the crop as given) and mri_0.15mm.nii.gz, the field-of-view (FOV) masks oct_fov_*.nii.gz (voxels > 0),
-the moving images of the deformable stage oct_affine_0.08mm.nii.gz and oct_affine_0.15mm.nii.gz (the 20 um OCT through the
-affine of OCTREG_RUN onto the MRI grids) with oct_affine_fov_0.08mm.nii.gz.
+Writes into DIR: oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm isotropic, its original world header) with its
+field-of-view (FOV) mask oct_fov_0.08mm.nii.gz (voxels > 0) and mri_0.08mm.nii.gz (the crop as given), the inputs of the
+affine stage; and oct_affine_0.08mm.nii.gz, the 20 um OCT through the affine of OCTREG_RUN onto the MRI grid (octreg apply
+--affine-only), the moving image of the deformable stage (deform_tools.py), whose fixed image is mri_0.08mm.nii.gz.
 """
 from __future__ import annotations
 
 import argparse
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
-import nibabel as nib
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from octreg import geometry as G, io  # noqa: E402
-
-
-def fov(src: Path, dst: Path):
-    im = nib.load(src)
-    nib.save(nib.Nifti1Image((np.asarray(im.dataobj, np.float32) > 0).astype(np.uint8), im.affine), dst)
+from octreg.register import apply  # noqa: E402
 
 
 def main():
@@ -37,19 +30,11 @@ def main():
     ap.add_argument("-o", "--out", required=True, type=Path)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
-    oct_ = io.load_volume(a.oct)
-    for mm in (0.08, 0.15):
-        arr, A = G.resample_iso(oct_, mm)
-        io.save_nifti(arr.astype(np.float32), A, a.out / f"oct_{mm:.2f}mm.nii.gz")
-        fov(a.out / f"oct_{mm:.2f}mm.nii.gz", a.out / f"oct_fov_{mm:.2f}mm.nii.gz")
+    arr, A = G.resample_iso(io.load_volume(a.oct), 0.08)
+    io.save_nifti(arr, A, a.out / "oct_0.08mm.nii.gz")
+    io.save_nifti((arr > 0).astype(np.uint8), A, a.out / "oct_fov_0.08mm.nii.gz")
     shutil.copy(a.mri, a.out / "mri_0.08mm.nii.gz")
-    arr, A = G.resample_iso(io.load_volume(a.mri), 0.15)
-    io.save_nifti(arr.astype(np.float32), A, a.out / "mri_0.15mm.nii.gz")
-    for mm in ("0.08", "0.15"):
-        subprocess.run([sys.executable, "-m", "octreg", "apply", "--run", str(a.run), "--moving", str(a.oct), "--reference",
-                        str(a.out / f"mri_{mm}mm.nii.gz"), "-o", str(a.out / f"oct_affine_{mm}mm.nii.gz"), "--affine-only"],
-                       check=True, env={**__import__("os").environ, "PYTHONPATH": str(REPO)})
-    fov(a.out / "oct_affine_0.08mm.nii.gz", a.out / "oct_affine_fov_0.08mm.nii.gz")
+    apply(a.run, a.oct, a.out / "mri_0.08mm.nii.gz", a.out / "oct_affine_0.08mm.nii.gz", affine_only=True)
     print("inputs in", a.out)
 
 

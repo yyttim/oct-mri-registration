@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Inputs of the I46 test (bench/i46/README.md), from the download of bench/i46/fetch.sh, into <bench_runs>/I46/inputs.
 
-OCT      the DANDI OME-TIFF (627 x 1271 x 1230, plane y x, uint8) as the array (x, y, plane) with the header
-         diag(0.012, 0.012, 0.01515) mm, multiplied by the specimen mask octmask_24um.nii.gz upsampled 2x (its last planes
-         repeated to the size of the OCT). The mask was made from the OCT (a threshold of the 24 um box average, then
-         morphology). Only its array is used, since its header is that of the 12 um isotropic grid it was drawn on.
-         -> oct_masked.nii.gz
+OCT      the DANDI OME-TIFF (627 x 1271 x 1230, plane y x, uint8), its voxels unchanged, as the array (x, y, plane) with the
+         header diag(0.012, 0.012, 0.01515) mm -> oct.nii.gz
 Ref      the authors' affine in the frame of this OCT (common.reference_matrix) -> ref_T_oct2mri.txt
 Tissue   the OCT tissue points of the scores (common.tissue_points), OCT world mm -> tissue_oct.npy
 Crops    the MRI cut around the block, as octreg expects it: an axis-aligned box on the MRI voxel grid around the 0.5 and 99.5
@@ -21,8 +18,8 @@ Context  -> bench/results/I46/context.json:
                            sqrt((var grey + var white) / 2), white matter = layer label 1, grey matter = labels 2 and 3 (infra-
                            and supragranular cortex), each eroded by one voxel (6-connected), inside the box of MRI voxels that
                            holds the OCT block placed by the reference, 54 voxels (8.1 mm) wider on every face
-         oct_noise         the share of the 2 x 2 x 2 voxel blocks of the unmasked OCT more than 0.3 mm outside the specimen
-                           mask whose mean is non-zero (the block is not embedded)
+         oct_noise         the 2 x 2 x 2 voxel blocks of the OCT more than 0.3 mm outside the specimen mask: their number and
+                           the share whose mean is not zero
 
     python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
 """
@@ -41,6 +38,7 @@ from common import (CONDITIONS, FLIPS, INPUTS, LABELS, MASK, OCT, OCT_AFFINE, OC
                     tissue_points, vessel_score)
 
 MARGIN_BOX = 54                                 # MRI voxels around the block for the grey/white contrast
+MASK_AFFINE = OCT_AFFINE @ np.array([[2, 0, 0, 0.5], [0, 2, 0, 0.5], [0, 0, 2, 0.5], [0, 0, 0, 1]])   # voxel i: OCT 2i, 2i + 1
 
 
 def read_oct():
@@ -52,25 +50,27 @@ def read_oct():
 
 
 def read_mask(shape):
-    m = np.asarray(nib.load(str(MASK)).dataobj) > 0
-    if m.shape != tuple(n // 2 for n in shape):
-        sys.exit(f"{MASK}: {m.shape}, expected half of the OCT array {shape}")
+    img = nib.load(str(MASK))
+    m = np.asarray(img.dataobj) > 0
+    if m.shape != tuple(n // 2 for n in shape) or not np.allclose(img.affine, MASK_AFFINE, atol=1e-6):
+        sys.exit(f"{MASK}: {m.shape}, expected half of the OCT array {shape} with the header {MASK_AFFINE.tolist()}")
     return m
 
 
-def oct_input():
-    if OCT.is_file():
-        return
-    oa = read_oct()
-    m = read_mask(oa.shape)
-    up = np.repeat(np.repeat(np.repeat(m, 2, 0), 2, 1), 2, 2)
-    full = np.pad(up, [(0, a - b) for a, b in zip(oa.shape, up.shape)], mode="edge")
-    img = nib.Nifti1Image((oa * full).astype(np.uint8), OCT_AFFINE)
+def save(arr, affine, path):
+    img = nib.Nifti1Image(arr, affine)
     img.header.set_xyzt_units("mm")
-    img.set_sform(OCT_AFFINE, 1)
-    img.set_qform(OCT_AFFINE, 1)
-    nib.save(img, str(OCT))
-    print(f"OCT {oa.shape}, specimen mask {full.mean():.3f} of the array -> {OCT}", flush=True)
+    img.set_sform(affine, 1)
+    img.set_qform(affine, 1)
+    nib.save(img, str(path))
+
+
+def oct_input():
+    """oct.nii.gz of the module docstring, kept if already there."""
+    read_mask(TIFF_SHAPE[::-1])
+    if not OCT.is_file():
+        save(read_oct(), OCT_AFFINE, OCT)
+        print(f"OCT {TIFF_SHAPE[::-1]} -> {OCT}", flush=True)
 
 
 def cnr(a, white, grey):

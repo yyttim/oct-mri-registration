@@ -2,17 +2,17 @@
 """octreg on the I46 crops (bench/i46/README.md), one run at a time, and the stored scores of a folder of runs.
 
 run      Runs, in this order, with the default parameters: the C3 crops of the 10, 20 and 30 deg FLASH, then the C6 and C12
-         crops of the 10 deg FLASH, each as `octreg register OCT CROP --oct-mask OCT -o RUN`, the masked OCT given as its own
-         specimen mask (it is zero outside the tissue). Then the C3 crops of the 10 deg FLASH without --oct-mask (octreg's own
-         specimen mask on the same OCT), named <crop>_nomask. A run whose result.json is complete (it holds the run time) is
-         not run again. Then collect.
+         crops of the 10 deg FLASH, each as `octreg register OCT CROP -o RUN` on the released OCT (prepare.py, oct.nii.gz).
+         Then the C3 crops of the 10 deg FLASH with the test's specimen mask (common.MASK) as --oct-mask, named
+         <crop>_mask. A run whose result.json is complete (it holds the run time) and comes from this octreg version is not
+         run again. Then collect.
 collect  Scores every run of that list in the runs folder against the reference (common.error and common.vessel_score): the
          final affine T_oct2mri.txt, and in "search" the search pose it was refined from (pose.T_search of result.json).
          "deform" holds the vessel check of the affine with and without the run's deformation (common.vessel_field) and the
-         read-outs of §5. Each entry also holds, from its result.json, the version and parameter hash of the run, the scores of
-         the pose, the flags, the darker peaks of the MRI valleys passed over (as fractions of the brightest peak), the outside
-         fraction of each image and the run time. If a run is missing or incomplete, the script names it and stops before
-         writing.
+         median displacement of the last pass of §5. Each entry also holds, from its result.json, the version of the run, the
+         search rank and the search scores F and O of the chosen candidate, its L after §4, whether the outline was used, the
+         outside fraction of each image and the run time. If a run is missing or incomplete, the script names it and stops
+         before writing.
 -> <bench_runs>/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]
@@ -31,23 +31,25 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import (CONDITIONS, FLIPS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, crop_file, crop_name, error,  # noqa: E402
-                    vessel_field, vessel_score)
+from common import (CONDITIONS, FLIPS, MASK, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, crop_file, crop_name,  # noqa: E402
+                    error, vessel_field, vessel_score)
 
 
 def jobs():
     """(name, crop, with --oct-mask) of every run, in the order they run."""
-    j = [(crop_name(im, "C3", k), True) for im in FLIPS for k in range(SEEDS)]
-    j += [(crop_name(PRIMARY, c, k), True) for c in CONDITIONS if c != "C3" for k in range(SEEDS)]
-    j += [(crop_name(PRIMARY, "C3", k), False) for k in range(SEEDS)]
-    return [(crop if masked else f"{crop}_nomask", crop, masked) for crop, masked in j]
+    j = [(crop_name(im, "C3", k), False) for im in FLIPS for k in range(SEEDS)]
+    j += [(crop_name(PRIMARY, c, k), False) for c in CONDITIONS if c != "C3" for k in range(SEEDS)]
+    j += [(crop_name(PRIMARY, "C3", k), True) for k in range(SEEDS)]
+    return [(f"{crop}_mask" if masked else crop, crop, masked) for crop, masked in j]
 
 
-def done(run):
+def done(run, version=None):
+    """Whether run/result.json is complete (it holds the run time) and, if version is given, from that octreg version."""
     try:
-        return "seconds" in json.loads((run / "result.json").read_text(encoding="utf-8"))
+        res = json.loads((run / "result.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
+    return "seconds" in res and version in (None, res.get("octreg_version"))
 
 
 def entry(name, crop, masked, run):
@@ -59,14 +61,12 @@ def entry(name, crop, masked, run):
     s4 = {**error(T4), **vessel_score(T4)}
     d = res["deform"]
     deform = None if d is None else {**vessel_field(T, *io.load_field(run / "oct2mri_warp.nii.gz")),
-                                     "strain_max": d["strain_max"], "displacement_median_mm": d["passes"][-1]["displacement_median_mm"]}
+                                     "displacement_median_mm": d["passes"][-1]["displacement_median_mm"]}
     return {"name": name, "crop": crop, "image": image, "cond": cond, "k": int(k[1:]), "oct_mask": masked,
-            "version": res["octreg_version"], "params_hash": res["params_hash"], **error(T), **vessel_score(T),
+            "version": res["octreg_version"], **error(T), **vessel_score(T),
             "search": {x: s4[x] for x in ("mean_mm", "rotation_deg", "tier", "vessel_median_mm")},
-            **{x: pose[x] for x in ("S", "L", "outline_used", "search_rank")}, "deform": deform, "flags": res["flags"],
-            "mri_valleys_passed": [round(v["darker_peak_of_brightest"], 3)
-                                   for v in res["foreground"]["mri"].get("tissue_valleys_passed", [])],
-            "outside_fraction": {k: res["foreground"][k].get("outside_fraction") for k in ("oct", "mri")},
+            **{x: pose[x] for x in ("search_rank", "search_F", "search_O", "L", "outline_used")}, "deform": deform,
+            "outside_fraction": {x: res["foreground"][x]["outside_fraction"] for x in ("oct", "mri")},
             "seconds": round(res["seconds"]["total"], 1)}
 
 
@@ -87,6 +87,7 @@ def collect(runs, out):
 
 
 def run(only):
+    from octreg import __version__
     env = {**os.environ, "PYTHONPATH": str(REPO)}
     RUNS.mkdir(parents=True, exist_ok=True)
     failed = []
@@ -94,15 +95,15 @@ def run(only):
         if only and name not in only:
             continue
         out = RUNS / name
-        if done(out):
+        if done(out, __version__):
             continue
         cmd = [sys.executable, "-m", "octreg", "register", str(OCT), str(crop_file(crop))]
-        cmd += ["--oct-mask", str(OCT)] if masked else []
+        cmd += ["--oct-mask", str(MASK)] if masked else []
         t0 = time.time()
         with open(RUNS / f"{name}.log", "w") as log:
             rc = subprocess.run(cmd + ["-o", str(out)], stdout=log, stderr=subprocess.STDOUT, env=env, cwd=str(REPO)).returncode
         print(f"{name}: rc {rc}, {time.time() - t0:.0f} s", flush=True)
-        if rc != 0 or not done(out):
+        if rc != 0 or not done(out, __version__):
             failed.append(name)
     if failed:
         sys.exit(f"{len(failed)} runs failed (logs in {RUNS}): " + ", ".join(failed))
