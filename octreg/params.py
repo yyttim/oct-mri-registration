@@ -20,7 +20,7 @@ class Params:
     texture_grid_mm: float = 0.16             # block grid of the texture field
     texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its threshold
     # score (§2)
-    erode_mm: float = 0.8                     # erosion of the OCT points of F, in round(mm / h) steps of the 6-neighbourhood
+    erode_mm: float = 0.8                     # the OCT points of F lie farther than this inside the specimen mask
     outline_min_outside: float = 0.01         # the outline is used when both images have this measured share outside the tissue
     # orientation search (§3)
     search_sigma_mm: float = 1.2              # Gaussian sigma of the gradients in the search
@@ -36,7 +36,7 @@ class Params:
     # smooth deformation (§5)
     df_grid_mm: float = 5.0                   # spacing of the control lattice
     df_max_strain: float = 0.08               # largest first difference of the lattice / spacing
-    df_band_mm: float = 0.6                   # dilation of the OCT points of §5, in round(mm / h) 6-neighbourhood steps
+    df_band_mm: float = 0.6                   # the OCT points of §5 lie within this of the specimen mask
     df_sigmas_mm: tuple = (0.6, 0.3)          # Gaussian sigmas of the deformation passes
     df_evals: int = 250                       # most score evaluations of L-BFGS per pass
 

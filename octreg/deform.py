@@ -1,20 +1,12 @@
-"""Smooth deformation (docs/METHOD.md §5): a small displacement field on top of the affine, fitted to the same
-orientation-tensor correlation, with the tissue surface in the score as well, under a strain bound.
+"""Smooth deformation (docs/METHOD.md §5): a displacement d on top of the affine T, fitted to F under a strain bound.
 
-Forward model. The OCT point x goes to y = T x + d(T x): T the affine (OCT world -> MRI world) and d a displacement in mm along
-the MRI world axes, trilinear on a regular control lattice of spacing Params.df_grid_mm over the MRI grid (two spacings of
-margin). The OCT gradient goes through the linear part of the map, (I - grad d^T) A^-T g (first order in d).
-Score. features.score over the OCT points of the specimen mask dilated by round(Params.df_band_mm / h) steps of the
-6-neighbourhood, h the OCT base voxel size (measured voxels only), with OCT gradients smoothed over all measured voxels and MRI
-gradients over the whole crop, so the boundary of the tissue enters the score as an edge in both volumes, together with the
-interior structure. eps is the median |g| over the specimen mask and over the MRI foreground. Minimised: -F + STRAIN_WEIGHT sum
-max(0, |dc| / Params.df_grid_mm - s)^2 over every component dc of the first differences of the lattice along its axes,
-s = Params.df_max_strain: the bound that keeps the field plausible for fixed tissue (every entry of grad d near or below s, so
-d is a contraction for s < 1/3 and id + d is invertible). L-BFGS with a strong-Wolfe line search, at most Params.df_iters
-iterations per sigma in Params.df_sigmas_mm: the objective never rises, and a node that no OCT point pulls moves only when the
-strain bound pulls it along behind a neighbour.
-Output. The pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), by fixed-point iteration: the registered OCT at
-the MRI point x is OCT(T^-1 (x + u(x))) (geometry.resample_to with field=u).
+The OCT point x goes to y = T x + d(T x), d in mm along the MRI world axes, trilinear on a lattice of spacing Params.df_grid_mm
+over the MRI grid (two spacings of margin); its gradient goes through the linear part of the map, (I - grad d^T) A^-T g. F is
+taken over the OCT points within Params.df_band_mm of the specimen mask, with the OCT gradients over all measured voxels and
+the MRI gradients over the whole crop, so the tissue surface is an edge in both volumes. Minimised by L-BFGS: -F + STRAIN_WEIGHT
+sum max(0, |dc| / df_grid_mm - df_max_strain)^2 over the components dc of the first differences of the lattice along its axes.
+Output: the pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), so the registered OCT at the MRI point x is
+OCT(T^-1 (x + u(x))).
 """
 from __future__ import annotations
 
@@ -88,7 +80,7 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     (m_arr, m_mask, A_M), (o_arr, o_mask, o_valid, A_O) = mri, oct
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
     valid = np.asarray(o_valid) > 0.5
-    band = ndimage.binary_dilation(o_mask, iterations=max(1, round(P.df_band_mm / h_o))) & valid
+    band = (ndimage.distance_transform_edt(~np.asarray(o_mask, bool), sampling=h_o) <= P.df_band_mm) & valid
     n = np.array(np.shape(m_arr)) - 1
     corners = G.apply_affine(np.asarray(A_M, float), np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])],
                                                               float))

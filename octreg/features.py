@@ -108,6 +108,5 @@ def score(T, tpl: OCTTemplate, mri: MRITensors, field=None):
 
 
 def eroded(mask, mm, h):
-    """mask eroded by mm (in steps of the 6-neighbourhood on a grid of spacing h)."""
-    k = max(1, round(mm / h))
-    return ndimage.binary_erosion(mask, iterations=k)
+    """The voxels of mask farther than mm from its outside (Euclidean, on a grid of spacing h; beyond the array is outside)."""
+    return ndimage.distance_transform_edt(np.pad(np.asarray(mask, bool), 1), sampling=h)[1:-1, 1:-1, 1:-1] > mm

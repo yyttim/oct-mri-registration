@@ -65,7 +65,7 @@ def fit_adam(objective, c, rho, T0, params: Params = Params(), device="cuda"):
 def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
     """Refine every pose of starts (numpy 4x4, the search candidates in rank order) on F alone, one pass per sigma in
     params.sigmas_mm, coarse to fine. mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on
-    the base grid. The OCT points are the specimen mask eroded by round(erode_mm / h) 6-neighbourhood steps.
+    the base grid. The OCT points lie farther than erode_mm inside the specimen mask.
     -> [{T, L, F: [{sigma_mm, start, end}], search_rank}], lowest final L first."""
     P = params
     (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct

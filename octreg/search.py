@@ -3,7 +3,7 @@
 For every rotation of a fixed near-uniform set the OCT template is rotated about its box centre and scored against the MRI crop
 at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012). The score is
 S = (F + O) / 2: F the correlation of the orientation tensors of octreg.features, in the same template form as there (OCT
-points of the specimen mask eroded by Params.erode_mm, OCT gradients inside the specimen mask, MRI tensors inside the
+points farther than Params.erode_mm inside the specimen mask, OCT gradients inside the specimen mask, MRI tensors inside the
 foreground and zero outside it), computed on the rotated template in the MRI axes; and O the outline correlation of the OCT
 specimen mask w with the MRI foreground M over the measured OCT voxels q, one-sided: weighted by q (1 - (1 - w) E), E = M
 inside the MRI crop and 1 outside. The crop may hold tissue that is not in the block (beyond a face where the block was cut
@@ -39,8 +39,7 @@ class Searcher:
     def __init__(self, mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, sigma_mm, erode_mm, device="cuda"):
         """mri [D, H, W] MRI intensities and mri_mask [D, H, W] foreground fraction M on an isotropic grid (mri_affine); oct_
         [d, h, w] OCT intensities, oct_w the specimen mask and oct_valid the measured fraction (oct_affine). sigma_mm: the
-        smoothing of the gradients; erode_mm: the OCT points are the specimen mask eroded by round(erode_mm / h) steps of
-        the 6-neighbourhood. The template is centred on the OCT grid box centre c_o and covers its bounding sphere (+3
+        smoothing of the gradients; erode_mm: the OCT points lie farther than erode_mm inside the specimen mask. The template is centred on the OCT grid box centre c_o and covers its bounding sphere (+3
         voxels); the MRI is zero-padded by half a template, so a block over the edge of the crop is still scored."""
         self.dev = device
         I, M, o, w, q = (to_torch(x, device) for x in (mri, mri_mask, oct_, oct_w, oct_valid))
