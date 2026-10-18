@@ -54,6 +54,19 @@ def test_foreground_keeps_a_dark_tissue_class():
     assert info["threshold"] == 0 and m.all(), info
 
 
+def test_foreground_keeps_a_dark_tissue_class_in_medium():
+    """The same in a medium (60): the deep valley between the two tissue classes is passed over, since the darker class lies
+    inside the hull of the brighter one even though the medium outside outnumbers it, and the medium's valley is taken."""
+    rng = np.random.default_rng(3)
+    ball = _ball(64, (32, 32, 32), 26)
+    z = np.indices((64,) * 3)[0]
+    slab = ball & (z > 24) & (z < 40)
+    img = np.where(slab, rng.normal(250, 25, ball.shape), np.where(ball, rng.normal(500, 25, ball.shape),
+                                                                   rng.normal(60, 10, ball.shape)))
+    m, info = pp.foreground(img.astype(np.float32), 0.15, P)
+    assert 60 < info["threshold"] < 250 and _dice(m, ball) > 0.98, info
+
+
 def _embedded_block(seed, medium=1.0, n=96):
     """A tissue slab with isotropic texture, cut by the two faces along axis 2, in a frame of medium of mean intensity
     `medium` x tissue, plus a black tile column. Medium as bright as tissue has anisotropic structure only (section offsets
