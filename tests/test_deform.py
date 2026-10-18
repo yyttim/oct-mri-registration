@@ -17,7 +17,7 @@ from scipy.spatial.transform import Rotation
 from octreg import deform, geometry as G, io
 from octreg.params import Params
 
-FAST = dataclasses.replace(Params(), df_iters=60)                 # 2 passes of 60 L-BFGS iterations (default 200)
+FAST = dataclasses.replace(Params(), df_evals=75)                 # 2 passes of 75 score evaluations (default 250)
 AMP, WIDTH = 0.8, 5.0                                              # the bump: 0.8 mm, Gaussian of 5 mm
 DIRECTION, CENTRE = np.array([0.6, -0.64, 0.48]), np.array([1.5, 1.0, -1.0])
 BUMP_STRAIN = AMP * np.abs(DIRECTION).max() / (WIDTH * np.sqrt(np.e))     # its largest |dd_i / dz_k|: 0.062
@@ -138,7 +138,7 @@ def test_lattice_field_interpolates_and_strains():
 
 def test_identical_pair_leaves_the_field_near_zero(exact_copy):
     mri, oct_, u, info, field = exact_copy
-    assert set(info) == {"passes", "strain_max", "seconds"} and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
+    assert set(info) == {"passes"} and u.shape == (3, *mri[0].shape) and u.dtype == np.float32
     assert all(p["F_start"] > 0.9999 and p["F_end"] > 0.9999 for p in info["passes"]), info
     band = ndimage.binary_dilation(mri[1], iterations=round(FAST.df_band_mm / 0.3))       # where the score has points
     assert np.linalg.norm(u, axis=0)[band].max() < 0.03, np.linalg.norm(u, axis=0)[band].max()     # a tenth of a voxel
@@ -151,7 +151,7 @@ def test_identical_pair_leaves_the_field_near_zero(exact_copy):
 def test_exact_copy_leaves_the_whole_field_at_zero(exact_copy):
     """Nodes that no OCT point pulls stay at zero (L-BFGS does not rescale a round-off gradient into a step)."""
     mri, oct_, u, info, field = exact_copy
-    assert np.abs(u).max() < 0.05 and info["strain_max"] < 0.01, (np.abs(u).max(), info["strain_max"])
+    assert np.abs(u).max() < 0.05 and lattice_strain(field) < 0.01, (np.abs(u).max(), lattice_strain(field))
 
 
 def test_reduces_a_smooth_displacement(bumped):
@@ -164,7 +164,7 @@ def test_reduces_a_smooth_displacement(bumped):
     assert np.median(imposed) > 0.5 and np.median(err) < 0.25 * np.median(imposed), (np.median(imposed), np.median(err))
     assert np.percentile(err, 95) < 0.25 and err.max() < 0.4, (np.percentile(err, 95), err.max())
     assert abs(info["passes"][-1]["displacement_max_mm"] - imposed.max()) < 0.15, (info["passes"][-1], imposed.max())
-    assert info["strain_max"] == round(lattice_strain(field), 4) <= FAST.df_max_strain + 2e-3, info["strain_max"]
+    assert lattice_strain(field) <= FAST.df_max_strain + 2e-3, lattice_strain(field)
     corners = G.apply_affine(mri[2], np.array([[0, 0, 0], np.array(mri[0].shape) - 1], float))
     assert np.allclose(field.lo.numpy(), corners.min(0) - 2 * FAST.df_grid_mm) and field.h == FAST.df_grid_mm
     # the registered OCT at the MRI point x is OCT(T^-1 (x + u(x))): its specimen mask lands on the MRI one
@@ -181,8 +181,7 @@ def test_keeps_the_strain_bound(bumped):
     P = dataclasses.replace(FAST, df_max_strain=0.04)
     assert BUMP_STRAIN > 1.5 * P.df_max_strain
     u, info, field = fit(mri, oct_, T, P)
-    assert 0.9 * P.df_max_strain < info["strain_max"] <= P.df_max_strain + 2e-3, info["strain_max"]
-    assert lattice_strain(field) <= P.df_max_strain + 2e-3
+    assert 0.9 * P.df_max_strain < lattice_strain(field) <= P.df_max_strain + 2e-3, lattice_strain(field)
     x = world(mri[0].shape, mri[2])[mri[1].ravel()]
     truth = pull_back(bump, x)
     imposed, err = np.linalg.norm(truth, axis=1), np.linalg.norm(u[:, mri[1]].T - truth, axis=1)
@@ -200,7 +199,7 @@ def test_pull_back_inverts_the_fitted_field(bumped):
         first_order = np.linalg.norm(ux + field(torch.as_tensor(x, dtype=torch.float32)).numpy(), axis=1)   # u = -d(x)
     assert residual.max() < 1e-4 and first_order.max() > 0.01, (residual.max(), first_order.max())
     with pytest.raises(ValueError):
-        dataclasses.replace(FAST, df_iters=0)                                               # --no-deform is the switch
+        dataclasses.replace(FAST, df_evals=0)                                               # --no-deform is the switch
 
 
 def test_field_file_and_resample(tmp_path):
@@ -257,7 +256,7 @@ def test_lattice_covers_an_oblique_mri_grid():
     R = Rotation.from_rotvec([0.3, -0.2, 0.25]).as_matrix()
     A = mri[2].copy()
     A[:3, :3] = R @ A[:3, :3]
-    _, _, field = fit((mri[0], mri[1], A), oct_, T, dataclasses.replace(FAST, df_iters=1))
+    _, _, field = fit((mri[0], mri[1], A), oct_, T, dataclasses.replace(FAST, df_evals=1))
     n = np.array(mri[0].shape) - 1
     corners = G.apply_affine(A, np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])], float))
     lo = field.lo.numpy()

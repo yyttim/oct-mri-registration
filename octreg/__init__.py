@@ -10,10 +10,10 @@ small smooth deformation on top, both fitted to one polarity-free structure scor
 5. A smooth displacement field on top of the affine, fitted to the same score under a strain bound.
 
 Method constants are in octreg.params.Params (numerical guards and fixed rule literals are documented where they are used).
-Python use: `from octreg.register import register, apply, qc`; command line: `octreg register`, `octreg apply`, `octreg qc`.
+Python use: `from octreg.register import register, apply`; command line: `octreg register`, `octreg apply`.
 """
-__version__ = "3.0.0"
+from .params import Params
 
-from .params import Params  # noqa: E402
+__version__ = "3.0.0"
 
 __all__ = ["Params", "__version__"]

@@ -13,7 +13,6 @@ import numpy as np
 import torch
 from scipy.spatial.transform import Rotation
 
-from . import geometry as G
 from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
 
@@ -29,16 +28,12 @@ def compose(r, t, ls, sh, c):
 
 
 def decompose(T, c):
-    """Inverse of compose for a 4x4 numpy affine: A = Q U (QR, diag U > 0) -> (r, t, ls, sh numpy [3]); refuses a mirror."""
+    """Inverse of compose for a proper 4x4 numpy affine: A = Q U (QR, diag U > 0) -> (r, t, ls, sh numpy [3])."""
     A = np.asarray(T, float)[:3, :3]
-    if np.linalg.det(A) <= 0:
-        raise ValueError(f"mirrored or singular pose (det <= 0)\n{T}")
     Q, U = np.linalg.qr(A)
     d = np.where(np.diag(U) < 0, -1.0, 1.0)
     Q, U = Q * d, d[:, None] * U
     s = np.diag(U)
-    if not s.min() > 1e-9 * s.max():
-        raise ValueError(f"singular pose\n{T}")
     Sh = U / s
     return (Rotation.from_matrix(Q).as_rotvec(), A @ np.asarray(c, float) + np.asarray(T, float)[:3, 3], np.log(s),
             np.array([Sh[0, 1], Sh[0, 2], Sh[1, 2]]))
@@ -47,7 +42,7 @@ def decompose(T, c):
 def fit_adam(objective, c, T0, iters, params: Params = Params(), device="cuda"):
     """Adam on L = 1 - objective(T) + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4) over all twelve affine parameters (r,
     t, 3 log-scales, 3 shears), cosine schedule to zero over iters, learning rates lr_rot rad, lr_t mm, lr_ls and lr_sh.
-    -> (T numpy 4x4, objective, L) of the iterate with the lowest L."""
+    -> (T numpy 4x4, objective, L) of the iterate with the lowest L, and the objective at T0."""
     P = params
     f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=device, requires_grad=True)
     r, t, ls, sh = (f(x) for x in decompose(T0, c))
@@ -62,6 +57,8 @@ def fit_adam(objective, c, T0, iters, params: Params = Params(), device="cuda"):
         v = objective(T)
         L = 1.0 - v + P.lam * ((ls ** 2).sum() + (sh ** 2).sum())
         l, s = float(L.detach()), float(v.detach())
+        if i == 0:
+            start = s
         if l < best[0]:
             best = (l, T.detach().cpu().double().numpy(), s)
         if i == iters:
@@ -69,14 +66,14 @@ def fit_adam(objective, c, T0, iters, params: Params = Params(), device="cuda"):
         L.backward()
         opt.step()
         sched.step()
-    return best[1], best[2], best[0]
+    return best[1], best[2], best[0], start
 
 
 def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
     """Refine every pose of starts (numpy 4x4, the search candidates in rank order) on F alone, one pass per sigma in
     params.sigmas_mm, coarse to fine. mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on
     the base grid. The OCT points are the specimen mask eroded by round(erode_mm / h) 6-neighbourhood steps.
-    -> [{T, L, F: [{sigma_mm, start, end}], log_scales, shears, search_rank}], lowest final L first."""
+    -> [{T, L, F: [{sigma_mm, start, end}], search_rank}], lowest final L first."""
     P = params
     (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
@@ -87,12 +84,7 @@ def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
         mt = MRITensors(m_arr, m_mask, A_M, s, device)
         F = lambda x, tpl=tpl, mt=mt: score(x, tpl, mt)
         for p in poses:
-            with torch.no_grad():
-                f0 = float(F(torch.tensor(p["T"], dtype=torch.float32, device=device)))
-            p["T"], f1, p["L"] = fit_adam(F, tpl.c, p["T"], P.iters, P, device)
+            p["T"], f1, p["L"], f0 = fit_adam(F, tpl.c, p["T"], P.iters, P, device)
             p["F"].append({"sigma_mm": s, "start": round(f0, 5), "end": round(f1, 5)})
         del tpl, mt, F
-    for p in poses:
-        _, _, ls, sh = decompose(p["T"], G.box(A_O, np.shape(o_arr))[0])
-        p.update(log_scales=ls.tolist(), shears=sh.tolist())
     return sorted(poses, key=lambda p: p["L"])

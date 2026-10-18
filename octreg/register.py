@@ -1,4 +1,4 @@
-"""`octreg register` (docs/METHOD.md §1-5 on two files, then the outputs), `octreg apply` and `octreg qc`.
+"""`octreg register` (docs/METHOD.md §1-5 on two files, then the outputs) and `octreg apply`.
 
 A transform T is a 4x4 matrix (mm) from the OCT world to the MRI world; worlds are the NIfTI header frames (array frame for
 TIFF / NPY). The OCT is only ever streamed: its largest array in memory is the fine grid (Params.fine_mm). The smooth
@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import sys
 import time
 from pathlib import Path
 
@@ -20,36 +19,13 @@ from scipy import ndimage
 from . import __version__, geometry as G, io, preprocess as pp
 from .deform import smooth_deformation
 from .params import Params
-from .refine import decompose, refine
+from .refine import refine
 from .search import search
 
-OUTPUTS = ("T_oct2mri.txt", "T_mri2oct.txt", "oct2mri.lta", "oct2mri_itk.txt", "oct_in_mri.nii.gz", "oct_in_mri_affine.nii.gz",
+OUTPUTS = ("T_oct2mri.txt", "oct2mri.lta", "oct2mri_itk.txt", "oct_in_mri.nii.gz", "oct_in_mri_affine.nii.gz",
            "mri_in_oct.nii.gz", "qc.png", "qc_montage.png", "result.json")
 WARP = "oct2mri_warp.nii.gz"
 OUTPUTS_DEFORM = (WARP, "qc_deform.png")       # written with the smooth deformation (§5)
-
-
-def peak_rss_gb():
-    """Peak resident memory of this process (GiB): ru_maxrss on Unix, the peak working set on Windows; None if unavailable."""
-    try:
-        import resource
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (2 ** 30 if sys.platform == "darwin" else 2 ** 20)
-    except ImportError:
-        pass
-    if sys.platform != "win32":
-        return None
-    import ctypes
-    from ctypes import wintypes
-
-    class Counters(ctypes.Structure):                           # PROCESS_MEMORY_COUNTERS
-        _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD)] + [(n, ctypes.c_size_t) for n in (
-            "PeakWorkingSetSize", "WorkingSetSize", "QuotaPeakPagedPoolUsage", "QuotaPagedPoolUsage",
-            "QuotaPeakNonPagedPoolUsage", "QuotaNonPagedPoolUsage", "PagefileUsage", "PeakPagefileUsage")]
-    c, k32 = Counters(), ctypes.WinDLL("kernel32")
-    c.cb = ctypes.sizeof(c)
-    k32.GetCurrentProcess.restype = wintypes.HANDLE
-    k32.K32GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
-    return c.PeakWorkingSetSize / 2 ** 30 if k32.K32GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(c), c.cb) else None
 
 
 def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mri_mask=None, params: Params = Params(),
@@ -74,8 +50,6 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     out.mkdir(parents=True, exist_ok=True)
     for f in OUTPUTS_DEFORM + ("result.json",):                 # left by an earlier run in this directory
         (out / f).unlink(missing_ok=True)
-    if cuda:
-        torch.cuda.reset_peak_memory_stats()
 
     def lap(name):
         sec[name] = time.time() - t0 - sum(sec.values())
@@ -95,7 +69,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     # §3: orientation search on the search grid, §4: every candidate refined on the structure score, the lowest L wins
     pool = lambda x, A: G.pool_iso(np.asarray(x, np.float32), A, P.search_mm)
     (ms, A_ms), (os_, A_os) = pool(mri_h, A_m), pool(oct_h, A_o)
-    candidates, info_search = search(ms, pool(mask_m, A_m)[0], A_ms, os_, pool(mask_o, A_o)[0], pool(valid_o, A_o)[0], A_os, P,
+    candidates = search(ms, pool(mask_m, A_m)[0], A_ms, os_, pool(mask_o, A_o)[0], pool(valid_o, A_o)[0], A_os, P,
                                      device, outline)
     lap("search")
     poses = refine([c["T"] for c in candidates], mri_b, oct_b, P, device)
@@ -103,30 +77,19 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     T = best["T"]
     lap("refine")
     io.write_transform_txt(T, out / "T_oct2mri.txt")            # the affine, the primary result: written before §5 runs
-    io.write_transform_txt(np.linalg.inv(T), out / "T_mri2oct.txt")
     io.write_lta(T, vo, vm, out / "oct2mri.lta")
     io.write_itk(T, vo, vm, out / "oct2mri_itk.txt")
     # §5: smooth deformation on top of the affine, in the MRI world
     field, info_deform = smooth_deformation(mri_b, oct_b, T, P, device) if deform else (None, None)
     lap("deform")
 
-    _, _, ls, sh = decompose(T, G.box(A_o, oct_h.shape)[0])
-    corners = G.apply_affine(vo.affine, np.array([[i, j, k] for i in (0, vo.shape[0] - 1) for j in (0, vo.shape[1] - 1)
-                                                  for k in (0, vo.shape[2] - 1)], float))
-    T_search = candidates[best["search_rank"]]["T"]
-    shift = float(np.linalg.norm(G.apply_affine(T, corners) - G.apply_affine(T_search, corners), axis=1).mean())
     pose = {"S": candidates[best["search_rank"]]["S"], "L": best["L"], "search_rank": best["search_rank"], "outline_used": outline,
-            "T_search": T_search, "F": best["F"], "shift_from_search_mm": shift, "log_scales": ls.tolist(), "shears": sh.tolist(),
-            "scale_per_oct_axis": np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist(),
-            "display_polarity": display_polarity(oct_b, mri_b, T)}
-    flags = ["mri_foreground_no_valley"] * (fg_m.get("status") == "no_valley")
-    flags += ["mri_tissue_valley_passed"] * bool(fg_m.get("tissue_valleys_passed"))
-    flags += ["outline_not_used"] * (not outline)
-    flags += ["nondefault_params"] * (P != Params())
+            "T_search": candidates[best["search_rank"]]["T"], "F": best["F"],
+            "scale_per_oct_axis": np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist()}
+    polarity = display_polarity(oct_b, mri_b, T)
     inputs = {"oct": {**vars(vo), "path": _abs(vo.path)}, "mri": {**vars(vm), "path": _abs(vm.path)},
               "oct_spacing_um": oct_spacing_um, "oct_mask": oct_mask and _abs(oct_mask), "mri_mask": mri_mask and _abs(mri_mask), "device": str(device)}
-    result = {"octreg_version": __version__, "inputs": inputs, "params": P.to_dict(), "params_hash": P.hash(), "T_oct2mri": T,
-              "pose": pose, "flags": flags, "search": info_search, "candidates": [
+    result = {"octreg_version": __version__, "inputs": inputs, "params": P.to_dict(), "T_oct2mri": T, "pose": pose, "candidates": [
                   {"search_rank": c["search_rank"], "S": candidates[c["search_rank"]]["S"], "L": c["L"]} for c in poses],
               "foreground": {"oct": {**fg_o, "outside_fraction": outside["oct"]},
                              "mri": {"source": "histogram", **fg_m, "outside_fraction": outside["mri"]}},
@@ -140,13 +103,12 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     else:
         shutil.copyfile(out / "oct_in_mri_affine.nii.gz", out / "oct_in_mri.nii.gz")
     io.save_nifti(G.resample_to(mri_h, A_m, oct_h.shape, A_o, T), A_o, out / "mri_in_oct.nii.gz")
-    qc_figures(out / "qc", (oct_h, mask_o, A_o), (mri_h, mask_m, A_m), T, pose["display_polarity"], vo.affine, pose_label(pose))
+    qc_figures(out / "qc", (oct_h, mask_o, A_o), (mri_h, mask_m, A_m), T, polarity, vo.affine, pose_label(pose))
     if field is not None:
-        qc_deform_figure(out / "qc_deform.png", (oct_h, mask_o, A_o), (mri_h, mask_m, A_m), T, field, pose["display_polarity"],
+        qc_deform_figure(out / "qc_deform.png", (oct_h, mask_o, A_o), (mri_h, mask_m, A_m), T, field, polarity,
                          deform_label(info_deform))
     lap("outputs")
-    result.update(seconds={**sec, "total": time.time() - t0}, peak_rss_gb=peak_rss_gb(),
-                  gpu_peak_gb=torch.cuda.max_memory_allocated() / 2 ** 30 if cuda else None)
+    result["seconds"] = {**sec, "total": time.time() - t0}
     io.write_json(result, out / "result.json")
     return result
 
@@ -207,7 +169,7 @@ def outline_used(mask_o, valid_o, mask_m, params: Params = Params()):
 
 def apply(run_dir, moving, reference, out, inverse=False, affine_only=False, oct_spacing_um=None) -> Path:
     """Resample the volume `moving` (OCT frame; MRI frame with inverse) onto the grid of `reference` through
-    run_dir/T_oct2mri.txt (T_mri2oct.txt with inverse): streamed box average to the reference voxel size (never finer than the
+    run_dir/T_oct2mri.txt (its inverse with inverse): streamed box average to the reference voxel size (never finer than the
     moving voxel size), then trilinear, 0 outside. When the run holds oct2mri_warp.nii.gz (§5), an OCT-frame volume goes through
     T and that field onto the MRI-frame reference, as for oct_in_mri.nii.gz; affine_only leaves the field out. The field is not
     inverted: with inverse the affine alone is used and a note is printed. moving, reference: image files (io.load_volume; the
@@ -215,11 +177,11 @@ def apply(run_dir, moving, reference, out, inverse=False, affine_only=False, oct
     (`moving`, or `reference` with inverse), overriding the recorded spacing: a TIFF or NPY run needs it once its file has
     moved. out: NIfTI path. -> out. Raises ValueError for a refused input."""
     run = Path(run_dir)
-    T_file = run / ("T_mri2oct.txt" if inverse else "T_oct2mri.txt")
-    for f in (T_file, run / "result.json"):
+    for f in (run / "T_oct2mri.txt", run / "result.json"):
         if not f.is_file():
             raise ValueError(f"{f}: no such file")
-    T = np.loadtxt(T_file)
+    T = np.loadtxt(run / "T_oct2mri.txt")
+    T = np.linalg.inv(T) if inverse else T
     inp = json.loads((run / "result.json").read_text())["inputs"]
     oct_i = int(bool(inverse))                                  # the file in the OCT frame: moving, reference with inverse
     mv, rf = (io.load_volume(f, oct_spacing_um if oct_spacing_um is not None and i == oct_i else
@@ -237,8 +199,7 @@ def deform_label(d):
     """One line of the §5 read-outs (info of deform.smooth_deformation)."""
     f = d["passes"][-1]
     F = ", ".join(f"{p['F_start']:.4f} -> {p['F_end']:.4f} at {p['sigma_mm']:g} mm" for p in d["passes"])
-    return (f"§5: F {F}; displacement median {f['displacement_median_mm']:.2f}, max {f['displacement_max_mm']:.2f} mm; "
-            f"max strain {d['strain_max']:.2f}")
+    return f"§5: F {F}; displacement median {f['displacement_median_mm']:.2f}, max {f['displacement_max_mm']:.2f} mm"
 
 
 def pose_label(pose):
@@ -261,32 +222,6 @@ def _mask_on(vol, shape, affine, voxel_mm):
     streamed and box-averaged to max(voxel_mm, mask voxel), trilinear onto the grid, > 0.5. -> bool array."""
     frac, A = G.resample_iso(vol, max(voxel_mm, _mm(vol.spacing_mm.min())), binary=True)
     return G.resample_to(frac, A, shape, affine, np.eye(4)) > 0.5
-
-
-def qc(run_dir, oct_path, mri_path, T=None, prefix=None, oct_spacing_um=None, oct_mask=None, mri_mask=None):
-    """`octreg qc`: the visual QC of a run (qc_figures) for its saved T or for another transform file T (4x4 OCT world -> MRI
-    world, text or .npy; a candidate pose), without registering: base grids and masks as in register with the run's params, the
-    run's display polarity. oct_spacing_um and the mask files default to the run's inputs; prefix to run_dir/qc, or
-    run_dir/qc_<T file stem> for a given T. -> (prefix.png, prefix_montage.png) Paths. Raises ValueError for a refused input."""
-    run = Path(run_dir)
-    for f in (run / "result.json", T):
-        if f is not None and not Path(f).is_file():
-            raise ValueError(f"{f}: no such file")
-    res = json.loads((run / "result.json").read_text())
-    inp, P = res["inputs"], Params.from_dict(res["params"])
-    spacing = inp["oct_spacing_um"] if oct_spacing_um is None else oct_spacing_um
-    vo, vm = io.load_volume(oct_path, spacing), io.load_volume(mri_path)
-    mo, mm = (io.load_volume(f, sp) if f else None for f, sp in ((oct_mask or inp["oct_mask"], spacing),
-                                                                  (mri_mask or inp["mri_mask"], None)))
-    T_run, pose = np.asarray(res["T_oct2mri"]), res["pose"]
-    Tm = T_run if T is None else np.load(T) if str(T).endswith(".npy") else np.loadtxt(T)
-    if Tm.shape != (4, 4):
-        raise ValueError(f"{T}: expected a 4x4 matrix")
-    label = pose_label(pose) if np.array_equal(Tm, T_run) else f"T {Path(T).name}"
-    mri_grid = prepare_mri(vm, P, mm)[0]
-    oct_grid = prepare_oct(*G.resample_iso(vo, P.fine_mm), P, mo)[0]
-    prefix = prefix or run / ("qc" if T is None else f"qc_{Path(T).stem}")
-    return qc_figures(prefix, oct_grid, mri_grid, Tm, pose["display_polarity"], vo.affine, label)
 
 
 QC_COLOURS, QC_CELL_IN, QC_HEAD_IN, QC_DPI = ("#ff3030", "#30d0ff"), 2.8, 0.4, 100

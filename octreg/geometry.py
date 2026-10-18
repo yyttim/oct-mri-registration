@@ -60,12 +60,9 @@ def resample_iso(vol: io.Volume, level_mm, binary=False):
 
 
 def pool_iso(arr, affine, level_mm):
-    """resample_iso for an in-memory array [D, H, W] or [C, D, H, W] on the grid `affine`, whose column norms are its voxel
-    edge. -> (float32 array, affine)."""
+    """resample_iso for an in-memory array [D, H, W] on the grid `affine`, whose column norms are its voxel edge.
+    -> (float32 array, affine)."""
     arr = np.asarray(arr)
-    if arr.ndim == 4:
-        outs = [pool_iso(a, affine, level_mm) for a in arr]
-        return np.stack([o for o, _ in outs]), outs[0][1]
     return _iso(((k, arr[:, :, k]) for k in range(arr.shape[2])), arr.shape, affine, level_mm)
 
 
@@ -136,8 +133,7 @@ def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world
     field (numpy [3, d, h, w], mm along the destination world axes, on the grid affine_field in the destination world): a
     pull-back displacement (octreg.deform): the destination point x is sampled at T (x + u(x)), u trilinear in the field and
     constant beyond its grid. CHUNK destination voxels at a time, so the memory does not grow with the destination grid."""
-    arr = np.asarray(arr)
-    src = arr.view(np.uint8) if arr.dtype == bool else arr
+    src = np.asarray(arr)
     A_d, B = _np(affine_dst), np.linalg.inv(_np(affine_src)) @ _np(T_dst_world_to_src_world)   # B: dst world -> src voxel
     M = B @ A_d                                                                                # destination -> source voxel
     shape = tuple(int(s) for s in shape_dst)
@@ -154,7 +150,7 @@ def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world
             c += B[:3, :3] @ np.stack([ndimage.map_coordinates(u, f, output=np.float64, order=1, mode="nearest") for u in field])
         out[i0:i0 + len(i) // jk.shape[1]] = ndimage.map_coordinates(src, c, output=out.dtype, order=order, mode="grid-constant",
                                                                      cval=0).reshape(-1, shape[1], shape[2])
-    return out.view(bool) if arr.dtype == bool else out
+    return out
 
 
 def gauss_1d(sigma_vox, order, device):

@@ -19,7 +19,6 @@ the MRI point x is OCT(T^-1 (x + u(x))) (geometry.resample_to with field=u).
 from __future__ import annotations
 
 import math
-import time
 
 import numpy as np
 import torch
@@ -59,7 +58,7 @@ class LatticeField(torch.nn.Module):
 def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     """mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on the base grids, T the affine.
     -> (pull-back field u numpy [3, D, H, W] on the MRI base grid, info)."""
-    P, t0 = params, time.time()
+    P = params
     (m_arr, m_mask, A_M), (o_arr, o_mask, o_valid, A_O) = mri, oct
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
     valid = np.asarray(o_valid) > 0.5
@@ -74,7 +73,7 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     for s in P.df_sigmas_mm:
         tpl = OCTTemplate(o_arr, valid.astype(np.float32), A_O, s, band, device=device, eps_mask=o_mask)
         mt = MRITensors(m_arr, None, A_M, s, device, eps_mask=m_mask)
-        opt = torch.optim.LBFGS(field.parameters(), lr=1.0, max_iter=P.df_iters, history_size=HISTORY,
+        opt = torch.optim.LBFGS(field.parameters(), lr=1.0, max_iter=P.df_evals, max_eval=P.df_evals, history_size=HISTORY,
                                 line_search_fn="strong_wolfe", tolerance_grad=1e-12, tolerance_change=1e-12)
 
         def objective(tpl=tpl, mt=mt):
@@ -95,7 +94,6 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
         del tpl, mt, objective
     shape = tuple(np.shape(m_arr))
     with torch.no_grad():
-        strain = max(float(x.abs().max()) for x in field.strains())
         u = np.zeros((3,) + shape, np.float32)
         ijk = torch.stack(torch.meshgrid(*[torch.arange(n, device=device, dtype=torch.float32) for n in shape[1:]], indexing="ij"), -1)
         for i in range(shape[0]):                                    # plane by plane: memory independent of the grid
@@ -105,4 +103,4 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
             for _ in range(INVERSE_ITERS):
                 z = x - field(z)
             u[:, i] = (z - x).T.reshape(3, *shape[1:]).cpu().numpy()
-    return u, {"passes": passes, "strain_max": round(strain, 4), "seconds": round(time.time() - t0, 1)}
+    return u, {"passes": passes}

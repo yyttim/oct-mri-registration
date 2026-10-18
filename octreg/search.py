@@ -14,7 +14,6 @@ the handedness.
 from __future__ import annotations
 
 import math
-import time
 
 import numpy as np
 import torch
@@ -30,9 +29,8 @@ DIMS = (-3, -2, -1)
 
 
 def angle_deg(R1, R2):
-    """Rotation angle (deg) between two orthogonal 3x3 matrices; 180 when their handedness differs."""
-    R = np.asarray(R1, float) @ np.asarray(R2, float).T
-    return 180.0 if np.linalg.det(R) < 0 else math.degrees(math.acos(np.clip((np.trace(R) - 1) / 2, -1.0, 1.0)))
+    """Rotation angle (deg) between two rotation matrices."""
+    return math.degrees(math.acos(np.clip((np.trace(np.asarray(R1) @ np.asarray(R2).T) - 1) / 2, -1.0, 1.0)))
 
 
 class Searcher:
@@ -139,8 +137,8 @@ def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params
     """Orientation search at one grid (arguments as Searcher, smoothing params.search_sigma_mm). Rotations: geometry.rotations
     (n_rot), proper rotations only. Per orientation the argmax over the translations of S = (F + O) / 2, S = F when outline is
     False. Greedy NMS on S: a pose duplicates a kept one iff centres are closer than nms_mm and rotations closer than nms_deg;
-    the best topk are kept. -> (candidates [{T 4x4, S, F, O}] best first, info {top1, top2, n_orientations, seconds})."""
-    P, t0 = params, time.time()
+    the best topk are kept. -> candidates [{T 4x4, S, F, O}], best first."""
+    P = params
     s = Searcher(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, P.search_sigma_mm, P.erode_mm, device)
     Rs = G.rotations(P.n_rot)
     found = []
@@ -159,9 +157,7 @@ def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params
         kept.append((dict(T=T, S=x, F=f, O=o if outline else None), centre, Rs[i]))
         if len(kept) >= P.topk:
             break
-    info = dict(top1=kept[0][0]["S"], top2=kept[1][0]["S"] if len(kept) > 1 else None, n_orientations=len(Rs),
-                seconds=time.time() - t0)
-    return [k[0] for k in kept], info
+    return [k[0] for k in kept]
 
 
 def masked_ncc(a, b, w):

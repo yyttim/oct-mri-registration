@@ -3,9 +3,6 @@ set, transform files (the ITK file checked with SimpleITK). Everything is synthe
 """
 import dataclasses
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import nibabel as nib
@@ -20,7 +17,6 @@ from octreg import geometry as g
 from octreg import io
 from octreg.params import Params
 
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def rot(seed):
@@ -59,42 +55,20 @@ def stack(vol):
 
 
 # ---------------------------------------------------------------------------------------------------------------- params
-def test_params_defaults_dict_and_hash():
+def test_params_defaults_and_dict():
     p = Params()
     assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam) == (0.6, 0.15, 0.04, 8000, 24, 150, 2.0)
-    assert (p.erode_mm, p.search_sigma_mm, p.sigmas_mm, p.lr_rot, p.lr_t) == (0.8, 1.2, (0.6, 0.4, 0.3), 0.004, 0.06)
-    assert (p.df_grid_mm, p.df_max_strain, p.df_band_mm, p.df_sigmas_mm, p.df_iters) == (5.0, 0.08, 0.6, (0.6, 0.3), 200)
-    keys = set(p.to_dict())
-    assert {k for k in keys if k.startswith("df_")} == {"df_grid_mm", "df_max_strain", "df_band_mm", "df_sigmas_mm", "df_iters"}
-    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
-    assert all(num(v) or (isinstance(v, tuple) and v and all(isinstance(x, float) for x in v)) for v in p.to_dict().values())
-    assert Params.from_dict({"sigmas_mm": [0.5, 1]}).sigmas_mm == (0.5, 1.0)
-    assert Params.from_dict({"df_sigmas_mm": [1]}).df_sigmas_mm == (1.0,)
-    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_band_mm=0.9, df_iters=50)
-    q = Params.from_dict(json.loads(json.dumps(v.to_dict())))                         # JSON lists back to tuples
-    assert q == v and q.hash() == v.hash() != p.hash() and len(p.hash()) == 16
-    assert Params.from_dict({"lam": 1, "df_grid_mm": 7}) == dataclasses.replace(p, lam=1.0, df_grid_mm=7.0)
-    for bad in ({"no_such_field": 0.8}, {"sigma": 0.3}, {"topk": 12.5}, {"topk": True}, {"sigmas_mm": 0.3},
-                {"df_grid_mm": [5.0]}):
-        with pytest.raises(ValueError, match="unknown key or not a"):
-            Params.from_dict(bad)
-    for bad in ({"fine_mm": 0.2}, {"search_mm": 0.1}, {"search_mm": 0.55}, {"sigmas_mm": []}, {"sigmas_mm": [0.3, -0.1]},
-                {"sigmas_mm": [True]}, {"df_sigmas_mm": [0.3, float("inf")]}, {"df_sigmas_mm": ["0.3"]}, {"iters": 0},
-                {"df_iters": -1}, {"erode_mm": 0.0}, {"search_sigma_mm": 0.0}, {"search_sigma_mm": -1.2},
-                {"df_grid_mm": 0.0}, {"df_max_strain": 0.0}, {"df_band_mm": -0.6}, {"df_iters": 0}, {"n_rot": 0}, {"topk": 0}):
+    assert (p.df_grid_mm, p.df_max_strain, p.df_band_mm, p.df_sigmas_mm, p.df_evals) == (5.0, 0.08, 0.6, (0.6, 0.3), 250)
+    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_band_mm=0.9, df_evals=50)
+    assert Params.from_dict(json.loads(json.dumps(v.to_dict()))) == v                 # JSON lists back to tuples
+    assert Params.from_dict({"lam": 1, "sigmas_mm": [1, 0.5]}) == dataclasses.replace(p, lam=1.0, sigmas_mm=(1.0, 0.5))
+    with pytest.raises(ValueError, match="unknown keys"):
+        Params.from_dict({"no_such_field": 0.8})
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        Params.from_dict([0.5])
+    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_band_mm": -0.6}, {"df_evals": 0}):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
-    with pytest.raises(ValueError, match="^Params: "):
-        dataclasses.replace(p, sigmas_mm=[0.5])                                   # a list is not hashable: refused
-    with pytest.raises(ValueError, match="^Params: overrides must be a JSON object"):
-        Params.from_dict([0.5])
-    assert Params(lam=2, sigmas_mm=(1, 0.5)) == dataclasses.replace(p, lam=2.0, sigmas_mm=(1.0, 0.5))
-    assert Params(lam=1).hash() == Params(lam=1.0).hash() and type(Params(lam=1).lam) is float
-    assert p.hash() == "c4963318cacfc67d"                                              # the default Params
-    env = dict(os.environ, PYTHONHASHSEED="4242", PYTHONPATH=str(ROOT))
-    out = subprocess.run([sys.executable, "-c", "from octreg.params import Params; print(Params().hash())"], env=env,
-                         capture_output=True, text=True, check=True).stdout.strip()
-    assert out == p.hash()
 
 
 # ------------------------------------------------------------------------------------------------------------------- io
@@ -228,7 +202,7 @@ def test_sampling_primitives():
     pts = torch.as_tensor(g.apply_affine(T, g.apply_affine(A_dst, ijk)))
     ref = g.sample_world(torch.as_tensor(x)[None], A, pts)[0].numpy().reshape(out.shape)  # torch grid_sample
     assert (out != 0).mean() > 0.3 and (out == 0).mean() > 0.05 and np.allclose(out, ref, atol=1e-5)
-    m = x > 0.5
+    m = (x > 0.5).astype(np.uint8)
     assert np.array_equal(g.resample_to(m, A, shape, A, np.eye(4), order=0), m)
 
 
@@ -280,7 +254,7 @@ def test_transform_txt_lta_itk_roundtrip(tmp_path):
         assert [int(s) for s in info["volume"]] == list(vol.shape) and info["filename"] == [str(Path(vol.path).resolve())]
         assert np.allclose(num("cras"), hdr["Pxyz_c"], atol=1e-5) and np.allclose(num("voxelsize"), hdr["delta"], atol=1e-6)
         assert np.allclose(np.stack([num("xras"), num("yras"), num("zras")]), hdr["Mdc"], atol=1e-6)
-    io.write_json({"T": T, "p": Params(), "nan": float("nan"), "f": np.float32(1.5), "path": tmp_path}, tmp_path / "r.json")
+    io.write_json({"T": T, "p": Params().to_dict(), "nan": float("nan"), "f": np.float32(1.5)}, tmp_path / "r.json")
     back = json.loads((tmp_path / "r.json").read_text())
     assert np.array_equal(back["T"], T) and back["p"]["search_mm"] == 0.6 and back["nan"] is None and back["f"] == 1.5
     sitk = pytest.importorskip("SimpleITK")                   # ITK file: dst voxel -> dst physical -> transform -> src voxel

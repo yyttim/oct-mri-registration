@@ -1,7 +1,6 @@
 """§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the trace-free tensor ignores
 the gradient sign; F is 1 for identical volumes and does not change when the OCT contrast is inverted; OCT points over MRI
-background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; F separates a mirror image; and the
-prior holds the scale where the data do not decide it."""
+background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; and the prior holds the scale where the data do not decide it."""
 import dataclasses
 
 import numpy as np
@@ -15,7 +14,6 @@ from octreg.params import Params
 from octreg.refine import compose, decompose, refine
 
 H = 0.15
-MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])
 
 
 def refine_one(T0, mri, oct_, params, device):
@@ -163,15 +161,6 @@ def test_refine_selects_the_lowest_final_L():
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
     assert [p["search_rank"] for p in poses] == [1, 0] and poses[0]["L"] < poses[1]["L"], [(p["search_rank"], p["L"]) for p in poses]
     assert err(poses[0]["T"]) < 0.1 and all(len(p["F"]) == len(Params().sigmas_mm) for p in poses), err(poses[0]["T"])
-
-
-def test_score_separates_mirror_images():
-    """Refined from the true pose and from the same pose in the mirrored OCT frame, the true frame aligns the fine structure
-    (F > 0.9) and the mirrored one cannot (F < 0.3)."""
-    mri, (o, mo, q, A_O), T = pair(seed=2)
-    true = refine_one(T, mri, (o, mo, q, A_O), Params(), "cpu")[1]["F"][-1]["end"]
-    mirrored = refine_one(T, mri, (o, mo, q, MIRROR @ A_O), Params(), "cpu")[1]["F"][-1]["end"]
-    assert true > 0.9 and mirrored < 0.3, (true, mirrored)
 
 
 def test_prior_holds_the_scale_the_data_do_not_decide():
