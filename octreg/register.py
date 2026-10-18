@@ -281,7 +281,7 @@ def qc_figures(prefix, oct_grid, mri_grid, T, polarity, oct_file_affine, label="
     for suffix, planes in views.items():
         W, H = 0.3 + 4 * QC_CELL_IN, QC_HEAD_IN + len(planes) * QC_CELL_IN
         fig = Figure(figsize=(W, H), dpi=QC_DPI)
-        fig.suptitle(f"{label}   polarity {polarity:+d}   scale per OCT axis {scales}", y=1 - 0.06 / H, va="top", fontsize=9)
+        fig.suptitle(f"{label}   scale per OCT axis {scales}", y=1 - 0.06 / H, va="top", fontsize=9)
         for r, (a, c) in enumerate(planes):
             po, pm, pf, pw = (np.take(x, c, a).T.astype(np.float32) for x in (o, m, fg, mask))
             board = (np.arange(po.shape[0])[:, None] // tile + np.arange(po.shape[1]) // tile) % 2 == 0
