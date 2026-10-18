@@ -1,69 +1,75 @@
-"""Smooth deformation (docs/METHOD.md §5): a small displacement field on top of the affine, fitted to the same
-orientation-tensor correlation, with the tissue surface in the score as well, under a strain bound.
-
-Forward model. The OCT point x goes to y = T x + d(T x): T the affine (OCT world -> MRI world) and d a displacement in mm along
-the MRI world axes, trilinear on a regular control lattice of spacing Params.df_grid_mm over the MRI grid (two spacings of
-margin). The OCT gradient goes through the linear part of the map, (I - grad d^T) A^-T g (first order in d).
-Score. features.score over the OCT points of the specimen mask dilated by round(Params.df_band_mm / h) steps of the
-6-neighbourhood, h the OCT base voxel size (measured voxels only), with OCT gradients smoothed over all measured voxels and MRI
-gradients over the whole crop, so the boundary of the tissue enters the score as an edge in both volumes, together with the
-interior structure. eps is the median |g| over the specimen mask and over the MRI foreground. Minimised: -F + STRAIN_WEIGHT sum
-max(0, |dc| / Params.df_grid_mm - s)^2 over every component dc of the first differences of the lattice along its axes,
-s = Params.df_max_strain: the bound that keeps the field plausible for fixed tissue (every entry of grad d near or below s, so
-d is a contraction for s < 1/3 and id + d is invertible). L-BFGS with a strong-Wolfe line search, at most Params.df_iters
-iterations per sigma in Params.df_sigmas_mm: the objective never rises, and a node that no OCT point pulls moves only when the
-strain bound pulls it along behind a neighbour.
-Output. The pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), by fixed-point iteration: the registered OCT at
-the MRI point x is OCT(T^-1 (x + u(x))) (geometry.resample_to with field=u).
+"""Smooth deformation (docs/METHOD.md §5): a displacement d on top of the affine T, fitted to F under a strain bound.
+The OCT point x goes to T x + d(T x). The output is the pull-back field u, x + u(x) = (id + d)^-1(x), on the MRI base grid.
 """
 from __future__ import annotations
 
 import math
-import time
 
 import numpy as np
 import torch
-import torch.nn.functional as Fnn
-from scipy import ndimage
 
 from . import geometry as G
-from .features import MRITensors, OCTTemplate, score
+from .features import MRITensors, OCTTemplate, eroded, score
 from .params import Params
 
-STRAIN_WEIGHT = 1e3       # weight of the strain hinge (a soft form of the bound)
+STRAIN_WEIGHT = 1e3       # weight of the strain hinge, a soft form of the bound
 INVERSE_ITERS = 20        # fixed-point iterations of the pull-back field
 HISTORY = 10              # L-BFGS memory
 
 
+class _Trilinear(torch.autograd.Function):
+    """d = sum over the 8 lattice corners of w c[:, idx], with a segment-sum gradient.
+    The segment sum is deterministic on the GPU, the atomic scatter of the grid_sample backward is not."""
+
+    @staticmethod
+    def forward(ctx, c, idx, w):
+        ctx.save_for_backward(idx, w)
+        ctx.nodes = c.shape[1]
+        return (c[:, idx] * w).sum(-1).T
+
+    @staticmethod
+    def backward(ctx, g):
+        idx, w = ctx.saved_tensors
+        key, order = torch.sort(idx.reshape(-1), stable=True)
+        counts = torch.bincount(key, minlength=ctx.nodes)
+        v = (g.T[:, :, None] * w).reshape(3, -1)[:, order]
+        return torch.stack([torch.segment_reduce(x, "sum", lengths=counts) for x in v]), None, None
+
+
 class LatticeField(torch.nn.Module):
-    """Displacement d(y) (mm, MRI world axes) at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi."""
+    """Displacement d(y) in mm at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi, constant beyond."""
 
     def __init__(self, lo, hi, h, device):
         super().__init__()
         self.lo = torch.tensor(np.asarray(lo, float), dtype=torch.float32, device=device)
         self.h = float(h)
         self.n = [int(math.ceil((b - a) / h)) + 1 for a, b in zip(lo, hi)]
-        self.c = torch.nn.Parameter(torch.zeros(1, 3, *self.n, device=device))
+        self.c = torch.nn.Parameter(torch.zeros(3, math.prod(self.n), device=device))
 
     def forward(self, y):
-        q = (y - self.lo) / self.h
-        g = torch.stack([2 * q[:, 2] / (self.n[2] - 1) - 1, 2 * q[:, 1] / (self.n[1] - 1) - 1,
-                         2 * q[:, 0] / (self.n[0] - 1) - 1], -1)
-        d = Fnn.grid_sample(self.c, g.reshape(1, 1, 1, -1, 3), align_corners=True, padding_mode="border")
-        return d.reshape(3, -1).T
+        n = torch.tensor(self.n, device=y.device)
+        q = torch.minimum(((y - self.lo) / self.h).clamp(min=0), n - 1)
+        i0 = torch.minimum(q.floor().long(), n - 2)
+        f = q - i0
+        idx, w = [], []
+        for a in (0, 1):
+            for b in (0, 1):
+                for e in (0, 1):
+                    idx.append(((i0[:, 0] + a) * n[1] + i0[:, 1] + b) * n[2] + i0[:, 2] + e)
+                    w.append((f[:, 0] if a else 1 - f[:, 0]) * (f[:, 1] if b else 1 - f[:, 1]) * (f[:, 2] if e else 1 - f[:, 2]))
+        return _Trilinear.apply(self.c, torch.stack(idx, 1), torch.stack(w, 1))
 
     def strains(self):
-        return [torch.diff(self.c[0], dim=a + 1) / self.h for a in range(3)]
+        c = self.c.reshape(3, *self.n)
+        return [torch.diff(c, dim=a + 1) / self.h for a in range(3)]
 
 
 def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
-    """mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on the base grids, T the affine.
+    """Fit the smooth deformation on top of the affine T. mri, oct: (arr, mask, affine) on the base grids.
     -> (pull-back field u numpy [3, D, H, W] on the MRI base grid, info)."""
-    P, t0 = params, time.time()
-    (m_arr, m_mask, A_M), (o_arr, o_mask, o_valid, A_O) = mri, oct
-    h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
-    valid = np.asarray(o_valid) > 0.5
-    band = ndimage.binary_dilation(o_mask, iterations=max(1, round(P.df_band_mm / h_o))) & valid
+    P = params
+    (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct
+    inner = eroded(o_mask, P.erode_mm, float(np.linalg.norm(np.asarray(A_O)[:3, 0])))
     n = np.array(np.shape(m_arr)) - 1
     corners = G.apply_affine(np.asarray(A_M, float), np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])],
                                                               float))
@@ -72,9 +78,9 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
     Tt = torch.tensor(np.asarray(T, float), dtype=torch.float32, device=device)
     passes = []
     for s in P.df_sigmas_mm:
-        tpl = OCTTemplate(o_arr, valid.astype(np.float32), A_O, s, band, device=device, eps_mask=o_mask)
-        mt = MRITensors(m_arr, None, A_M, s, device, eps_mask=m_mask)
-        opt = torch.optim.LBFGS(field.parameters(), lr=1.0, max_iter=P.df_iters, history_size=HISTORY,
+        tpl = OCTTemplate(o_arr, o_mask, A_O, s, inner, device=device)
+        mt = MRITensors(m_arr, m_mask, A_M, s, device)
+        opt = torch.optim.LBFGS(field.parameters(), lr=1.0, max_iter=P.df_evals, max_eval=P.df_evals, history_size=HISTORY,
                                 line_search_fn="strong_wolfe", tolerance_grad=1e-12, tolerance_change=1e-12)
 
         def objective(tpl=tpl, mt=mt):
@@ -95,14 +101,13 @@ def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
         del tpl, mt, objective
     shape = tuple(np.shape(m_arr))
     with torch.no_grad():
-        strain = max(float(x.abs().max()) for x in field.strains())
         u = np.zeros((3,) + shape, np.float32)
         ijk = torch.stack(torch.meshgrid(*[torch.arange(n, device=device, dtype=torch.float32) for n in shape[1:]], indexing="ij"), -1)
-        for i in range(shape[0]):                                    # plane by plane: memory independent of the grid
+        for i in range(shape[0]):                                    # plane by plane to bound memory
             p = torch.cat([torch.full_like(ijk[..., :1], float(i)), ijk], -1).reshape(-1, 3)
             x = G.apply_affine(torch.tensor(np.asarray(A_M, float), dtype=torch.float32, device=device), p)
             z = x.clone()
             for _ in range(INVERSE_ITERS):
                 z = x - field(z)
             u[:, i] = (z - x).T.reshape(3, *shape[1:]).cpu().numpy()
-    return u, {"passes": passes, "strain_max": round(strain, 4), "seconds": round(time.time() - t0, 1)}
+    return u, {"passes": passes}

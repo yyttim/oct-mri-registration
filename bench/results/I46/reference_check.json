@@ -2155,143 +2155,143 @@
  },
  "vessels": {
   "reference": {
-   "vessel_n": 2955,
-   "vessel_mean_mm": 0.1304,
-   "vessel_median_mm": 0.1012
+   "vessel_n": 2952,
+   "vessel_mean_mm": 0.1299,
+   "vessel_median_mm": 0.0998
   },
   "directions": 12,
   "shift_0.5mm": {
-   "vessel_mean_mm": 0.221,
-   "vessel_median_mm": 0.2107,
+   "vessel_mean_mm": 0.2204,
+   "vessel_median_mm": 0.2102,
    "per_direction": [
     {
-     "vessel_n": 2952,
+     "vessel_n": 2954,
      "vessel_mean_mm": 0.2288,
      "vessel_median_mm": 0.224
     },
     {
-     "vessel_n": 2892,
-     "vessel_mean_mm": 0.2296,
-     "vessel_median_mm": 0.2202
+     "vessel_n": 2888,
+     "vessel_mean_mm": 0.2291,
+     "vessel_median_mm": 0.219
     },
     {
-     "vessel_n": 2893,
-     "vessel_mean_mm": 0.2262,
-     "vessel_median_mm": 0.2196
+     "vessel_n": 2885,
+     "vessel_mean_mm": 0.2278,
+     "vessel_median_mm": 0.2208
     },
     {
-     "vessel_n": 2864,
-     "vessel_mean_mm": 0.2299,
-     "vessel_median_mm": 0.2219
-    },
-    {
-     "vessel_n": 2974,
-     "vessel_mean_mm": 0.1685,
-     "vessel_median_mm": 0.1342
-    },
-    {
-     "vessel_n": 3053,
-     "vessel_mean_mm": 0.2208,
-     "vessel_median_mm": 0.2104
-    },
-    {
-     "vessel_n": 3011,
+     "vessel_n": 2860,
      "vessel_mean_mm": 0.2285,
-     "vessel_median_mm": 0.2188
+     "vessel_median_mm": 0.2207
     },
     {
-     "vessel_n": 2891,
-     "vessel_mean_mm": 0.2275,
-     "vessel_median_mm": 0.2191
+     "vessel_n": 2973,
+     "vessel_mean_mm": 0.1672,
+     "vessel_median_mm": 0.1333
     },
     {
-     "vessel_n": 2930,
-     "vessel_mean_mm": 0.2431,
-     "vessel_median_mm": 0.2372
+     "vessel_n": 3050,
+     "vessel_mean_mm": 0.2201,
+     "vessel_median_mm": 0.2099
     },
     {
-     "vessel_n": 2921,
-     "vessel_mean_mm": 0.2199,
+     "vessel_n": 3006,
+     "vessel_mean_mm": 0.2276,
+     "vessel_median_mm": 0.2173
+    },
+    {
+     "vessel_n": 2886,
+     "vessel_mean_mm": 0.2256,
+     "vessel_median_mm": 0.2179
+    },
+    {
+     "vessel_n": 2928,
+     "vessel_mean_mm": 0.2421,
+     "vessel_median_mm": 0.2362
+    },
+    {
+     "vessel_n": 2923,
+     "vessel_mean_mm": 0.2195,
      "vessel_median_mm": 0.2127
     },
     {
-     "vessel_n": 3051,
-     "vessel_mean_mm": 0.2072,
-     "vessel_median_mm": 0.1942
+     "vessel_n": 3052,
+     "vessel_mean_mm": 0.207,
+     "vessel_median_mm": 0.1941
     },
     {
-     "vessel_n": 2935,
-     "vessel_mean_mm": 0.2224,
-     "vessel_median_mm": 0.2167
+     "vessel_n": 2937,
+     "vessel_mean_mm": 0.2216,
+     "vessel_median_mm": 0.2161
     }
    ]
   },
   "shift_1mm": {
-   "vessel_mean_mm": 0.2575,
-   "vessel_median_mm": 0.2468,
+   "vessel_mean_mm": 0.2573,
+   "vessel_median_mm": 0.2467,
    "per_direction": [
     {
-     "vessel_n": 2937,
-     "vessel_mean_mm": 0.2647,
-     "vessel_median_mm": 0.2492
+     "vessel_n": 2929,
+     "vessel_mean_mm": 0.2648,
+     "vessel_median_mm": 0.2505
     },
     {
-     "vessel_n": 2776,
-     "vessel_mean_mm": 0.2576,
-     "vessel_median_mm": 0.2434
+     "vessel_n": 2773,
+     "vessel_mean_mm": 0.257,
+     "vessel_median_mm": 0.2421
     },
     {
-     "vessel_n": 2805,
-     "vessel_mean_mm": 0.27,
-     "vessel_median_mm": 0.2608
+     "vessel_n": 2800,
+     "vessel_mean_mm": 0.2702,
+     "vessel_median_mm": 0.2622
     },
     {
-     "vessel_n": 2788,
-     "vessel_mean_mm": 0.2688,
-     "vessel_median_mm": 0.2627
-    },
-    {
-     "vessel_n": 2957,
-     "vessel_mean_mm": 0.2022,
-     "vessel_median_mm": 0.1876
-    },
-    {
-     "vessel_n": 3166,
-     "vessel_mean_mm": 0.252,
-     "vessel_median_mm": 0.2411
-    },
-    {
-     "vessel_n": 3046,
-     "vessel_mean_mm": 0.2528,
-     "vessel_median_mm": 0.2372
-    },
-    {
-     "vessel_n": 2838,
-     "vessel_mean_mm": 0.2643,
-     "vessel_median_mm": 0.2593
-    },
-    {
-     "vessel_n": 2923,
-     "vessel_mean_mm": 0.2667,
-     "vessel_median_mm": 0.2603
-    },
-    {
-     "vessel_n": 2886,
-     "vessel_mean_mm": 0.2674,
-     "vessel_median_mm": 0.2577
-    },
-    {
-     "vessel_n": 3167,
-     "vessel_mean_mm": 0.2534,
-     "vessel_median_mm": 0.2418
-    },
-    {
-     "vessel_n": 2887,
-     "vessel_mean_mm": 0.2698,
+     "vessel_n": 2787,
+     "vessel_mean_mm": 0.2685,
      "vessel_median_mm": 0.261
+    },
+    {
+     "vessel_n": 2953,
+     "vessel_mean_mm": 0.2014,
+     "vessel_median_mm": 0.186
+    },
+    {
+     "vessel_n": 3165,
+     "vessel_mean_mm": 0.2518,
+     "vessel_median_mm": 0.2395
+    },
+    {
+     "vessel_n": 3043,
+     "vessel_mean_mm": 0.253,
+     "vessel_median_mm": 0.2379
+    },
+    {
+     "vessel_n": 2835,
+     "vessel_mean_mm": 0.2638,
+     "vessel_median_mm": 0.258
+    },
+    {
+     "vessel_n": 2917,
+     "vessel_mean_mm": 0.2667,
+     "vessel_median_mm": 0.261
+    },
+    {
+     "vessel_n": 2878,
+     "vessel_mean_mm": 0.2674,
+     "vessel_median_mm": 0.258
+    },
+    {
+     "vessel_n": 3163,
+     "vessel_mean_mm": 0.2536,
+     "vessel_median_mm": 0.2422
+    },
+    {
+     "vessel_n": 2890,
+     "vessel_mean_mm": 0.2698,
+     "vessel_median_mm": 0.2621
     }
    ]
   },
-  "seconds": 54
+  "seconds": 37
  }
 }

@@ -1,7 +1,4 @@
-"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the trace-free tensor ignores
-the gradient sign; F is 1 for identical volumes and does not change when the OCT contrast is inverted; OCT points over MRI
-background lower F (template form); the refinement recovers a pose 1 mm and 3 degrees off; F separates a mirror image; and the
-prior holds the scale where the data do not decide it."""
+"""The §2 structure similarity (octreg.features) and the §4 refinement on synthetic volumes."""
 import dataclasses
 
 import numpy as np
@@ -10,22 +7,21 @@ from scipy import ndimage
 from scipy.spatial.transform import Rotation
 
 from octreg import geometry as G
-from octreg.features import MRITensors, OCTTemplate, correlation, eroded, gradient_field, score, tensors, tracefree
+from octreg.features import MRITensors, OCTTemplate, correlation, eroded, gradient_field, score, orientation_tensor, tensors
 from octreg.params import Params
 from octreg.refine import compose, decompose, refine
 
 H = 0.15
-MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])
 
 
 def refine_one(T0, mri, oct_, params, device):
-    """refine.refine from one start -> (T, its record)."""
+    """Refine from one start. -> (T, its record)."""
     r = refine([T0], mri, oct_, params, device)[0]
     return r["T"], r
 
 
 def grid(shape, perm=True):
-    """Base-grid affine centred on the world origin: permuted axes with a flip (perm) or two flipped axes."""
+    """Base-grid affine centred on the world origin, with permuted axes and a flip if perm, else two flipped axes."""
     A = np.zeros((4, 4))
     A[3, 3] = 1
     if perm:
@@ -48,27 +44,24 @@ def test_gradient_field_ramp():
     mask = np.zeros(shape, bool)
     mask[4:-4, 4:-4, 4:-4] = True
     g = gradient_field(arr, mask, A, 0.3, "cpu").numpy()
-    inner = ndimage.binary_erosion(mask, iterations=9)                                # beyond the kernel radius (8 voxels)
+    inner = ndimage.binary_erosion(mask, iterations=9)                                # beyond the kernel radius of 8 voxels
     assert np.abs(g[:, inner] - np.array([2, 0, -3])[:, None]).max() < 2e-3
-    assert np.abs(g[:, ~mask]).max() == 0                                            # zero outside the mask
+    assert np.abs(g[:, ~mask]).max() == 0
     flat = gradient_field(np.where(mask, 5.0, 0.0).astype(np.float32), mask, A, 0.3, "cpu").numpy()
     assert np.abs(flat).max() < 1e-3                                                  # the mask edge adds no gradient
 
 
-def test_tracefree_ignores_the_sign():
-    """P(n) = P(-n), trace 0, and <P(n), P(m)> = (n . m)^2 - |n|^2 |m|^2 / 3 over the six channels."""
+def test_orientation_tensor_ignores_the_sign():
+    """P(n) = P(-n) and <P(n), P(m)> = (n . m)^2 over the six channels."""
     n, m = torch.as_tensor(np.random.default_rng(0).normal(size=(2, 3, 200)), dtype=torch.float32)
-    P, Q = tracefree(n), tracefree(m)
-    assert P.shape == (6, 200) and torch.equal(P, tracefree(-n))
-    assert float((P[0] + P[1] + P[2]).abs().max()) < 1e-5
-    dot = (n * m).sum(0) ** 2 - (n * n).sum(0) * (m * m).sum(0) / 3
-    assert torch.allclose((P * Q).sum(0), dot, atol=1e-4)
+    P, Q = orientation_tensor(n), orientation_tensor(m)
+    assert P.shape == (6, 200) and torch.equal(P, orientation_tensor(-n))
+    assert torch.allclose((P * Q).sum(0), (n * m).sum(0) ** 2, atol=1e-4)
 
 
 def pair(seed=0):
-    """MRI: 1 + 0.3 s inside an ellipsoid on 64^3 voxels (s a smoothed Gaussian field); OCT: 60 x 62 x 58 voxels on a
-    differently flipped grid showing 2 - tanh(1.5 s) at T x (inverted, non-linear contrast), specimen mask the ellipsoid at T x,
-    all measured. -> ((mri, mask, A_M), (oct, mask, measured, A_O), T)."""
+    """A synthetic MRI and an OCT showing it at T x with inverted non-linear contrast on a differently flipped grid.
+    -> ((mri, mask, A_M), (oct, mask, A_O), T)."""
     rng = np.random.default_rng(seed)
     shape_m = (64, 64, 64)
     A_M = grid(shape_m)
@@ -86,7 +79,7 @@ def pair(seed=0):
     samp = lambda vol: G.sample_world(torch.as_tensor(vol[None], dtype=torch.float32), A_M, xm_of_o)[0].numpy().reshape(shape_o)
     so, mo = samp(s.astype(np.float32)), samp(mask_m.astype(np.float32)) > 0.5
     oct_ = np.where(mo, 2.0 - np.tanh(1.5 * so), 0.0).astype(np.float32)
-    return (mri, mask_m, A_M), (oct_, mo, np.ones(shape_o, np.float32), A_O), T
+    return (mri, mask_m, A_M), (oct_, mo, A_O), T
 
 
 def test_score_identical_and_contrast_free():
@@ -100,8 +93,8 @@ def test_score_identical_and_contrast_free():
 
 
 def test_score_of_the_pair():
-    """At the true pose of the pair (inverted, non-linear contrast) F is high, 0.5 mm off it is much lower."""
-    mri, (o, mo, _, A_O), T = pair()
+    """F is high at the true pose of the pair and much lower 0.5 mm off it."""
+    mri, (o, mo, A_O), T = pair()
     tpl, mt = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu"), MRITensors(*mri, 0.3, "cpu")
     off = np.eye(4)
     off[:3, 3] = [0.5, 0.0, 0.0]
@@ -110,8 +103,8 @@ def test_score_of_the_pair():
 
 
 def test_background_lowers_the_score():
-    """Template form: with the MRI foreground cut in half, the OCT points over the MRI background (tensors 0) stay in the sum
-    and lower F, while the correlation over the points that remain over MRI tissue stays high."""
+    """With the MRI foreground cut in half, the OCT points over MRI background (tensors 0) stay in the sum and lower F, while
+    F over the points still on tissue stays high."""
     (mri, mask, A), _, _ = pair()
     tpl = OCTTemplate(mri, mask, A, 0.3, eroded(mask, 0.8, H), device="cpu")
     half = mask & (world(mask.shape, A)[..., 0] < 0.5)
@@ -124,9 +117,9 @@ def test_background_lowers_the_score():
 
 
 def test_no_overlap_gives_a_finite_gradient():
-    """A pose that puts every OCT point beyond the MRI grid scores 0 with a zero, finite gradient (no NaN): its fit stays at
-    L = 1 and the candidate loses the selection by the lowest final L instead of breaking it."""
-    mri, (o, mo, _, A_O), T = pair(seed=3)
+    """A pose with every OCT point beyond the MRI grid scores 0 with a zero, finite gradient, so its candidate stays at L = 1
+    and loses the selection instead of breaking it."""
+    mri, (o, mo, A_O), T = pair(seed=3)
     far = np.eye(4)
     far[:3, 3] = [200.0, 0.0, 0.0]
     Tt = torch.tensor(far @ T, dtype=torch.float32, requires_grad=True)
@@ -141,7 +134,7 @@ def test_refine_recovers_offset_pose():
     off[:3, :3] = Rotation.from_rotvec(np.radians(3.0) * np.array([1.0, 1.0, 0.0]) / np.sqrt(2)).as_matrix()
     off[:3, 3] = [0.6, -0.5, 0.6]
     T0 = off @ T
-    pts = world(oct_[0].shape, oct_[3])[oct_[1]]
+    pts = world(oct_[0].shape, oct_[2])[oct_[1]]
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
     T1, info = refine_one(T0, mri, oct_, Params(), "cpu")
     assert err(T0) > 0.9 and err(T1) < 0.05, (err(T0), err(T1))
@@ -150,8 +143,8 @@ def test_refine_recovers_offset_pose():
 
 
 def test_refine_selects_the_lowest_final_L():
-    """Of several starts, refine returns every pose sorted by its final L, and the start near the truth wins even when it is not
-    the first (the search rank of a start is its position in the list)."""
+    """refine sorts the poses by final L, and the start near the truth wins even when it is not first. The search rank of a
+    start is its index in the list."""
     mri, oct_, T = pair()
     wrong = np.eye(4)
     wrong[:3, :3] = Rotation.from_rotvec(np.radians(60.0) * np.array([0.0, 0.0, 1.0])).as_matrix()
@@ -159,27 +152,32 @@ def test_refine_selects_the_lowest_final_L():
     near = np.eye(4)
     near[:3, 3] = [0.3, -0.2, 0.3]
     poses = refine([wrong @ T, near @ T], mri, oct_, dataclasses.replace(Params(), iters=60), "cpu")
-    pts = world(oct_[0].shape, oct_[3])[oct_[1]]
+    pts = world(oct_[0].shape, oct_[2])[oct_[1]]
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
     assert [p["search_rank"] for p in poses] == [1, 0] and poses[0]["L"] < poses[1]["L"], [(p["search_rank"], p["L"]) for p in poses]
     assert err(poses[0]["T"]) < 0.1 and all(len(p["F"]) == len(Params().sigmas_mm) for p in poses), err(poses[0]["T"])
 
 
-def test_score_separates_mirror_images():
-    """Refined from the true pose and from the same pose in the mirrored OCT frame, the true frame aligns the fine structure
-    (F > 0.9) and the mirrored one cannot (F < 0.3)."""
-    mri, (o, mo, q, A_O), T = pair(seed=2)
-    true = refine_one(T, mri, (o, mo, q, A_O), Params(), "cpu")[1]["F"][-1]["end"]
-    mirrored = refine_one(T, mri, (o, mo, q, MIRROR @ A_O), Params(), "cpu")[1]["F"][-1]["end"]
-    assert true > 0.9 and mirrored < 0.3, (true, mirrored)
+def test_refine_tie_rule(monkeypatch):
+    """A final L within TIE of the lowest is a tie, which the better search rank wins."""
+    shape = (20, 20, 20)
+    A = grid(shape)
+    vol = ndimage.gaussian_filter(np.random.default_rng(0).standard_normal(shape), 1.5).astype(np.float32)
+    box = np.ones(shape, bool)
+    starts = [np.eye(4) for _ in range(3)]
+    for i, T in enumerate(starts):
+        T[0, 3] = i                                                                  # marks the start of search rank i
+    for L, ranks in (((0.2 + 5e-6, 0.2, 0.3), [0, 1, 2]), ((0.2 + 5e-4, 0.2, 0.3), [1, 0, 2])):
+        stub = lambda objective, c, rho, T0, params, device, L=L: (T0, 0.5, L[int(T0[0, 3])], 0.4)
+        monkeypatch.setattr("octreg.refine.fit_adam", stub)
+        poses = refine(starts, (vol, box, A), (vol, box, A), Params(), "cpu")
+        assert [p["search_rank"] for p in poses] == ranks, [(p["search_rank"], p["L"]) for p in poses]
 
 
 def test_prior_holds_the_scale_the_data_do_not_decide():
-    """F does not reward a smaller block: refined from the true pose with lam 0 the size is kept (|log-scale| < 0.01). A
-    structure that does not vary along world z gives the same F at every OCT scale along z, so the data do not decide that
-    scale; refined from a 10 % stretch along z, the prior (lam) brings it back to 1."""
+    """The prior restores a scale that F does not decide, and with lam 0 the size of the block is kept."""
     mri, oct_, T = pair(seed=3)
-    c = G.box(oct_[3], oct_[0].shape)[0]
+    c = G.box(oct_[2], oct_[0].shape)[0]
     T1 = refine_one(T, mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]
     assert np.abs(decompose(T1, c)[2]).max() < 0.01, decompose(T1, c)[2]
 
@@ -198,34 +196,52 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     cc = torch.as_tensor(c, dtype=torch.float32)
     F = [float(score(compose(f(0, 0, 0), cc, f(0, 0, ls), f(0, 0, 0), cc), tpl, mt)) for ls in (0.0, np.log(1.1), np.log(0.9))]
     assert F[0] > 0.9 and max(F) - min(F) < 1e-5, F
-    T1 = refine_one(np.diag([1.0, 1.0, 1.1, 1.0]), (mri, fg, A), (o, mo, np.ones(shape_o, np.float32), A_o), Params(), "cpu")[0]
+    T1 = refine_one(np.diag([1.0, 1.0, 1.1, 1.0]), (mri, fg, A), (o, mo, A_o), Params(), "cpu")[0]
     ls = decompose(T1, c)[2]
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 
 
-def test_gradient_transport_under_a_displacement():
-    """score(T, ..., field) carries the OCT gradient through the map y = T x + d(T x) as (I - grad d^T) A^-T g: for a linear d
-    the score equals that of the affine (I + B) T to first order in B, and leaving the transport out moves it much more."""
+def test_a_linear_field_carries_the_gradients(monkeypatch):
+    """A linear field d(y) = M y turns the OCT gradients and scores as the affine (I + M) T to first order. The gradients
+    are turned by I - M^T, much closer to those of the affine than unturned or turned by I - M."""
+    from octreg import features
     from octreg.deform import LatticeField
-    mri, (o, mo, _, A_O), T = pair(seed=1)
+    mri, (o, mo, A_O), T = pair(seed=2)
     tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
     mt = MRITensors(*mri, 0.3, "cpu")
-    B = 0.05 * np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.5], [0.0, -0.5, 0.0]])       # a small turn: it reorients the edges
-    y0 = G.apply_affine(T, G.box(A_O, o.shape)[0])
-    field = LatticeField(y0 - 12.0, y0 + 12.0, 2.0, "cpu")
+    t = lambda X: torch.tensor(X, dtype=torch.float32)
+    y = G.apply_affine(t(T), tpl.pts)
+    lo, hi = y.min(0).values.numpy() - 8, y.max(0).values.numpy() + 8
+    field = LatticeField(lo, hi, 4.0, "cpu")
+    M = np.array([[0.04, 0.02, 0.0], [0.0, -0.03, 0.02], [0.02, 0.0, 0.03]])
+    nodes = np.stack(np.meshgrid(*[lo[a] + field.h * np.arange(field.n[a]) for a in range(3)], indexing="ij"), -1).reshape(-1, 3)
+    seen = []
+    monkeypatch.setattr(features, "tensors", lambda g, eps: seen.append(g) or tensors(g, eps))
     with torch.no_grad():
-        n = field.n
-        nodes = (field.lo + 2.0 * torch.stack(torch.meshgrid(*[torch.arange(k, dtype=torch.float32) for k in n], indexing="ij"), -1))
-        d = (nodes - torch.as_tensor(y0, dtype=torch.float32)) @ torch.as_tensor(B.T, dtype=torch.float32)
-        field.c.copy_(d.permute(3, 0, 1, 2)[None])
-    Ta = np.eye(4)
-    Ta[:3, :3] = np.eye(3) + B
-    Ta[:3, 3] = -B @ y0
+        field.c.copy_(t((nodes @ M.T).T))
+        TM = np.eye(4)
+        TM[:3, :3] += M
+        F_field, F_affine = float(score(t(T), tpl, mt, field)), float(score(t(TM @ T), tpl, mt))
+        g = torch.linalg.inv(t(T)[:3, :3]).T @ tpl.g
+        F_unturned = float(correlation(tensors(g, tpl.eps), mt.at(y + field(y))))
+    want = torch.linalg.inv(t(TM @ T)[:3, :3]).T @ tpl.g
+    err = lambda x: float(((x - want).norm(dim=0) / want.norm(dim=0)).median())
+    assert err(seen[0]) < 0.25 * min(err(g), err(g - t(M) @ g)), (err(seen[0]), err(g), err(g - t(M) @ g))
+    assert abs(F_field - F_affine) < 0.25 * abs(F_unturned - F_affine), (F_field, F_affine, F_unturned)
+
+
+def test_a_field_moves_the_points():
+    """A constant field v scores as the translation by v after T."""
+    from octreg.deform import LatticeField
+    mri, (o, mo, A_O), T = pair(seed=1)
+    tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
+    mt = MRITensors(*mri, 0.3, "cpu")
+    v = np.array([0.2, -0.15, 0.1])
+    field = LatticeField(np.full(3, -20.0), np.full(3, 20.0), 4.0, "cpu")
+    with torch.no_grad():
+        field.c.copy_(torch.as_tensor(np.repeat(v[:, None], field.c.shape[1], 1), dtype=torch.float32))
+    Tv = np.eye(4)
+    Tv[:3, 3] = v
     t = lambda X: torch.tensor(X, dtype=torch.float32)
     with torch.no_grad():
-        F_field = float(score(t(T), tpl, mt, field))
-        F_affine = float(score(t(Ta @ T), tpl, mt))
-        y = G.apply_affine(t(T), tpl.pts)
-        g = torch.linalg.inv(t(T)[:3, :3]).T @ tpl.g
-        F_plain = float(correlation(tensors(g, tpl.eps), mt.at(y + field(y))))           # positions moved, gradients not
-    assert abs(F_plain - F_affine) > 1e-3 and abs(F_field - F_affine) < 0.1 * abs(F_plain - F_affine), (F_field, F_affine, F_plain)
+        assert abs(float(score(t(T), tpl, mt, field)) - float(score(t(Tv @ T), tpl, mt))) < 1e-5

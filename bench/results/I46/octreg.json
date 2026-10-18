@@ -5,63 +5,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 0,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3909,
-  "median_mm": 0.3709,
-  "p95_mm": 0.7478,
-  "max_mm": 1.1243,
-  "rotation_deg": 3.972,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3492,
+  "median_mm": 0.3234,
+  "p95_mm": 0.6729,
+  "max_mm": 1.0592,
+  "rotation_deg": 3.932,
   "rotation_axis": [
-   0.327,
-   0.944,
-   0.045
+   0.255,
+   0.94,
+   0.229
   ],
-  "centroid_mm": 0.2525,
+  "centroid_mm": 0.1373,
   "scales": [
-   1.0151,
-   0.9872,
-   0.9985
+   1.0077,
+   0.9828,
+   1.0115
   ],
   "singular_values": [
-   1.0564,
-   0.9956,
-   0.9742
+   1.0672,
+   0.993,
+   0.9682
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3909,
-  "rotation_L_deg": 3.908,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.188,
-  "vessel_median_mm": 0.171,
+  "mean_L_mm": 0.3633,
+  "rotation_L_deg": 3.767,
+  "vessel_n": 3016,
+  "vessel_mean_mm": 0.1753,
+  "vessel_median_mm": 0.1535,
   "search": {
-   "mean_mm": 0.8659,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.6823,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2312
+   "vessel_median_mm": 0.1958
   },
-  "S": 0.532709538936615,
-  "L": 0.3913286626338959,
+  "search_rank": 0,
+  "search_F": 0.5943567156791687,
+  "search_O": null,
+  "L": 0.4200531244277954,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3004,
-   "affine_median_mm": 0.171,
-   "field_median_mm": 0.1563,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1768
+   "n": 2998,
+   "affine_median_mm": 0.1531,
+   "field_median_mm": 0.1522,
+   "displacement_median_mm": 0.1218
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 405.8
+  "seconds": 327.8
  },
  {
   "name": "flip1_C3_k1",
@@ -69,63 +64,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 1,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.398,
-  "median_mm": 0.3769,
-  "p95_mm": 0.7685,
-  "max_mm": 1.146,
-  "rotation_deg": 3.984,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3574,
+  "median_mm": 0.3269,
+  "p95_mm": 0.7202,
+  "max_mm": 1.1212,
+  "rotation_deg": 3.921,
   "rotation_axis": [
-   0.323,
-   0.946,
-   0.043
+   0.245,
+   0.955,
+   0.168
   ],
-  "centroid_mm": 0.2669,
+  "centroid_mm": 0.169,
   "scales": [
-   1.0151,
-   0.988,
-   0.9975
+   1.0073,
+   0.9854,
+   1.01
   ],
   "singular_values": [
-   1.056,
-   0.9961,
-   0.974
+   1.0665,
+   0.9948,
+   0.9677
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3944,
-  "rotation_L_deg": 3.921,
-  "vessel_n": 3060,
-  "vessel_mean_mm": 0.189,
-  "vessel_median_mm": 0.1732,
+  "mean_L_mm": 0.3569,
+  "rotation_L_deg": 3.789,
+  "vessel_n": 3031,
+  "vessel_mean_mm": 0.1767,
+  "vessel_median_mm": 0.1551,
   "search": {
-   "mean_mm": 0.9469,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.947,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2231
+   "vessel_median_mm": 0.2238
   },
-  "S": 0.5405470728874207,
-  "L": 0.3998849093914032,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.6016631722450256,
+  "search_O": null,
+  "L": 0.42958396673202515,
+  "outline_used": false,
   "deform": {
-   "n": 3015,
-   "affine_median_mm": 0.173,
-   "field_median_mm": 0.1644,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1911
+   "n": 3016,
+   "affine_median_mm": 0.1555,
+   "field_median_mm": 0.1719,
+   "displacement_median_mm": 0.1495
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 444.5
+  "seconds": 327.3
  },
  {
   "name": "flip1_C3_k2",
@@ -133,66 +123,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 2,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3929,
-  "median_mm": 0.3726,
-  "p95_mm": 0.7533,
-  "max_mm": 1.1299,
-  "rotation_deg": 3.972,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3509,
+  "median_mm": 0.3231,
+  "p95_mm": 0.6892,
+  "max_mm": 1.0833,
+  "rotation_deg": 3.904,
   "rotation_axis": [
-   0.325,
+   0.248,
    0.945,
-   0.047
+   0.212
   ],
-  "centroid_mm": 0.2567,
+  "centroid_mm": 0.1497,
   "scales": [
-   1.0152,
-   0.9875,
-   0.9983
+   1.0077,
+   0.9843,
+   1.0118
   ],
   "singular_values": [
-   1.0564,
-   0.9958,
-   0.9742
+   1.0676,
+   0.9942,
+   0.9682
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3919,
-  "rotation_L_deg": 3.907,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.1884,
-  "vessel_median_mm": 0.1713,
+  "mean_L_mm": 0.3589,
+  "rotation_L_deg": 3.748,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1759,
+  "vessel_median_mm": 0.1537,
   "search": {
    "mean_mm": 1.2858,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2346
+   "vessel_median_mm": 0.2334
   },
-  "S": 0.5337979793548584,
-  "L": 0.39466995000839233,
+  "search_rank": 0,
+  "search_F": 0.5941221714019775,
+  "search_O": null,
+  "L": 0.4237706661224365,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3039,
-   "affine_median_mm": 0.1711,
-   "field_median_mm": 0.1558,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1677
+   "n": 3013,
+   "affine_median_mm": 0.1538,
+   "field_median_mm": 0.1582,
+   "displacement_median_mm": 0.1743
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.717
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 975.2
+  "seconds": 312.0
  },
  {
   "name": "flip1_C3_k3",
@@ -200,63 +182,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 3,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3915,
-  "median_mm": 0.3719,
-  "p95_mm": 0.7476,
-  "max_mm": 1.1227,
-  "rotation_deg": 3.966,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3507,
+  "median_mm": 0.3232,
+  "p95_mm": 0.6885,
+  "max_mm": 1.0825,
+  "rotation_deg": 3.905,
   "rotation_axis": [
-   0.32,
-   0.946,
-   0.043
+   0.254,
+   0.944,
+   0.212
   ],
-  "centroid_mm": 0.2539,
+  "centroid_mm": 0.1494,
   "scales": [
-   1.0152,
-   0.9875,
-   0.998
+   1.0079,
+   0.9844,
+   1.0117
   ],
   "singular_values": [
-   1.0562,
-   0.9958,
-   0.9742
+   1.0676,
+   0.9944,
+   0.9683
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3918,
-  "rotation_L_deg": 3.903,
-  "vessel_n": 3053,
-  "vessel_mean_mm": 0.1885,
-  "vessel_median_mm": 0.1714,
+  "mean_L_mm": 0.359,
+  "rotation_L_deg": 3.75,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1758,
+  "vessel_median_mm": 0.1534,
   "search": {
-   "mean_mm": 0.993,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.9931,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2162
+   "vessel_median_mm": 0.216
   },
-  "S": 0.53661048412323,
-  "L": 0.39476022124290466,
+  "search_rank": 0,
+  "search_F": 0.6008399724960327,
+  "search_O": null,
+  "L": 0.42387479543685913,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3024,
-   "affine_median_mm": 0.171,
-   "field_median_mm": 0.155,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1697
+   "n": 3021,
+   "affine_median_mm": 0.1534,
+   "field_median_mm": 0.1614,
+   "displacement_median_mm": 0.1202
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 662.5
+  "seconds": 476.1
  },
  {
   "name": "flip1_C3_k4",
@@ -264,63 +241,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 4,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3932,
-  "median_mm": 0.3734,
-  "p95_mm": 0.7519,
-  "max_mm": 1.1275,
-  "rotation_deg": 3.969,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3527,
+  "median_mm": 0.3253,
+  "p95_mm": 0.6921,
+  "max_mm": 1.0868,
+  "rotation_deg": 3.919,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.044
+   0.242,
+   0.949,
+   0.204
   ],
-  "centroid_mm": 0.257,
+  "centroid_mm": 0.1514,
   "scales": [
-   1.0153,
-   0.9877,
-   0.9978
+   1.0078,
+   0.9842,
+   1.0115
   ],
   "singular_values": [
-   1.0563,
-   0.9959,
-   0.9742
+   1.0675,
+   0.9941,
+   0.9684
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.393,
-  "rotation_L_deg": 3.906,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.1888,
-  "vessel_median_mm": 0.1713,
+  "mean_L_mm": 0.3601,
+  "rotation_L_deg": 3.767,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1762,
+  "vessel_median_mm": 0.1536,
   "search": {
    "mean_mm": 1.611,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2086
+   "vessel_median_mm": 0.2089
   },
-  "S": 0.5306558609008789,
-  "L": 0.39808785915374756,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5936472415924072,
+  "search_O": null,
+  "L": 0.42758309841156006,
+  "outline_used": false,
   "deform": {
-   "n": 2998,
-   "affine_median_mm": 0.171,
-   "field_median_mm": 0.1642,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.1686
+   "n": 3005,
+   "affine_median_mm": 0.1536,
+   "field_median_mm": 0.1693,
+   "displacement_median_mm": 0.1483
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 427.0
+  "seconds": 468.9
  },
  {
   "name": "flip1_C3_k5",
@@ -328,63 +300,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 5,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4004,
-  "median_mm": 0.3788,
-  "p95_mm": 0.774,
-  "max_mm": 1.1531,
-  "rotation_deg": 4.008,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3616,
+  "median_mm": 0.3297,
+  "p95_mm": 0.7354,
+  "max_mm": 1.1395,
+  "rotation_deg": 3.946,
   "rotation_axis": [
-   0.321,
-   0.946,
-   0.044
+   0.246,
+   0.956,
+   0.158
   ],
-  "centroid_mm": 0.2691,
+  "centroid_mm": 0.1778,
   "scales": [
-   1.0151,
-   0.9881,
-   0.9973
+   1.0072,
+   0.9858,
+   1.0096
   ],
   "singular_values": [
-   1.056,
-   0.9962,
-   0.9739
+   1.0664,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3966,
-  "rotation_L_deg": 3.944,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1893,
-  "vessel_median_mm": 0.1733,
+  "mean_L_mm": 0.358,
+  "rotation_L_deg": 3.82,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1772,
+  "vessel_median_mm": 0.1566,
   "search": {
-   "mean_mm": 3.166,
-   "rotation_deg": 13.795,
+   "mean_mm": 1.0753,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2339
+   "vessel_median_mm": 0.2252
   },
-  "S": 0.43921804428100586,
-  "L": 0.403152734041214,
+  "search_rank": 0,
+  "search_F": 0.6012229323387146,
+  "search_O": null,
+  "L": 0.43322399258613586,
   "outline_used": false,
-  "search_rank": 11,
   "deform": {
-   "n": 3033,
-   "affine_median_mm": 0.1733,
-   "field_median_mm": 0.1577,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1705
+   "n": 3023,
+   "affine_median_mm": 0.1566,
+   "field_median_mm": 0.1662,
+   "displacement_median_mm": 0.161
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 528.0
+  "seconds": 469.0
  },
  {
   "name": "flip1_C3_k6",
@@ -392,63 +359,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 6,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3983,
-  "median_mm": 0.3771,
-  "p95_mm": 0.7691,
-  "max_mm": 1.1466,
-  "rotation_deg": 3.985,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3572,
+  "median_mm": 0.3269,
+  "p95_mm": 0.7195,
+  "max_mm": 1.1197,
+  "rotation_deg": 3.915,
   "rotation_axis": [
-   0.322,
-   0.946,
-   0.044
+   0.243,
+   0.955,
+   0.168
   ],
-  "centroid_mm": 0.2674,
+  "centroid_mm": 0.1695,
   "scales": [
-   1.0152,
-   0.988,
-   0.9975
+   1.0074,
+   0.9853,
+   1.0099
   ],
   "singular_values": [
-   1.056,
-   0.9961,
-   0.974
+   1.0664,
+   0.9948,
+   0.9678
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3946,
-  "rotation_L_deg": 3.922,
-  "vessel_n": 3059,
-  "vessel_mean_mm": 0.1891,
-  "vessel_median_mm": 0.1734,
+  "mean_L_mm": 0.3566,
+  "rotation_L_deg": 3.784,
+  "vessel_n": 3032,
+  "vessel_mean_mm": 0.1767,
+  "vessel_median_mm": 0.1548,
   "search": {
-   "mean_mm": 3.2894,
-   "rotation_deg": 11.553,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2066
+   "mean_mm": 0.7602,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2122
   },
-  "S": 0.4341990649700165,
-  "L": 0.4009207487106323,
+  "search_rank": 0,
+  "search_F": 0.5957674384117126,
+  "search_O": null,
+  "L": 0.43073737621307373,
   "outline_used": false,
-  "search_rank": 18,
   "deform": {
-   "n": 3017,
-   "affine_median_mm": 0.1735,
-   "field_median_mm": 0.154,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1692
+   "n": 3002,
+   "affine_median_mm": 0.1548,
+   "field_median_mm": 0.1659,
+   "displacement_median_mm": 0.1783
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 341.4
+  "seconds": 310.5
  },
  {
   "name": "flip1_C3_k7",
@@ -456,63 +418,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 7,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.399,
-  "median_mm": 0.3777,
-  "p95_mm": 0.7707,
-  "max_mm": 1.1484,
-  "rotation_deg": 3.991,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3575,
+  "median_mm": 0.3271,
+  "p95_mm": 0.7204,
+  "max_mm": 1.1205,
+  "rotation_deg": 3.918,
   "rotation_axis": [
-   0.321,
-   0.946,
-   0.043
+   0.242,
+   0.956,
+   0.168
   ],
-  "centroid_mm": 0.268,
+  "centroid_mm": 0.1701,
   "scales": [
-   1.0151,
-   0.9881,
-   0.9974
+   1.0074,
+   0.9852,
+   1.0098
   ],
   "singular_values": [
-   1.0559,
-   0.9961,
-   0.974
+   1.0663,
+   0.9947,
+   0.9677
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3953,
-  "rotation_L_deg": 3.928,
-  "vessel_n": 3058,
-  "vessel_mean_mm": 0.1892,
-  "vessel_median_mm": 0.1732,
+  "mean_L_mm": 0.3568,
+  "rotation_L_deg": 3.786,
+  "vessel_n": 3031,
+  "vessel_mean_mm": 0.1768,
+  "vessel_median_mm": 0.1549,
   "search": {
-   "mean_mm": 1.8199,
-   "rotation_deg": 23.269,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2266
+   "mean_mm": 0.7019,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2031
   },
-  "S": 0.42416146397590637,
-  "L": 0.4021333158016205,
+  "search_rank": 0,
+  "search_F": 0.5953720211982727,
+  "search_O": null,
+  "L": 0.43208861351013184,
   "outline_used": false,
-  "search_rank": 17,
   "deform": {
-   "n": 3030,
-   "affine_median_mm": 0.1733,
-   "field_median_mm": 0.1607,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1719
+   "n": 2979,
+   "affine_median_mm": 0.1564,
+   "field_median_mm": 0.1774,
+   "displacement_median_mm": 0.2026
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 352.5
+  "seconds": 328.6
  },
  {
   "name": "flip1_C3_k8",
@@ -520,63 +477,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 8,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3983,
-  "median_mm": 0.3771,
-  "p95_mm": 0.7692,
-  "max_mm": 1.1467,
-  "rotation_deg": 3.985,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3567,
+  "median_mm": 0.3262,
+  "p95_mm": 0.7198,
+  "max_mm": 1.119,
+  "rotation_deg": 3.904,
   "rotation_axis": [
-   0.322,
-   0.946,
-   0.044
+   0.241,
+   0.957,
+   0.162
   ],
-  "centroid_mm": 0.2674,
+  "centroid_mm": 0.1703,
   "scales": [
-   1.0152,
-   0.988,
-   0.9974
+   1.0074,
+   0.9853,
+   1.0095
   ],
   "singular_values": [
-   1.056,
-   0.9961,
-   0.974
+   1.0661,
+   0.9947,
+   0.9677
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3946,
-  "rotation_L_deg": 3.922,
-  "vessel_n": 3059,
-  "vessel_mean_mm": 0.1891,
-  "vessel_median_mm": 0.1734,
+  "mean_L_mm": 0.355,
+  "rotation_L_deg": 3.776,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1766,
+  "vessel_median_mm": 0.1555,
   "search": {
-   "mean_mm": 1.8404,
-   "rotation_deg": 23.269,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2344
+   "mean_mm": 0.7611,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2169
   },
-  "S": 0.42518290877342224,
-  "L": 0.4010671377182007,
+  "search_rank": 0,
+  "search_F": 0.5936586260795593,
+  "search_O": null,
+  "L": 0.43090078234672546,
   "outline_used": false,
-  "search_rank": 19,
   "deform": {
-   "n": 3001,
-   "affine_median_mm": 0.1728,
-   "field_median_mm": 0.1667,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1723
+   "n": 3007,
+   "affine_median_mm": 0.1557,
+   "field_median_mm": 0.1673,
+   "displacement_median_mm": 0.1377
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 306.3
+  "seconds": 319.5
  },
  {
   "name": "flip1_C3_k9",
@@ -584,63 +536,58 @@
   "image": "flip1",
   "cond": "C3",
   "k": 9,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4011,
-  "median_mm": 0.3798,
-  "p95_mm": 0.7752,
-  "max_mm": 1.1537,
-  "rotation_deg": 4.009,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3617,
+  "median_mm": 0.3298,
+  "p95_mm": 0.7356,
+  "max_mm": 1.1394,
+  "rotation_deg": 3.944,
   "rotation_axis": [
-   0.321,
-   0.946,
-   0.039
+   0.245,
+   0.956,
+   0.158
   ],
-  "centroid_mm": 0.2704,
+  "centroid_mm": 0.1783,
   "scales": [
-   1.0151,
-   0.9884,
-   0.9971
+   1.0072,
+   0.9857,
+   1.0096
   ],
   "singular_values": [
-   1.0557,
-   0.9964,
-   0.974
+   1.0663,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3973,
-  "rotation_L_deg": 3.947,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1894,
-  "vessel_median_mm": 0.1737,
+  "mean_L_mm": 0.3579,
+  "rotation_L_deg": 3.819,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1772,
+  "vessel_median_mm": 0.1567,
   "search": {
-   "mean_mm": 0.7478,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.7871,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.1968
+   "vessel_median_mm": 0.2056
   },
-  "S": 0.5329009890556335,
-  "L": 0.40381762385368347,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5964110493659973,
+  "search_O": null,
+  "L": 0.43396463990211487,
+  "outline_used": false,
   "deform": {
-   "n": 3005,
-   "affine_median_mm": 0.1734,
-   "field_median_mm": 0.1629,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1659
+   "n": 3019,
+   "affine_median_mm": 0.1567,
+   "field_median_mm": 0.1575,
+   "displacement_median_mm": 0.1636
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 371.6
+  "seconds": 466.3
  },
  {
   "name": "flip2_C3_k0",
@@ -648,66 +595,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 0,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5015,
-  "median_mm": 0.4656,
-  "p95_mm": 0.8111,
-  "max_mm": 1.1361,
-  "rotation_deg": 3.663,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3641,
+  "median_mm": 0.3375,
+  "p95_mm": 0.6777,
+  "max_mm": 0.9856,
+  "rotation_deg": 2.886,
   "rotation_axis": [
-   0.463,
-   0.886,
-   -0.04
+   0.509,
+   0.857,
+   0.083
   ],
-  "centroid_mm": 0.3789,
+  "centroid_mm": 0.2205,
   "scales": [
-   1.0022,
-   1.0139,
-   1.0058
+   1.0009,
+   1.0189,
+   1.0161
   ],
   "singular_values": [
-   1.0641,
-   1.0237,
-   0.9608
+   1.074,
+   1.0292,
+   0.9602
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5847,
-  "rotation_L_deg": 3.666,
-  "vessel_n": 2958,
-  "vessel_mean_mm": 0.1914,
-  "vessel_median_mm": 0.1773,
+  "mean_L_mm": 0.4354,
+  "rotation_L_deg": 2.842,
+  "vessel_n": 3009,
+  "vessel_mean_mm": 0.1712,
+  "vessel_median_mm": 0.1465,
   "search": {
-   "mean_mm": 1.3137,
-   "rotation_deg": 10.325,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2531
+   "mean_mm": 0.8661,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2314
   },
-  "S": 0.5138810276985168,
-  "L": 0.4043356478214264,
+  "search_rank": 0,
+  "search_F": 0.5704143047332764,
+  "search_O": null,
+  "L": 0.4062087833881378,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 2891,
-   "affine_median_mm": 0.1774,
-   "field_median_mm": 0.1558,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2685
+   "n": 2998,
+   "affine_median_mm": 0.1465,
+   "field_median_mm": 0.1507,
+   "displacement_median_mm": 0.1659
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.717
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00074
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 382.8
+  "seconds": 459.3
  },
  {
   "name": "flip2_C3_k1",
@@ -715,63 +654,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 1,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5149,
-  "median_mm": 0.4781,
-  "p95_mm": 0.8276,
-  "max_mm": 1.1537,
-  "rotation_deg": 3.725,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.37,
+  "median_mm": 0.3405,
+  "p95_mm": 0.6905,
+  "max_mm": 1.0041,
+  "rotation_deg": 2.929,
   "rotation_axis": [
-   0.443,
-   0.894,
-   -0.066
+   0.507,
+   0.862,
+   0.022
   ],
-  "centroid_mm": 0.3924,
+  "centroid_mm": 0.2267,
   "scales": [
-   1.0008,
-   1.0121,
-   1.0046
+   1.0001,
+   1.0184,
+   1.0145
   ],
   "singular_values": [
-   1.0627,
-   1.0221,
+   1.0731,
+   1.028,
    0.9594
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5991,
-  "rotation_L_deg": 3.74,
-  "vessel_n": 2945,
-  "vessel_mean_mm": 0.1932,
-  "vessel_median_mm": 0.179,
+  "mean_L_mm": 0.4421,
+  "rotation_L_deg": 2.918,
+  "vessel_n": 3005,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.1485,
   "search": {
-   "mean_mm": 1.3518,
-   "rotation_deg": 10.325,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2453
+   "mean_mm": 0.9551,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2454
   },
-  "S": 0.5161676406860352,
-  "L": 0.41295570135116577,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5698815584182739,
+  "search_O": null,
+  "L": 0.417761892080307,
+  "outline_used": false,
   "deform": {
-   "n": 2895,
-   "affine_median_mm": 0.1789,
-   "field_median_mm": 0.1542,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2846
+   "n": 2983,
+   "affine_median_mm": 0.1482,
+   "field_median_mm": 0.1476,
+   "displacement_median_mm": 0.204
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 2e-05
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 391.3
+  "seconds": 453.5
  },
  {
   "name": "flip2_C3_k2",
@@ -779,66 +713,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 2,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5076,
-  "median_mm": 0.4712,
-  "p95_mm": 0.8179,
-  "max_mm": 1.1428,
-  "rotation_deg": 3.678,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3647,
+  "median_mm": 0.3372,
+  "p95_mm": 0.6798,
+  "max_mm": 0.9893,
+  "rotation_deg": 2.89,
   "rotation_axis": [
-   0.454,
-   0.889,
-   -0.059
+   0.51,
+   0.858,
+   0.06
   ],
-  "centroid_mm": 0.3857,
+  "centroid_mm": 0.2202,
   "scales": [
-   1.0017,
-   1.013,
-   1.0049
+   1.0007,
+   1.0187,
+   1.0158
   ],
   "singular_values": [
-   1.0634,
-   1.0227,
-   0.9602
+   1.0739,
+   1.0288,
+   0.9599
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5914,
-  "rotation_L_deg": 3.691,
-  "vessel_n": 2954,
-  "vessel_mean_mm": 0.1923,
-  "vessel_median_mm": 0.1785,
+  "mean_L_mm": 0.4357,
+  "rotation_L_deg": 2.86,
+  "vessel_n": 3007,
+  "vessel_mean_mm": 0.1712,
+  "vessel_median_mm": 0.1467,
   "search": {
-   "mean_mm": 1.3055,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.8922,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2421
+   "vessel_median_mm": 0.2433
   },
-  "S": 0.510816216468811,
-  "L": 0.40871018171310425,
+  "search_rank": 0,
+  "search_F": 0.5678219795227051,
+  "search_O": null,
+  "L": 0.4120008051395416,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 2890,
-   "affine_median_mm": 0.1788,
-   "field_median_mm": 0.1441,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.3122
+   "n": 2997,
+   "affine_median_mm": 0.1466,
+   "field_median_mm": 0.1444,
+   "displacement_median_mm": 0.1623
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.716
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00085
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 352.6
+  "seconds": 368.5
  },
  {
   "name": "flip2_C3_k3",
@@ -846,66 +772,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 3,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5074,
-  "median_mm": 0.471,
-  "p95_mm": 0.8177,
-  "max_mm": 1.1427,
-  "rotation_deg": 3.68,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3647,
+  "median_mm": 0.3372,
+  "p95_mm": 0.6798,
+  "max_mm": 0.9894,
+  "rotation_deg": 2.891,
   "rotation_axis": [
-   0.454,
-   0.889,
-   -0.057
+   0.51,
+   0.858,
+   0.06
   ],
-  "centroid_mm": 0.3855,
+  "centroid_mm": 0.2202,
   "scales": [
-   1.0017,
-   1.013,
-   1.0049
+   1.0006,
+   1.0187,
+   1.0158
   ],
   "singular_values": [
-   1.0634,
-   1.0228,
-   0.9602
+   1.0739,
+   1.0288,
+   0.9599
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5912,
-  "rotation_L_deg": 3.692,
-  "vessel_n": 2954,
-  "vessel_mean_mm": 0.1923,
-  "vessel_median_mm": 0.1782,
+  "mean_L_mm": 0.4357,
+  "rotation_L_deg": 2.86,
+  "vessel_n": 3007,
+  "vessel_mean_mm": 0.1712,
+  "vessel_median_mm": 0.1467,
   "search": {
-   "mean_mm": 1.3886,
-   "rotation_deg": 10.325,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2365
+   "mean_mm": 0.9238,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2428
   },
-  "S": 0.5096884965896606,
-  "L": 0.4085826575756073,
+  "search_rank": 0,
+  "search_F": 0.5629321336746216,
+  "search_O": null,
+  "L": 0.4118519425392151,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 2895,
-   "affine_median_mm": 0.1778,
-   "field_median_mm": 0.1547,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2721
+   "n": 2998,
+   "affine_median_mm": 0.1467,
+   "field_median_mm": 0.1458,
+   "displacement_median_mm": 0.1859
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.716
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00068
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 457.1
+  "seconds": 383.6
  },
  {
   "name": "flip2_C3_k4",
@@ -913,63 +831,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 4,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5129,
-  "median_mm": 0.476,
-  "p95_mm": 0.826,
-  "max_mm": 1.1529,
-  "rotation_deg": 3.724,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3662,
+  "median_mm": 0.3376,
+  "p95_mm": 0.683,
+  "max_mm": 0.9935,
+  "rotation_deg": 2.9,
   "rotation_axis": [
-   0.445,
-   0.893,
-   -0.063
+   0.512,
+   0.858,
+   0.044
   ],
-  "centroid_mm": 0.3898,
+  "centroid_mm": 0.2229,
   "scales": [
-   1.0009,
-   1.0125,
-   1.0047
+   1.0004,
+   1.0183,
+   1.015
   ],
   "singular_values": [
-   1.063,
-   1.0223,
-   0.9595
+   1.0733,
+   1.0282,
+   0.9597
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5968,
-  "rotation_L_deg": 3.738,
-  "vessel_n": 2949,
-  "vessel_mean_mm": 0.1929,
-  "vessel_median_mm": 0.1789,
+  "mean_L_mm": 0.4378,
+  "rotation_L_deg": 2.879,
+  "vessel_n": 3005,
+  "vessel_mean_mm": 0.1714,
+  "vessel_median_mm": 0.1475,
   "search": {
-   "mean_mm": 0.991,
-   "rotation_deg": 10.325,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.234
+   "mean_mm": 1.4436,
+   "rotation_deg": 10.327,
+   "tier": "beyond",
+   "vessel_median_mm": 0.2345
   },
-  "S": 0.5120106935501099,
-  "L": 0.4108116328716278,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5737633109092712,
+  "search_O": null,
+  "L": 0.4148824214935303,
+  "outline_used": false,
   "deform": {
-   "n": 2869,
-   "affine_median_mm": 0.1782,
-   "field_median_mm": 0.1434,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.2852
+   "n": 2965,
+   "affine_median_mm": 0.1472,
+   "field_median_mm": 0.148,
+   "displacement_median_mm": 0.1947
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00017
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 290.8
+  "seconds": 382.8
  },
  {
   "name": "flip2_C3_k5",
@@ -977,63 +890,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 5,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5159,
-  "median_mm": 0.4794,
-  "p95_mm": 0.8286,
-  "max_mm": 1.154,
-  "rotation_deg": 3.718,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3694,
+  "median_mm": 0.3398,
+  "p95_mm": 0.6893,
+  "max_mm": 1.0023,
+  "rotation_deg": 2.92,
   "rotation_axis": [
-   0.437,
-   0.896,
-   -0.082
+   0.506,
+   0.863,
+   0.014
   ],
-  "centroid_mm": 0.3935,
+  "centroid_mm": 0.2261,
   "scales": [
-   1.0009,
-   1.0118,
-   1.0047
+   0.9999,
+   1.0181,
+   1.0142
   ],
   "singular_values": [
-   1.063,
-   1.0217,
-   0.9594
+   1.0728,
+   1.0277,
+   0.9591
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.6001,
-  "rotation_L_deg": 3.741,
-  "vessel_n": 2944,
-  "vessel_mean_mm": 0.1935,
-  "vessel_median_mm": 0.179,
+  "mean_L_mm": 0.4414,
+  "rotation_L_deg": 2.915,
+  "vessel_n": 3003,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.148,
   "search": {
-   "mean_mm": 1.5081,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.0086,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2407
+   "vessel_median_mm": 0.2499
   },
-  "S": 0.5164197683334351,
-  "L": 0.4160991311073303,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5700746178627014,
+  "search_O": null,
+  "L": 0.4219871759414673,
+  "outline_used": false,
   "deform": {
-   "n": 2888,
-   "affine_median_mm": 0.1789,
-   "field_median_mm": 0.1427,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.2929
+   "n": 2978,
+   "affine_median_mm": 0.1479,
+   "field_median_mm": 0.1429,
+   "displacement_median_mm": 0.1693
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 422.9
+  "seconds": 418.7
  },
  {
   "name": "flip2_C3_k6",
@@ -1041,66 +949,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 6,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5155,
-  "median_mm": 0.4786,
-  "p95_mm": 0.829,
-  "max_mm": 1.1554,
-  "rotation_deg": 3.728,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3694,
+  "median_mm": 0.34,
+  "p95_mm": 0.6891,
+  "max_mm": 1.0021,
+  "rotation_deg": 2.919,
   "rotation_axis": [
-   0.441,
-   0.894,
-   -0.078
+   0.506,
+   0.863,
+   0.017
   ],
-  "centroid_mm": 0.3927,
+  "centroid_mm": 0.2262,
   "scales": [
-   1.0008,
-   1.0119,
-   1.0046
+   1.0,
+   1.0183,
+   1.0143
   ],
   "singular_values": [
-   1.0629,
-   1.0218,
-   0.9594
+   1.0729,
+   1.0279,
+   0.9593
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5996,
-  "rotation_L_deg": 3.75,
-  "vessel_n": 2944,
-  "vessel_mean_mm": 0.1934,
-  "vessel_median_mm": 0.1787,
+  "mean_L_mm": 0.4415,
+  "rotation_L_deg": 2.912,
+  "vessel_n": 3004,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.1483,
   "search": {
-   "mean_mm": 0.9085,
-   "rotation_deg": 10.325,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2412
+   "mean_mm": 1.167,
+   "rotation_deg": 10.327,
+   "tier": "beyond",
+   "vessel_median_mm": 0.2437
   },
-  "S": 0.5151196122169495,
-  "L": 0.4142119288444519,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5736509561538696,
+  "search_O": null,
+  "L": 0.4194023907184601,
+  "outline_used": false,
   "deform": {
-   "n": 2881,
-   "affine_median_mm": 0.1785,
-   "field_median_mm": 0.1361,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.3215
+   "n": 2976,
+   "affine_median_mm": 0.148,
+   "field_median_mm": 0.1407,
+   "displacement_median_mm": 0.1957
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.713
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00032
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 392.0
+  "seconds": 413.1
  },
  {
   "name": "flip2_C3_k7",
@@ -1108,67 +1008,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 7,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5162,
-  "median_mm": 0.4797,
-  "p95_mm": 0.8291,
-  "max_mm": 1.1548,
-  "rotation_deg": 3.721,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3693,
+  "median_mm": 0.3398,
+  "p95_mm": 0.689,
+  "max_mm": 1.0019,
+  "rotation_deg": 2.919,
   "rotation_axis": [
-   0.438,
-   0.895,
-   -0.081
+   0.506,
+   0.863,
+   0.015
   ],
-  "centroid_mm": 0.3938,
+  "centroid_mm": 0.226,
   "scales": [
-   1.0009,
-   1.0118,
-   1.0047
+   0.9999,
+   1.0182,
+   1.0142
   ],
   "singular_values": [
-   1.0629,
-   1.0217,
-   0.9594
+   1.0728,
+   1.0278,
+   0.9592
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.6004,
-  "rotation_L_deg": 3.743,
-  "vessel_n": 2944,
-  "vessel_mean_mm": 0.1936,
-  "vessel_median_mm": 0.1791,
+  "mean_L_mm": 0.4414,
+  "rotation_L_deg": 2.912,
+  "vessel_n": 3004,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.1479,
   "search": {
-   "mean_mm": 1.1669,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.5701,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2544
+   "vessel_median_mm": 0.2446
   },
-  "S": 0.51205974817276,
-  "L": 0.41584187746047974,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5688565969467163,
+  "search_O": null,
+  "L": 0.42159801721572876,
+  "outline_used": false,
   "deform": {
-   "n": 2881,
-   "affine_median_mm": 0.179,
-   "field_median_mm": 0.1352,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.3479
+   "n": 2981,
+   "affine_median_mm": 0.1478,
+   "field_median_mm": 0.1406,
+   "displacement_median_mm": 0.2032
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.72,
-   0.562
-  ],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.00022
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 338.1
+  "seconds": 408.2
  },
  {
   "name": "flip2_C3_k8",
@@ -1176,63 +1067,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 8,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5151,
-  "median_mm": 0.4784,
-  "p95_mm": 0.8276,
-  "max_mm": 1.1536,
-  "rotation_deg": 3.725,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3701,
+  "median_mm": 0.3406,
+  "p95_mm": 0.6905,
+  "max_mm": 1.0038,
+  "rotation_deg": 2.924,
   "rotation_axis": [
-   0.442,
-   0.894,
-   -0.067
+   0.507,
+   0.862,
+   0.022
   ],
-  "centroid_mm": 0.3926,
+  "centroid_mm": 0.2272,
   "scales": [
-   1.0008,
-   1.0121,
-   1.0046
+   1.0001,
+   1.0182,
+   1.0146
   ],
   "singular_values": [
-   1.0627,
-   1.0221,
-   0.9594
+   1.0731,
+   1.0279,
+   0.9593
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5993,
-  "rotation_L_deg": 3.741,
-  "vessel_n": 2944,
-  "vessel_mean_mm": 0.1933,
-  "vessel_median_mm": 0.179,
+  "mean_L_mm": 0.4422,
+  "rotation_L_deg": 2.914,
+  "vessel_n": 3004,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.1481,
   "search": {
-   "mean_mm": 0.9954,
-   "rotation_deg": 10.325,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2413
+   "mean_mm": 1.1677,
+   "rotation_deg": 10.327,
+   "tier": "beyond",
+   "vessel_median_mm": 0.2473
   },
-  "S": 0.5188302993774414,
-  "L": 0.41353628039360046,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5796725749969482,
+  "search_O": null,
+  "L": 0.4185554087162018,
+  "outline_used": false,
   "deform": {
-   "n": 2882,
-   "affine_median_mm": 0.1784,
-   "field_median_mm": 0.1487,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.3025
+   "n": 2972,
+   "affine_median_mm": 0.1481,
+   "field_median_mm": 0.1423,
+   "displacement_median_mm": 0.1814
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 455.9
+  "seconds": 304.7
  },
  {
   "name": "flip2_C3_k9",
@@ -1240,63 +1126,58 @@
   "image": "flip2",
   "cond": "C3",
   "k": 9,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.5171,
-  "median_mm": 0.4805,
-  "p95_mm": 0.8306,
-  "max_mm": 1.1567,
-  "rotation_deg": 3.73,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3695,
+  "median_mm": 0.3399,
+  "p95_mm": 0.6896,
+  "max_mm": 1.0028,
+  "rotation_deg": 2.922,
   "rotation_axis": [
-   0.437,
-   0.896,
-   -0.082
+   0.506,
+   0.863,
+   0.013
   ],
-  "centroid_mm": 0.3943,
+  "centroid_mm": 0.2261,
   "scales": [
-   1.0007,
-   1.0118,
-   1.0046
+   0.9999,
+   1.0181,
+   1.0142
   ],
   "singular_values": [
-   1.0628,
-   1.0218,
-   0.9592
+   1.0728,
+   1.0277,
+   0.9591
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.6014,
-  "rotation_L_deg": 3.754,
-  "vessel_n": 2944,
-  "vessel_mean_mm": 0.1937,
-  "vessel_median_mm": 0.1793,
+  "mean_L_mm": 0.4416,
+  "rotation_L_deg": 2.917,
+  "vessel_n": 3003,
+  "vessel_mean_mm": 0.172,
+  "vessel_median_mm": 0.148,
   "search": {
-   "mean_mm": 1.1393,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.2244,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2349
+   "vessel_median_mm": 0.2543
   },
-  "S": 0.5106320977210999,
-  "L": 0.4167826473712921,
+  "search_rank": 0,
+  "search_F": 0.5734891891479492,
+  "search_O": null,
+  "L": 0.42290401458740234,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 2883,
-   "affine_median_mm": 0.1793,
-   "field_median_mm": 0.1425,
-   "strain_max": 0.0803,
-   "displacement_median_mm": 0.3191
+   "n": 2975,
+   "affine_median_mm": 0.1476,
+   "field_median_mm": 0.1478,
+   "displacement_median_mm": 0.1733
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 275.5
+  "seconds": 301.4
  },
  {
   "name": "flip3_C3_k0",
@@ -1304,62 +1185,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 0,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3216,
-  "median_mm": 0.2978,
-  "p95_mm": 0.6305,
-  "max_mm": 0.9942,
-  "rotation_deg": 3.655,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.319,
+  "median_mm": 0.2878,
+  "p95_mm": 0.6435,
+  "max_mm": 0.9502,
+  "rotation_deg": 3.768,
   "rotation_axis": [
-   0.254,
-   0.724,
-   0.641
+   0.469,
+   0.716,
+   0.517
   ],
-  "centroid_mm": 0.1114,
+  "centroid_mm": 0.0745,
   "scales": [
-   1.0143,
-   1.0259,
-   1.0214
+   1.0056,
+   1.0148,
+   1.0229
   ],
   "singular_values": [
-   1.0725,
-   1.0412,
-   0.974
+   1.0744,
+   1.0298,
+   0.9659
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.34,
-  "rotation_L_deg": 3.269,
-  "vessel_n": 3083,
-  "vessel_mean_mm": 0.1683,
-  "vessel_median_mm": 0.1449,
+  "mean_L_mm": 0.3594,
+  "rotation_L_deg": 3.472,
+  "vessel_n": 3028,
+  "vessel_mean_mm": 0.1629,
+  "vessel_median_mm": 0.1348,
   "search": {
-   "mean_mm": 3.9553,
-   "rotation_deg": 36.169,
+   "mean_mm": 1.3138,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2594
+   "vessel_median_mm": 0.2528
   },
-  "S": 0.40491411089897156,
-  "L": 0.42023444175720215,
+  "search_rank": 1,
+  "search_F": 0.4887060225009918,
+  "search_O": null,
+  "L": 0.4170427620410919,
   "outline_used": false,
-  "search_rank": 17,
   "deform": {
-   "n": 3029,
-   "affine_median_mm": 0.1445,
-   "field_median_mm": 0.1509,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1702
+   "n": 3019,
+   "affine_median_mm": 0.1347,
+   "field_median_mm": 0.1417,
+   "displacement_median_mm": 0.1452
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.07351
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 467.7
+  "seconds": 300.2
  },
  {
   "name": "flip3_C3_k1",
@@ -1367,62 +1244,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 1,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3211,
-  "median_mm": 0.2958,
-  "p95_mm": 0.634,
-  "max_mm": 0.9996,
-  "rotation_deg": 3.684,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.318,
+  "median_mm": 0.2856,
+  "p95_mm": 0.6442,
+  "max_mm": 0.9437,
+  "rotation_deg": 3.793,
   "rotation_axis": [
-   0.239,
-   0.724,
-   0.647
+   0.468,
+   0.711,
+   0.525
   ],
-  "centroid_mm": 0.1072,
+  "centroid_mm": 0.0735,
   "scales": [
-   1.0135,
-   1.0256,
-   1.0204
+   1.0054,
+   1.0142,
+   1.0219
   ],
   "singular_values": [
-   1.0715,
-   1.0408,
-   0.9733
+   1.0735,
+   1.029,
+   0.9658
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.338,
-  "rotation_L_deg": 3.294,
-  "vessel_n": 3072,
-  "vessel_mean_mm": 0.1673,
-  "vessel_median_mm": 0.1436,
+  "mean_L_mm": 0.359,
+  "rotation_L_deg": 3.493,
+  "vessel_n": 3023,
+  "vessel_mean_mm": 0.1619,
+  "vessel_median_mm": 0.1337,
   "search": {
-   "mean_mm": 3.6201,
-   "rotation_deg": 36.169,
+   "mean_mm": 2.8257,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2689
+   "vessel_median_mm": 0.2358
   },
-  "S": 0.40582481026649475,
-  "L": 0.4290423095226288,
+  "search_rank": 0,
+  "search_F": 0.4927607774734497,
+  "search_O": null,
+  "L": 0.42870011925697327,
   "outline_used": false,
-  "search_rank": 16,
   "deform": {
-   "n": 3032,
-   "affine_median_mm": 0.143,
-   "field_median_mm": 0.1496,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.1687
+   "n": 2993,
+   "affine_median_mm": 0.1335,
+   "field_median_mm": 0.1433,
+   "displacement_median_mm": 0.1605
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.05612
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 274.9
+  "seconds": 263.5
  },
  {
   "name": "flip3_C3_k2",
@@ -1430,62 +1303,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 2,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3205,
-  "median_mm": 0.2946,
-  "p95_mm": 0.6368,
-  "max_mm": 1.0034,
-  "rotation_deg": 3.655,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3179,
+  "median_mm": 0.2859,
+  "p95_mm": 0.6432,
+  "max_mm": 0.9464,
+  "rotation_deg": 3.785,
   "rotation_axis": [
-   0.258,
-   0.73,
-   0.633
+   0.468,
+   0.712,
+   0.524
   ],
-  "centroid_mm": 0.1116,
+  "centroid_mm": 0.0727,
   "scales": [
-   1.0135,
-   1.0253,
-   1.0205
+   1.0055,
+   1.0144,
+   1.0222
   ],
   "singular_values": [
-   1.0715,
-   1.0405,
-   0.9734
+   1.0738,
+   1.0292,
+   0.9659
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3375,
-  "rotation_L_deg": 3.274,
-  "vessel_n": 3075,
-  "vessel_mean_mm": 0.1676,
-  "vessel_median_mm": 0.1445,
+  "mean_L_mm": 0.3585,
+  "rotation_L_deg": 3.485,
+  "vessel_n": 3024,
+  "vessel_mean_mm": 0.1622,
+  "vessel_median_mm": 0.1342,
   "search": {
-   "mean_mm": 2.3941,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.8922,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2495
+   "vessel_median_mm": 0.2433
   },
-  "S": 0.4876731336116791,
-  "L": 0.4253547489643097,
+  "search_rank": 0,
+  "search_F": 0.4907112717628479,
+  "search_O": null,
+  "L": 0.42369726300239563,
   "outline_used": false,
-  "search_rank": 2,
   "deform": {
-   "n": 3046,
-   "affine_median_mm": 0.1437,
-   "field_median_mm": 0.1396,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1486
+   "n": 3010,
+   "affine_median_mm": 0.1342,
+   "field_median_mm": 0.1413,
+   "displacement_median_mm": 0.1376
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.03517
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 275.0
+  "seconds": 263.7
  },
  {
   "name": "flip3_C3_k3",
@@ -1493,62 +1362,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 3,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3203,
-  "median_mm": 0.2947,
-  "p95_mm": 0.6351,
-  "max_mm": 1.0017,
-  "rotation_deg": 3.642,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.318,
+  "median_mm": 0.2861,
+  "p95_mm": 0.6432,
+  "max_mm": 0.9463,
+  "rotation_deg": 3.784,
   "rotation_axis": [
-   0.259,
-   0.732,
-   0.63
+   0.467,
+   0.712,
+   0.524
   ],
-  "centroid_mm": 0.1113,
+  "centroid_mm": 0.073,
   "scales": [
-   1.0136,
-   1.0256,
-   1.0204
+   1.0055,
+   1.0144,
+   1.0223
   ],
   "singular_values": [
-   1.0715,
-   1.0408,
-   0.9735
+   1.0738,
+   1.0293,
+   0.9659
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3376,
-  "rotation_L_deg": 3.262,
-  "vessel_n": 3076,
-  "vessel_mean_mm": 0.1677,
-  "vessel_median_mm": 0.1448,
+  "mean_L_mm": 0.3587,
+  "rotation_L_deg": 3.485,
+  "vessel_n": 3024,
+  "vessel_mean_mm": 0.1623,
+  "vessel_median_mm": 0.1342,
   "search": {
-   "mean_mm": 3.4829,
-   "rotation_deg": 36.169,
+   "mean_mm": 2.6835,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2552
+   "vessel_median_mm": 0.2414
   },
-  "S": 0.40271657705307007,
-  "L": 0.4245988428592682,
+  "search_rank": 0,
+  "search_F": 0.4952286183834076,
+  "search_O": null,
+  "L": 0.4227055311203003,
   "outline_used": false,
-  "search_rank": 14,
   "deform": {
-   "n": 3035,
-   "affine_median_mm": 0.1439,
-   "field_median_mm": 0.1443,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1624
+   "n": 3013,
+   "affine_median_mm": 0.1343,
+   "field_median_mm": 0.1456,
+   "displacement_median_mm": 0.1324
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.05294
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 277.4
+  "seconds": 268.7
  },
  {
   "name": "flip3_C3_k4",
@@ -1556,62 +1421,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 4,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.322,
-  "median_mm": 0.2963,
-  "p95_mm": 0.6383,
-  "max_mm": 1.0074,
-  "rotation_deg": 3.677,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3179,
+  "median_mm": 0.2858,
+  "p95_mm": 0.6431,
+  "max_mm": 0.9423,
+  "rotation_deg": 3.789,
   "rotation_axis": [
-   0.254,
-   0.731,
-   0.634
+   0.466,
+   0.711,
+   0.527
   ],
-  "centroid_mm": 0.1094,
+  "centroid_mm": 0.0741,
   "scales": [
-   1.0132,
-   1.026,
-   1.0203
+   1.0055,
+   1.0141,
+   1.022
   ],
   "singular_values": [
-   1.0713,
-   1.0412,
-   0.9732
+   1.0735,
+   1.029,
+   0.9659
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3397,
-  "rotation_L_deg": 3.295,
-  "vessel_n": 3075,
-  "vessel_mean_mm": 0.1678,
-  "vessel_median_mm": 0.1445,
+  "mean_L_mm": 0.3589,
+  "rotation_L_deg": 3.488,
+  "vessel_n": 3023,
+  "vessel_mean_mm": 0.1621,
+  "vessel_median_mm": 0.1343,
   "search": {
-   "mean_mm": 3.2652,
-   "rotation_deg": 8.512,
+   "mean_mm": 2.0093,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2567
+   "vessel_median_mm": 0.2519
   },
-  "S": 0.4134925305843353,
-  "L": 0.42673057317733765,
+  "search_rank": 0,
+  "search_F": 0.49891236424446106,
+  "search_O": null,
+  "L": 0.4255490303039551,
   "outline_used": false,
-  "search_rank": 14,
   "deform": {
-   "n": 3032,
-   "affine_median_mm": 0.1433,
-   "field_median_mm": 0.1425,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1647
+   "n": 3000,
+   "affine_median_mm": 0.1343,
+   "field_median_mm": 0.142,
+   "displacement_median_mm": 0.1622
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.05221
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 278.9
+  "seconds": 357.4
  },
  {
   "name": "flip3_C3_k5",
@@ -1619,62 +1480,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 5,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3216,
-  "median_mm": 0.2953,
-  "p95_mm": 0.6378,
-  "max_mm": 1.0072,
-  "rotation_deg": 3.7,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3173,
+  "median_mm": 0.2844,
+  "p95_mm": 0.6441,
+  "max_mm": 0.9436,
+  "rotation_deg": 3.805,
   "rotation_axis": [
-   0.242,
-   0.731,
-   0.638
+   0.465,
+   0.707,
+   0.532
   ],
-  "centroid_mm": 0.1061,
+  "centroid_mm": 0.0705,
   "scales": [
-   1.0131,
-   1.0255,
-   1.0199
+   1.0054,
+   1.014,
+   1.0219
   ],
   "singular_values": [
-   1.071,
-   1.0406,
-   0.973
+   1.0735,
+   1.0288,
+   0.9658
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3384,
-  "rotation_L_deg": 3.314,
-  "vessel_n": 3072,
-  "vessel_mean_mm": 0.1673,
-  "vessel_median_mm": 0.1436,
+  "mean_L_mm": 0.3577,
+  "rotation_L_deg": 3.501,
+  "vessel_n": 3024,
+  "vessel_mean_mm": 0.1615,
+  "vessel_median_mm": 0.1331,
   "search": {
-   "mean_mm": 2.2768,
-   "rotation_deg": 22.44,
+   "mean_mm": 2.6471,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2516
+   "vessel_median_mm": 0.2378
   },
-  "S": 0.4412926137447357,
-  "L": 0.4322257936000824,
+  "search_rank": 0,
+  "search_F": 0.4963326156139374,
+  "search_O": null,
+  "L": 0.4331133961677551,
   "outline_used": false,
-  "search_rank": 6,
   "deform": {
-   "n": 3046,
-   "affine_median_mm": 0.1432,
-   "field_median_mm": 0.1373,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.1538
+   "n": 3015,
+   "affine_median_mm": 0.1329,
+   "field_median_mm": 0.1348,
+   "displacement_median_mm": 0.1631
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.03578
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 284.2
+  "seconds": 359.0
  },
  {
   "name": "flip3_C3_k6",
@@ -1682,62 +1539,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 6,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3205,
-  "median_mm": 0.294,
-  "p95_mm": 0.6374,
-  "max_mm": 1.0044,
-  "rotation_deg": 3.675,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3176,
+  "median_mm": 0.2851,
+  "p95_mm": 0.6434,
+  "max_mm": 0.9416,
+  "rotation_deg": 3.789,
   "rotation_axis": [
-   0.243,
-   0.729,
-   0.64
+   0.467,
+   0.711,
+   0.525
   ],
-  "centroid_mm": 0.1094,
+  "centroid_mm": 0.0735,
   "scales": [
-   1.0133,
-   1.0253,
-   1.0199
+   1.0054,
+   1.0142,
+   1.0217
   ],
   "singular_values": [
-   1.071,
-   1.0404,
-   0.9732
+   1.0733,
+   1.0289,
+   0.9658
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3364,
-  "rotation_L_deg": 3.289,
-  "vessel_n": 3072,
-  "vessel_mean_mm": 0.1673,
-  "vessel_median_mm": 0.1431,
+  "mean_L_mm": 0.3587,
+  "rotation_L_deg": 3.489,
+  "vessel_n": 3023,
+  "vessel_mean_mm": 0.1618,
+  "vessel_median_mm": 0.1334,
   "search": {
-   "mean_mm": 1.9423,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.7114,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2523
+   "vessel_median_mm": 0.2505
   },
-  "S": 0.5000383257865906,
-  "L": 0.4305418133735657,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.4922392964363098,
+  "search_O": null,
+  "L": 0.43060043454170227,
+  "outline_used": false,
   "deform": {
-   "n": 3042,
-   "affine_median_mm": 0.1427,
-   "field_median_mm": 0.1382,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.1671
+   "n": 3012,
+   "affine_median_mm": 0.1334,
+   "field_median_mm": 0.1395,
+   "displacement_median_mm": 0.1548
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.02795
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 280.2
+  "seconds": 357.8
  },
  {
   "name": "flip3_C3_k7",
@@ -1745,62 +1598,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 7,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3199,
-  "median_mm": 0.2936,
-  "p95_mm": 0.6354,
-  "max_mm": 1.0017,
-  "rotation_deg": 3.677,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3173,
+  "median_mm": 0.2845,
+  "p95_mm": 0.6441,
+  "max_mm": 0.9437,
+  "rotation_deg": 3.805,
   "rotation_axis": [
-   0.242,
-   0.729,
-   0.64
+   0.465,
+   0.708,
+   0.532
   ],
-  "centroid_mm": 0.1078,
+  "centroid_mm": 0.0704,
   "scales": [
-   1.0133,
-   1.025,
-   1.0198
+   1.0054,
+   1.014,
+   1.0219
   ],
   "singular_values": [
-   1.071,
-   1.0401,
-   0.9732
+   1.0735,
+   1.0288,
+   0.9658
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.336,
-  "rotation_L_deg": 3.29,
-  "vessel_n": 3071,
-  "vessel_mean_mm": 0.167,
-  "vessel_median_mm": 0.1437,
+  "mean_L_mm": 0.3577,
+  "rotation_L_deg": 3.501,
+  "vessel_n": 3024,
+  "vessel_mean_mm": 0.1615,
+  "vessel_median_mm": 0.1332,
   "search": {
-   "mean_mm": 3.6543,
-   "rotation_deg": 36.169,
+   "mean_mm": 1.5701,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2521
+   "vessel_median_mm": 0.2446
   },
-  "S": 0.4110274612903595,
-  "L": 0.4319504499435425,
+  "search_rank": 1,
+  "search_F": 0.49006912112236023,
+  "search_O": null,
+  "L": 0.43285125494003296,
   "outline_used": false,
-  "search_rank": 18,
   "deform": {
-   "n": 3044,
-   "affine_median_mm": 0.143,
-   "field_median_mm": 0.1425,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1513
+   "n": 3011,
+   "affine_median_mm": 0.1332,
+   "field_median_mm": 0.1341,
+   "displacement_median_mm": 0.1511
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.03879
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 277.7
+  "seconds": 310.1
  },
  {
   "name": "flip3_C3_k8",
@@ -1808,62 +1657,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 8,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3207,
-  "median_mm": 0.2944,
-  "p95_mm": 0.6372,
-  "max_mm": 1.0049,
-  "rotation_deg": 3.665,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3177,
+  "median_mm": 0.2852,
+  "p95_mm": 0.6436,
+  "max_mm": 0.9432,
+  "rotation_deg": 3.791,
   "rotation_axis": [
-   0.244,
-   0.732,
-   0.637
+   0.467,
+   0.712,
+   0.525
   ],
-  "centroid_mm": 0.1085,
+  "centroid_mm": 0.073,
   "scales": [
-   1.0133,
-   1.026,
-   1.0199
+   1.0054,
+   1.0142,
+   1.0218
   ],
   "singular_values": [
-   1.071,
-   1.0411,
-   0.9732
+   1.0734,
+   1.0289,
+   0.9658
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3371,
-  "rotation_L_deg": 3.28,
-  "vessel_n": 3074,
-  "vessel_mean_mm": 0.1673,
-  "vessel_median_mm": 0.1435,
+  "mean_L_mm": 0.3586,
+  "rotation_L_deg": 3.491,
+  "vessel_n": 3023,
+  "vessel_mean_mm": 0.1618,
+  "vessel_median_mm": 0.1335,
   "search": {
-   "mean_mm": 2.0741,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.7101,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2522
+   "vessel_median_mm": 0.2524
   },
-  "S": 0.5027391910552979,
-  "L": 0.42966243624687195,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.4958690106868744,
+  "search_O": null,
+  "L": 0.4296548366546631,
+  "outline_used": false,
   "deform": {
-   "n": 3038,
-   "affine_median_mm": 0.1425,
-   "field_median_mm": 0.1398,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1805
+   "n": 3011,
+   "affine_median_mm": 0.1335,
+   "field_median_mm": 0.1359,
+   "displacement_median_mm": 0.1728
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.04496
+   "oct": 0.3633,
+   "mri": 0.0
   },
-  "seconds": 277.6
+  "seconds": 334.3
  },
  {
   "name": "flip3_C3_k9",
@@ -1871,63 +1716,58 @@
   "image": "flip3",
   "cond": "C3",
   "k": 9,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3162,
-  "median_mm": 0.2891,
-  "p95_mm": 0.6339,
-  "max_mm": 0.9942,
-  "rotation_deg": 3.631,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3172,
+  "median_mm": 0.2843,
+  "p95_mm": 0.6435,
+  "max_mm": 0.9399,
+  "rotation_deg": 3.801,
   "rotation_axis": [
-   0.247,
-   0.727,
-   0.64
+   0.465,
+   0.707,
+   0.532
   ],
-  "centroid_mm": 0.1132,
+  "centroid_mm": 0.0717,
   "scales": [
-   1.0134,
-   1.0233,
-   1.0196
+   1.0055,
+   1.014,
+   1.0218
   ],
   "singular_values": [
-   1.0707,
-   1.0385,
-   0.9733
+   1.0734,
+   1.0288,
+   0.9659
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3304,
-  "rotation_L_deg": 3.245,
-  "vessel_n": 3072,
-  "vessel_mean_mm": 0.167,
-  "vessel_median_mm": 0.1431,
+  "mean_L_mm": 0.3578,
+  "rotation_L_deg": 3.497,
+  "vessel_n": 3024,
+  "vessel_mean_mm": 0.1614,
+  "vessel_median_mm": 0.1322,
   "search": {
-   "mean_mm": 1.2061,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.2244,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2423
+   "vessel_median_mm": 0.2543
   },
-  "S": 0.45737507939338684,
-  "L": 0.4313405752182007,
+  "search_rank": 0,
+  "search_F": 0.498826265335083,
+  "search_O": null,
+  "L": 0.4348643720149994,
   "outline_used": false,
-  "search_rank": 5,
   "deform": {
-   "n": 3055,
-   "affine_median_mm": 0.143,
-   "field_median_mm": 0.1351,
-   "strain_max": 0.08,
-   "displacement_median_mm": 0.1519
+   "n": 3007,
+   "affine_median_mm": 0.1322,
+   "field_median_mm": 0.1263,
+   "displacement_median_mm": 0.1437
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 263.6
+  "seconds": 339.7
  },
  {
   "name": "flip1_C6_k0",
@@ -1935,63 +1775,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 0,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.393,
-  "median_mm": 0.3732,
-  "p95_mm": 0.7515,
-  "max_mm": 1.127,
-  "rotation_deg": 3.968,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3556,
+  "median_mm": 0.3258,
+  "p95_mm": 0.707,
+  "max_mm": 1.1075,
+  "rotation_deg": 3.942,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.044
+   0.248,
+   0.945,
+   0.214
   ],
-  "centroid_mm": 0.2568,
+  "centroid_mm": 0.1584,
   "scales": [
-   1.0153,
-   0.9877,
-   0.9978
+   1.0075,
+   0.9845,
+   1.0123
   ],
   "singular_values": [
-   1.0562,
-   0.9959,
-   0.9742
+   1.0683,
+   0.9944,
+   0.968
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3929,
-  "rotation_L_deg": 3.904,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.1888,
-  "vessel_median_mm": 0.1713,
+  "mean_L_mm": 0.3599,
+  "rotation_L_deg": 3.786,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1765,
+  "vessel_median_mm": 0.1544,
   "search": {
-   "mean_mm": 1.2318,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.5254,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2434
+   "vessel_median_mm": 0.2023
   },
-  "S": 0.533044695854187,
-  "L": 0.3978038728237152,
+  "search_rank": 0,
+  "search_F": 0.5859225392341614,
+  "search_O": null,
+  "L": 0.4272705614566803,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3001,
-   "affine_median_mm": 0.1713,
-   "field_median_mm": 0.1624,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1729
+   "n": 3014,
+   "affine_median_mm": 0.1544,
+   "field_median_mm": 0.1611,
+   "displacement_median_mm": 0.1299
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 412.1
+  "seconds": 286.2
  },
  {
   "name": "flip1_C6_k1",
@@ -1999,63 +1834,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 1,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4032,
-  "median_mm": 0.3816,
-  "p95_mm": 0.7806,
-  "max_mm": 1.1593,
-  "rotation_deg": 4.017,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3619,
+  "median_mm": 0.3304,
+  "p95_mm": 0.7351,
+  "max_mm": 1.1375,
+  "rotation_deg": 3.94,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.038
+   0.241,
+   0.958,
+   0.154
   ],
-  "centroid_mm": 0.274,
+  "centroid_mm": 0.1798,
   "scales": [
-   1.0151,
-   0.9887,
-   0.9968
+   1.0073,
+   0.9859,
+   1.009
   ],
   "singular_values": [
-   1.0555,
-   0.9966,
-   0.9739
+   1.0659,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3989,
-  "rotation_L_deg": 3.956,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1898,
-  "vessel_median_mm": 0.1743,
+  "mean_L_mm": 0.3585,
+  "rotation_L_deg": 3.816,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1775,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 1.1928,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.434,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2449
+   "vessel_median_mm": 0.2122
   },
-  "S": 0.5301704406738281,
-  "L": 0.4061897099018097,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5912232398986816,
+  "search_O": null,
+  "L": 0.43661195039749146,
+  "outline_used": false,
   "deform": {
-   "n": 3007,
-   "affine_median_mm": 0.1746,
-   "field_median_mm": 0.1546,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1727
+   "n": 3014,
+   "affine_median_mm": 0.1574,
+   "field_median_mm": 0.1556,
+   "displacement_median_mm": 0.1513
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 446.5
+  "seconds": 272.5
  },
  {
   "name": "flip1_C6_k2",
@@ -2063,63 +1893,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 2,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3906,
-  "median_mm": 0.371,
-  "p95_mm": 0.7454,
-  "max_mm": 1.1208,
-  "rotation_deg": 3.966,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3494,
+  "median_mm": 0.3236,
+  "p95_mm": 0.6731,
+  "max_mm": 1.0596,
+  "rotation_deg": 3.934,
   "rotation_axis": [
-   0.323,
-   0.945,
-   0.044
+   0.255,
+   0.94,
+   0.229
   ],
-  "centroid_mm": 0.2519,
+  "centroid_mm": 0.1374,
   "scales": [
-   1.0151,
-   0.9873,
-   0.9983
+   1.0076,
+   0.9828,
+   1.0115
   ],
   "singular_values": [
-   1.0563,
-   0.9957,
-   0.9742
+   1.0672,
+   0.993,
+   0.9681
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3912,
-  "rotation_L_deg": 3.903,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1882,
-  "vessel_median_mm": 0.1708,
+  "mean_L_mm": 0.3634,
+  "rotation_L_deg": 3.769,
+  "vessel_n": 3016,
+  "vessel_mean_mm": 0.1753,
+  "vessel_median_mm": 0.1535,
   "search": {
    "mean_mm": 1.3537,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2262
+   "vessel_median_mm": 0.2267
   },
-  "S": 0.5328812003135681,
-  "L": 0.39162030816078186,
+  "search_rank": 0,
+  "search_F": 0.5955126285552979,
+  "search_O": null,
+  "L": 0.4203781187534332,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3002,
-   "affine_median_mm": 0.1712,
-   "field_median_mm": 0.1636,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1897
+   "n": 2998,
+   "affine_median_mm": 0.1538,
+   "field_median_mm": 0.1583,
+   "displacement_median_mm": 0.1275
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 1036.7
+  "seconds": 267.7
  },
  {
   "name": "flip1_C6_k3",
@@ -2127,63 +1952,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 3,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3923,
-  "median_mm": 0.3727,
-  "p95_mm": 0.7497,
-  "max_mm": 1.1246,
-  "rotation_deg": 3.965,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.351,
+  "median_mm": 0.3239,
+  "p95_mm": 0.6882,
+  "max_mm": 1.0814,
+  "rotation_deg": 3.907,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.043
+   0.251,
+   0.945,
+   0.208
   ],
-  "centroid_mm": 0.2558,
+  "centroid_mm": 0.1502,
   "scales": [
-   1.0153,
-   0.9876,
-   0.9978
+   1.0082,
+   0.9844,
+   1.0114
   ],
   "singular_values": [
-   1.0561,
-   0.9959,
-   0.9742
+   1.0674,
+   0.9943,
+   0.9686
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3924,
-  "rotation_L_deg": 3.902,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.1886,
-  "vessel_median_mm": 0.1715,
+  "mean_L_mm": 0.3592,
+  "rotation_L_deg": 3.753,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.176,
+  "vessel_median_mm": 0.1532,
   "search": {
-   "mean_mm": 1.1416,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.1417,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.235
+   "vessel_median_mm": 0.2342
   },
-  "S": 0.5335531234741211,
-  "L": 0.39730527997016907,
+  "search_rank": 0,
+  "search_F": 0.5921600461006165,
+  "search_O": null,
+  "L": 0.42671090364456177,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3011,
-   "affine_median_mm": 0.1719,
-   "field_median_mm": 0.1569,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1754
+   "n": 3004,
+   "affine_median_mm": 0.1537,
+   "field_median_mm": 0.1516,
+   "displacement_median_mm": 0.1676
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 615.4
+  "seconds": 388.1
  },
  {
   "name": "flip1_C6_k4",
@@ -2191,63 +2011,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 4,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3987,
-  "median_mm": 0.3774,
-  "p95_mm": 0.7703,
-  "max_mm": 1.148,
-  "rotation_deg": 3.99,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3571,
+  "median_mm": 0.3264,
+  "p95_mm": 0.7214,
+  "max_mm": 1.1209,
+  "rotation_deg": 3.908,
   "rotation_axis": [
-   0.322,
-   0.946,
-   0.044
+   0.241,
+   0.957,
+   0.162
   ],
-  "centroid_mm": 0.2678,
+  "centroid_mm": 0.1712,
   "scales": [
-   1.0151,
-   0.988,
-   0.9974
+   1.0074,
+   0.9853,
+   1.0094
   ],
   "singular_values": [
-   1.0559,
-   0.9961,
-   0.974
+   1.0661,
+   0.9946,
+   0.9677
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3951,
-  "rotation_L_deg": 3.926,
-  "vessel_n": 3058,
-  "vessel_mean_mm": 0.1892,
-  "vessel_median_mm": 0.173,
+  "mean_L_mm": 0.3552,
+  "rotation_L_deg": 3.779,
+  "vessel_n": 3033,
+  "vessel_mean_mm": 0.1766,
+  "vessel_median_mm": 0.1558,
   "search": {
-   "mean_mm": 2.7564,
-   "rotation_deg": 11.598,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2325
+   "mean_mm": 0.7081,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2094
   },
-  "S": 0.47371694445610046,
-  "L": 0.40155643224716187,
+  "search_rank": 0,
+  "search_F": 0.5987631678581238,
+  "search_O": null,
+  "L": 0.43144553899765015,
   "outline_used": false,
-  "search_rank": 9,
   "deform": {
-   "n": 3040,
-   "affine_median_mm": 0.1728,
-   "field_median_mm": 0.1503,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1858
+   "n": 3025,
+   "affine_median_mm": 0.1558,
+   "field_median_mm": 0.1622,
+   "displacement_median_mm": 0.1304
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 453.3
+  "seconds": 420.9
  },
  {
   "name": "flip1_C6_k5",
@@ -2255,63 +2070,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 5,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.404,
-  "median_mm": 0.3823,
-  "p95_mm": 0.7826,
-  "max_mm": 1.1617,
-  "rotation_deg": 4.024,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3621,
+  "median_mm": 0.3307,
+  "p95_mm": 0.7348,
+  "max_mm": 1.1363,
+  "rotation_deg": 3.942,
   "rotation_axis": [
-   0.317,
-   0.948,
-   0.038
+   0.238,
+   0.959,
+   0.155
   ],
-  "centroid_mm": 0.2749,
+  "centroid_mm": 0.1806,
   "scales": [
-   1.0151,
-   0.9888,
-   0.9967
+   1.0075,
+   0.9858,
+   1.0087
   ],
   "singular_values": [
-   1.0555,
-   0.9967,
-   0.9739
+   1.0656,
+   0.9949,
+   0.9678
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3997,
-  "rotation_L_deg": 3.963,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1901,
-  "vessel_median_mm": 0.1745,
+  "mean_L_mm": 0.3587,
+  "rotation_L_deg": 3.817,
+  "vessel_n": 3037,
+  "vessel_mean_mm": 0.1776,
+  "vessel_median_mm": 0.1577,
   "search": {
-   "mean_mm": 3.3039,
-   "rotation_deg": 12.945,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2327
+   "mean_mm": 0.694,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.207
   },
-  "S": 0.4560973346233368,
-  "L": 0.40853151679039,
+  "search_rank": 0,
+  "search_F": 0.5938581824302673,
+  "search_O": null,
+  "L": 0.43923142552375793,
   "outline_used": false,
-  "search_rank": 12,
   "deform": {
-   "n": 3019,
-   "affine_median_mm": 0.1745,
-   "field_median_mm": 0.1656,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1821
+   "n": 3014,
+   "affine_median_mm": 0.1576,
+   "field_median_mm": 0.1701,
+   "displacement_median_mm": 0.1585
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 575.7
+  "seconds": 433.5
  },
  {
   "name": "flip1_C6_k6",
@@ -2319,63 +2129,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 6,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3937,
-  "median_mm": 0.3738,
-  "p95_mm": 0.7534,
-  "max_mm": 1.129,
-  "rotation_deg": 3.972,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3567,
+  "median_mm": 0.3259,
+  "p95_mm": 0.7209,
+  "max_mm": 1.1211,
+  "rotation_deg": 3.908,
   "rotation_axis": [
-   0.317,
-   0.947,
-   0.045
+   0.244,
+   0.956,
+   0.164
   ],
-  "centroid_mm": 0.2579,
+  "centroid_mm": 0.1697,
   "scales": [
-   1.0153,
-   0.9877,
-   0.9977
+   1.0073,
+   0.9852,
+   1.0098
   ],
   "singular_values": [
-   1.0562,
-   0.9959,
-   0.9742
+   1.0663,
+   0.9947,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3935,
-  "rotation_L_deg": 3.907,
-  "vessel_n": 3054,
-  "vessel_mean_mm": 0.1889,
-  "vessel_median_mm": 0.1717,
+  "mean_L_mm": 0.3548,
+  "rotation_L_deg": 3.779,
+  "vessel_n": 3030,
+  "vessel_mean_mm": 0.1763,
+  "vessel_median_mm": 0.1553,
   "search": {
-   "mean_mm": 1.1984,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.1985,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.228
+   "vessel_median_mm": 0.2275
   },
-  "S": 0.5323890447616577,
-  "L": 0.39971664547920227,
+  "search_rank": 0,
+  "search_F": 0.5955978631973267,
+  "search_O": null,
+  "L": 0.4293960928916931,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3038,
-   "affine_median_mm": 0.1715,
-   "field_median_mm": 0.1566,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1792
+   "n": 3023,
+   "affine_median_mm": 0.1556,
+   "field_median_mm": 0.1589,
+   "displacement_median_mm": 0.1603
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 370.6
+  "seconds": 315.5
  },
  {
   "name": "flip1_C6_k7",
@@ -2383,63 +2188,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 7,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4024,
-  "median_mm": 0.3809,
-  "p95_mm": 0.7788,
-  "max_mm": 1.157,
-  "rotation_deg": 4.01,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.362,
+  "median_mm": 0.3304,
+  "p95_mm": 0.7358,
+  "max_mm": 1.1385,
+  "rotation_deg": 3.942,
   "rotation_axis": [
-   0.319,
-   0.947,
-   0.039
+   0.242,
+   0.958,
+   0.155
   ],
-  "centroid_mm": 0.2733,
+  "centroid_mm": 0.1799,
   "scales": [
-   1.0151,
-   0.9886,
-   0.9969
+   1.0073,
+   0.9858,
+   1.0092
   ],
   "singular_values": [
-   1.0555,
-   0.9965,
-   0.9739
+   1.066,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3981,
-  "rotation_L_deg": 3.948,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1897,
-  "vessel_median_mm": 0.174,
+  "mean_L_mm": 0.3584,
+  "rotation_L_deg": 3.817,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1775,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 0.7774,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.7776,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2148
+   "vessel_median_mm": 0.2167
   },
-  "S": 0.5397724509239197,
-  "L": 0.40598633885383606,
+  "search_rank": 0,
+  "search_F": 0.5987350344657898,
+  "search_O": null,
+  "L": 0.4363846480846405,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3037,
-   "affine_median_mm": 0.1737,
-   "field_median_mm": 0.1506,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1781
+   "n": 3026,
+   "affine_median_mm": 0.1571,
+   "field_median_mm": 0.1621,
+   "displacement_median_mm": 0.1472
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 365.2
+  "seconds": 286.6
  },
  {
   "name": "flip1_C6_k8",
@@ -2447,63 +2247,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 8,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4025,
-  "median_mm": 0.381,
-  "p95_mm": 0.7789,
-  "max_mm": 1.1573,
-  "rotation_deg": 4.012,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3617,
+  "median_mm": 0.33,
+  "p95_mm": 0.7352,
+  "max_mm": 1.1379,
+  "rotation_deg": 3.94,
   "rotation_axis": [
-   0.319,
-   0.947,
-   0.039
+   0.242,
+   0.957,
+   0.157
   ],
-  "centroid_mm": 0.2732,
+  "centroid_mm": 0.1793,
   "scales": [
-   1.0151,
-   0.9885,
-   0.9969
+   1.0073,
+   0.9857,
+   1.0093
   ],
   "singular_values": [
-   1.0556,
-   0.9965,
-   0.9739
+   1.0661,
+   0.9949,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3982,
-  "rotation_L_deg": 3.951,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1897,
-  "vessel_median_mm": 0.1741,
+  "mean_L_mm": 0.358,
+  "rotation_L_deg": 3.814,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1774,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 3.6256,
-   "rotation_deg": 12.945,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2338
+   "mean_mm": 0.7242,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2073
   },
-  "S": 0.45710983872413635,
-  "L": 0.4058361053466797,
+  "search_rank": 0,
+  "search_F": 0.5995600819587708,
+  "search_O": null,
+  "L": 0.43621692061424255,
   "outline_used": false,
-  "search_rank": 13,
   "deform": {
-   "n": 3029,
-   "affine_median_mm": 0.1739,
-   "field_median_mm": 0.156,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1972
+   "n": 2996,
+   "affine_median_mm": 0.1574,
+   "field_median_mm": 0.1716,
+   "displacement_median_mm": 0.1771
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 369.5
+  "seconds": 277.9
  },
  {
   "name": "flip1_C6_k9",
@@ -2511,63 +2306,58 @@
   "image": "flip1",
   "cond": "C6",
   "k": 9,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4041,
-  "median_mm": 0.3823,
-  "p95_mm": 0.7827,
-  "max_mm": 1.1618,
-  "rotation_deg": 4.025,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.362,
+  "median_mm": 0.3307,
+  "p95_mm": 0.7347,
+  "max_mm": 1.1362,
+  "rotation_deg": 3.942,
   "rotation_axis": [
-   0.317,
-   0.948,
-   0.038
+   0.238,
+   0.959,
+   0.155
   ],
-  "centroid_mm": 0.2749,
+  "centroid_mm": 0.1806,
   "scales": [
-   1.0151,
-   0.9888,
-   0.9967
+   1.0075,
+   0.9858,
+   1.0087
   ],
   "singular_values": [
-   1.0555,
-   0.9967,
-   0.9739
+   1.0656,
+   0.9949,
+   0.9678
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3998,
-  "rotation_L_deg": 3.964,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1901,
-  "vessel_median_mm": 0.1745,
+  "mean_L_mm": 0.3587,
+  "rotation_L_deg": 3.817,
+  "vessel_n": 3037,
+  "vessel_mean_mm": 0.1776,
+  "vessel_median_mm": 0.1577,
   "search": {
-   "mean_mm": 1.2318,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.5254,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2434
+   "vessel_median_mm": 0.2023
   },
-  "S": 0.53508061170578,
-  "L": 0.4085415005683899,
-  "outline_used": false,
   "search_rank": 0,
+  "search_F": 0.5905223488807678,
+  "search_O": null,
+  "L": 0.43924254179000854,
+  "outline_used": false,
   "deform": {
-   "n": 2991,
-   "affine_median_mm": 0.1742,
-   "field_median_mm": 0.1572,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1907
+   "n": 3011,
+   "affine_median_mm": 0.1581,
+   "field_median_mm": 0.1571,
+   "displacement_median_mm": 0.1479
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 293.4
+  "seconds": 369.3
  },
  {
   "name": "flip1_C12_k0",
@@ -2575,62 +2365,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 0,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4033,
-  "median_mm": 0.3817,
-  "p95_mm": 0.7809,
-  "max_mm": 1.1597,
-  "rotation_deg": 4.019,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3483,
+  "median_mm": 0.3232,
+  "p95_mm": 0.676,
+  "max_mm": 1.0591,
+  "rotation_deg": 3.837,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.038
+   0.222,
+   0.95,
+   0.218
   ],
-  "centroid_mm": 0.274,
+  "centroid_mm": 0.1549,
   "scales": [
-   1.0151,
-   0.9887,
-   0.9968
+   1.0083,
+   0.9845,
+   1.0086
   ],
   "singular_values": [
-   1.0555,
-   0.9966,
-   0.9739
+   1.0651,
+   0.9938,
+   0.9687
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3991,
-  "rotation_L_deg": 3.958,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1898,
-  "vessel_median_mm": 0.1742,
+  "mean_L_mm": 0.3605,
+  "rotation_L_deg": 3.677,
+  "vessel_n": 3025,
+  "vessel_mean_mm": 0.1763,
+  "vessel_median_mm": 0.1539,
   "search": {
    "mean_mm": 1.3537,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2262
+   "vessel_median_mm": 0.2267
   },
-  "S": 0.5321327447891235,
-  "L": 0.4068417549133301,
-  "outline_used": false,
-  "search_rank": 2,
+  "search_rank": 12,
+  "search_F": 0.5911244750022888,
+  "search_O": 0.004188814666122198,
+  "L": 0.43977293372154236,
+  "outline_used": true,
   "deform": {
-   "n": 3023,
-   "affine_median_mm": 0.1744,
-   "field_median_mm": 0.1601,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1774
+   "n": 3013,
+   "affine_median_mm": 0.1539,
+   "field_median_mm": 0.1609,
+   "displacement_median_mm": 0.164
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.13687
+   "oct": 0.3633,
+   "mri": 0.13722
   },
-  "seconds": 347.5
+  "seconds": 436.4
  },
  {
   "name": "flip1_C12_k1",
@@ -2638,63 +2424,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 1,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4047,
-  "median_mm": 0.3828,
-  "p95_mm": 0.7842,
-  "max_mm": 1.1637,
-  "rotation_deg": 4.028,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3628,
+  "median_mm": 0.3316,
+  "p95_mm": 0.7353,
+  "max_mm": 1.1368,
+  "rotation_deg": 3.948,
   "rotation_axis": [
-   0.317,
-   0.948,
-   0.039
+   0.235,
+   0.96,
+   0.154
   ],
-  "centroid_mm": 0.2759,
+  "centroid_mm": 0.1812,
   "scales": [
-   1.0151,
-   0.9889,
-   0.9967
+   1.0077,
+   0.9858,
+   1.0086
   ],
   "singular_values": [
-   1.0555,
-   0.9967,
-   0.9739
+   1.0656,
+   0.9949,
+   0.968
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.4003,
-  "rotation_L_deg": 3.966,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1902,
-  "vessel_median_mm": 0.1744,
+  "mean_L_mm": 0.3594,
+  "rotation_L_deg": 3.824,
+  "vessel_n": 3041,
+  "vessel_mean_mm": 0.1778,
+  "vessel_median_mm": 0.1581,
   "search": {
-   "mean_mm": 1.1006,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.1007,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2408
+   "vessel_median_mm": 0.2413
   },
-  "S": 0.5330789685249329,
-  "L": 0.4096612334251404,
+  "search_rank": 1,
+  "search_F": 0.5844285488128662,
+  "search_O": null,
+  "L": 0.4404967725276947,
   "outline_used": false,
-  "search_rank": 2,
   "deform": {
-   "n": 3036,
-   "affine_median_mm": 0.1744,
-   "field_median_mm": 0.1586,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1697
+   "n": 3028,
+   "affine_median_mm": 0.1581,
+   "field_median_mm": 0.1702,
+   "displacement_median_mm": 0.1613
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 461.5
+  "seconds": 418.1
  },
  {
   "name": "flip1_C12_k2",
@@ -2702,62 +2483,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 2,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.3929,
-  "median_mm": 0.3732,
-  "p95_mm": 0.7513,
-  "max_mm": 1.1267,
-  "rotation_deg": 3.969,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3492,
+  "median_mm": 0.3247,
+  "p95_mm": 0.6628,
+  "max_mm": 1.0404,
+  "rotation_deg": 3.927,
   "rotation_axis": [
-   0.319,
-   0.947,
-   0.043
+   0.241,
+   0.94,
+   0.242
   ],
-  "centroid_mm": 0.2566,
+  "centroid_mm": 0.1397,
   "scales": [
-   1.0153,
-   0.9877,
-   0.9978
+   1.0079,
+   0.9826,
+   1.009
   ],
   "singular_values": [
-   1.0562,
-   0.9959,
-   0.9742
+   1.0651,
+   0.9922,
+   0.9684
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3928,
-  "rotation_L_deg": 3.906,
-  "vessel_n": 3053,
-  "vessel_mean_mm": 0.1888,
-  "vessel_median_mm": 0.1714,
+  "mean_L_mm": 0.3685,
+  "rotation_L_deg": 3.754,
+  "vessel_n": 3009,
+  "vessel_mean_mm": 0.1758,
+  "vessel_median_mm": 0.1549,
   "search": {
-   "mean_mm": 0.7609,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.7611,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2174
+   "vessel_median_mm": 0.2169
   },
-  "S": 0.5344914793968201,
-  "L": 0.3974151313304901,
-  "outline_used": false,
-  "search_rank": 8,
+  "search_rank": 17,
+  "search_F": 0.5916994214057922,
+  "search_O": 0.004025197587907314,
+  "L": 0.4289960265159607,
+  "outline_used": true,
   "deform": {
-   "n": 3027,
-   "affine_median_mm": 0.1716,
-   "field_median_mm": 0.1616,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1732
+   "n": 3001,
+   "affine_median_mm": 0.1549,
+   "field_median_mm": 0.1636,
+   "displacement_median_mm": 0.1505
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.12957
+   "oct": 0.3633,
+   "mri": 0.13003
   },
-  "seconds": 290.7
+  "seconds": 358.1
  },
  {
   "name": "flip1_C12_k3",
@@ -2765,62 +2542,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 3,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4013,
-  "median_mm": 0.3799,
-  "p95_mm": 0.7756,
-  "max_mm": 1.1541,
-  "rotation_deg": 4.011,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3614,
+  "median_mm": 0.3296,
+  "p95_mm": 0.7345,
+  "max_mm": 1.1375,
+  "rotation_deg": 3.939,
   "rotation_axis": [
-   0.321,
-   0.946,
-   0.039
+   0.244,
+   0.957,
+   0.158
   ],
-  "centroid_mm": 0.2706,
+  "centroid_mm": 0.1785,
   "scales": [
-   1.0151,
-   0.9884,
-   0.997
+   1.0073,
+   0.9857,
+   1.0094
   ],
   "singular_values": [
-   1.0557,
-   0.9964,
-   0.974
+   1.0662,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3975,
-  "rotation_L_deg": 3.95,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1895,
-  "vessel_median_mm": 0.1736,
+  "mean_L_mm": 0.3577,
+  "rotation_L_deg": 3.813,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1773,
+  "vessel_median_mm": 0.1568,
   "search": {
    "mean_mm": 1.4477,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2318
+   "vessel_median_mm": 0.2304
   },
-  "S": 0.5326735973358154,
-  "L": 0.4042644202709198,
-  "outline_used": false,
-  "search_rank": 7,
+  "search_rank": 15,
+  "search_F": 0.589353621006012,
+  "search_O": -5.880337266717106e-05,
+  "L": 0.43466755747795105,
+  "outline_used": true,
   "deform": {
-   "n": 3031,
-   "affine_median_mm": 0.1739,
-   "field_median_mm": 0.1562,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1736
+   "n": 3010,
+   "affine_median_mm": 0.1568,
+   "field_median_mm": 0.1595,
+   "displacement_median_mm": 0.1768
   },
-  "flags": [
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
-   "mri": 0.08086
+   "oct": 0.3633,
+   "mri": 0.08121
   },
-  "seconds": 435.4
+  "seconds": 312.9
  },
  {
   "name": "flip1_C12_k4",
@@ -2828,63 +2601,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 4,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4025,
-  "median_mm": 0.381,
-  "p95_mm": 0.7789,
-  "max_mm": 1.1572,
-  "rotation_deg": 4.01,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.362,
+  "median_mm": 0.3303,
+  "p95_mm": 0.7356,
+  "max_mm": 1.1382,
+  "rotation_deg": 3.94,
   "rotation_axis": [
-   0.319,
-   0.947,
-   0.038
+   0.242,
+   0.958,
+   0.155
   ],
-  "centroid_mm": 0.2734,
+  "centroid_mm": 0.1799,
   "scales": [
-   1.0151,
-   0.9886,
-   0.9968
+   1.0073,
+   0.9858,
+   1.0092
   ],
   "singular_values": [
-   1.0555,
-   0.9965,
-   0.9739
+   1.066,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3982,
-  "rotation_L_deg": 3.949,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1897,
-  "vessel_median_mm": 0.1741,
+  "mean_L_mm": 0.3583,
+  "rotation_L_deg": 3.816,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1774,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 0.8383,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.7871,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2356
+   "vessel_median_mm": 0.2056
   },
-  "S": 0.5302717685699463,
-  "L": 0.40593358874320984,
+  "search_rank": 0,
+  "search_F": 0.5917339324951172,
+  "search_O": null,
+  "L": 0.43632569909095764,
   "outline_used": false,
-  "search_rank": 6,
   "deform": {
-   "n": 2972,
-   "affine_median_mm": 0.1739,
-   "field_median_mm": 0.151,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.184
+   "n": 3020,
+   "affine_median_mm": 0.1569,
+   "field_median_mm": 0.1559,
+   "displacement_median_mm": 0.1158
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 359.3
+  "seconds": 296.6
  },
  {
   "name": "flip1_C12_k5",
@@ -2892,63 +2660,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 5,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4058,
-  "median_mm": 0.3839,
-  "p95_mm": 0.7866,
-  "max_mm": 1.1668,
-  "rotation_deg": 4.042,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3631,
+  "median_mm": 0.332,
+  "p95_mm": 0.7359,
+  "max_mm": 1.1373,
+  "rotation_deg": 3.952,
   "rotation_axis": [
-   0.316,
-   0.948,
-   0.036
+   0.234,
+   0.96,
+   0.154
   ],
-  "centroid_mm": 0.2765,
+  "centroid_mm": 0.1817,
   "scales": [
-   1.015,
-   0.989,
-   0.9965
+   1.0077,
+   0.9858,
+   1.0085
   ],
   "singular_values": [
-   1.0554,
-   0.9968,
-   0.9738
+   1.0656,
+   0.9948,
+   0.9679
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.4016,
-  "rotation_L_deg": 3.981,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1904,
-  "vessel_median_mm": 0.1745,
+  "mean_L_mm": 0.3598,
+  "rotation_L_deg": 3.827,
+  "vessel_n": 3042,
+  "vessel_mean_mm": 0.1779,
+  "vessel_median_mm": 0.1583,
   "search": {
-   "mean_mm": 0.7609,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.7611,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2174
+   "vessel_median_mm": 0.2169
   },
-  "S": 0.5348625183105469,
-  "L": 0.41061893105506897,
+  "search_rank": 1,
+  "search_F": 0.590644121170044,
+  "search_O": null,
+  "L": 0.44157060980796814,
   "outline_used": false,
-  "search_rank": 7,
   "deform": {
-   "n": 3000,
-   "affine_median_mm": 0.1743,
-   "field_median_mm": 0.1572,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1564
+   "n": 3032,
+   "affine_median_mm": 0.1586,
+   "field_median_mm": 0.1537,
+   "displacement_median_mm": 0.1345
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 352.3
+  "seconds": 411.1
  },
  {
   "name": "flip1_C12_k6",
@@ -2956,63 +2719,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 6,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4074,
-  "median_mm": 0.3851,
-  "p95_mm": 0.7906,
-  "max_mm": 1.1719,
-  "rotation_deg": 4.054,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3646,
+  "median_mm": 0.3333,
+  "p95_mm": 0.7392,
+  "max_mm": 1.1418,
+  "rotation_deg": 3.97,
   "rotation_axis": [
-   0.315,
-   0.948,
-   0.038
+   0.233,
+   0.96,
+   0.155
   ],
-  "centroid_mm": 0.2784,
+  "centroid_mm": 0.183,
   "scales": [
-   1.0149,
-   0.9891,
-   0.9964
+   1.0076,
+   0.9859,
+   1.0084
   ],
   "singular_values": [
-   1.0553,
-   0.9969,
-   0.9737
+   1.0655,
+   0.9949,
+   0.9679
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.4029,
-  "rotation_L_deg": 3.993,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1907,
-  "vessel_median_mm": 0.1749,
+  "mean_L_mm": 0.3613,
+  "rotation_L_deg": 3.844,
+  "vessel_n": 3040,
+  "vessel_mean_mm": 0.1782,
+  "vessel_median_mm": 0.1584,
   "search": {
-   "mean_mm": 0.6938,
-   "rotation_deg": 10.325,
+   "mean_mm": 0.694,
+   "rotation_deg": 10.327,
    "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2065
+   "vessel_median_mm": 0.207
   },
-  "S": 0.5338281989097595,
-  "L": 0.41215088963508606,
+  "search_rank": 3,
+  "search_F": 0.5913125276565552,
+  "search_O": null,
+  "L": 0.4432901442050934,
   "outline_used": false,
-  "search_rank": 9,
   "deform": {
-   "n": 2990,
-   "affine_median_mm": 0.1744,
-   "field_median_mm": 0.1604,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.1617
+   "n": 3032,
+   "affine_median_mm": 0.1583,
+   "field_median_mm": 0.1546,
+   "displacement_median_mm": 0.1168
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 452.2
+  "seconds": 444.6
  },
  {
   "name": "flip1_C12_k7",
@@ -3020,63 +2778,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 7,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4101,
-  "median_mm": 0.3879,
-  "p95_mm": 0.7972,
-  "max_mm": 1.1773,
-  "rotation_deg": 4.055,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.366,
+  "median_mm": 0.3349,
+  "p95_mm": 0.7415,
+  "max_mm": 1.1441,
+  "rotation_deg": 3.978,
   "rotation_axis": [
-   0.314,
-   0.949,
-   0.029
+   0.23,
+   0.962,
+   0.149
   ],
-  "centroid_mm": 0.284,
+  "centroid_mm": 0.1851,
   "scales": [
-   1.015,
-   0.9898,
-   0.9955
+   1.0077,
+   0.9861,
+   1.008
   ],
   "singular_values": [
-   1.0547,
-   0.9973,
-   0.9737
+   1.0652,
+   0.995,
+   0.9679
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.4046,
-  "rotation_L_deg": 3.999,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1911,
-  "vessel_median_mm": 0.1761,
+  "mean_L_mm": 0.3628,
+  "rotation_L_deg": 3.856,
+  "vessel_n": 3042,
+  "vessel_mean_mm": 0.1785,
+  "vessel_median_mm": 0.1589,
   "search": {
-   "mean_mm": 1.0212,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.0213,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2375
+   "vessel_median_mm": 0.2377
   },
-  "S": 0.5325435400009155,
-  "L": 0.4156574308872223,
+  "search_rank": 4,
+  "search_F": 0.5868699550628662,
+  "search_O": null,
+  "L": 0.44724178314208984,
   "outline_used": false,
-  "search_rank": 7,
   "deform": {
-   "n": 3008,
-   "affine_median_mm": 0.1758,
-   "field_median_mm": 0.1636,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1588
+   "n": 3027,
+   "affine_median_mm": 0.1587,
+   "field_median_mm": 0.1586,
+   "displacement_median_mm": 0.126
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 280.2
+  "seconds": 450.0
  },
  {
   "name": "flip1_C12_k8",
@@ -3084,63 +2837,58 @@
   "image": "flip1",
   "cond": "C12",
   "k": 8,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4034,
-  "median_mm": 0.3817,
-  "p95_mm": 0.781,
-  "max_mm": 1.16,
-  "rotation_deg": 4.02,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3619,
+  "median_mm": 0.3304,
+  "p95_mm": 0.7351,
+  "max_mm": 1.1373,
+  "rotation_deg": 3.94,
   "rotation_axis": [
-   0.318,
-   0.947,
-   0.038
+   0.241,
+   0.958,
+   0.154
   ],
-  "centroid_mm": 0.274,
+  "centroid_mm": 0.1799,
   "scales": [
-   1.015,
-   0.9887,
-   0.9968
+   1.0073,
+   0.9858,
+   1.009
   ],
   "singular_values": [
-   1.0555,
-   0.9966,
-   0.9739
+   1.0658,
+   0.995,
+   0.9676
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.3991,
-  "rotation_L_deg": 3.959,
-  "vessel_n": 3056,
-  "vessel_mean_mm": 0.1898,
-  "vessel_median_mm": 0.1742,
+  "mean_L_mm": 0.3585,
+  "rotation_L_deg": 3.815,
+  "vessel_n": 3035,
+  "vessel_mean_mm": 0.1775,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 1.1928,
-   "rotation_deg": 10.325,
+   "mean_mm": 1.434,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2449
+   "vessel_median_mm": 0.2122
   },
-  "S": 0.5299399495124817,
-  "L": 0.40640559792518616,
+  "search_rank": 0,
+  "search_F": 0.5908252596855164,
+  "search_O": null,
+  "L": 0.43685317039489746,
   "outline_used": false,
-  "search_rank": 6,
   "deform": {
-   "n": 3010,
-   "affine_median_mm": 0.1741,
-   "field_median_mm": 0.1644,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.168
+   "n": 3024,
+   "affine_median_mm": 0.1574,
+   "field_median_mm": 0.1583,
+   "displacement_median_mm": 0.1193
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 470.1
+  "seconds": 277.2
  },
  {
   "name": "flip1_C12_k9",
@@ -3148,705 +2896,647 @@
   "image": "flip1",
   "cond": "C12",
   "k": 9,
-  "oct_mask": true,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.4082,
-  "median_mm": 0.386,
-  "p95_mm": 0.7923,
-  "max_mm": 1.1739,
-  "rotation_deg": 4.062,
+  "oct_mask": false,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3651,
+  "median_mm": 0.3339,
+  "p95_mm": 0.74,
+  "max_mm": 1.143,
+  "rotation_deg": 3.976,
   "rotation_axis": [
-   0.315,
-   0.948,
-   0.035
+   0.232,
+   0.96,
+   0.153
   ],
-  "centroid_mm": 0.2791,
+  "centroid_mm": 0.1833,
   "scales": [
-   1.0148,
-   0.9893,
-   0.9962
+   1.0076,
+   0.9859,
+   1.0083
   ],
   "singular_values": [
-   1.0552,
-   0.997,
-   0.9736
+   1.0654,
+   0.9949,
+   0.9678
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.4039,
-  "rotation_L_deg": 4.002,
-  "vessel_n": 3057,
-  "vessel_mean_mm": 0.1908,
-  "vessel_median_mm": 0.1751,
+  "mean_L_mm": 0.3619,
+  "rotation_L_deg": 3.851,
+  "vessel_n": 3040,
+  "vessel_mean_mm": 0.1783,
+  "vessel_median_mm": 0.1585,
   "search": {
    "mean_mm": 1.3537,
-   "rotation_deg": 10.325,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2262
+   "vessel_median_mm": 0.2267
   },
-  "S": 0.5329864025115967,
-  "L": 0.41296833753585815,
+  "search_rank": 8,
+  "search_F": 0.5940249562263489,
+  "search_O": null,
+  "L": 0.44420942664146423,
   "outline_used": false,
-  "search_rank": 16,
   "deform": {
-   "n": 3005,
-   "affine_median_mm": 0.1756,
-   "field_median_mm": 0.1592,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1733
+   "n": 2990,
+   "affine_median_mm": 0.1592,
+   "field_median_mm": 0.1645,
+   "displacement_median_mm": 0.1527
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.00038,
+   "oct": 0.3633,
    "mri": 0.0
   },
-  "seconds": 335.5
+  "seconds": 263.6
  },
  {
-  "name": "flip1_C3_k0_nomask",
+  "name": "flip1_C3_k0_mask",
   "crop": "flip1_C3_k0",
   "image": "flip1",
   "cond": "C3",
   "k": 0,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 0.6552,
-  "median_mm": 0.5797,
-  "p95_mm": 1.4319,
-  "max_mm": 2.0198,
-  "rotation_deg": 4.871,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.368,
+  "median_mm": 0.3404,
+  "p95_mm": 0.7097,
+  "max_mm": 1.1196,
+  "rotation_deg": 4.261,
   "rotation_axis": [
-   0.56,
-   0.73,
-   0.392
+   0.3,
+   0.933,
+   0.198
   ],
-  "centroid_mm": 0.6027,
+  "centroid_mm": 0.127,
   "scales": [
-   1.0089,
-   1.0303,
-   1.0425
+   1.0082,
+   0.9926,
+   1.0112
   ],
   "singular_values": [
-   1.1089,
-   1.0307,
-   0.9709
+   1.0676,
+   1.0018,
+   0.969
   ],
   "tier": "<= 1 mm",
-  "mean_L_mm": 0.5888,
-  "rotation_L_deg": 4.665,
-  "vessel_n": 3183,
-  "vessel_mean_mm": 0.1883,
-  "vessel_median_mm": 0.1693,
+  "mean_L_mm": 0.3893,
+  "rotation_L_deg": 4.115,
+  "vessel_n": 3029,
+  "vessel_mean_mm": 0.1783,
+  "vessel_median_mm": 0.1561,
   "search": {
-   "mean_mm": 3.2296,
-   "rotation_deg": 10.325,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2469
+   "mean_mm": 0.6823,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.1958
   },
-  "S": 0.5214288830757141,
-  "L": 0.44263824820518494,
+  "search_rank": 0,
+  "search_F": 0.611358642578125,
+  "search_O": null,
+  "L": 0.422704815864563,
   "outline_used": false,
-  "search_rank": 23,
   "deform": {
-   "n": 3150,
-   "affine_median_mm": 0.1687,
-   "field_median_mm": 0.1574,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.1959
+   "n": 3008,
+   "affine_median_mm": 0.1555,
+   "field_median_mm": 0.163,
+   "displacement_median_mm": 0.1282
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 373.9
+  "seconds": 251.3
  },
  {
-  "name": "flip1_C3_k1_nomask",
+  "name": "flip1_C3_k1_mask",
   "crop": "flip1_C3_k1",
   "image": "flip1",
   "cond": "C3",
   "k": 1,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 5.4753,
-  "median_mm": 5.5452,
-  "p95_mm": 8.7258,
-  "max_mm": 10.7119,
-  "rotation_deg": 48.269,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3727,
+  "median_mm": 0.3448,
+  "p95_mm": 0.7212,
+  "max_mm": 1.1385,
+  "rotation_deg": 4.33,
   "rotation_axis": [
-   0.529,
-   0.254,
-   0.81
+   0.297,
+   0.933,
+   0.204
   ],
-  "centroid_mm": 4.8274,
+  "centroid_mm": 0.1324,
   "scales": [
-   1.0313,
-   1.0277,
-   1.0123
+   1.008,
+   0.9921,
+   1.0104
   ],
   "singular_values": [
-   1.0838,
-   1.0313,
-   0.9823
+   1.0671,
+   1.0011,
+   0.9687
   ],
-  "tier": "beyond",
-  "mean_L_mm": 5.4497,
-  "rotation_L_deg": 47.817,
-  "vessel_n": 2995,
-  "vessel_mean_mm": 0.2728,
-  "vessel_median_mm": 0.2578,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3928,
+  "rotation_L_deg": 4.18,
+  "vessel_n": 3030,
+  "vessel_mean_mm": 0.1795,
+  "vessel_median_mm": 0.1572,
   "search": {
-   "mean_mm": 7.723,
-   "rotation_deg": 54.498,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2598
+   "mean_mm": 0.947,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2238
   },
-  "S": 0.528354823589325,
-  "L": 0.5110612511634827,
+  "search_rank": 0,
+  "search_F": 0.6177204847335815,
+  "search_O": null,
+  "L": 0.43206146359443665,
   "outline_used": false,
-  "search_rank": 19,
   "deform": {
-   "n": 2918,
-   "affine_median_mm": 0.2584,
-   "field_median_mm": 0.2523,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2778
+   "n": 3006,
+   "affine_median_mm": 0.1572,
+   "field_median_mm": 0.1735,
+   "displacement_median_mm": 0.1568
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 256.4
+  "seconds": 396.1
  },
  {
-  "name": "flip1_C3_k2_nomask",
+  "name": "flip1_C3_k2_mask",
   "crop": "flip1_C3_k2",
   "image": "flip1",
   "cond": "C3",
   "k": 2,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 3.4545,
-  "median_mm": 3.4131,
-  "p95_mm": 4.5241,
-  "max_mm": 5.2587,
-  "rotation_deg": 8.994,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3688,
+  "median_mm": 0.3411,
+  "p95_mm": 0.714,
+  "max_mm": 1.1275,
+  "rotation_deg": 4.272,
   "rotation_axis": [
-   0.524,
-   0.852,
-   0.022
+   0.298,
+   0.934,
+   0.199
   ],
-  "centroid_mm": 3.4201,
+  "centroid_mm": 0.1296,
   "scales": [
-   1.0289,
-   1.0461,
-   1.0092
+   1.0084,
+   0.9925,
+   1.0111
   ],
   "singular_values": [
-   1.0899,
-   1.0467,
-   0.9746
+   1.0676,
+   1.0016,
+   0.9691
   ],
-  "tier": "beyond",
-  "mean_L_mm": 3.3937,
-  "rotation_L_deg": 8.943,
-  "vessel_n": 3395,
-  "vessel_mean_mm": 0.2636,
-  "vessel_median_mm": 0.2477,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3887,
+  "rotation_L_deg": 4.125,
+  "vessel_n": 3032,
+  "vessel_mean_mm": 0.1786,
+  "vessel_median_mm": 0.1567,
   "search": {
-   "mean_mm": 7.0755,
-   "rotation_deg": 22.44,
+   "mean_mm": 1.2858,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.26
+   "vessel_median_mm": 0.2334
   },
-  "S": 0.5896934866905212,
-  "L": 0.5057843923568726,
+  "search_rank": 0,
+  "search_F": 0.6087043285369873,
+  "search_O": null,
+  "L": 0.426352858543396,
   "outline_used": false,
-  "search_rank": 1,
   "deform": {
-   "n": 3246,
-   "affine_median_mm": 0.2474,
-   "field_median_mm": 0.2539,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.3013
+   "n": 3012,
+   "affine_median_mm": 0.1566,
+   "field_median_mm": 0.1656,
+   "displacement_median_mm": 0.1733
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "mri_tissue_valley_passed",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [
-   0.717
-  ],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 264.5
+  "seconds": 458.5
  },
  {
-  "name": "flip1_C3_k3_nomask",
+  "name": "flip1_C3_k3_mask",
   "crop": "flip1_C3_k3",
   "image": "flip1",
   "cond": "C3",
   "k": 3,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 3.4507,
-  "median_mm": 3.4096,
-  "p95_mm": 4.5227,
-  "max_mm": 5.2544,
-  "rotation_deg": 9.002,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3688,
+  "median_mm": 0.3411,
+  "p95_mm": 0.7141,
+  "max_mm": 1.1277,
+  "rotation_deg": 4.272,
   "rotation_axis": [
-   0.522,
-   0.853,
-   0.015
+   0.298,
+   0.934,
+   0.199
   ],
-  "centroid_mm": 3.4162,
+  "centroid_mm": 0.1296,
   "scales": [
-   1.0284,
-   1.0467,
-   1.0085
+   1.0084,
+   0.9925,
+   1.0112
   ],
   "singular_values": [
-   1.0897,
-   1.0464,
-   0.9746
+   1.0677,
+   1.0016,
+   0.9691
   ],
-  "tier": "beyond",
-  "mean_L_mm": 3.39,
-  "rotation_L_deg": 8.956,
-  "vessel_n": 3395,
-  "vessel_mean_mm": 0.2636,
-  "vessel_median_mm": 0.2479,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3887,
+  "rotation_L_deg": 4.126,
+  "vessel_n": 3032,
+  "vessel_mean_mm": 0.1786,
+  "vessel_median_mm": 0.1566,
   "search": {
-   "mean_mm": 4.0716,
-   "rotation_deg": 10.325,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2429
+   "mean_mm": 0.9931,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.216
   },
-  "S": 0.567813515663147,
-  "L": 0.5061656832695007,
+  "search_rank": 0,
+  "search_F": 0.6161811947822571,
+  "search_O": null,
+  "L": 0.4264521896839142,
   "outline_used": false,
-  "search_rank": 5,
   "deform": {
-   "n": 3258,
-   "affine_median_mm": 0.2478,
-   "field_median_mm": 0.2595,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.2732
+   "n": 3020,
+   "affine_median_mm": 0.1564,
+   "field_median_mm": 0.1701,
+   "displacement_median_mm": 0.1519
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 267.8
+  "seconds": 461.1
  },
  {
-  "name": "flip1_C3_k4_nomask",
+  "name": "flip1_C3_k4_mask",
   "crop": "flip1_C3_k4",
   "image": "flip1",
   "cond": "C3",
   "k": 4,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 9.8574,
-  "median_mm": 9.4183,
-  "p95_mm": 18.887,
-  "max_mm": 25.5454,
-  "rotation_deg": 171.761,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3716,
+  "median_mm": 0.3437,
+  "p95_mm": 0.7194,
+  "max_mm": 1.1359,
+  "rotation_deg": 4.316,
   "rotation_axis": [
-   -0.958,
-   0.009,
-   0.285
+   0.298,
+   0.932,
+   0.204
   ],
-  "centroid_mm": 7.3332,
+  "centroid_mm": 0.1316,
   "scales": [
-   1.0254,
-   1.0003,
-   0.9881
+   1.0081,
+   0.9922,
+   1.0107
   ],
   "singular_values": [
-   1.0507,
-   1.0134,
-   0.9749
+   1.0673,
+   1.0013,
+   0.9688
   ],
-  "tier": "beyond",
-  "mean_L_mm": 9.8872,
-  "rotation_L_deg": 171.576,
-  "vessel_n": 1511,
-  "vessel_mean_mm": 0.2915,
-  "vessel_median_mm": 0.2821,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3917,
+  "rotation_L_deg": 4.166,
+  "vessel_n": 3034,
+  "vessel_mean_mm": 0.1792,
+  "vessel_median_mm": 0.1571,
   "search": {
-   "mean_mm": 10.1445,
-   "rotation_deg": 164.281,
+   "mean_mm": 1.611,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2653
+   "vessel_median_mm": 0.2089
   },
-  "S": 0.5328744053840637,
-  "L": 0.47845524549484253,
+  "search_rank": 0,
+  "search_F": 0.6067805290222168,
+  "search_O": null,
+  "L": 0.43009135127067566,
   "outline_used": false,
-  "search_rank": 18,
   "deform": {
-   "n": 1409,
-   "affine_median_mm": 0.2815,
-   "field_median_mm": 0.2841,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.2287
+   "n": 3004,
+   "affine_median_mm": 0.1571,
+   "field_median_mm": 0.1724,
+   "displacement_median_mm": 0.1503
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 264.5
+  "seconds": 293.1
  },
  {
-  "name": "flip1_C3_k5_nomask",
+  "name": "flip1_C3_k5_mask",
   "crop": "flip1_C3_k5",
   "image": "flip1",
   "cond": "C3",
   "k": 5,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 9.7427,
-  "median_mm": 9.3246,
-  "p95_mm": 18.7091,
-  "max_mm": 25.3656,
-  "rotation_deg": 173.438,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3737,
+  "median_mm": 0.3461,
+  "p95_mm": 0.7227,
+  "max_mm": 1.1403,
+  "rotation_deg": 4.338,
   "rotation_axis": [
-   -0.954,
-   -0.021,
-   0.298
+   0.293,
+   0.934,
+   0.204
   ],
-  "centroid_mm": 7.1634,
+  "centroid_mm": 0.134,
   "scales": [
-   1.0282,
-   0.9923,
-   0.9925
+   1.0079,
+   0.9921,
+   1.01
   ],
   "singular_values": [
-   1.0534,
-   1.0053,
-   0.979
+   1.0668,
+   1.001,
+   0.9686
   ],
-  "tier": "beyond",
-  "mean_L_mm": 9.7752,
-  "rotation_L_deg": 173.256,
-  "vessel_n": 1410,
-  "vessel_mean_mm": 0.2785,
-  "vessel_median_mm": 0.2651,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3941,
+  "rotation_L_deg": 4.188,
+  "vessel_n": 3029,
+  "vessel_mean_mm": 0.1797,
+  "vessel_median_mm": 0.1579,
   "search": {
-   "mean_mm": 9.7017,
-   "rotation_deg": 179.667,
+   "mean_mm": 1.0753,
+   "rotation_deg": 10.327,
    "tier": "beyond",
-   "vessel_median_mm": 0.2457
+   "vessel_median_mm": 0.2252
   },
-  "S": 0.5306159853935242,
-  "L": 0.49863532185554504,
+  "search_rank": 0,
+  "search_F": 0.6169018149375916,
+  "search_O": null,
+  "L": 0.43565264344215393,
   "outline_used": false,
-  "search_rank": 14,
   "deform": {
-   "n": 1305,
-   "affine_median_mm": 0.2651,
-   "field_median_mm": 0.2745,
-   "strain_max": 0.0802,
-   "displacement_median_mm": 0.2567
+   "n": 3013,
+   "affine_median_mm": 0.1579,
+   "field_median_mm": 0.1689,
+   "displacement_median_mm": 0.165
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 267.6
+  "seconds": 260.4
  },
  {
-  "name": "flip1_C3_k6_nomask",
+  "name": "flip1_C3_k6_mask",
   "crop": "flip1_C3_k6",
   "image": "flip1",
   "cond": "C3",
   "k": 6,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 11.43,
-  "median_mm": 11.1954,
-  "p95_mm": 20.4993,
-  "max_mm": 27.0078,
-  "rotation_deg": 164.218,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.373,
+  "median_mm": 0.3452,
+  "p95_mm": 0.7219,
+  "max_mm": 1.1395,
+  "rotation_deg": 4.335,
   "rotation_axis": [
-   -0.985,
-   0.048,
-   0.166
+   0.296,
+   0.933,
+   0.204
   ],
-  "centroid_mm": 9.4805,
+  "centroid_mm": 0.1329,
   "scales": [
-   1.0061,
-   0.9964,
-   0.9884
+   1.008,
+   0.9921,
+   1.0102
   ],
   "singular_values": [
-   1.049,
-   1.002,
-   0.9654
+   1.0669,
+   1.0011,
+   0.9686
   ],
-  "tier": "beyond",
-  "mean_L_mm": 11.4882,
-  "rotation_L_deg": 164.08,
-  "vessel_n": 1322,
-  "vessel_mean_mm": 0.2495,
-  "vessel_median_mm": 0.2335,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3933,
+  "rotation_L_deg": 4.185,
+  "vessel_n": 3030,
+  "vessel_mean_mm": 0.1796,
+  "vessel_median_mm": 0.1576,
   "search": {
-   "mean_mm": 11.5266,
-   "rotation_deg": 171.608,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2403
+   "mean_mm": 0.7602,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2122
   },
-  "S": 0.5278903841972351,
-  "L": 0.502103865146637,
+  "search_rank": 0,
+  "search_F": 0.6148526668548584,
+  "search_O": null,
+  "L": 0.4331988990306854,
   "outline_used": false,
-  "search_rank": 18,
   "deform": {
-   "n": 1246,
-   "affine_median_mm": 0.2374,
-   "field_median_mm": 0.2388,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2039
+   "n": 2999,
+   "affine_median_mm": 0.1571,
+   "field_median_mm": 0.1647,
+   "displacement_median_mm": 0.1587
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 265.9
+  "seconds": 261.2
  },
  {
-  "name": "flip1_C3_k7_nomask",
+  "name": "flip1_C3_k7_mask",
   "crop": "flip1_C3_k7",
   "image": "flip1",
   "cond": "C3",
   "k": 7,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 3.5454,
-  "median_mm": 3.5063,
-  "p95_mm": 4.6218,
-  "max_mm": 5.3333,
-  "rotation_deg": 9.134,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3735,
+  "median_mm": 0.3458,
+  "p95_mm": 0.7227,
+  "max_mm": 1.1406,
+  "rotation_deg": 4.34,
   "rotation_axis": [
-   0.506,
-   0.859,
-   -0.078
+   0.295,
+   0.934,
+   0.204
   ],
-  "centroid_mm": 3.5089,
+  "centroid_mm": 0.1335,
   "scales": [
-   1.0301,
-   1.0419,
+   1.0079,
+   0.9921,
    1.0101
   ],
   "singular_values": [
-   1.0907,
-   1.0425,
-   0.9758
+   1.0669,
+   1.0011,
+   0.9686
   ],
-  "tier": "beyond",
-  "mean_L_mm": 3.482,
-  "rotation_L_deg": 9.142,
-  "vessel_n": 3400,
-  "vessel_mean_mm": 0.2646,
-  "vessel_median_mm": 0.2484,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3938,
+  "rotation_L_deg": 4.189,
+  "vessel_n": 3029,
+  "vessel_mean_mm": 0.1796,
+  "vessel_median_mm": 0.1576,
   "search": {
-   "mean_mm": 5.4039,
-   "rotation_deg": 27.933,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2634
+   "mean_mm": 0.7019,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2031
   },
-  "S": 0.5197502970695496,
-  "L": 0.5103065967559814,
+  "search_rank": 0,
+  "search_F": 0.613464891910553,
+  "search_O": null,
+  "L": 0.43453139066696167,
   "outline_used": false,
-  "search_rank": 21,
   "deform": {
-   "n": 3269,
-   "affine_median_mm": 0.2473,
-   "field_median_mm": 0.2519,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.3058
+   "n": 2947,
+   "affine_median_mm": 0.1584,
+   "field_median_mm": 0.1779,
+   "displacement_median_mm": 0.1765
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 265.5
+  "seconds": 405.5
  },
  {
-  "name": "flip1_C3_k8_nomask",
+  "name": "flip1_C3_k8_mask",
   "crop": "flip1_C3_k8",
   "image": "flip1",
   "cond": "C3",
   "k": 8,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 9.9284,
-  "median_mm": 9.5114,
-  "p95_mm": 18.9528,
-  "max_mm": 25.6133,
-  "rotation_deg": 172.897,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3731,
+  "median_mm": 0.3453,
+  "p95_mm": 0.7219,
+  "max_mm": 1.1396,
+  "rotation_deg": 4.335,
   "rotation_axis": [
-   -0.962,
-   0.012,
-   0.274
+   0.296,
+   0.933,
+   0.204
   ],
-  "centroid_mm": 7.4404,
+  "centroid_mm": 0.1329,
   "scales": [
-   1.0121,
-   1.0032,
-   0.9951
+   1.008,
+   0.9921,
+   1.0102
   ],
   "singular_values": [
-   1.0553,
-   1.0152,
-   0.9658
+   1.0669,
+   1.0011,
+   0.9686
   ],
-  "tier": "beyond",
-  "mean_L_mm": 9.959,
-  "rotation_L_deg": 172.712,
-  "vessel_n": 1548,
-  "vessel_mean_mm": 0.29,
-  "vessel_median_mm": 0.2829,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3933,
+  "rotation_L_deg": 4.185,
+  "vessel_n": 3030,
+  "vessel_mean_mm": 0.1796,
+  "vessel_median_mm": 0.1576,
   "search": {
-   "mean_mm": 9.8964,
-   "rotation_deg": 164.281,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2577
+   "mean_mm": 0.7611,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2169
   },
-  "S": 0.5232831239700317,
-  "L": 0.48113927245140076,
+  "search_rank": 0,
+  "search_F": 0.6126305460929871,
+  "search_O": null,
+  "L": 0.43335962295532227,
   "outline_used": false,
-  "search_rank": 21,
   "deform": {
-   "n": 1443,
-   "affine_median_mm": 0.2827,
-   "field_median_mm": 0.2814,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2284
+   "n": 3002,
+   "affine_median_mm": 0.1573,
+   "field_median_mm": 0.1663,
+   "displacement_median_mm": 0.1455
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 258.9
+  "seconds": 493.6
  },
  {
-  "name": "flip1_C3_k9_nomask",
+  "name": "flip1_C3_k9_mask",
   "crop": "flip1_C3_k9",
   "image": "flip1",
   "cond": "C3",
   "k": 9,
-  "oct_mask": false,
-  "version": "3.0.0",
-  "params_hash": "c4963318cacfc67d",
-  "mean_mm": 10.2095,
-  "median_mm": 9.8096,
-  "p95_mm": 19.2057,
-  "max_mm": 25.8937,
-  "rotation_deg": 168.212,
+  "oct_mask": true,
+  "version": "3.1.0",
+  "code": "79670ddbd0f5",
+  "mean_mm": 0.3737,
+  "median_mm": 0.346,
+  "p95_mm": 0.7226,
+  "max_mm": 1.1402,
+  "rotation_deg": 4.337,
   "rotation_axis": [
-   -0.963,
-   0.032,
-   0.266
+   0.293,
+   0.934,
+   0.204
   ],
-  "centroid_mm": 7.8517,
+  "centroid_mm": 0.1343,
   "scales": [
-   0.9979,
-   1.0017,
-   1.0035
+   1.0079,
+   0.992,
+   1.0099
   ],
   "singular_values": [
-   1.0603,
-   1.0121,
-   0.9574
+   1.0668,
+   1.001,
+   0.9685
   ],
-  "tier": "beyond",
-  "mean_L_mm": 10.2398,
-  "rotation_L_deg": 168.017,
-  "vessel_n": 1658,
-  "vessel_mean_mm": 0.2548,
-  "vessel_median_mm": 0.2456,
+  "tier": "<= 1 mm",
+  "mean_L_mm": 0.3941,
+  "rotation_L_deg": 4.186,
+  "vessel_n": 3029,
+  "vessel_mean_mm": 0.1797,
+  "vessel_median_mm": 0.1582,
   "search": {
-   "mean_mm": 10.5442,
-   "rotation_deg": 179.273,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2425
+   "mean_mm": 0.7871,
+   "rotation_deg": 10.327,
+   "tier": "<= 1 mm",
+   "vessel_median_mm": 0.2056
   },
-  "S": 0.5341799259185791,
-  "L": 0.4787023365497589,
+  "search_rank": 0,
+  "search_F": 0.6149318218231201,
+  "search_O": null,
+  "L": 0.4363841116428375,
   "outline_used": false,
-  "search_rank": 14,
   "deform": {
-   "n": 1611,
-   "affine_median_mm": 0.2457,
-   "field_median_mm": 0.2384,
-   "strain_max": 0.0801,
-   "displacement_median_mm": 0.2078
+   "n": 3002,
+   "affine_median_mm": 0.1581,
+   "field_median_mm": 0.1629,
+   "displacement_median_mm": 0.1512
   },
-  "flags": [
-   "mri_foreground_no_valley",
-   "outline_not_used"
-  ],
-  "mri_valleys_passed": [],
   "outside_fraction": {
-   "oct": 0.5036,
+   "oct": 0.39972,
    "mri": 0.0
   },
-  "seconds": 262.7
+  "seconds": 502.3
  }
 ]

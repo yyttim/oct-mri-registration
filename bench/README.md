@@ -26,25 +26,26 @@ MRI crop). They are not part of the repository.
 I58=${OCTREG_I58_DIR:-${OCTREG_DATA_ROOT:-data}/I58}
 OCT=$I58/I58_Brainstem_mus_Slice_full_20um_corr.nii.gz
 MRI=$I58/I58_brainstem_MRI_cropped_to_OCT.nii.gz
-python -m octreg register $OCT $MRI -o bench_runs/I58/octreg
-python bench/ablate.py $OCT $MRI -o bench_runs/I58/ablation
-python bench/ablate.py $OCT $MRI -o bench_runs/I58/ablation/turned --only base,no_search --turn 0,0,90
-python bench/figures.py --octreg-run bench_runs/I58/octreg --ablation bench_runs/I58/ablation --deform-baselines DEFORM
+RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I58
+python -m octreg register $OCT $MRI -o $RUNS/octreg
+python bench/ablate.py $OCT $MRI -o $RUNS/ablation
+python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search --turn 0,0,90
+python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation --deform-baselines DEFORM
 ```
 
-`ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`, and
-with `--turn` from the OCT turned by 90° about its sectioning axis.
+`ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
+`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world.
 
 | | | | |
 |---|---|---|---|
-| **no outline term** | **the refinement on S** | **no orientation search** | **no refinement** |
-| <img src="../docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="../docs/figures/ablation/outline_refine.png" width="175" alt="the refinement on S"> | <img src="../docs/figures/ablation/no_search.png" width="175" alt="no orientation search"> | <img src="../docs/figures/ablation/no_refine.png" width="175" alt="no refinement"> |
-| **only the best search pose refined** | **no scale and shear prior** | **signed gradients, polarity +1** | **signed gradients, polarity −1** |
-| <img src="../docs/figures/ablation/first_choice.png" width="175" alt="only the best search pose refined"> | <img src="../docs/figures/ablation/no_prior.png" width="175" alt="no scale and shear prior"> | <img src="../docs/figures/ablation/signed.png" width="175" alt="signed gradients, polarity +1"> | <img src="../docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, polarity −1"> |
-| **the full tensor** | **the deformation without the tissue surface** | **no strain bound** | **turned 90°, the start** |
-| <img src="../docs/figures/ablation/full_tensor.png" width="175" alt="the full tensor"> | <img src="../docs/figures/ablation/df_interior.png" width="175" alt="the deformation without the tissue surface"> | <img src="../docs/figures/ablation/df_free.png" width="175" alt="no strain bound"> | <img src="../docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> |
-| **turned 90°, no search** | **turned 90°, octreg** |  |  |
-| <img src="../docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no search"> | <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |  |  |
+| **no outline term** | **poses proposed by (F + O) / 2 only** | **no orientation search** | **no refinement** |
+| <img src="../docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="../docs/figures/ablation/outline_decides.png" width="175" alt="poses proposed by (F + O) / 2 only"> | <img src="../docs/figures/ablation/no_search.png" width="175" alt="no orientation search"> | <img src="../docs/figures/ablation/no_refine.png" width="175" alt="no refinement"> |
+| **only the first search pose refined** | **no scale and shear prior** | **signed gradients** | **signed gradients, OCT negated** |
+| <img src="../docs/figures/ablation/first_choice.png" width="175" alt="only the first search pose refined"> | <img src="../docs/figures/ablation/no_prior.png" width="175" alt="no scale and shear prior"> | <img src="../docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="../docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> |
+| **the trace-free tensor** | **search gradients over the whole specimen mask** | **no strain bound** | **turned 90°, the start** |
+| <img src="../docs/figures/ablation/tracefree.png" width="175" alt="the trace-free tensor"> | <img src="../docs/figures/ablation/search_whole_mask.png" width="175" alt="search gradients over the whole specimen mask"> | <img src="../docs/figures/ablation/df_free.png" width="175" alt="no strain bound"> | <img src="../docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> |
+| **turned 90°, no orientation search** | **turned 90°, octreg** |  |  |
+| <img src="../docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |  |  |
 
 The sagittal plane of the I58 figure in the [README](../README.md) through each variant, with the MRI tissue boundary in red.
 

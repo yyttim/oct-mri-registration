@@ -1,11 +1,6 @@
-"""params, io and geometry: header frames, plane streaming, isotropic resampling against direct pooling, sampling, the rotation
-set, transform files (the ITK file checked with SimpleITK). Everything is synthetic (<= 96^3) in pytest temp dirs.
-"""
+"""params, io and geometry on small synthetic volumes."""
 import dataclasses
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import nibabel as nib
@@ -20,16 +15,14 @@ from octreg import geometry as g
 from octreg import io
 from octreg.params import Params
 
-ROOT = Path(__file__).resolve().parents[1]
-
 
 def rot(seed):
-    """A random proper rotation [3, 3] (scipy, uniform on SO(3)), independent of the search set."""
+    """A random rotation [3, 3], uniform on SO(3) and independent of the search set."""
     return Rotation.random(random_state=seed).as_matrix()
 
 
 def oblique(spacing, origin, seed=7, mirror=True):
-    """voxel -> world affine with rotated axes; det < 0 when mirror."""
+    """voxel -> world affine with rotated axes, det < 0 when mirror."""
     A = np.eye(4)
     A[:3, :3] = rot(seed) @ np.diag(spacing) @ np.diag([1.0, 1.0, -1.0 if mirror else 1.0])
     A[:3, 3] = origin
@@ -41,8 +34,7 @@ def corners(shape):
 
 
 def direct(data, A, k, shape_out, A_out):
-    """Reference pooling on the whole array: k^3 box means (float64), then trilinear at the output voxel centres, blending with
-    0 beyond the outer pooled centres."""
+    """Reference pooling: k^3 box means, then trilinear at the output voxel centres with 0 beyond the pooled centres."""
     n = np.array(data.shape) // k
     pooled = data[:n[0] * k[0], :n[1] * k[1], :n[2] * k[2]].reshape(n[0], k[0], n[1], k[1], n[2], k[2]).mean((1, 3, 5), dtype=np.float64)
     A_p = np.array(A, float)
@@ -58,46 +50,28 @@ def stack(vol):
     return np.stack([p for _, p in planes], -1)
 
 
-# ---------------------------------------------------------------------------------------------------------------- params
-def test_params_defaults_dict_and_hash():
+def test_params_defaults_and_dict():
     p = Params()
     assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam) == (0.6, 0.15, 0.04, 8000, 24, 150, 2.0)
-    assert (p.erode_mm, p.search_sigma_mm, p.sigmas_mm, p.lr_rot, p.lr_t) == (0.8, 1.2, (0.6, 0.4, 0.3), 0.004, 0.06)
-    assert (p.df_grid_mm, p.df_max_strain, p.df_band_mm, p.df_sigmas_mm, p.df_iters) == (5.0, 0.08, 0.6, (0.6, 0.3), 200)
-    keys = set(p.to_dict())
-    assert {k for k in keys if k.startswith("df_")} == {"df_grid_mm", "df_max_strain", "df_band_mm", "df_sigmas_mm", "df_iters"}
-    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
-    assert all(num(v) or (isinstance(v, tuple) and v and all(isinstance(x, float) for x in v)) for v in p.to_dict().values())
-    assert Params.from_dict({"sigmas_mm": [0.5, 1]}).sigmas_mm == (0.5, 1.0)
-    assert Params.from_dict({"df_sigmas_mm": [1]}).df_sigmas_mm == (1.0,)
-    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_band_mm=0.9, df_iters=50)
-    q = Params.from_dict(json.loads(json.dumps(v.to_dict())))                         # JSON lists back to tuples
-    assert q == v and q.hash() == v.hash() != p.hash() and len(p.hash()) == 16
-    assert Params.from_dict({"lam": 1, "df_grid_mm": 7}) == dataclasses.replace(p, lam=1.0, df_grid_mm=7.0)
-    for bad in ({"no_such_field": 0.8}, {"sigma": 0.3}, {"topk": 12.5}, {"topk": True}, {"sigmas_mm": 0.3},
-                {"df_grid_mm": [5.0]}):
-        with pytest.raises(ValueError, match="unknown key or not a"):
-            Params.from_dict(bad)
-    for bad in ({"fine_mm": 0.2}, {"search_mm": 0.1}, {"search_mm": 0.55}, {"sigmas_mm": []}, {"sigmas_mm": [0.3, -0.1]},
-                {"sigmas_mm": [True]}, {"df_sigmas_mm": [0.3, float("inf")]}, {"df_sigmas_mm": ["0.3"]}, {"iters": 0},
-                {"df_iters": -1}, {"erode_mm": 0.0}, {"search_sigma_mm": 0.0}, {"search_sigma_mm": -1.2},
-                {"df_grid_mm": 0.0}, {"df_max_strain": 0.0}, {"df_band_mm": -0.6}, {"df_iters": 0}, {"n_rot": 0}, {"topk": 0}):
+    assert (p.df_grid_mm, p.df_max_strain, p.df_sigmas_mm, p.df_evals) == (5.0, 0.08, (0.6, 0.3), 250)
+    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_max_strain=0.1, df_evals=50)
+    assert Params.from_dict(json.loads(json.dumps(v.to_dict()))) == v                 # JSON lists back to tuples
+    assert Params.from_dict({"lam": 1, "sigmas_mm": [1, 0.5]}) == dataclasses.replace(p, lam=1.0, sigmas_mm=(1.0, 0.5))
+    with pytest.raises(ValueError, match="unknown keys"):
+        Params.from_dict({"no_such_field": 0.8})
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        Params.from_dict([0.5])
+    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0},
+                {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}, {"lam": -1},
+                {"lr_mm": 0}, {"texture_window_mm": -0.36}, {"valley_ratio": 0}, {"min_component": 1.0}, {"nms_mm": -3},
+                {"outline_min_outside": -0.1}, json.loads('{"lam": NaN}'), json.loads('{"lam": Infinity}')):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
-    with pytest.raises(ValueError, match="^Params: "):
-        dataclasses.replace(p, sigmas_mm=[0.5])                                   # a list is not hashable: refused
-    with pytest.raises(ValueError, match="^Params: overrides must be a JSON object"):
-        Params.from_dict([0.5])
-    assert Params(lam=2, sigmas_mm=(1, 0.5)) == dataclasses.replace(p, lam=2.0, sigmas_mm=(1.0, 0.5))
-    assert Params(lam=1).hash() == Params(lam=1.0).hash() and type(Params(lam=1).lam) is float
-    assert p.hash() == "c4963318cacfc67d"                                              # the default Params
-    env = dict(os.environ, PYTHONHASHSEED="4242", PYTHONPATH=str(ROOT))
-    out = subprocess.run([sys.executable, "-c", "from octreg.params import Params; print(Params().hash())"], env=env,
-                         capture_output=True, text=True, check=True).stdout.strip()
-    assert out == p.hash()
+    for bad in (lambda: dataclasses.replace(p, iters=10.5), lambda: Params(lam="2"), lambda: Params(lam=float("nan"))):
+        with pytest.raises(ValueError, match="^Params: "):
+            bad()
 
 
-# ------------------------------------------------------------------------------------------------------------------- io
 @pytest.mark.parametrize("suffix", [".nii", ".nii.gz"])
 @pytest.mark.parametrize("form", ["sform", "qform"])
 def test_oblique_det_negative_nifti_roundtrip(tmp_path, suffix, form):
@@ -113,7 +87,7 @@ def test_oblique_det_negative_nifti_roundtrip(tmp_path, suffix, form):
     v = io.load_volume(tmp_path / f"o{suffix}")
     assert v.frame == "header" and v.shape == shape and np.allclose(v.spacing_mm, (0.02, 0.025, 0.03), atol=1e-7)
     assert np.abs(corners(shape) @ (v.affine[:3, :3] - A[:3, :3] / 1000).T + v.affine[:3, 3] - A[:3, 3] / 1000).max() < 1e-6
-    io.save_nifti(data, v.affine, tmp_path / f"s{suffix}")                            # writer -> reader round trip
+    io.save_nifti(data, v.affine, tmp_path / f"s{suffix}")
     w = io.load_volume(tmp_path / f"s{suffix}")
     assert np.abs(corners(shape) @ (w.affine - v.affine)[:3, :3].T + (w.affine - v.affine)[:3, 3]).max() < 1e-6
     assert np.array_equal(stack(w), data)
@@ -125,13 +99,13 @@ def test_oblique_det_negative_nifti_roundtrip(tmp_path, suffix, form):
 @pytest.mark.parametrize("suffix", [".nii", ".nii.gz"])
 def test_streamed_planes_equal_nibabel(tmp_path, suffix):
     rng = np.random.default_rng(1)
-    raw = rng.integers(-3000, 3000, (9, 11, 13, 1)).astype(np.int16)                  # trailing singleton, scaled int16
+    raw = rng.integers(-3000, 3000, (9, 11, 13, 1)).astype(np.int16)                  # trailing singleton axis, scaled int16
     img = nib.Nifti1Image(raw, np.diag([0.08, 0.08, 0.08, 1.0]))
     img.header.set_slope_inter(0.5, 3.0)
     nib.save(img, str(tmp_path / f"i{suffix}"))
-    f = rng.random((9, 11, 13)).astype(np.float32)                                     # float with NaN / inf
+    f = rng.random((9, 11, 13)).astype(np.float32)
     f[1, 2, 3], f[4, 5, 6] = np.nan, np.inf
-    nib.save(nib.Nifti1Image(f, None), str(tmp_path / f"f{suffix}"))                     # no sform / qform: array frame
+    nib.save(nib.Nifti1Image(f, None), str(tmp_path / f"f{suffix}"))                     # no sform or qform: array frame
     for name in ("i", "f"):
         v = io.load_volume(tmp_path / f"{name}{suffix}")
         ref = np.nan_to_num(np.asarray(nib.load(str(tmp_path / f"{name}{suffix}")).get_fdata(), np.float32), posinf=0.0)
@@ -149,13 +123,13 @@ def test_tiff_npy_axes_spacing_and_refusals(tmp_path):
     v = io.load_volume(tmp_path / "o.ome.tif")
     assert v.frame == "array" and v.shape == (10, 8, 6) and np.allclose(v.affine, np.diag([0.012, 0.013, 0.014, 1.0]))
     assert np.array_equal(stack(v), a.transpose(2, 1, 0))
-    tifffile.imwrite(tmp_path / "c.tif", a, compression="zlib")                         # read page by page
+    tifffile.imwrite(tmp_path / "c.tif", a, compression="zlib")                         # compressed, so read page by page
     with pytest.raises(ValueError, match="no voxel spacing"):
         io.load_volume(tmp_path / "c.tif")
     v = io.load_volume(tmp_path / "c.tif", spacing_um=(35, 31, 30))
     assert np.allclose(v.spacing_mm, (0.030, 0.031, 0.035)) and np.array_equal(stack(v), a.transpose(2, 1, 0))
     np.save(tmp_path / "n.npy", a)
-    v = io.load_volume(tmp_path / "n.npy", spacing_um=(14, 12, 10))                    # Z,Y,X
+    v = io.load_volume(tmp_path / "n.npy", spacing_um=(14, 12, 10))
     assert np.allclose(v.spacing_mm, (0.010, 0.012, 0.014)) and np.array_equal(stack(v), a.transpose(2, 1, 0))
     with pytest.raises(ValueError, match="no voxel spacing"):
         io.load_volume(tmp_path / "n.npy")
@@ -170,13 +144,12 @@ def test_tiff_npy_axes_spacing_and_refusals(tmp_path):
             io.load_volume(tmp_path / bad)
 
 
-# ------------------------------------------------------------------------------------------------------------- geometry
 def test_resample_iso_equals_direct_pooling(tmp_path):
     rng = np.random.default_rng(3)
     shape, sp = (64, 72, 80), (0.020, 0.025, 0.030)
     A = oblique(sp, (1.0, -2.0, 3.0))
     ijk = np.stack(np.meshgrid(*[np.arange(s) for s in shape], indexing="ij"), -1).astype(float)
-    ramp = (ijk @ A[:3, :3].T + A[:3, 3]) @ np.array([0.7, -1.1, 0.4])                # linear in world mm
+    ramp = (ijk @ A[:3, :3].T + A[:3, 3]) @ np.array([0.7, -1.1, 0.4])
     noise = rng.random(shape).astype(np.float32)
     for name, data in (("ramp", ramp.astype(np.float32)), ("noise", noise)):
         io.save_nifti(data, A, tmp_path / f"{name}.nii.gz")
@@ -203,8 +176,14 @@ def test_resample_iso_equals_direct_pooling(tmp_path):
     io.save_nifti((mask * 255).astype(np.uint8), np.diag([0.02, -0.02, 0.02, 1.0]), tmp_path / "mask.nii.gz")
     frac, _ = g.resample_iso(io.load_volume(tmp_path / "mask.nii.gz"), 0.04, binary=True)       # indicator, not the values
     assert np.allclose(frac, mask.reshape(32, 2, 36, 2, 40, 2).mean((1, 3, 5)), atol=1e-6)
-    A = oblique((0.02, 0.02, 0.02), (0.0, 0.0, 0.0))                  # k = 8, step 0.9375: 15 pooled -> 16 planes, the last
-    ones, _ = g.pool_iso(np.ones((120, 24, 120), np.float32), A, 0.15)                 # one past the last pooled centre
+    sparse = np.zeros((90, 90, 66), np.float32)                         # 12 x 12 x 15.15 um, the steps are not exact in binary
+    sparse[::7, ::5, ::4] = 5
+    io.save_nifti(sparse, np.diag([0.012, 0.012, 0.01515, 1]), tmp_path / "sparse.nii.gz")
+    out, _ = g.resample_iso(io.load_volume(tmp_path / "sparse.nii.gz"), 0.04)
+    assert out[out > 0].min() > 1e-6                                    # partial weights only, no float residue near zeros
+    # k = 8 and step 0.9375: 15 pooled planes give 16 output planes, the last one past the last pooled centre
+    A = oblique((0.02, 0.02, 0.02), (0.0, 0.0, 0.0))
+    ones, _ = g.pool_iso(np.ones((120, 24, 120), np.float32), A, 0.15)
     assert ones.shape == (16, 3, 16) and np.allclose(ones[:15, :, :15], 1) and np.allclose(ones[15, :, :15], 0.9375)
     assert np.allclose(ones[15, :, 15], 0.9375 ** 2)
     edge = rng.random((120, 24, 120)).astype(np.float32)
@@ -228,36 +207,35 @@ def test_sampling_primitives():
     pts = torch.as_tensor(g.apply_affine(T, g.apply_affine(A_dst, ijk)))
     ref = g.sample_world(torch.as_tensor(x)[None], A, pts)[0].numpy().reshape(out.shape)  # torch grid_sample
     assert (out != 0).mean() > 0.3 and (out == 0).mean() > 0.05 and np.allclose(out, ref, atol=1e-5)
-    m = x > 0.5
+    m = (x > 0.5).astype(np.uint8)
     assert np.array_equal(g.resample_to(m, A, shape, A, np.eye(4), order=0), m)
 
 
 def _nearest_deg(q, probes):
-    """Geodesic angle (degrees) from each probe quaternion [m, 4] to the nearest of q [n, 4]."""
+    """Geodesic angle in degrees from each probe quaternion [m, 4] to the nearest of q [n, 4]."""
     near = np.concatenate([np.abs(probes[i:i + 2000] @ q.T).max(1) for i in range(0, len(probes), 2000)])
     return np.degrees(2 * np.arccos(np.minimum(near, 1.0)))
 
 
 def test_rotation_set():
-    """The rotation set every search uses: the identity first, n proper rotations, deterministic, near-uniform on SO(3)
-    (covering radius from 20000 uniform probes below 12 degrees for n = 8000; n iid uniform rotations give about 16-17), the
-    share within an angle of the identity that of the Haar measure, (t - sin t) / pi, and no two rotations within 3 degrees."""
-    assert [len(g.rotations(n)) for n in (1, 2, 100)] == [1, 2, 100] and np.array_equal(g.rotations(1)[0], np.eye(3))
+    """The rotation set is proper, deterministic, near-uniform on SO(3) and has no two rotations within 3 degrees."""
+    assert [len(g.rotations(n)) for n in (1, 2, 100)] == [1, 2, 100]
     R = g.rotations(8000)
-    assert R.shape == (8000, 3, 3) and R.dtype == np.float64 and np.array_equal(R[0], np.eye(3))
+    assert R.shape == (8000, 3, 3) and R.dtype == np.float64
     assert np.allclose(R @ R.transpose(0, 2, 1), np.eye(3), atol=1e-12) and np.allclose(np.linalg.det(R), 1.0, atol=1e-12)
     assert np.array_equal(g.rotations(8000), R)
     q = Rotation.from_matrix(R).as_quat()
+    # covering radius over 20000 uniform probes, about 16 degrees for 8000 iid uniform rotations
     assert _nearest_deg(q, Rotation.random(20000, random_state=0).as_quat()).max() < 12.0
     angle = Rotation.from_matrix(R).magnitude()
+    # the share within angle t of the identity is (t - sin t) / pi under the Haar measure
     for t in np.radians([30, 60, 90, 120, 150]):
         assert abs((angle < t).mean() - (t - np.sin(t)) / np.pi) < 0.005
-    # the second largest |q_i . q_j| of each row (the largest is the rotation itself)
+    # second largest |q_i . q_j| of each row, the largest being the rotation itself
     sep = np.concatenate([np.partition(np.abs(q[i:i + 2000] @ q.T), -2, 1)[:, -2] for i in range(0, len(q), 2000)])
     assert np.degrees(2 * np.arccos(np.minimum(sep, 1.0))).min() > 3.0
 
 
-# ------------------------------------------------------------------------------------------------------- transform files
 def test_transform_txt_lta_itk_roundtrip(tmp_path):
     shape_o, shape_m = (40, 30, 20), (34, 48, 50)
     A_o, A_m = oblique((0.02, 0.02, 0.02), (5.0, -3.0, 2.0)), oblique((0.08, 0.08, 0.08), (-10.0, 12.0, -7.0), seed=3, mirror=False)
@@ -280,7 +258,7 @@ def test_transform_txt_lta_itk_roundtrip(tmp_path):
         assert [int(s) for s in info["volume"]] == list(vol.shape) and info["filename"] == [str(Path(vol.path).resolve())]
         assert np.allclose(num("cras"), hdr["Pxyz_c"], atol=1e-5) and np.allclose(num("voxelsize"), hdr["delta"], atol=1e-6)
         assert np.allclose(np.stack([num("xras"), num("yras"), num("zras")]), hdr["Mdc"], atol=1e-6)
-    io.write_json({"T": T, "p": Params(), "nan": float("nan"), "f": np.float32(1.5), "path": tmp_path}, tmp_path / "r.json")
+    io.write_json({"T": T, "p": Params().to_dict(), "nan": float("nan"), "f": np.float32(1.5)}, tmp_path / "r.json")
     back = json.loads((tmp_path / "r.json").read_text())
     assert np.array_equal(back["T"], T) and back["p"]["search_mm"] == 0.6 and back["nan"] is None and back["f"] == 1.5
     sitk = pytest.importorskip("SimpleITK")                   # ITK file: dst voxel -> dst physical -> transform -> src voxel

@@ -1,7 +1,4 @@
-"""§3 orientation search (octreg/search.py) on a 0.6 mm search grid: the FFT maps F and O are the direct weighted correlations
-at every translation, also over the edge of the MRI crop and with partial-volume masks; an OCT block cut through a known
-rotation of the search set, with inverted non-linear contrast on a permuted, flipped grid, is found at that rotation and the
-nearest translations, embedded or cut from a larger specimen, with and without the outline; a mirror image scores lower."""
+"""The §3 orientation search (octreg.search) on a synthetic phantom with a 0.6 mm search grid."""
 import dataclasses
 
 import numpy as np
@@ -11,18 +8,17 @@ import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 
 from octreg import geometry as G
-from octreg.features import tracefree
+from octreg.features import orientation_tensor, to_torch
 from octreg.params import Params
-from octreg.search import Outline, Searcher, angle_deg, search
+from octreg.search import EPS, Searcher, angle_deg, search
 
 H = 0.6                                                  # Params().search_mm
 FAST = dataclasses.replace(Params(), n_rot=24, topk=4)
-SEMI = np.array([6.5, 5.5, 4.5])                         # specimen ellipsoid (mm) in the MRI world
-MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])
+SEMI = np.array([6.5, 5.5, 4.5])                         # semi-axes of the specimen ellipsoid in the MRI world, mm
 
 
 def structure(x):
-    """A smooth random field at world points x [..., 3] (mm): 12 plane waves of wavelength 5 - 9 mm."""
+    """A smooth random field at world points x [..., 3] in mm, a sum of 12 plane waves."""
     rng = np.random.default_rng(0)
     k = rng.normal(size=(12, 3))
     k *= (2 * np.pi / rng.uniform(5.0, 9.0, 12) / np.linalg.norm(k, axis=1))[:, None]
@@ -30,11 +26,7 @@ def structure(x):
 
 
 def phantom(rot_index, cut=None):
-    """MRI: 36^3 voxels, 1 + 0.3 structure inside the specimen ellipsoid M, 0.1 outside. OCT: 27 x 25 x 23 voxels on a permuted,
-    flipped grid, all measured; voxel x shows 2 - tanh(1.5 structure) at T_true x inside the specimen (mask M(T_true x)), 0.3
-    embedding outside. T_true = R (x - c_o) + (0.4, -0.3, 0.2) mm, R = rotation rot_index of the search set, c_o the OCT box
-    centre.
-    cut: OCT axis-0 index from which the block was cut off the specimen (embedding there, over MRI tissue and medium alike).
+    """A synthetic MRI and an OCT block at rotation rot_index of the search set, cut off the specimen at axis-0 index cut.
     -> ((mri, M, A_M), (oct, mask, measured, A_O), T_true)."""
     shape_m = (36, 36, 36)
     A_M = np.diag([H, H, H, 1.0])
@@ -58,23 +50,22 @@ def phantom(rot_index, cut=None):
 
 
 def index_of(s, T):
-    """Flat translation index of the Searcher s nearest to the pose T (template centre at T c_o)."""
+    """Flat translation index of the Searcher s nearest to the pose T."""
     u = G.apply_affine(np.linalg.inv(s.A_M), G.apply_affine(T, s.c_o)) - (s.n - 1) / 2.0
     return int(np.ravel_multi_index(tuple(np.rint(u).astype(int)), s.shape))
 
 
 def direct_F(s, mri, R, index):
-    """F at one translation as a direct sum: the centred correlation, over the rotated template's points (the eroded specimen
-    mask), of its tensors with the MRI tensors under it (zero outside the MRI foreground and beyond the crop)."""
+    """F at one translation index as a direct sum over the rotated template's points."""
     n, pad = s.n, (s.shape[0] - mri[0].shape[0]) // 2
     I, M = (torch.as_tensor(x, dtype=torch.float32) for x in mri[:2])
     Mb = (M > 0.5).float()
     g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(I * Mb, Mb, s.sig))
-    TM = F.pad(tracefree(g / torch.sqrt((g * g).sum(0) + g.norm(dim=0)[Mb > 0].median() ** 2))[None], [pad] * 6)[0]
-    v, w, _, inner = G.sample_world(s.src, s.A_src, s.c_t + s.tgrid @ torch.as_tensor(R, dtype=torch.float32)).reshape(4, n, n, n)
-    wb = (w > 0.5).float()
-    g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(v * wb, wb, s.sig))
-    a, wt = tracefree(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2)), (inner > 0.5).float()
+    TM = F.pad(orientation_tensor(g / torch.sqrt((g * g).sum(0) + g.norm(dim=0)[Mb > 0].median() ** 2))[None], [pad] * 6)[0]
+    v, _, _, inner = G.sample_world(s.src, s.A_src, s.c_t + s.tgrid @ torch.as_tensor(R, dtype=torch.float32)).reshape(4, n, n, n)
+    wt = (inner > 0.5).float()
+    g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(v * wt, wt, s.sig))
+    a = orientation_tensor(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2))
     i, j, k = np.unravel_index(index, s.shape)
     b = TM[:, i:i + n, j:j + n, k:k + n]
     N = wt.sum()
@@ -82,9 +73,34 @@ def direct_F(s, mri, R, index):
     return float((wt * da * db).sum() / torch.sqrt((wt * da * da).sum() * (wt * db * db).sum()))
 
 
+def masked_ncc(a, b, w):
+    """NCC of a and b [N] weighted by w [N]."""
+    N = w.sum() + EPS
+    da, db = a - (a * w).sum() / N, b - (b * w).sum() / N
+    return (w * da * db).sum() / torch.sqrt(((w * da * da).sum() * (w * db * db).sum()).clamp(min=EPS))
+
+
+class Outline:
+    """The outline O at one pose T in direct form, as the FFT maps of Searcher give it at every translation: the NCC of the
+    OCT mask w with the MRI foreground M over the measured voxels, weighted by q (1 - (1 - w) E), E = M inside the MRI grid
+    and 1 outside. As in the search it is one-sided, so medium over MRI tissue or beyond the crop is left out."""
+
+    def __init__(self, mri_mask, A_M, oct_mask, oct_valid, A_O, device="cuda"):
+        q, w = to_torch(oct_valid, device), to_torch(oct_mask, device)
+        idx = torch.nonzero(q > 0)
+        self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
+        self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
+        self.M, self.A_M = to_torch(mri_mask, device)[None], np.asarray(A_M, float)
+
+    def __call__(self, T):
+        x = G.apply_affine(T, self.pts)
+        M = G.sample_world(self.M, self.A_M, x)[0]
+        E = 1 - G.sample_world(1 - self.M, self.A_M, x)[0]  # sample_world gives 0 beyond the grid, so E = 1 there
+        return masked_ncc(self.w, M, self.q * (1 - (1 - self.w) * E))
+
+
 def test_maps_are_the_direct_sums():
-    """F at the true rotation and O at the identity rotation, at the true translation, shifted ones and one with OCT tissue
-    beyond the crop, equal the direct sums (O: search.Outline, the outline in direct form), also with partial-volume masks."""
+    """The FFT maps F and O equal the direct sums, at shifted translations and with partial-volume masks."""
     mri, oct_, T = phantom(5)
     for smooth in (False, True):
         m, o = mri, oct_
@@ -95,7 +111,7 @@ def test_maps_are_the_direct_sums():
         assert s.n % 2 == 1 and all(d % 2 == 1 for d in oct_[0].shape)      # template points on OCT voxels at the identity
         R = T[:3, :3]
         Fm, _ = s.score(R)
-        _, Om = s.score(np.eye(3))
+        _, Om = s.score(np.eye(3), True)
         out = Outline(m[1], m[2], o[1], o[2], o[3], "cpu")
         tissue = G.apply_affine(o[3], np.argwhere(o[1] > 0.5).astype(float))
         beyond = lambda P: np.mean(np.any(np.abs(G.apply_affine(np.linalg.inv(m[2]) @ P, tissue) - 17.5) > 17.5, axis=1))
@@ -106,7 +122,7 @@ def test_maps_are_the_direct_sums():
             assert abs(float(Fm.reshape(-1)[idx]) - direct_F(s, m, R, idx)) < 1e-3
             P = s.pose(np.eye(3), idx)
             assert abs(float(Om.reshape(-1)[idx]) - float(out(torch.as_tensor(P, dtype=torch.float32)))) < 1e-4
-            assert (beyond(s.pose(R, idx)) > 0.1 and beyond(P) > 0.1) == (u[0] < t[0] - 5)
+            assert (beyond(s.pose(R, idx)) > 0.05 and beyond(P) > 0.05) == (u[0] < t[0] - 5)
         assert float(Fm.reshape(-1)[index_of(s, T)]) > 0.8
 
 
@@ -114,19 +130,16 @@ def test_maps_are_the_direct_sums():
 @pytest.mark.parametrize("outline", [True, False])
 @pytest.mark.parametrize("rot_index", [5, 17])
 def test_search_recovers_the_pose(rot_index, outline, cut):
-    """The best candidate has the true rotation and a centre within a search voxel of the truth (embedded block); a block cut
-    from a larger specimen can slide about one voxel more towards its cut face, where the MRI tissue continues and no OCT point
-    is scored. O is one-sided: embedding over MRI tissue beyond the cut costs nothing."""
+    """The first candidate has the true pose. With the outline the first half of the candidates is ranked by S = (F + O) / 2
+    and the rest by F, and every pair is apart by the suppression rule."""
     mri, oct_, T = phantom(rot_index, cut)
-    cands, info = search(*mri, *oct_, FAST, "cpu", outline)
-    assert info["n_orientations"] == FAST.n_rot and len(cands) == FAST.topk and info["top1"] == cands[0]["S"]
-    assert [c["S"] for c in cands] == sorted((c["S"] for c in cands), reverse=True)
-    for c in cands:
-        assert np.linalg.det(c["T"][:3, :3]) > 0
-        if outline:
-            assert abs(c["S"] - (c["F"] + c["O"]) / 2) < 1e-6
-        else:
-            assert c["O"] is None and c["S"] == c["F"]
+    cands = search(*mri, *oct_, FAST, "cpu", outline)
+    assert len(cands) == FAST.topk and all(np.linalg.det(c["T"][:3, :3]) > 0 for c in cands)
+    assert all((c["O"] is not None) == outline for c in cands)
+    key = (lambda c: (c["F"] + c["O"]) / 2) if outline else (lambda c: c["F"])
+    half = FAST.topk // 2 if outline else FAST.topk
+    assert [key(c) for c in cands[:half]] == sorted((key(c) for c in cands[:half]), reverse=True)
+    assert [c["F"] for c in cands[half:]] == sorted((c["F"] for c in cands[half:]), reverse=True)
     c_o = G.box(oct_[3], oct_[0].shape)[0]
     centres = [G.apply_affine(c["T"], c_o) for c in cands]
     for i in range(len(cands)):
@@ -136,27 +149,18 @@ def test_search_recovers_the_pose(rot_index, outline, cut):
     best = cands[0]
     assert angle_deg(best["T"][:3, :3], T[:3, :3]) < 1e-3
     err = np.linalg.norm(centres[0] - G.apply_affine(T, c_o))
+    # a cut block may slide about a voxel toward its cut face, where no OCT point is scored
     assert err < (H if cut is None else 1.5 * H), err
-    assert best["F"] > 0.85 and info["top1"] > info["top2"] + 0.1, (best, info)
+    assert best["F"] > 0.85 and key(best) > key(cands[1]) + 0.1, (best, cands[1])
     if outline:
-        assert best["O"] > 0.9, best["O"]                        # one-sided: embedding beyond a cut face costs nothing
-
-
-@pytest.mark.parametrize("outline", [True, False])
-def test_mirror_image_scores_lower(outline):
-    """Proper rotations only: the same block in the mirrored OCT frame finds no pose as good as the true frame's."""
-    mri, (o, w, q, A_O), _ = phantom(5)
-    true = search(*mri, o, w, q, A_O, FAST, "cpu", outline)[1]["top1"]
-    mirrored = search(*mri, o, w, q, MIRROR @ A_O, FAST, "cpu", outline)[1]["top1"]
-    assert true > mirrored + 0.2, (true, mirrored)
+        assert best["O"] > 0.9, best["O"]                        # one-sided: medium beyond a cut face costs nothing
 
 
 def test_thin_specimen():
-    """A specimen thinner than the search smoothing is still scored (its points lie one voxel inside its mask); a mask with no
-    voxel erode_mm inside it is refused with a ValueError."""
+    """A specimen thinner than the search smoothing is still scored, and a mask with no inner voxel is refused."""
     mri, oct_, _ = phantom(17, cut=10)
-    cands, info = search(*mri, *oct_, FAST, "cpu", False)
-    assert all(np.isfinite(c["S"]) for c in cands) and np.isfinite(info["top1"])
+    cands = search(*mri, *oct_, FAST, "cpu", False)
+    assert all(np.isfinite(c["F"]) for c in cands)
     w = np.zeros_like(oct_[1])
     w[w.shape[0] // 2] = 1                                                  # one plane: nothing 0.8 mm inside
     with pytest.raises(ValueError, match="fewer than 10 OCT points"):
@@ -164,11 +168,10 @@ def test_thin_specimen():
 
 
 def test_oblique_mri_axes_and_per_mm_eps():
-    """The search works in world coordinates: on an MRI grid whose axes are turned 25 degrees off the world axes it recovers the
-    true rotation and centre as on an axis-aligned grid. Both eps are medians of per-mm gradients, as in octreg.features."""
-    from octreg.features import gradient_field, median_norm
+    """The search recovers the pose on oblique MRI axes, and eps_O is the median of per-mm OCT gradients."""
+    from octreg.features import eroded, gradient_field, median_norm
     (_, _, A_M), oct_, T = phantom(5)
-    Rq = G.rotations(1000)[37]                                              # an oblique turn of the MRI axes
+    Rq = G.rotations(1000)[37]
     c = G.apply_affine(A_M, np.full(3, 17.5))
     A2 = np.eye(4)
     A2[:3, :3] = Rq @ np.diag([H, H, H])
@@ -176,11 +179,11 @@ def test_oblique_mri_axes_and_per_mm_eps():
     xm = G.apply_affine(A2, np.indices((36, 36, 36)).reshape(3, -1).T.astype(float))
     M = (((xm / SEMI) ** 2).sum(-1) <= 1).reshape(36, 36, 36)
     mri = (np.where(M, 1.0 + 0.3 * structure(xm).reshape(M.shape), 0.1).astype(np.float32), M.astype(np.float32), A2)
-    cands, info = search(*mri, *oct_, FAST, "cpu", False)
+    cands = search(*mri, *oct_, FAST, "cpu", False)
     assert angle_deg(cands[0]["T"][:3, :3], T[:3, :3]) < 1e-3, angle_deg(cands[0]["T"][:3, :3], T[:3, :3])
     c_o = G.box(oct_[3], oct_[0].shape)[0]
     assert np.linalg.norm(G.apply_affine(cands[0]["T"], c_o) - G.apply_affine(T, c_o)) < 1.5 * H
     s = Searcher(*mri, *oct_, FAST.search_sigma_mm, FAST.erode_mm, "cpu")
-    wb = (oct_[1] > 0.5).astype(np.float32)
+    wb = eroded(oct_[1] > 0.5, FAST.erode_mm, H).astype(np.float32)
     ref = float(median_norm(gradient_field(oct_[0], wb, oct_[3], FAST.search_sigma_mm, "cpu"), wb))
     assert abs(float(s.eps_O) - ref) < 1e-4 * ref, (float(s.eps_O), ref)

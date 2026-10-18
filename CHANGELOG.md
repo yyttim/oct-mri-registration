@@ -1,12 +1,54 @@
 # Changelog
 
+## 3.1.0
+
+A specimen mask for OCT in bright, dark or clipped medium, a simpler MRI foreground, the full orientation tensor and a search in
+which the outline only proposes poses ([docs/METHOD.md](docs/METHOD.md)).
+
+- §1: the OCT specimen is the voxels with signal and isotropic texture, both decided by one threshold rule, the lower of Otsu's
+  threshold and the low-side foot of the tallest histogram peak, each on its own histogram. There is no closing, and components
+  holding at least 1 % of the mask are kept. The MRI foreground lies above the first histogram valley, walking down from the
+  brightest peak, that holds less than half of its smaller peak and whose darker class lies mostly outside the convex hull of
+  the voxels above it, and it is every positive voxel without such a valley. Its histogram peaks are found with an empty bin
+  added at each end, and the MRI foreground has no closing. `--oct-spacing-um` applies to an `--oct-mask` of the OCT's array
+  shape, and a mask of another shape keeps the spacing of its own file or, as a plain TIFF or NPY, is refused.
+- §2: F uses the full orientation tensor n nᵀ (squared normalised gradient fields). The OCT points lie farther than 0.8 mm
+  inside the specimen mask in Euclidean distance.
+- §3: every rotation keeps its best translation by F and, where both images show medium around the tissue, by (F + O) / 2.
+  The best 12 poses by (F + O) / 2 and the rest by F go to §4. The OCT gradients of the search are taken inside the eroded
+  mask of its points, so a margin of medium inside the specimen mask adds no edge. The rotations are 8,000 Super-Fibonacci
+  points.
+- §4: one Adam step size for all parameters, in mm of motion of the OCT box corners (`lr_mm`), each pass keeps its last iterate,
+  and among the poses whose final L lies within 10⁻⁵ of the lowest, the one proposed first wins.
+- §5: the deformation is fitted to the F of §2 over the same points, without the tissue surface, and repeated runs give the same
+  field.
+- Parameters: `lr_mm` and `df_evals` are new. `medium_fraction`, `texture_close_mm`, `lr_rot`, `lr_t`, `lr_ls`, `lr_sh`,
+  `df_band_mm` and `df_iters` are gone. `Params` refuses a value of the wrong type, a value that is not finite and a value out
+  of its range, also when built in Python, and `search_mm` need not be a multiple of `base_mm`.
+- Inputs: a mask file in another frame than its image (header or array) is refused before any output is written, and an
+  OCT without positive voxels is refused with a message.
+- Resampling: the interpolation positions of the isotropic grids are rounded to 10⁻⁹ voxel. A position on a pooled voxel
+  centre took a residue weight from its neighbour, which left tiny values next to exact zeros and moved the §1 threshold on an
+  OCT whose medium is clipped to zero.
+- Outputs and commands: `T_mri2oct.txt`, the command `octreg qc` with its function `octreg.register.qc`, and `Params.hash()` are
+  gone, and `octreg apply --inverse` inverts `T_oct2mri.txt`. In `result.json` every candidate holds its search rank, F and O at
+  the search and its final L, and the pose has `search_F` and `search_O` in place of S and no `shift_from_search_mm`,
+  `log_scales` or `shears`. `foreground.oct` has `signal_threshold` and `texture_threshold` in place of `threshold` and the
+  source `octreg` in place of `texture`, and the run time of §5 is in `seconds.deform` only. The flags, the parameter hash, the
+  search block, the display polarity, the strain read-out, the memory peaks, the component counts and the valley details of the
+  MRI foreground are gone.
+- bench: the I46 test gives every method the released OCT, and octreg runs with its own masks. Further runs give octreg the
+  test's specimen mask. The deformable baselines run from `bench/baselines/deform_tools.py`. `bench/baselines/composites.py` and
+  `zooms.py`, the `--shots` option of `evaluate_runs.py` and `evaluate_deform.py` and the `--stages` option of
+  `bench/i46/figures.py` are gone. The ablation variants `tracefree`, `outline_decides` and `search_whole_mask` replace
+  `full_tensor`, `outline_refine` and `df_interior`. A run of `bench/ablate.py` or `bench/i46/run.py` records the identity of
+  its octreg code in `code.txt` and is reused only by the same code.
+
 ## 3.0.0
 
-Params hash c4963318cacfc67d.
-
 One score in the search, the refinement and the deformation: the correlation of the trace-free orientation tensors of the
-normalised gradients of the two volumes, which needs no intensity mapping and no contrast polarity
-([docs/METHOD.md](docs/METHOD.md)). §1 to §5 instead of §1 to §6. The score is in the new module `octreg.features`.
+normalised gradients of the two volumes, which needs no intensity mapping and no contrast polarity. §1 to §5 instead of §1 to
+§6, and the score is in the module `octreg.features`.
 
 - §2: the score F replaces the two-class maps. S = (F + O) / 2 with the one-sided outline O where both images show an outside,
   else S = F.
@@ -15,30 +57,10 @@ normalised gradients of the two volumes, which needs no intensity mapping and no
   shears is removed, and the prior λ = 2 stays.
 - §5: the smooth deformation is fitted to F, with the tissue surface in the score, under a strain bound of 0.08 on a 5 mm
   lattice, by L-BFGS. It runs on every pair (`--no-deform`, or `deform=False` of `register` in Python, skips it).
-- Parameters: `erode_mm`, `search_sigma_mm`, `sigmas_mm`, `df_band_mm`, `df_sigmas_mm` and `df_iters` are new. `iters` counts
-  the Adam iterations of one pass (150), and the learning rates are those of the passes (`lr_rot` 0.004, `lr_t` 0.06, `lr_ls`
-  and `lr_sh` 0.002). `df_max_strain` is 0.08 (0.15 in 2.x).
-- `result.json`: the pose holds S and the rank of the search pose it came from, the search pose, L, the passes on F and
-  `display_polarity`, the sign used by the QC images. `candidates` holds the search rank, S and final L of every refined pose.
-  `pose.F` and `shift_from_search_mm` take the place of `NGF` and `ngf_shift_mm`, and the pose keys `polarity`, `S_class`,
-  `S_outline`, `T_before_ngf` and `NGF_start` are gone, and so are the `ngf` and `refine` blocks. `seconds` has `search` and
-  `refine` in place of `two_class` and `search_refine_ngf`. `deform` holds the passes, `strain_max` and `seconds`, and it is
-  null with `--no-deform`. `inputs.oct_mask` and `inputs.mri_mask` are absolute paths, so `octreg qc` finds them from any
-  folder. The flags `clamp_saturated` and `deformation_not_supported` are gone. `octreg qc --run` reads 3.0 run directories.
-- `bench/ablate.py`: one change to the method per variant, and starts from a turned OCT (`--turn`). OCT and MRI are positional
-  arguments, `--oct-spacing-um` is new, and `--main`, `--starts`, `--random-starts`, `--seed`, `--force` and `--pair` are gone.
-- `bench/i46`: the vessel check of the deformation (`common.vessel_field`), the ablation of 3.0 and the start test in
-  `analyses.py`, whose `near` step and its options `--checkout` and `--device` are gone.
-
-Removed
-
-- The two-class maps, the polarity, the block matching and surface-edge fit of the old §6 with its held-out gate, the modules
-  `octreg.ngf` and `octreg.blockmatch`, and the parameters `seed`, `flatten_sigma_mm`, `sigmoid_std`, `ngf_*` and the `df_*` of
-  the old §6 except `df_grid_mm` and `df_max_strain`.
-- `bench/run_i58.py`, `bench/evaluate.py`, `bench/report.py`, `bench/BENCHMARK.md`, `bench/compose_pair.py`,
-  `bench/fig_registration.py`, `bench/ablate_deform.py`, `bench/ngf_lam.py`, and the stored results of the old ablations and
-  evaluation (`bench/results/I58/ablations.json`, `starts.json`, `eval.json`, `deform_ablation.*`,
-  `bench/results/I46/near.json`).
+- `result.json` holds the search rank, S and final L of every refined pose, and `deform` is null with `--no-deform`. The mask
+  paths in `inputs` are absolute.
+- The two-class maps, the polarity, the block matching and surface-edge fit of the old §6, the modules `octreg.ngf` and
+  `octreg.blockmatch`, and their parameters are gone.
 
 ## 2.1.0
 
