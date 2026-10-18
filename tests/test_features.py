@@ -1,7 +1,7 @@
-"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp; the orientation tensor ignores
-the gradient sign; F is 1 for identical volumes and does not change when the OCT contrast is inverted; OCT points over MRI
-background lower F (template form); a displacement field moves the points; the refinement recovers a pose 1 mm and 3 degrees
-off; and the prior holds the scale where the data do not decide it."""
+"""§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp, the orientation tensor
+ignores the gradient sign, F is 1 for identical volumes and does not change when the OCT contrast is inverted, OCT points over
+MRI background lower F (template form), a displacement field moves the points, the refinement recovers a pose 1 mm and 3
+degrees off, the tie rule of the selection, and the prior holds the scale where the data do not decide it."""
 import dataclasses
 
 import numpy as np
@@ -182,7 +182,7 @@ def test_refine_tie_rule(monkeypatch):
 def test_prior_holds_the_scale_the_data_do_not_decide():
     """F does not reward a smaller block: refined from the true pose with lam 0 the size is kept (|log-scale| < 0.01). A
     structure that does not vary along world z gives the same F at every OCT scale along z, so the data do not decide that
-    scale; refined from a 10 % stretch along z, the prior (lam) brings it back to 1."""
+    scale. Refined from a 10 % stretch along z, the prior (lam) brings it back to 1."""
     mri, oct_, T = pair(seed=3)
     c = G.box(oct_[2], oct_[0].shape)[0]
     T1 = refine_one(T, mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]

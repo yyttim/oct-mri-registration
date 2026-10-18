@@ -1,5 +1,5 @@
-"""preprocess: the MRI foreground valley, a shallow tissue valley passed over, a deep one inside the tissue rejected; the OCT
-specimen mask by signal and texture (and chunk invariance); holes filled in the planes across a cut face."""
+"""preprocess: the MRI foreground valley, a shallow tissue valley passed over, a deep one inside the tissue rejected. The OCT
+specimen mask by signal and texture (and chunk invariance). Holes filled in the planes across a cut face."""
 import dataclasses
 
 import numpy as np
@@ -22,7 +22,7 @@ def _ball(n, c, r):
 
 
 def test_foreground_valley():
-    """A ball in a darker medium: the valley between them; one class only: every positive voxel."""
+    """A ball in a darker medium: the valley between them. One class only: every positive voxel."""
     rng = np.random.default_rng(0)
     ball = _ball(64, (32, 32, 32), 26)
     bimodal = np.where(ball, rng.normal(500, 30, ball.shape), rng.normal(100, 20, ball.shape)).astype(np.float32)
@@ -70,8 +70,8 @@ def test_foreground_keeps_a_dark_tissue_class_in_medium():
 def _embedded_block(seed, medium=1.0, n=96):
     """A tissue slab with isotropic texture, cut by the two faces along axis 2, in a frame of medium of mean intensity
     `medium` x tissue, plus a black tile column. Medium as bright as tissue has anisotropic structure only (section offsets
-    along axis 2, tile seams along axis 0, quiet along axis 1); dark medium is speckle (exponential intensities). The specimen is
-    the larger part of the measured volume, as in a block imaged with a margin."""
+    along axis 2, tile seams along axis 0, quiet along axis 1). Dark medium is speckle (exponential intensities). The
+    specimen is the larger part of the measured volume, as in a block imaged with a margin."""
     rng = np.random.default_rng(seed)
     z, y = np.mgrid[:n, :n]
     slab = np.broadcast_to((((z - 48) / 36) ** 4 + ((y - 46) / 38) ** 4 <= 1)[:, :, None], (n,) * 3)
@@ -98,7 +98,7 @@ def test_specimen_mask_signal_and_texture(monkeypatch, medium, voxel_mm, min_dic
 
 
 def test_fill_planes_fills_holes_open_to_a_face():
-    """A cavity that reaches a cut face is not enclosed in 3-D but is in the planes across it; outside stays outside."""
+    """A cavity that reaches a cut face is not enclosed in 3-D but is in the planes across it. Outside stays outside."""
     m = np.zeros((12, 12, 12), bool)
     m[2:10, 2:10, :] = True
     m[5:7, 5:7, :] = False                                   # a tunnel through the block along axis 2, open at both faces

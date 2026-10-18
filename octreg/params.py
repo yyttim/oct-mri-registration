@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Params:
-    """Method constants (no switches); a variant via dataclasses.replace or from_dict (a partial dict)."""
+    """Method constants (no switches). A variant via dataclasses.replace or from_dict (a partial dict)."""
     # grids
     search_mm: float = 0.6                    # isotropic grid of the orientation search
     base_mm: float = 0.15                     # isotropic grid of the refinement and the deformation
@@ -16,7 +16,7 @@ class Params:
     # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
     min_component: float = 0.01               # mask components smaller than this fraction of the mask are dropped
-    texture_bandpass_mm: float = 0.08         # Gaussian sigma of the band-pass before the directional variation
+    texture_bandpass_mm: float = 0.08         # sigma of the normalised Gaussian smoothing before the directional variation
     texture_window_mm: float = 0.36           # window of the directional local coefficient of variation
     texture_grid_mm: float = 0.16             # block grid of the texture field
     texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its threshold
@@ -38,7 +38,7 @@ class Params:
     df_grid_mm: float = 5.0                   # spacing of the control lattice
     df_max_strain: float = 0.08               # largest first difference of the lattice / spacing
     df_sigmas_mm: tuple = (0.6, 0.3)          # Gaussian sigmas of the deformation passes
-    df_evals: int = 250                       # most score evaluations of L-BFGS per pass
+    df_evals: int = 250                       # score evaluations after which an L-BFGS pass stops
 
     def __post_init__(self):
         real = lambda x: isinstance(x, float) and math.isfinite(x)
@@ -70,7 +70,7 @@ class Params:
 
     @classmethod
     def from_dict(cls, d: dict) -> "Params":
-        """Params from a partial dict (JSON); unknown keys raise ValueError."""
+        """Params from a partial dict (JSON). Unknown keys raise ValueError."""
         if not isinstance(d, dict):
             raise ValueError(f"Params: overrides must be a JSON object, not {type(d).__name__}")
         unknown = set(d) - set(cls.__dataclass_fields__)

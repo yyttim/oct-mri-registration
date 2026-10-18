@@ -1,10 +1,10 @@
 """§5 smooth deformation (octreg/deform.py), CPU. LatticeField is trilinear on its nodes (exact on linear fields) and its
 strains are first differences over the spacing. The stage runs on a synthetic specimen: smooth random structure inside an
-ellipsoid, bright on a zero background (the MRI); the OCT on its own flipped grid, a small rotation away, shows the MRI content
-at y = T x + d(T x), the interior contrast inverted, in darker agarose with a little noise. An exact copy and the aligned pair
-(d = 0) leave the field near zero (an exact copy everywhere); a smooth bump d of 0.8 mm is
-mostly recovered, within the strain bound (also a bound tighter than the bump); the pull-back field u inverts the fitted field,
-x + u(x) + d(x + u(x)) = x, and brings the OCT specimen onto the MRI one through geometry.resample_to; a field written and read
+ellipsoid, bright on a zero background (the MRI), and the OCT on its own flipped grid, a small rotation away, showing the MRI
+content at y = T x + d(T x), the interior contrast inverted, in darker agarose with a little noise. An exact copy and the
+aligned pair (d = 0) leave the field near zero (an exact copy everywhere). A smooth bump d of 0.8 mm is mostly recovered,
+within the strain bound (also a bound tighter than the bump). The pull-back field u inverts the fitted field,
+x + u(x) + d(x + u(x)) = x, and brings the OCT specimen onto the MRI one through geometry.resample_to. A field written and read
 back reproduces the warped volume."""
 import dataclasses
 

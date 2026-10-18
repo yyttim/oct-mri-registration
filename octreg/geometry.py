@@ -1,6 +1,6 @@
 """Grids, rotations, world-space sampling and the separable Gaussian filtering of the score.
 
-Arrays are indexed (i, j, k); an affine maps voxel index -> world mm; a transform T is a 4x4 world -> world matrix (mm).
+Arrays are indexed (i, j, k). An affine maps voxel index -> world mm, and a transform T is a 4x4 world -> world matrix (mm).
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def box(affine, shape):
 
 
 def apply_affine(T, pts):
-    """T [4, 4], pts [..., 3] (numpy or torch; the result is of the same kind) -> T applied to the points [..., 3]."""
+    """T [4, 4], pts [..., 3] (numpy or torch, the result of the same kind) -> T applied to the points [..., 3]."""
     if isinstance(pts, torch.Tensor):
         T = torch.as_tensor(T, dtype=pts.dtype, device=pts.device)
         return pts @ T[:3, :3].T + T[:3, 3]
@@ -113,8 +113,8 @@ def _lin(x, axis, i0, f):
 
 
 def sample_world(field, affine, pts):
-    """Trilinear sample of field (torch [C, D, H, W], voxel -> world affine) at world points pts (torch [..., 3], mm);
-    torch grid_sample with align_corners=True, blending with 0 outside. -> torch [C, ...]."""
+    """Trilinear sample of field (torch [C, D, H, W], voxel -> world affine) at world points pts (torch [..., 3], mm),
+    by torch grid_sample with align_corners=True, blending with 0 outside. -> torch [C, ...]."""
     C, D, H, W = field.shape
     Ainv = torch.as_tensor(np.linalg.inv(_np(affine)), dtype=pts.dtype, device=pts.device)
     ijk = pts @ Ainv[:3, :3].T + Ainv[:3, 3]
@@ -127,7 +127,7 @@ def sample_world(field, affine, pts):
 def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world, order=1, field=None, affine_field=None):
     """Resample arr (numpy [D, H, W], voxel -> world affine_src) onto the grid (shape_dst, affine_dst): every destination
     voxel goes to world, through T to the source world and is sampled there, order 1 (trilinear, float32 out) or 0 (nearest,
-    arr dtype out); 0 outside (scipy map_coordinates 'grid-constant', the same values as sample_world). -> numpy shape_dst.
+    arr dtype out), 0 outside (scipy map_coordinates 'grid-constant', the same values as sample_world). -> numpy shape_dst.
     field (numpy [3, d, h, w], mm along the destination world axes, on the grid affine_field in the destination world): a
     pull-back displacement (octreg.deform): the destination point x is sampled at T (x + u(x)), u trilinear in the field and
     constant beyond its grid. CHUNK destination voxels at a time, so the memory does not grow with the destination grid."""

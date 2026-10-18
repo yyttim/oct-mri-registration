@@ -6,11 +6,13 @@ so the mask edge adds no gradient, and g is taken to world coordinates. The norm
 channels whose dot product is <P(n), P(n')> = (n . n')^2, the squared product of normalised gradient fields. The tensor does not
 change when the gradient changes sign, so the score needs neither an intensity mapping nor the contrast polarity.
 
-The score is computed in template form, as the orientation search computes it: over the OCT points x_i, the correlation of the
-OCT tensors, their gradients taken through the pose (g' = A^-T g for the linear part A), with the MRI tensors sampled at the
-mapped points, zero outside the MRI mask and grid:
+The score is computed in template form over the OCT points x_i, the voxels farther than erode_mm inside the specimen mask
+(their gradients and eps taken inside the whole specimen mask): the correlation of the OCT tensors, their gradients taken
+through the pose (g' = A^-T g for the linear part A), with the MRI tensors sampled at the mapped points, zero outside the MRI
+mask and grid:
     F = sum_i <a_i - abar, b_i - bbar> / sqrt(sum_i |a_i - abar|^2  sum_i |b_i - bbar|^2).
-OCT tissue mapped onto MRI background therefore lowers F, as it lowers the search score.
+OCT tissue mapped onto MRI background therefore lowers F. The orientation search (octreg.search) takes the same template form
+on the turned OCT, with the gradients and eps inside the eroded mask of its points.
 """
 from __future__ import annotations
 
@@ -36,7 +38,7 @@ def orientation_tensor(n):
 
 
 def gradient_field(arr, mask, affine, sigma_mm, device="cuda"):
-    """World-frame gradient [3, D, H, W] (torch, per mm) of arr smoothed with sigma_mm inside mask by normalised convolution;
+    """World-frame gradient [3, D, H, W] (torch, per mm) of arr smoothed with sigma_mm inside mask by normalised convolution,
     zero outside the mask. arr, mask on an isotropic grid (affine voxel -> world)."""
     h = float(np.linalg.norm(np.asarray(affine)[:3, 0]))
     x, m = to_torch(arr, device), to_torch(mask, device)
@@ -70,7 +72,7 @@ class MRITensors:
 
 class OCTTemplate:
     """The OCT side: points of `points` (bool, every `stride`-th voxel per axis) in the world and their world-frame gradients of
-    arr smoothed inside `mask`; eps the median |g| over the mask."""
+    arr smoothed inside `mask`, with eps the median |g| over the mask."""
 
     def __init__(self, arr, mask, affine, sigma_mm, points, stride=2, device="cuda"):
         sel = np.zeros(np.shape(points), bool)
@@ -103,5 +105,6 @@ def score(T, tpl: OCTTemplate, mri: MRITensors, field=None):
 
 
 def eroded(mask, mm, h):
-    """The voxels of mask farther than mm from its outside (Euclidean, on a grid of spacing h; beyond the array is outside)."""
+    """The voxels of mask farther than mm from its outside (Euclidean, on a grid of spacing h). Beyond the array counts as
+    outside."""
     return ndimage.distance_transform_edt(np.pad(np.asarray(mask, bool), 1), sampling=h)[1:-1, 1:-1, 1:-1] > mm

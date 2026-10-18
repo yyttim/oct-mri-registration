@@ -25,7 +25,7 @@ def rot(seed):
 
 
 def oblique(spacing, origin, seed=7, mirror=True):
-    """voxel -> world affine with rotated axes; det < 0 when mirror."""
+    """voxel -> world affine with rotated axes, det < 0 when mirror."""
     A = np.eye(4)
     A[:3, :3] = rot(seed) @ np.diag(spacing) @ np.diag([1.0, 1.0, -1.0 if mirror else 1.0])
     A[:3, 3] = origin
@@ -219,9 +219,9 @@ def _nearest_deg(q, probes):
 
 
 def test_rotation_set():
-    """The rotation set every search uses: n proper rotations, deterministic, near-uniform on SO(3)
-    (covering radius from 20000 uniform probes below 12 degrees for n = 8000; n iid uniform rotations give about 16-17), the
-    share within an angle of the identity that of the Haar measure, (t - sin t) / pi, and no two rotations within 3 degrees."""
+    """The rotation set every search uses: n proper rotations, deterministic, near-uniform on SO(3) (covering radius from
+    20000 uniform probes below 12 degrees for n = 8000, where n iid uniform rotations give about 16-17), the share within an
+    angle of the identity that of the Haar measure, (t - sin t) / pi, and no two rotations within 3 degrees."""
     assert [len(g.rotations(n)) for n in (1, 2, 100)] == [1, 2, 100]
     R = g.rotations(8000)
     assert R.shape == (8000, 3, 3) and R.dtype == np.float64

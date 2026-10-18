@@ -1,5 +1,5 @@
 """§3 orientation search (octreg/search.py) on a 0.6 mm search grid: the FFT maps F and O are the direct weighted correlations
-at every translation, also over the edge of the MRI crop and with partial-volume masks; an OCT block cut through a known
+at every translation, also over the edge of the MRI crop and with partial-volume masks. An OCT block cut through a known
 rotation of the search set, with inverted non-linear contrast on a permuted, flipped grid, is found at that rotation and the
 nearest translations, embedded or cut from a larger specimen, with and without the outline."""
 import dataclasses
@@ -30,7 +30,7 @@ def structure(x):
 
 def phantom(rot_index, cut=None):
     """MRI: 36^3 voxels, 1 + 0.3 structure inside the specimen ellipsoid M, 0.1 outside. OCT: 27 x 25 x 23 voxels on a permuted,
-    flipped grid, all measured; voxel x shows 2 - tanh(1.5 structure) at T_true x inside the specimen (mask M(T_true x)), 0.3
+    flipped grid, all measured. Voxel x shows 2 - tanh(1.5 structure) at T_true x inside the specimen (mask M(T_true x)), 0.3
     embedding outside. T_true = R (x - c_o) + (0.4, -0.3, 0.2) mm, R = rotation rot_index of the search set, c_o the OCT box
     centre.
     cut: OCT axis-0 index from which the block was cut off the specimen (embedding there, over MRI tissue and medium alike).
@@ -143,9 +143,9 @@ def test_maps_are_the_direct_sums():
 def test_search_recovers_the_pose(rot_index, outline, cut):
     """With the outline, the first half of the candidates is proposed by S = (F + O) / 2 and the rest by F, each half best
     first, every pair apart by the suppression rule. The first candidate has the true rotation and a centre within a search
-    voxel of the truth (embedded block); a block cut from a larger specimen can slide about one voxel more towards its cut face,
-    where the MRI tissue continues and no OCT point is scored. O is one-sided: embedding over MRI tissue beyond the cut costs
-    nothing."""
+    voxel of the truth (embedded block). A block cut from a larger specimen can slide about one voxel more towards its cut
+    face, where the MRI tissue continues and no OCT point is scored. O is one-sided: embedding over MRI tissue beyond the cut
+    costs nothing."""
     mri, oct_, T = phantom(rot_index, cut)
     cands = search(*mri, *oct_, FAST, "cpu", outline)
     assert len(cands) == FAST.topk and all(np.linalg.det(c["T"][:3, :3]) > 0 for c in cands)
@@ -170,7 +170,7 @@ def test_search_recovers_the_pose(rot_index, outline, cut):
 
 
 def test_thin_specimen():
-    """A specimen thinner than the search smoothing is still scored (its points lie one voxel inside its mask); a mask with no
+    """A specimen thinner than the search smoothing is still scored (its points lie one voxel inside its mask). A mask with no
     voxel erode_mm inside it is refused with a ValueError."""
     mri, oct_, _ = phantom(17, cut=10)
     cands = search(*mri, *oct_, FAST, "cpu", False)

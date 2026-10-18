@@ -1,13 +1,13 @@
 """Orientation search (docs/METHOD.md §3) on the search grid (Params.search_mm).
 
 For every rotation of a fixed near-uniform set the OCT template is turned about its box centre and scored against the MRI crop
-at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012): F, the
+at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012). F is the
 correlation of the orientation tensors of octreg.features in the same template form as there, computed on the turned template in
 the MRI axes, its gradients taken inside the eroded specimen mask of its points (at the search scale a margin of medium inside
-the mask would add an edge that reaches them); and, where both images show medium around the tissue (register.outline_used), the
-outline O, the correlation of the OCT specimen mask w with the MRI foreground M over the measured OCT voxels q, weighted by q (1
-- (1 - w) E) with E = M inside the MRI crop and 1 outside: OCT tissue over MRI background or outside the crop lowers O, medium
-over MRI tissue does not (the crop may hold tissue beyond a face where the block was cut out).
+the mask would add an edge that reaches them). Where both images show medium around the tissue (register.outline_used), the
+outline O is the correlation of the OCT specimen mask w with the MRI foreground M over the measured OCT voxels q, weighted by
+q (1 - (1 - w) E) with E = M inside the MRI crop and 1 outside: OCT tissue over MRI background or outside the crop lowers O,
+medium over MRI tissue does not (the crop may hold tissue beyond a face where the block was cut out).
 """
 from __future__ import annotations
 
@@ -35,10 +35,10 @@ class Searcher:
     """Score maps of one orientation at a time against the zero-padded MRI grid."""
 
     def __init__(self, mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, sigma_mm, erode_mm, device="cuda"):
-        """mri [D, H, W] MRI intensities and mri_mask [D, H, W] foreground fraction M on an isotropic grid (mri_affine); oct_
+        """mri [D, H, W] MRI intensities and mri_mask [D, H, W] foreground fraction M on an isotropic grid (mri_affine). oct_
         [d, h, w] OCT intensities, oct_w the specimen mask and oct_valid the measured fraction (oct_affine). sigma_mm: the
-        smoothing of the gradients; erode_mm: the OCT points lie farther than erode_mm inside the specimen mask. The template is
-        centred on the OCT grid box centre c_o and covers its bounding sphere (+3 voxels); the MRI is zero-padded by half a
+        smoothing of the gradients. erode_mm: the OCT points lie farther than erode_mm inside the specimen mask. The template is
+        centred on the OCT grid box centre c_o and covers its bounding sphere (+3 voxels). The MRI is zero-padded by half a
         template, so a block over the edge of the crop is still scored."""
         self.dev = device
         I, M, o, w, q = (to_torch(x, device) for x in (mri, mri_mask, oct_, oct_w, oct_valid))
@@ -72,7 +72,9 @@ class Searcher:
         self.FT, self.FT2 = torch.fft.rfftn(TMp, dim=DIMS), torch.fft.rfftn((TMp * TMp).sum(0), dim=DIMS)
         self.FM, self.FM2, self.FM3 = (torch.fft.rfftn(Mp ** k, dim=DIMS) for k in (1, 2, 3))
         self.FE = torch.fft.rfftn(F.pad(M[None], [pad] * 6, value=1.0)[0], dim=DIMS)             # E: M in the crop, 1 outside
-        self.var_floor = float(Mp.var()) * 0.02                        # round-off guard of the FFT sums of the outline
+        # variance floor of M under the template (per unit weight), 0.02 of the variance of the padded M: it sets O near 0
+        # where M is almost constant under the template
+        self.var_floor = float(Mp.var()) * 0.02
         del TMp, Mp, TM, gM
         self.src = F.pad(torch.stack([o, w, q, inner])[None], [1] * 6)[0]
         self.A_src = A_O.copy()
@@ -96,7 +98,7 @@ class Searcher:
     @torch.no_grad()
     def score(self, R, outline=True):
         """Orientation R (numpy 3x3) -> (F, O) maps [D', H', W'], O None without the outline. Index u means
-        x_mri = R (x_oct - c_o) + t_u; the template lies inside the grid at the indices of self.valid."""
+        x_mri = R (x_oct - c_o) + t_u. The template lies inside the grid at the indices of self.valid."""
         n = self.n
         pts = self.c_t + self.tgrid @ torch.as_tensor(np.asarray(R), dtype=torch.float32, device=self.dev)   # x_o = c_o + R^T y
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)

@@ -16,8 +16,8 @@ TIE = 1e-5          # final L closer than this to the lowest count as equal (the
 
 
 def compose(r, t, ls, sh, c):
-    """Torch parameters (rotation vector r rad, t = image of c in mm, log-scales, shears Sh[0,1], Sh[0,2], Sh[1,2]; each [3])
-    and c (mm, [3]) -> 4x4 OCT world -> MRI world (torch, differentiable; the rotation is exp([r]x), also at r = 0)."""
+    """Torch parameters (rotation vector r rad, t = image of c in mm, log-scales, shears Sh[0,1], Sh[0,2], Sh[1,2], each [3])
+    and c (mm, [3]) -> 4x4 OCT world -> MRI world (torch, differentiable). The rotation is exp([r]x), also at r = 0."""
     z, one = torch.zeros_like(r[0]), torch.ones_like(r[0])
     K = torch.stack([torch.stack([z, -r[2], r[1]]), torch.stack([r[2], z, -r[0]]), torch.stack([-r[1], r[0], z])])
     Sh = torch.stack([torch.stack([one, sh[0], sh[1]]), torch.stack([z, one, sh[2]]), torch.stack([z, z, one])])
@@ -39,7 +39,7 @@ def decompose(T, c):
 
 def fit_adam(objective, c, rho, T0, params: Params = Params(), device="cuda"):
     """Adam on L = 1 - objective(T) + lam (sum ls^2 + sum sh^2) from pose T0 (numpy 4x4) over all twelve affine parameters,
-    cosine schedule to zero over params.iters; one step size in mm of corner motion: lr_mm for t, lr_mm / rho for r, ls and sh
+    cosine schedule to zero over params.iters. One step size in mm of corner motion: lr_mm for t, lr_mm / rho for r, ls and sh
     (rho the radius of the OCT box). -> (T numpy 4x4, objective, L) of the last iterate, and the objective at T0."""
     P = params
     f = lambda x: torch.tensor(np.asarray(x, float), dtype=torch.float32, device=device, requires_grad=True)

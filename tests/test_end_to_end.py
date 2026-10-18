@@ -2,10 +2,11 @@
 a black tile, inverted contrast, LPI-like header) and an MRI crop (RIA-like header) related by a known affine. register() runs
 with a reduced search, refinement and deformation (FAST). The pose is recovered to < 0.4 mm, and the specimen mask finds the
 specimen where an intensity histogram of the OCT has no valley. Without §5 every affine output is written, oct_in_mri is
-oct_in_mri_affine and the §5 files of an earlier run are removed; with §5 the field is written on the MRI base grid, the affine
-is the same and `octreg apply` reproduces both overlays. `octreg apply` uses a field file put into the run directory; user
-masks replace both masks; the same OCT as an NPY stack, taken in its array frame, gives the same pose, and `octreg apply
---oct-spacing-um` replays an NPY run from another path; `octreg register` with --params and --no-deform."""
+oct_in_mri_affine and the §5 files of an earlier run are removed. With §5 the field is written on the MRI base grid, the
+affine is the same and `octreg apply` reproduces both overlays. `octreg apply` uses a field file put into the run directory.
+User masks replace both masks, and a mask in another frame than its image is refused. The same OCT as an NPY stack, taken in
+its array frame, gives the same pose, and `octreg apply --oct-spacing-um` replays an NPY run from another path. Last,
+`octreg register` with --params and --no-deform."""
 import dataclasses
 import json
 
@@ -110,7 +111,7 @@ def deformed(data, tmp_path_factory):
 
 
 def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
-    """register(..., deform=False): the affine outputs and result.json; apply and apply --inverse; refused inputs exit 2."""
+    """register(..., deform=False): the affine outputs and result.json, apply and apply --inverse, and refused inputs exit 2."""
     oct_path, mri_path, T_true, pts = data
     out = tmp_path / "run"
     out.mkdir()
@@ -142,7 +143,7 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert saved["params"] == json.loads(json.dumps(FAST.to_dict()))
 
     assert saved["foreground"]["oct"]["source"] == "octreg" and saved["foreground"]["mri"]["threshold"] > 0
-    oct_img = nib.load(str(oct_path))                          # equal intensities: no histogram valley; texture: the specimen
+    oct_img = nib.load(str(oct_path))                          # no valley in the histogram, the texture finds the specimen
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
     assert pp.foreground(raw_h, 0.15, Params())[1]["threshold"] == 0
     assert 0.9 < saved["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3
@@ -184,7 +185,7 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
 
 
 def test_register_with_the_deformation(data, deformed, tmp_path):
-    """register(..., deform=True): the field file on the MRI base grid, qc_deform.png and the §5 read-outs; `octreg apply`
+    """register(..., deform=True): the field file on the MRI base grid, qc_deform.png and the §5 read-outs. `octreg apply`
     reproduces oct_in_mri through the field and oct_in_mri_affine with --affine-only, and the two differ."""
     oct_path, mri_path, T_true, pts = data
     out, res = deformed
@@ -214,7 +215,7 @@ def test_register_with_the_deformation(data, deformed, tmp_path):
     np.testing.assert_allclose(nii(tmp_path / "plain.nii.gz"), both[1], rtol=1e-5, atol=1e-3)
     assert np.abs(both[0] - both[1]).max() > 1
     assert deform_label(saved["deform"]).startswith("§5: F " + ", ".join(f"{p['F_start']:.4f} -> {p['F_end']:.4f} at {p['sigma_mm']:g} mm"
-                                                                          for p in d["passes"]) + "; ")
+                                                                          for p in d["passes"]) + ". ")
     fig = png(out / "qc_deform.png")                           # 3 rows of planes, the MRI foreground outline drawn
     assert round((fig.shape[0] / QC_DPI - QC_HEAD_IN) / QC_CELL_IN, 2) == 3
     assert (fig == list(bytes.fromhex(QC_COLOURS[0][1:]))).all(-1).sum() > 100
@@ -259,7 +260,7 @@ def test_mask_in_another_frame_is_refused(data, tmp_path):
 def test_array_frame(data, tmp_path):
     """An NPY stack has only an array frame, taken as given with the given spacing. The stack here is written so that its array
     frame is the header frame it came from up to a translation (the header negates all three axes, so all three are flipped),
-    and the same pose is found; `octreg apply` reproduces oct_in_mri from the stack."""
+    and the same pose is found. `octreg apply` reproduces oct_in_mri from the stack."""
     oct_path, mri_path, T_true, pts = data
     img = nib.load(str(oct_path))
     np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[::-1, ::-1, ::-1])   # numpy (z, y, x)
@@ -299,7 +300,7 @@ def test_apply_moved_npy_with_spacing(data, tmp_path):
 
 
 def test_register_command(data, tmp_path, capsys):
-    """`octreg register` with a params file: exit 0, every output with §5, a summary line, the params of the file; with
+    """`octreg register` with a params file: exit 0, every output with §5, a summary line, the params of the file. With
     --no-deform in the same directory the §5 files are gone."""
     (tmp_path / "params.json").write_text(json.dumps(TINY))
     out = tmp_path / "run"

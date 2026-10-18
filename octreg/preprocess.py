@@ -1,4 +1,4 @@
-"""Masks (docs/METHOD.md §1): the MRI foreground and the OCT specimen mask from isotropic texture. numpy/scipy on the CPU;
+"""Masks (docs/METHOD.md §1): the MRI foreground and the OCT specimen mask from isotropic texture. numpy/scipy on the CPU,
 arrays [D, H, W] on isotropic grids of voxel_mm (mm). Exact zeros in the OCT are missing data (black tiles): never specimen."""
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ def _pool(a, k):
 
 def _upsample(a, k, shape, rows=None):
     """Linear interpolation of a block grid a (block centres at j k + (k - 1) / 2 voxels, clamped beyond the outer centres) at
-    the voxels of a grid of `shape`; rows = (lo, hi) returns only rows lo:hi along axis 0. -> float32."""
+    the voxels of a grid of `shape`. rows = (lo, hi) returns only rows lo:hi along axis 0. -> float32."""
     x = np.asarray(a, np.float32)
     for ax, n in enumerate(shape):
         c = np.clip((np.arange(n) - (k - 1) / 2) / k, 0, a.shape[ax] - 1)[slice(*rows) if ax == 0 and rows else slice(None)]
@@ -55,12 +55,12 @@ def _upsample(a, k, shape, rows=None):
 def foreground(arr, voxel_mm, params: Params = Params()):
     """The MRI foreground: the voxels above the first histogram valley, walking down from the brightest peak, that holds less
     than valley_ratio of the smaller of its two peaks and whose darker class lies mostly outside the brighter side: less than
-    half of the voxels between the next lower valley (or zero) and this one inside the convex hull of the candidate foreground
-    (medium lies outside the specimen, while a darker tissue class such as white matter lies within the hull of cortex);
-    every positive voxel without such a valley. Histogram of 256 bins of the positive values; peaks of the square root of the
-    counts (so a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the maximum and >= 5 bins
-    apart. Holes filled, components >= min_component of the mask kept.
-    arr: [D, H, W]; voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
+    half of the voxels between the next lower valley (or zero) and this one lie inside the convex hull of the candidate
+    foreground (medium lies outside the specimen, while a darker tissue class such as white matter lies within the hull of
+    cortex). Without such a valley, every positive voxel. Histogram of 256 bins of the positive values, peaks of the square
+    root of the counts (so a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the maximum and
+    >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
+    arr: [D, H, W], voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
     if s.size == 0:
@@ -100,7 +100,7 @@ def _enclosed(m, sel):
 
 # ----------------------------------------------------------------------------- specimen mask (§1)
 def threshold(counts, centres):
-    """t = min(Otsu, low-side triangle) of a histogram (counts, bin centres). With two modes Otsu falls between them; with one
+    """t = min(Otsu, low-side triangle) of a histogram (counts, bin centres). With two modes Otsu falls between them. With one
     main mode Otsu would split it, and the foot of that mode on its low side (the triangle threshold of Zack et al. 1977, taken
     on the low side) lies lower."""
     h = np.asarray(counts, np.float64)
@@ -121,12 +121,14 @@ def _hist(chunks, nbins=256):
 
 def specimen_mask(fine, voxel_mm, params: Params = Params()):
     """§1 specimen mask: a voxel is specimen when it has signal and isotropic texture, each decided by `threshold`.
-    Signal: log intensity of the measured voxels (fine > 0) above t; voxels below count as missing. Texture on the signal
-    voxels: band-pass b = G(x m) / G(m) (sigma texture_bandpass_mm), per array axis the running coefficient of variation of b
-    over texture_window_mm (counted where >= half the window has signal), C = the minimum over the axes, averaged over blocks of
-    ~texture_grid_mm (blocks >= half signal), log C smoothed over the blocks (normalised Gaussian, sigma texture_smooth_mm),
-    above t, linearly interpolated to the fine grid > 0.5. Signal AND texture; components >= min_component of the mask kept,
-    holes filled in every array plane, AND measured. fine: [D, H, W] OCT intensities; voxel_mm: spacing (mm).
+    Signal: log intensity of the measured voxels (fine > 0) above t. Voxels below t have no signal: they are left out of the
+    texture and become specimen only where the hole filling encloses them. Every voxel fine > 0 counts as measured.
+    Texture on the signal voxels m: the normalised Gaussian smoothing b = G(x m) / G(m) (sigma texture_bandpass_mm), per array
+    axis the running coefficient of variation of b over texture_window_mm (counted where >= half the window has signal),
+    C = the minimum over the axes, averaged over blocks of ~texture_grid_mm (blocks >= half signal), log C smoothed over the
+    blocks (normalised Gaussian, sigma texture_smooth_mm), above t, linearly interpolated to the fine grid > 0.5. Signal AND
+    texture, components >= min_component of the mask kept, holes filled in every array plane, AND measured.
+    fine: [D, H, W] OCT intensities. voxel_mm: spacing (mm).
     -> (bool [D, H, W], {signal_threshold (intensity), texture_threshold (C), volume_cm3})."""
     P, D = params, fine.shape[0]
     logs = lambda: (np.log(x[x > 0]) for x in (np.asarray(fine[z:z + _CHUNK], np.float32) for z in range(0, D, _CHUNK)))
@@ -163,7 +165,7 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
     L = np.divide(ndimage.gaussian_filter(np.log(np.where(valid, C, 1.0)) * w, s), ndimage.gaussian_filter(w, s),
                   out=np.zeros_like(w), where=valid)
     if not (valid.sum() > 1 and L[valid].std() > 0):
-        raise ValueError("specimen mask: no texture variation in the measured data; supply an OCT mask")
+        raise ValueError("specimen mask: no texture variation in the measured data, supply an OCT mask")
     lt = threshold(*_hist(lambda: [L[valid]]))
     keep = (valid & (L > lt)).astype(np.float32)
     out = np.empty(fine.shape, bool)

@@ -60,7 +60,7 @@ def main(argv=None) -> int:
             res = register(args.oct, args.mri, args.out, args.oct_spacing_um, args.oct_mask, args.mri_mask, params, args.device,
                            not args.no_deform)
             dl = deform_label(res["deform"]) if res["deform"] else "§5: off"
-            print(f"octreg: {pose_label(res['pose'])}; {dl} -> {args.out}")
+            print(f"octreg: {pose_label(res['pose'])}. {dl} -> {args.out}")
         else:
             print(f"octreg: wrote {apply(args.run, args.moving, args.reference, args.out, args.inverse, args.affine_only, args.oct_spacing_um)}")
     except ValueError as e:

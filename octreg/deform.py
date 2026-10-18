@@ -1,7 +1,7 @@
 """Smooth deformation (docs/METHOD.md §5): a displacement d on top of the affine T, fitted to F under a strain bound.
 
 The OCT point x goes to y = T x + d(T x), d in mm along the MRI world axes, trilinear on a lattice of spacing Params.df_grid_mm
-over the MRI grid (two spacings of margin); F is that of §2, over the same OCT points. Minimised by L-BFGS: -F + STRAIN_WEIGHT
+over the MRI grid (two spacings of margin). F is that of §2, over the same OCT points. Minimised by L-BFGS: -F + STRAIN_WEIGHT
 sum max(0, |dc| / df_grid_mm - df_max_strain)^2 over the components dc of the first differences of the lattice along its axes.
 Output: the pull-back field u on the MRI base grid, x + u(x) = (id + d)^-1(x), so the registered OCT at the MRI point x is
 OCT(T^-1 (x + u(x))).
@@ -23,8 +23,8 @@ HISTORY = 10              # L-BFGS memory
 
 
 class _Trilinear(torch.autograd.Function):
-    """d = sum over the 8 lattice corners of w c[:, idx]. Its gradient is a segment sum over the corners sorted by node, which is
-    deterministic on the GPU (an atomic scatter, as in the backward pass of grid_sample, is not)."""
+    """d = sum over the 8 lattice corners of w c[:, idx]. Its gradient is a segment sum over the corners sorted by node,
+    which is deterministic on the GPU (an atomic scatter, as in the backward pass of grid_sample, is not)."""
 
     @staticmethod
     def forward(ctx, c, idx, w):
