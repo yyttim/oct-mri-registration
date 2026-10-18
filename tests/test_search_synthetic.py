@@ -64,16 +64,17 @@ def index_of(s, T):
 
 def direct_F(s, mri, R, index):
     """F at one translation as a direct sum: the centred correlation, over the rotated template's points (the eroded specimen
-    mask), of its tensors with the MRI tensors under it (zero outside the MRI foreground and beyond the crop)."""
+    mask, also the support of their gradients), of its tensors with the MRI tensors under it (zero outside the MRI foreground
+    and beyond the crop)."""
     n, pad = s.n, (s.shape[0] - mri[0].shape[0]) // 2
     I, M = (torch.as_tensor(x, dtype=torch.float32) for x in mri[:2])
     Mb = (M > 0.5).float()
     g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(I * Mb, Mb, s.sig))
     TM = F.pad(orientation_tensor(g / torch.sqrt((g * g).sum(0) + g.norm(dim=0)[Mb > 0].median() ** 2))[None], [pad] * 6)[0]
-    v, w, _, inner = G.sample_world(s.src, s.A_src, s.c_t + s.tgrid @ torch.as_tensor(R, dtype=torch.float32)).reshape(4, n, n, n)
-    wb = (w > 0.5).float()
-    g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(v * wb, wb, s.sig))
-    a, wt = orientation_tensor(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2)), (inner > 0.5).float()
+    v, _, _, inner = G.sample_world(s.src, s.A_src, s.c_t + s.tgrid @ torch.as_tensor(R, dtype=torch.float32)).reshape(4, n, n, n)
+    wt = (inner > 0.5).float()
+    g = torch.einsum("ij,jklm->iklm", s.to_world, G.nc_gradient(v * wt, wt, s.sig))
+    a = orientation_tensor(g / torch.sqrt((g * g).sum(0) + s.eps_O ** 2))
     i, j, k = np.unravel_index(index, s.shape)
     b = TM[:, i:i + n, j:j + n, k:k + n]
     N = wt.sum()
@@ -155,8 +156,9 @@ def test_thin_specimen():
 
 def test_oblique_mri_axes_and_per_mm_eps():
     """The search works in world coordinates: on an MRI grid whose axes are turned 25 degrees off the world axes it recovers the
-    true rotation and centre as on an axis-aligned grid. Both eps are medians of per-mm gradients, as in octreg.features."""
-    from octreg.features import gradient_field, median_norm
+    true rotation and centre as on an axis-aligned grid. Both eps are medians of per-mm gradients, as in octreg.features, the
+    OCT one over the eroded specimen mask that supports its gradients."""
+    from octreg.features import eroded, gradient_field, median_norm
     (_, _, A_M), oct_, T = phantom(5)
     Rq = G.rotations(1000)[37]                                              # an oblique turn of the MRI axes
     c = G.apply_affine(A_M, np.full(3, 17.5))
@@ -171,6 +173,6 @@ def test_oblique_mri_axes_and_per_mm_eps():
     c_o = G.box(oct_[3], oct_[0].shape)[0]
     assert np.linalg.norm(G.apply_affine(cands[0]["T"], c_o) - G.apply_affine(T, c_o)) < 1.5 * H
     s = Searcher(*mri, *oct_, FAST.search_sigma_mm, FAST.erode_mm, "cpu")
-    wb = (oct_[1] > 0.5).astype(np.float32)
+    wb = eroded(oct_[1] > 0.5, FAST.erode_mm, H).astype(np.float32)
     ref = float(median_norm(gradient_field(oct_[0], wb, oct_[3], FAST.search_sigma_mm, "cpu"), wb))
     assert abs(float(s.eps_O) - ref) < 1e-4 * ref, (float(s.eps_O), ref)

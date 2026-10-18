@@ -19,6 +19,7 @@ from scipy import ndimage
 from octreg import geometry as G, io, preprocess as pp
 from octreg.cli import main
 from octreg.params import Params
+from octreg.refine import TIE
 from octreg.register import OUTPUTS, OUTPUTS_DEFORM, QC_CELL_IN, QC_COLOURS, QC_DPI, QC_HEAD_IN, WARP, deform_label, register
 
 FAST = dataclasses.replace(Params(), fine_mm=0.08, n_rot=200, topk=4, iters=40, df_evals=30,
@@ -129,7 +130,9 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert set(saved["seconds"]) == {"mri", "oct_fine_grid", "oct_mask", "search", "refine", "deform", "outputs", "total"}
     cands = saved["candidates"]
     assert len(cands) == FAST.topk and all(set(c) == {"search_rank", "search_F", "search_O", "L"} for c in cands)
-    assert [c["L"] for c in cands] == sorted(c["L"] for c in cands)
+    lo = min(c["L"] for c in cands)                            # within TIE of the lowest L the better search rank comes first
+    key = [(0, c["search_rank"]) if c["L"] <= lo + TIE else (1, c["L"]) for c in cands]
+    assert key == sorted(key)
     assert sorted(c["search_rank"] for c in cands) == list(range(FAST.topk))
     assert all(pose[k] == cands[0][k] for k in ("search_rank", "search_F", "search_O", "L"))
     assert [f["sigma_mm"] for f in pose["F"]] == list(FAST.sigmas_mm)

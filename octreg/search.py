@@ -2,11 +2,12 @@
 
 For every rotation of a fixed near-uniform set the OCT template is turned about its box centre and scored against the MRI crop
 at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012): F, the
-correlation of the orientation tensors of octreg.features in the same template form as there, computed on the turned template
-in the MRI axes; and, where both images show medium around the tissue (register.outline_used), the outline O, the correlation
-of the OCT specimen mask w with the MRI foreground M over the measured OCT voxels q, weighted by q (1 - (1 - w) E) with E = M
-inside the MRI crop and 1 outside: OCT tissue over MRI background or outside the crop lowers O, medium over MRI tissue does not
-(the crop may hold tissue beyond a face where the block was cut out).
+correlation of the orientation tensors of octreg.features in the same template form as there, computed on the turned template in
+the MRI axes, its gradients taken inside the eroded specimen mask of its points (at the search scale a margin of medium inside
+the mask would add an edge that reaches them); and, where both images show medium around the tissue (register.outline_used), the
+outline O, the correlation of the OCT specimen mask w with the MRI foreground M over the measured OCT voxels q, weighted by q (1
+- (1 - w) E) with E = M inside the MRI crop and 1 outside: OCT tissue over MRI background or outside the crop lowers O, medium
+over MRI tissue does not (the crop may hold tissue beyond a face where the block was cut out).
 """
 from __future__ import annotations
 
@@ -58,9 +59,8 @@ class Searcher:
         gM = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(I * Mb, Mb, self.sig))
         eps_M = gM.norm(dim=0)[Mb > 0].median()
         TM = orientation_tensor(gM / torch.sqrt((gM * gM).sum(0) + eps_M ** 2))
-        wb = (w > 0.5).float()
-        gO = G.nc_gradient(o * wb, wb, sigma_mm / h_o)
-        self.eps_O = gO.norm(dim=0)[wb > 0].median() / h_o            # per mm, as the template gradients (rotation-free norm)
+        gO = G.nc_gradient(o * inner, inner, sigma_mm / h_o)
+        self.eps_O = gO.norm(dim=0)[inner > 0].median() / h_o         # per mm, as the template gradients (rotation-free norm)
         self.c_o, radius = G.box(A_O, w.shape)
         self.n = n = math.ceil(2 * radius / h) + 3
         pad = n // 2 + 1
@@ -100,10 +100,9 @@ class Searcher:
         n = self.n
         pts = self.c_t + self.tgrid @ torch.as_tensor(np.asarray(R), dtype=torch.float32, device=self.dev)   # x_o = c_o + R^T y
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)
-        wb = (w > 0.5).float()
-        g = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(v * wb, wb, self.sig))
+        wt = (inner > 0.5).float()                                    # the OCT points, also the support of their gradients
+        g = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(v * wt, wt, self.sig))
         T = orientation_tensor(g / torch.sqrt((g * g).sum(0) + self.eps_O ** 2))
-        wt = (inner > 0.5).float()
         N = wt.sum() + EPS
         Fw, FwT = self._ft(wt), self._ft(wt[None] * T)
         ST, STT = (wt[None] * T).sum(DIMS), (wt[None] * T * T).sum()
