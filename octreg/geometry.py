@@ -23,10 +23,9 @@ def _np(A) -> np.ndarray:
 
 def rotations(n) -> np.ndarray:
     """n Super-Fibonacci rotations (Alexa, CVPR 2022), a deterministic near-uniform set on SO(3). -> [n, 3, 3] float64."""
-    m = n
-    s = np.arange(m) + 0.5
+    s = np.arange(n) + 0.5
     phi, psi = np.sqrt(2.0), 1.533751168755204288118041
-    r, R_ = np.sqrt(s / m), np.sqrt(1.0 - s / m)
+    r, R_ = np.sqrt(s / n), np.sqrt(1.0 - s / n)
     a, b = 2 * np.pi * s / phi, 2 * np.pi * s / psi
     q = np.stack([r * np.sin(a), r * np.cos(a), R_ * np.sin(b), R_ * np.cos(b)], 1)        # (x, y, z, w)
     return Rotation.from_quat(q).as_matrix()

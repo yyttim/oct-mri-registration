@@ -63,9 +63,9 @@ def test_orientation_tensor_ignores_the_sign():
 
 
 def pair(seed=0):
-    """MRI: 1 + 0.3 s inside an ellipsoid on 64^3 voxels (s a smoothed Gaussian field); OCT: 60 x 62 x 58 voxels on a
-    differently flipped grid showing 2 - tanh(1.5 s) at T x (inverted, non-linear contrast), specimen mask the ellipsoid at T x,
-    all measured. -> ((mri, mask, A_M), (oct, mask, measured, A_O), T)."""
+    """MRI: 1 + 0.3 s inside an ellipsoid on 64^3 voxels (s a smoothed Gaussian field). OCT: 60 x 62 x 58 voxels on a
+    differently flipped grid showing 2 - tanh(1.5 s) at T x (inverted, non-linear contrast), specimen mask the ellipsoid at
+    T x. -> ((mri, mask, A_M), (oct, mask, A_O), T)."""
     rng = np.random.default_rng(seed)
     shape_m = (64, 64, 64)
     A_M = grid(shape_m)
@@ -83,7 +83,7 @@ def pair(seed=0):
     samp = lambda vol: G.sample_world(torch.as_tensor(vol[None], dtype=torch.float32), A_M, xm_of_o)[0].numpy().reshape(shape_o)
     so, mo = samp(s.astype(np.float32)), samp(mask_m.astype(np.float32)) > 0.5
     oct_ = np.where(mo, 2.0 - np.tanh(1.5 * so), 0.0).astype(np.float32)
-    return (mri, mask_m, A_M), (oct_, mo, np.ones(shape_o, np.float32), A_O), T
+    return (mri, mask_m, A_M), (oct_, mo, A_O), T
 
 
 def test_score_identical_and_contrast_free():
@@ -98,7 +98,7 @@ def test_score_identical_and_contrast_free():
 
 def test_score_of_the_pair():
     """At the true pose of the pair (inverted, non-linear contrast) F is high, 0.5 mm off it is much lower."""
-    mri, (o, mo, _, A_O), T = pair()
+    mri, (o, mo, A_O), T = pair()
     tpl, mt = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu"), MRITensors(*mri, 0.3, "cpu")
     off = np.eye(4)
     off[:3, 3] = [0.5, 0.0, 0.0]
@@ -123,7 +123,7 @@ def test_background_lowers_the_score():
 def test_no_overlap_gives_a_finite_gradient():
     """A pose that puts every OCT point beyond the MRI grid scores 0 with a zero, finite gradient (no NaN): its fit stays at
     L = 1 and the candidate loses the selection by the lowest final L instead of breaking it."""
-    mri, (o, mo, _, A_O), T = pair(seed=3)
+    mri, (o, mo, A_O), T = pair(seed=3)
     far = np.eye(4)
     far[:3, 3] = [200.0, 0.0, 0.0]
     Tt = torch.tensor(far @ T, dtype=torch.float32, requires_grad=True)
@@ -138,7 +138,7 @@ def test_refine_recovers_offset_pose():
     off[:3, :3] = Rotation.from_rotvec(np.radians(3.0) * np.array([1.0, 1.0, 0.0]) / np.sqrt(2)).as_matrix()
     off[:3, 3] = [0.6, -0.5, 0.6]
     T0 = off @ T
-    pts = world(oct_[0].shape, oct_[3])[oct_[1]]
+    pts = world(oct_[0].shape, oct_[2])[oct_[1]]
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
     T1, info = refine_one(T0, mri, oct_, Params(), "cpu")
     assert err(T0) > 0.9 and err(T1) < 0.05, (err(T0), err(T1))
@@ -156,10 +156,27 @@ def test_refine_selects_the_lowest_final_L():
     near = np.eye(4)
     near[:3, 3] = [0.3, -0.2, 0.3]
     poses = refine([wrong @ T, near @ T], mri, oct_, dataclasses.replace(Params(), iters=60), "cpu")
-    pts = world(oct_[0].shape, oct_[3])[oct_[1]]
+    pts = world(oct_[0].shape, oct_[2])[oct_[1]]
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
     assert [p["search_rank"] for p in poses] == [1, 0] and poses[0]["L"] < poses[1]["L"], [(p["search_rank"], p["L"]) for p in poses]
     assert err(poses[0]["T"]) < 0.1 and all(len(p["F"]) == len(Params().sigmas_mm) for p in poses), err(poses[0]["T"])
+
+
+def test_refine_tie_rule(monkeypatch):
+    """A final L within TIE (1e-5) of the lowest is a tie, which the better search rank wins: with fit_adam replaced by a stub
+    that sets the final L of each start, rank 0 at 0.2 + 5e-6 still comes first, at 0.2 + 5e-4 it falls behind rank 1."""
+    shape = (20, 20, 20)
+    A = grid(shape)
+    vol = ndimage.gaussian_filter(np.random.default_rng(0).standard_normal(shape), 1.5).astype(np.float32)
+    box = np.ones(shape, bool)
+    starts = [np.eye(4) for _ in range(3)]
+    for i, T in enumerate(starts):
+        T[0, 3] = i                                                                  # the start of search rank i
+    for L, ranks in (((0.2 + 5e-6, 0.2, 0.3), [0, 1, 2]), ((0.2 + 5e-4, 0.2, 0.3), [1, 0, 2])):
+        stub = lambda objective, c, rho, T0, params, device, L=L: (T0, 0.5, L[int(T0[0, 3])], 0.4)
+        monkeypatch.setattr("octreg.refine.fit_adam", stub)
+        poses = refine(starts, (vol, box, A), (vol, box, A), Params(), "cpu")
+        assert [p["search_rank"] for p in poses] == ranks, [(p["search_rank"], p["L"]) for p in poses]
 
 
 def test_prior_holds_the_scale_the_data_do_not_decide():
@@ -167,7 +184,7 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     structure that does not vary along world z gives the same F at every OCT scale along z, so the data do not decide that
     scale; refined from a 10 % stretch along z, the prior (lam) brings it back to 1."""
     mri, oct_, T = pair(seed=3)
-    c = G.box(oct_[3], oct_[0].shape)[0]
+    c = G.box(oct_[2], oct_[0].shape)[0]
     T1 = refine_one(T, mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]
     assert np.abs(decompose(T1, c)[2]).max() < 0.01, decompose(T1, c)[2]
 
@@ -186,7 +203,7 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     cc = torch.as_tensor(c, dtype=torch.float32)
     F = [float(score(compose(f(0, 0, 0), cc, f(0, 0, ls), f(0, 0, 0), cc), tpl, mt)) for ls in (0.0, np.log(1.1), np.log(0.9))]
     assert F[0] > 0.9 and max(F) - min(F) < 1e-5, F
-    T1 = refine_one(np.diag([1.0, 1.0, 1.1, 1.0]), (mri, fg, A), (o, mo, np.ones(shape_o, np.float32), A_o), Params(), "cpu")[0]
+    T1 = refine_one(np.diag([1.0, 1.0, 1.1, 1.0]), (mri, fg, A), (o, mo, A_o), Params(), "cpu")[0]
     ls = decompose(T1, c)[2]
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 
@@ -195,7 +212,7 @@ def test_a_field_moves_the_points():
     """score(T, ..., field) moves the OCT points by the field after T and keeps their gradients: a constant field v scores as
     the translation by v after T."""
     from octreg.deform import LatticeField
-    mri, (o, mo, _, A_O), T = pair(seed=1)
+    mri, (o, mo, A_O), T = pair(seed=1)
     tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
     mt = MRITensors(*mri, 0.3, "cpu")
     v = np.array([0.2, -0.15, 0.1])

@@ -70,7 +70,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     (oct_h, mask_o, A_o), valid_o, fg_o = prepare_oct(fine, A_f, P, mo)
     del fine
     lap("oct_mask")
-    mri_b, oct_b = (mri_h, mask_m, A_m), (oct_h, mask_o, valid_o.astype(np.float32), A_o)
+    mri_b, oct_b = (mri_h, mask_m, A_m), (oct_h, mask_o, A_o)
     outline, outside = outline_used(mask_o, valid_o, mask_m, P)
     # §3: orientation search on the search grid, §4: every candidate refined on the structure score, the lowest L wins
     pool = lambda x, A: G.pool_iso(np.asarray(x, np.float32), A, P.search_mm)
@@ -124,7 +124,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
 def display_polarity(oct_b, mri_b, T):
     """The sign of the correlation of the OCT and MRI intensities inside the OCT specimen mask at the pose T: for the display of
     the QC figures only (the method does not use the polarity)."""
-    (o, mo, _, A_o), (m, mm, A_m) = oct_b, mri_b
+    (o, mo, A_o), (m, mm, A_m) = oct_b, mri_b
     vals = G.resample_to(m, A_m, o.shape, A_o, T)
     inside = np.asarray(mo, bool) & (G.resample_to(np.asarray(mm, np.float32), A_m, o.shape, A_o, T) > 0.5)
     if inside.sum() < 10:

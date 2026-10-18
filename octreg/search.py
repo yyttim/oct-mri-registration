@@ -157,30 +157,3 @@ def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params
             if not any(np.linalg.norm(centre - c) < P.nms_mm and angle_deg(Rs[i], R) < P.nms_deg for _, c, R in kept):
                 kept.append((dict(T=T, F=f, O=o), centre, Rs[i]))
     return [k[0] for k in kept]
-
-
-def masked_ncc(a, b, w):
-    """w-weighted NCC of a and b (torch [N]), weights w [N]."""
-    N = w.sum() + EPS
-    da, db = a - (a * w).sum() / N, b - (b * w).sum() / N
-    return (w * da * db).sum() / torch.sqrt(((w * da * da).sum() * (w * db * db).sum()).clamp(min=EPS))
-
-
-class Outline:
-    """The outline O at one pose T, in direct form (the FFT maps of Searcher give it at every translation): the NCC of the OCT
-    specimen mask w with the MRI foreground M sampled through the pose, over the measured OCT voxels, weighted by
-    q (1 - (1 - w) E), q the measured fraction and E = M inside the MRI grid and 1 outside (one-sided, as in the search:
-    embedding over MRI tissue or outside the crop is left out)."""
-
-    def __init__(self, mri_mask, A_M, oct_mask, oct_valid, A_O, device="cuda"):
-        q, w = to_torch(oct_valid, device), to_torch(oct_mask, device)
-        idx = torch.nonzero(q > 0)
-        self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
-        self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
-        self.M, self.A_M = to_torch(mri_mask, device)[None], np.asarray(A_M, float)
-
-    def __call__(self, T):
-        x = G.apply_affine(T, self.pts)
-        M = G.sample_world(self.M, self.A_M, x)[0]
-        E = 1 - G.sample_world(1 - self.M, self.A_M, x)[0]  # sampled with zeros outside the grid: E = 1 there
-        return masked_ncc(self.w, M, self.q * (1 - (1 - self.w) * E))

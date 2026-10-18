@@ -71,10 +71,10 @@ class LatticeField(torch.nn.Module):
 
 
 def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):
-    """mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on the base grids, T the affine.
+    """mri = (arr, foreground, affine), oct = (arr, specimen mask, affine) on the base grids, T the affine.
     -> (pull-back field u numpy [3, D, H, W] on the MRI base grid, info)."""
     P = params
-    (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
+    (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct
     inner = eroded(o_mask, P.erode_mm, float(np.linalg.norm(np.asarray(A_O)[:3, 0])))
     n = np.array(np.shape(m_arr)) - 1
     corners = G.apply_affine(np.asarray(A_M, float), np.array([[i, j, k] for i in (0, n[0]) for j in (0, n[1]) for k in (0, n[2])],

@@ -47,9 +47,9 @@ def bump(z, amplitude=AMP):
 
 def pair(d, h=0.3, semi=(6.0, 5.4, 5.0), seed=0):
     """-> (mri, oct, T) as smooth_deformation takes them, grids of spacing h: an ellipsoid (semi-axes semi, MRI world mm) of
-    smooth structure at 1 +- 0.3, zero outside (the MRI); the OCT voxel x shows the MRI content at y = T x + d(T x) as
-    1.6 - 0.3 s (inverted) inside the ellipsoid and agarose at 0.3 with noise 0.05 outside, all measured, the specimen mask the
-    ellipsoid at y."""
+    smooth structure at 1 +- 0.3, zero outside (the MRI). The OCT voxel x shows the MRI content at y = T x + d(T x) as
+    1.6 - 0.3 s (inverted) inside the ellipsoid and agarose at 0.3 with noise 0.05 outside, the specimen mask the ellipsoid
+    at y."""
     rng, semi = np.random.default_rng(seed), np.asarray(semi, float)
     shape_m = tuple(int(np.ceil((2 * a + 3.0) / h)) for a in semi[[0, 2, 1]])  # array axes (R, I, A) of the MRI grid
     shape_o = tuple(int(np.ceil((2 * a + 4.0) / h)) for a in semi)
@@ -65,7 +65,7 @@ def pair(d, h=0.3, semi=(6.0, 5.4, 5.0), seed=0):
     so = G.sample_world(torch.as_tensor(s[None]), A_M, torch.as_tensor(y, dtype=torch.float32))[0].numpy()
     tissue = ((y / semi) ** 2).sum(-1) <= 1
     oct_ = np.where(tissue, 1.6 - 0.3 * so, 0.3 + 0.05 * rng.standard_normal(len(y))).reshape(shape_o).astype(np.float32)
-    return (mri, mask_m, A_M), (oct_, tissue.reshape(shape_o), np.ones(shape_o, np.float32), A_O), T
+    return (mri, mask_m, A_M), (oct_, tissue.reshape(shape_o), A_O), T
 
 
 def fit(mri, oct_, T, params=FAST):
@@ -106,7 +106,7 @@ def bumped():
 def exact_copy():
     """An exact copy: the OCT is the MRI on its own grid, T = I, so F = 1 at the zero field."""
     mri, _, _ = pair(lambda z: 0 * z)
-    oct_ = (mri[0], mri[1], np.ones(mri[0].shape, np.float32), mri[2])
+    oct_ = mri
     return (mri, oct_) + fit(mri, oct_, np.eye(4))
 
 
@@ -196,8 +196,8 @@ def test_reduces_a_smooth_displacement(bumped):
     # the registered OCT at the MRI point x is OCT(T^-1 (x + u(x))): its specimen mask lands on the MRI one
     dice = lambda a: 2 * (a & mri[1]).sum() / (a.sum() + mri[1].sum())
     spec = oct_[1].astype(np.float32)
-    affine = G.resample_to(spec, oct_[3], mri[0].shape, mri[2], np.linalg.inv(T)) > 0.5
-    warped = G.resample_to(spec, oct_[3], mri[0].shape, mri[2], np.linalg.inv(T), field=u, affine_field=mri[2]) > 0.5
+    affine = G.resample_to(spec, oct_[2], mri[0].shape, mri[2], np.linalg.inv(T)) > 0.5
+    warped = G.resample_to(spec, oct_[2], mri[0].shape, mri[2], np.linalg.inv(T), field=u, affine_field=mri[2]) > 0.5
     assert dice(warped) > 0.975 and 1 - dice(warped) < 0.5 * (1 - dice(affine)), (dice(affine), dice(warped))
 
 

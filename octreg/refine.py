@@ -63,12 +63,13 @@ def fit_adam(objective, c, rho, T0, params: Params = Params(), device="cuda"):
 
 
 def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
-    """Refine every pose of starts (numpy 4x4, the search candidates in rank order) on F alone, one pass per sigma in
-    params.sigmas_mm, coarse to fine. mri = (arr, foreground, affine), oct = (arr, specimen mask, measured fraction, affine) on
-    the base grid. The OCT points lie farther than erode_mm inside the specimen mask.
-    -> [{T, L, F: [{sigma_mm, start, end}], search_rank}], lowest final L first."""
+    """Refine every pose of starts (numpy 4x4, the search candidates in rank order) on L (F and the scale and shear prior, no
+    outline), one pass per sigma in params.sigmas_mm, coarse to fine. mri = (arr, foreground, affine), oct = (arr, specimen
+    mask, affine) on the base grid. The OCT points lie farther than erode_mm inside the specimen mask.
+    -> [{T, L, F: [{sigma_mm, start, end}], search_rank}]: the poses within TIE of the lowest final L first, by search rank,
+    then the others by final L."""
     P = params
-    (m_arr, m_mask, A_M), (o_arr, o_mask, _, A_O) = mri, oct
+    (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
     inner = eroded(o_mask, P.erode_mm, h_o)
     rho = G.box(A_O, np.shape(o_arr))[1]

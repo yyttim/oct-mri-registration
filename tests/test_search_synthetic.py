@@ -11,9 +11,9 @@ import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 
 from octreg import geometry as G
-from octreg.features import orientation_tensor
+from octreg.features import orientation_tensor, to_torch
 from octreg.params import Params
-from octreg.search import Outline, Searcher, angle_deg, search
+from octreg.search import EPS, Searcher, angle_deg, search
 
 H = 0.6                                                  # Params().search_mm
 FAST = dataclasses.replace(Params(), n_rot=24, topk=4)
@@ -82,9 +82,36 @@ def direct_F(s, mri, R, index):
     return float((wt * da * db).sum() / torch.sqrt((wt * da * da).sum() * (wt * db * db).sum()))
 
 
+def masked_ncc(a, b, w):
+    """w-weighted NCC of a and b (torch [N]), weights w [N]."""
+    N = w.sum() + EPS
+    da, db = a - (a * w).sum() / N, b - (b * w).sum() / N
+    return (w * da * db).sum() / torch.sqrt(((w * da * da).sum() * (w * db * db).sum()).clamp(min=EPS))
+
+
+class Outline:
+    """The outline O at one pose T, in direct form (the FFT maps of Searcher give it at every translation): the NCC of the OCT
+    specimen mask w with the MRI foreground M sampled through the pose, over the measured OCT voxels, weighted by
+    q (1 - (1 - w) E), q the measured fraction and E = M inside the MRI grid and 1 outside (one-sided, as in the search:
+    embedding over MRI tissue or outside the crop is left out)."""
+
+    def __init__(self, mri_mask, A_M, oct_mask, oct_valid, A_O, device="cuda"):
+        q, w = to_torch(oct_valid, device), to_torch(oct_mask, device)
+        idx = torch.nonzero(q > 0)
+        self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
+        self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
+        self.M, self.A_M = to_torch(mri_mask, device)[None], np.asarray(A_M, float)
+
+    def __call__(self, T):
+        x = G.apply_affine(T, self.pts)
+        M = G.sample_world(self.M, self.A_M, x)[0]
+        E = 1 - G.sample_world(1 - self.M, self.A_M, x)[0]  # sampled with zeros outside the grid: E = 1 there
+        return masked_ncc(self.w, M, self.q * (1 - (1 - self.w) * E))
+
+
 def test_maps_are_the_direct_sums():
     """F at the true rotation and O at the identity rotation, at the true translation, shifted ones and one with OCT tissue
-    beyond the crop, equal the direct sums (O: search.Outline, the outline in direct form), also with partial-volume masks."""
+    beyond the crop, equal the direct sums (O: Outline, the outline in direct form), also with partial-volume masks."""
     mri, oct_, T = phantom(5)
     for smooth in (False, True):
         m, o = mri, oct_
