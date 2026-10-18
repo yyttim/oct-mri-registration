@@ -66,7 +66,8 @@ def test_params_defaults_and_dict():
         Params.from_dict({"no_such_field": 0.8})
     with pytest.raises(ValueError, match="must be a JSON object"):
         Params.from_dict([0.5])
-    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0}):
+    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0},
+                {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
 

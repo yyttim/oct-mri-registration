@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import math
 from dataclasses import dataclass
 
 
@@ -40,12 +41,22 @@ class Params:
     df_evals: int = 250                       # most score evaluations of L-BFGS per pass
 
     def __post_init__(self):
+        real = lambda x: isinstance(x, float) and math.isfinite(x)
         for f in dataclasses.fields(self):                    # ints given for floats, lists for tuples (JSON)
-            v = getattr(self, f.name)
+            given = v = getattr(self, f.name)
             if isinstance(f.default, float) and type(v) is int:
-                object.__setattr__(self, f.name, float(v))
+                v = float(v)
             elif isinstance(f.default, tuple) and isinstance(v, (list, tuple)):
-                object.__setattr__(self, f.name, tuple(float(x) for x in v))
+                v = tuple(float(x) if type(x) is int else x for x in v)
+            object.__setattr__(self, f.name, v)
+            if isinstance(f.default, float):
+                ok, want = real(v), "a finite number"
+            elif isinstance(f.default, tuple):
+                ok, want = isinstance(v, tuple) and len(v) > 0 and all(map(real, v)), "a non-empty list of finite numbers"
+            else:
+                ok, want = isinstance(v, int) and not isinstance(v, bool), "an integer"
+            if not ok:
+                raise ValueError(f"Params: {f.name} must be {want}, got {given!r}")
         if not 0 < self.fine_mm <= self.base_mm < self.search_mm:
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm")
         if not (self.sigmas_mm and self.df_sigmas_mm and min(self.sigmas_mm + self.df_sigmas_mm) > 0):

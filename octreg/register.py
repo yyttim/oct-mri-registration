@@ -47,6 +47,12 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
     mo = None if oct_mask is None else io.load_volume(oct_mask, None if io._kind(oct_mask) == "nii" else oct_spacing_um)
     mm = None if mri_mask is None else io.load_volume(mri_mask)
+    for mask, image, hint in ((mo, vo, "a NIfTI mask for a NIfTI OCT, an array-frame TIFF / NPY mask for a TIFF / NPY OCT read "
+                               "in its array frame"),
+                              (mm, vm, "a NIfTI mask with an sform or qform exactly when the MRI has one")):
+        if mask is not None and mask.frame != image.frame:
+            raise ValueError(f"{mask.path} is in the {mask.frame} frame and {image.path} in the {image.frame} frame: a mask "
+                             f"must be in the world of its image ({hint})")
     out.mkdir(parents=True, exist_ok=True)
     for f in OUTPUTS_DEFORM + ("result.json",):                 # left by an earlier run in this directory
         (out / f).unlink(missing_ok=True)

@@ -82,16 +82,20 @@ def foreground(arr, voxel_mm, params: Params = Params()):
 
 
 def _enclosed(m, sel):
-    """The share of the voxels of sel (every second voxel along each axis) that lie inside the convex hull of the mask m;
-    1 for a mask of fewer than four surface voxels."""
-    from scipy.spatial import ConvexHull, Delaunay
+    """The share of the voxels of sel (every second voxel along each axis) that lie inside the convex hull of the mask m.
+    1.0 when m has fewer than four surface voxels or they span a flat hull, 0.0 when sel has no sampled voxel."""
+    from scipy.spatial import ConvexHull, Delaunay, QhullError
     pts = np.argwhere(m & ~ndimage.binary_erosion(m))
     q = np.argwhere(sel[::2, ::2, ::2]) * 2
     if len(pts) < 4:
         return 1.0
     if len(q) == 0:
         return 0.0
-    return float((Delaunay(pts[ConvexHull(pts).vertices]).find_simplex(q) >= 0).mean())
+    try:
+        hull = Delaunay(pts[ConvexHull(pts).vertices])
+    except QhullError:                                       # a flat point set
+        return 1.0
+    return float((hull.find_simplex(q) >= 0).mean())
 
 
 # ----------------------------------------------------------------------------- specimen mask (§1)

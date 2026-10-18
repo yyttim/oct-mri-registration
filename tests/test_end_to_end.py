@@ -239,6 +239,23 @@ def test_user_masks(tmp_path):
     assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4
 
 
+def test_mask_in_another_frame_is_refused(data, tmp_path):
+    """A mask must be in the frame of its image: an NPY OCT mask (array frame) for the NIfTI OCT (header frame) and a NIfTI
+    MRI mask without sform or qform (array frame) for the MRI are refused before any output is written, ValueError in Python
+    and exit code 2 on the command line."""
+    oct_path, mri_path, _, _ = data
+    np.save(tmp_path / "oct_mask.npy", np.ones((62, 68, 72), np.uint8))                    # numpy (z, y, x) of the OCT
+    nib.save(nib.Nifti1Image(np.ones(nib.load(str(mri_path)).shape, np.uint8), None), str(tmp_path / "mri_mask.nii.gz"))
+    out = tmp_path / "run"
+    with pytest.raises(ValueError, match="must be in the world of its image"):
+        register(oct_path, mri_path, out, (80, 80, 80), oct_mask=tmp_path / "oct_mask.npy", params=FAST, device="cpu")
+    with pytest.raises(ValueError, match="must be in the world of its image"):
+        register(oct_path, mri_path, out, mri_mask=tmp_path / "mri_mask.nii.gz", params=FAST, device="cpu")
+    assert main(["register", str(oct_path), str(mri_path), "-o", str(out), "--oct-spacing-um", "80,80,80", "--oct-mask",
+                 str(tmp_path / "oct_mask.npy"), "--device", "cpu"]) == 2
+    assert not out.exists()
+
+
 def test_array_frame(data, tmp_path):
     """An NPY stack has only an array frame, taken as given with the given spacing. The stack here is written so that its array
     frame is the header frame it came from up to a translation (the header negates all three axes, so all three are flipped),
