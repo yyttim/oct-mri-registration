@@ -208,6 +208,29 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 
 
+def test_a_linear_field_carries_the_gradients():
+    """A field d(y) = M y scores as the affine (I + M) T to first order in M: the field moves the points and turns their
+    gradients by I - M^T. Leaving the gradients unturned scores farther from the affine."""
+    from octreg.deform import LatticeField
+    mri, (o, mo, A_O), T = pair(seed=2)
+    tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
+    mt = MRITensors(*mri, 0.3, "cpu")
+    t = lambda X: torch.tensor(X, dtype=torch.float32)
+    y = G.apply_affine(t(T), tpl.pts)
+    lo, hi = y.min(0).values.numpy() - 8, y.max(0).values.numpy() + 8
+    field = LatticeField(lo, hi, 4.0, "cpu")
+    M = np.array([[0.04, 0.02, 0.0], [0.0, -0.03, 0.02], [0.02, 0.0, 0.03]])
+    nodes = np.stack(np.meshgrid(*[lo[a] + field.h * np.arange(field.n[a]) for a in range(3)], indexing="ij"), -1).reshape(-1, 3)
+    with torch.no_grad():
+        field.c.copy_(t((nodes @ M.T).T))
+        TM = np.eye(4)
+        TM[:3, :3] += M
+        F_field, F_affine = float(score(t(T), tpl, mt, field)), float(score(t(TM @ T), tpl, mt))
+        g = torch.linalg.inv(t(T)[:3, :3]).T @ tpl.g
+        F_unturned = float(correlation(tensors(g, tpl.eps), mt.at(y + field(y))))
+    assert abs(F_field - F_affine) < 0.25 * abs(F_unturned - F_affine), (F_field, F_affine, F_unturned)
+
+
 def test_a_field_moves_the_points():
     """score(T, ..., field) moves the OCT points by the field after T and keeps their gradients: a constant field v scores as
     the translation by v after T."""

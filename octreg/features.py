@@ -24,6 +24,8 @@ from scipy import ndimage
 
 from . import geometry as G
 
+JACOBIAN_STEP_MM = 0.5    # central differences of a displacement field for the transport of the OCT gradients (score)
+
 
 def to_torch(x, device):
     """numpy or torch -> float32 tensor on device."""
@@ -96,12 +98,17 @@ def correlation(a, b):
 
 def score(T, tpl: OCTTemplate, mri: MRITensors, field=None):
     """F of the pose T (torch 4x4) and, optionally, a displacement field d (callable: MRI world points [N, 3] -> [N, 3]) that
-    moves the points after T: the OCT point x goes to y = T x + d(T x), its gradient through the linear part of T.
+    moves the points after T: the OCT point x goes to y = T x + d(T x). Its gradient goes through the linear part A of T and,
+    to first order, through the field: (I - J^T) A^-T g, J = dd/dy by central differences over JACOBIAN_STEP_MM.
     -> torch scalar."""
     y = G.apply_affine(T, tpl.pts)
+    g = torch.linalg.inv(T[:3, :3]).T @ tpl.g
     if field is not None:
+        E = JACOBIAN_STEP_MM * torch.eye(3, dtype=y.dtype, device=y.device)
+        J = torch.stack([field(y + E[k]) - field(y - E[k]) for k in range(3)], 2) / (2 * JACOBIAN_STEP_MM)   # [N, i, k]
+        g = g - torch.einsum("nki,kn->in", J, g)
         y = y + field(y)
-    return correlation(tensors(torch.linalg.inv(T[:3, :3]).T @ tpl.g, tpl.eps), mri.at(y))
+    return correlation(tensors(g, tpl.eps), mri.at(y))
 
 
 def eroded(mask, mm, h):
