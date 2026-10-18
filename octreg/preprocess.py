@@ -54,9 +54,11 @@ def _upsample(a, k, shape, rows=None):
 # ----------------------------------------------------------------------------- MRI foreground (§1)
 def foreground(arr, voxel_mm, params: Params = Params()):
     """The MRI foreground: the voxels above the first histogram valley, walking down from the brightest peak, that holds less
-    than valley_ratio of the smaller of its two peaks; every positive voxel without such a valley. Histogram of 256 bins of the
-    positive values; peaks of the square root of the counts (so a narrow background peak cannot hide the tissue peak) with a
-    prominence >= 5 % of the maximum and >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
+    than valley_ratio of the smaller of its two peaks and whose darker side lies mostly outside the brighter one (_enclosed
+    below one half: medium lies outside the specimen, while a darker tissue class such as white matter lies within the
+    hull of cortex); every positive voxel without such a valley. Histogram of 256 bins of the positive values; peaks of the
+    square root of the counts (so a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the
+    maximum and >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
     arr: [D, H, W]; voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
@@ -65,14 +67,29 @@ def foreground(arr, voxel_mm, params: Params = Params()):
     h, e = np.histogram(s, bins=256)
     c = 0.5 * (e[1:] + e[:-1])
     pk = find_peaks(np.sqrt(h), prominence=0.05 * np.sqrt(h.max()), distance=5)[0]
-    t = 0.0
     for lo, hi in zip(pk[:-1][::-1], pk[1:][::-1]):
         val = lo + int(np.argmin(h[lo:hi + 1]))
         if h[val] < params.valley_ratio * min(h[lo], h[hi]):
-            t = float(c[val])
-            break
-    m = _components(ndimage.binary_fill_holes(v > t), params.min_component)
+            m = _components(ndimage.binary_fill_holes(v > c[val]), params.min_component)
+            if _enclosed(m) < 0.5:
+                t = float(c[val])
+                break
+    else:
+        t, m = 0.0, _components(ndimage.binary_fill_holes(v > 0), params.min_component)
     return m, {"threshold": t, "volume_cm3": float(m.sum()) * voxel_mm ** 3 / 1e3}
+
+
+def _enclosed(m):
+    """The share of the voxels outside the mask m (every second voxel along each axis) that lie inside the convex hull of m;
+    1 for a mask of fewer than four surface voxels."""
+    from scipy.spatial import ConvexHull, Delaunay
+    pts = np.argwhere(m & ~ndimage.binary_erosion(m))
+    q = np.argwhere(~m[::2, ::2, ::2]) * 2
+    if len(pts) < 4:
+        return 1.0
+    if len(q) == 0:
+        return 0.0
+    return float((Delaunay(pts[ConvexHull(pts).vertices]).find_simplex(q) >= 0).mean())
 
 
 # ----------------------------------------------------------------------------- specimen mask (§1)

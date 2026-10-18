@@ -1,5 +1,5 @@
-"""preprocess: the MRI foreground valley, a shallow tissue valley passed over; the OCT specimen mask by signal and texture (and
-chunk invariance); holes filled in the planes across a cut face."""
+"""preprocess: the MRI foreground valley, a shallow tissue valley passed over, a deep one inside the tissue rejected; the OCT
+specimen mask by signal and texture (and chunk invariance); holes filled in the planes across a cut face."""
 import dataclasses
 
 import numpy as np
@@ -41,6 +41,17 @@ def test_foreground_passes_a_shallow_tissue_valley():
     tissue = np.where(core, rng.normal(420, 40, ball.shape), rng.normal(500, 40, ball.shape))
     m, info = pp.foreground(np.where(ball, tissue, rng.normal(60, 10, ball.shape)).astype(np.float32), 0.15, P)
     assert 60 < info["threshold"] < 300 and _dice(m, ball) > 0.98, info
+
+
+def test_foreground_keeps_a_dark_tissue_class():
+    """All tissue: a bright class with a darker one running through it (white matter in cortex), a deep valley between them.
+    The darker class lies inside the convex hull of the brighter one, so the valley is not the tissue edge."""
+    rng = np.random.default_rng(2)
+    z = np.indices((64,) * 3)[0]
+    slab = (z > 24) & (z < 40)
+    m, info = pp.foreground(np.where(slab, rng.normal(250, 25, slab.shape), rng.normal(500, 25, slab.shape)).astype(np.float32),
+                            0.15, P)
+    assert info["threshold"] == 0 and m.all(), info
 
 
 def _embedded_block(seed, medium=1.0, n=96):
