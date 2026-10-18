@@ -113,12 +113,12 @@ def exact_copy():
 def test_lattice_field_interpolates_and_strains():
     lo, hi, h = np.array([-3.0, 0.0, 1.0]), np.array([7.5, 9.9, 11.0]), 5.0
     f = deform.LatticeField(lo, hi, h, "cpu")
-    assert f.n == [4, 3, 3] and tuple(f.c.shape) == (1, 3, 4, 3, 3) and not f.c.detach().any() and f.c.requires_grad
+    assert f.n == [4, 3, 3] and tuple(f.c.shape) == (3, 36) and not f.c.detach().any() and f.c.requires_grad
     assert np.all(lo + h * (np.array(f.n) - 1) >= hi)                                       # the nodes cover lo..hi
     rng = np.random.default_rng(0)
     c = rng.standard_normal((3, 4, 3, 3))
     with torch.no_grad():
-        f.c.copy_(torch.as_tensor(c[None]))
+        f.c.copy_(torch.as_tensor(c.reshape(3, -1)))
         nodes = lo + h * np.indices(f.n).reshape(3, -1).T
         assert np.abs(f(torch.as_tensor(nodes, dtype=torch.float32)).numpy() - c.reshape(3, -1).T).max() < 1e-5   # node values
         y = rng.uniform(lo, lo + h * (np.array(f.n) - 1), (200, 3))
@@ -130,10 +130,36 @@ def test_lattice_field_interpolates_and_strains():
         assert [tuple(s.shape) for s in strains] == [(3, 3, 3, 3), (3, 4, 2, 3), (3, 4, 3, 2)]
         assert all(np.allclose(s.numpy(), np.diff(c, axis=a + 1) / h, atol=1e-6) for a, s in enumerate(strains))
         J, b = np.array([[0.01, 0.02, -0.01], [0.0, -0.03, 0.02], [0.04, 0.0, 0.0]]), np.array([0.3, -0.1, 0.0])
-        f.c.copy_(torch.as_tensor((nodes @ J.T + b).T.reshape(1, 3, *f.n)))                  # a linear field d = J y + b
+        f.c.copy_(torch.as_tensor((nodes @ J.T + b).T))                                        # a linear field d = J y + b
         assert np.abs(f(torch.as_tensor(y, dtype=torch.float32)).numpy() - (y @ J.T + b)).max() < 1e-5  # exact on linear fields
         assert all(np.allclose(s.numpy(), J[:, a, None, None, None], atol=1e-6) for a, s in enumerate(f.strains()))
         assert abs(lattice_strain(f) - 0.04) < 1e-6
+
+
+def test_lattice_gradient_is_the_sum_of_the_weights():
+    """The gradient of the lattice values is the sum of the trilinear weights of the points times their output gradients (the
+    sorted segment sum of the backward pass, deterministic on the GPU), as autograd gives it through a plain gather."""
+    f = deform.LatticeField(np.zeros(3), np.array([10.0, 12.0, 8.0]), 2.0, "cpu")
+    rng = np.random.default_rng(1)
+    y = torch.as_tensor(rng.uniform(-1.0, 13.0, (500, 3)), dtype=torch.float32)
+    r = torch.as_tensor(rng.standard_normal((500, 3)), dtype=torch.float32)
+    with torch.no_grad():
+        f.c.copy_(torch.as_tensor(rng.standard_normal(tuple(f.c.shape)), dtype=torch.float32))
+    (f(y) * r).sum().backward()
+    c = f.c.detach().clone().requires_grad_(True)
+    n = torch.tensor(f.n)
+    q = torch.minimum((y / f.h).clamp(min=0), n - 1)
+    i0 = torch.minimum(q.floor().long(), n - 2)
+    fr = q - i0
+    d = 0
+    for a in (0, 1):
+        for b in (0, 1):
+            for e in (0, 1):
+                idx = ((i0[:, 0] + a) * n[1] + i0[:, 1] + b) * n[2] + i0[:, 2] + e
+                w = (fr[:, 0] if a else 1 - fr[:, 0]) * (fr[:, 1] if b else 1 - fr[:, 1]) * (fr[:, 2] if e else 1 - fr[:, 2])
+                d = d + c[:, idx].T * w[:, None]
+    (d * r).sum().backward()
+    assert torch.allclose(f.c.grad, c.grad, atol=1e-5)
 
 
 def test_identical_pair_leaves_the_field_near_zero(exact_copy):

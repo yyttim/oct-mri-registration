@@ -5,20 +5,11 @@ from __future__ import annotations
 import numpy as np
 from scipy import ndimage
 from scipy.signal import find_peaks
-from skimage.filters import threshold_multiotsu, threshold_otsu
+from skimage.filters import threshold_otsu
 
 from .params import Params
 
 _CHUNK = 64          # planes per chunk along axis 0: memory only, results do not depend on it
-
-
-def _close(m, r):
-    """Binary closing with a ball of radius r voxels on the edge-padded mask (a face that cuts the tissue is not eroded)."""
-    if r < 1:
-        return m
-    o = np.arange(-r, r + 1) ** 2
-    ball = o[:, None, None] + o[None, :, None] + o[None, None, :] <= r * r
-    return ndimage.binary_closing(np.pad(m, r, mode="edge"), ball)[r:-r, r:-r, r:-r]
 
 
 def _fill_planes(m):
@@ -32,15 +23,13 @@ def _fill_planes(m):
     return out
 
 
-def _components(m, min_fraction=None):
-    """6-connected components of m -> (mask of the largest component, or of every component holding >= min_fraction of the
-    mask voxels; number of components before the rule)."""
-    lab, n = ndimage.label(m)
+def _components(m, min_fraction):
+    """The 6-connected components of m holding >= min_fraction of its voxels."""
+    lab, _ = ndimage.label(m)
     size = np.bincount(lab.ravel())
-    size[0] = 0
-    keep = (np.arange(n + 1) == np.argmax(size)) if min_fraction is None else size >= min_fraction * size.sum()
+    keep = size >= min_fraction * size[1:].sum()
     keep[0] = False
-    return keep[lab], int(n)
+    return keep[lab]
 
 
 def _pool(a, k):
@@ -62,41 +51,28 @@ def _upsample(a, k, shape, rows=None):
     return x
 
 
-# ----------------------------------------------------------------------------- foreground (histogram-valley rule)
+# ----------------------------------------------------------------------------- MRI foreground (§1)
 def foreground(arr, voxel_mm, params: Params = Params()):
-    """Foreground mask by the histogram-valley rule (the MRI foreground). Positive finite values below their
-    p99.5, 256-bin histogram smoothed over 5 bins, peaks of its square root (so the narrow background peak of a box-averaged
-    grid cannot hide the tissue peak) of prominence >= 5 % of the maximum and >= 5 bins apart; walking left
-    from the rightmost peak, t = the first valley < valley_ratio x the smaller of its two peaks whose darker peak lies below
-    medium_fraction x the brightest peak (status 'ok'): a valley between two peaks of tissue, such as grey and white matter in a
-    crop without medium, is passed over and recorded. Without such a valley t = min(p1, 0.5 x lower cut of a 3-class
-    multi-Otsu) (status 'no_valley': the whole field of view). Mask = arr > t, closing (ball of 2 voxels), holes filled,
-    components >= min_component of the foreground kept. arr: [D, H, W]; voxel_mm: spacing.
-    -> (bool [D, H, W], {threshold (arr units), status, valley_ratio, volume_cm3, n_components, tissue_valleys_passed})."""
+    """The MRI foreground: the voxels above the first histogram valley, walking down from the brightest peak, that holds less
+    than valley_ratio of the smaller of its two peaks; every positive voxel without such a valley. Histogram of 256 bins of the
+    positive values; peaks of the square root of the counts (so a narrow background peak cannot hide the tissue peak) with a
+    prominence >= 5 % of the maximum and >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
+    arr: [D, H, W]; voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
-    s = s[s < np.percentile(s, 99.5)] if s.size else s
     if s.size == 0:
-        raise ValueError("foreground: the image has no positive intensity variation")
+        raise ValueError("MRI foreground: the image has no positive values")
     h, e = np.histogram(s, bins=256)
-    c, hs = 0.5 * (e[1:] + e[:-1]), ndimage.uniform_filter1d(h.astype(float), 5)
-    pk = find_peaks(np.sqrt(hs), prominence=0.05 * np.sqrt(hs.max()), distance=5)[0]
-    t, status, ratio, passed = None, "no_valley", None, []
-    for j, lo in enumerate(pk[:-1][::-1]):
-        hi = pk[len(pk) - 1 - j]
-        val = lo + int(np.argmin(hs[lo:hi + 1]))
-        r = float(hs[val] / max(min(hs[lo], hs[hi]), 1.0))
-        if r < params.valley_ratio:
-            if c[lo] < params.medium_fraction * c[pk[-1]]:
-                t, status, ratio = float(c[val]), "ok", r
-                break
-            passed.append({"threshold": float(c[val]), "valley_ratio": r, "darker_peak_of_brightest": float(c[lo] / c[pk[-1]])})
-    if t is None:
-        t = float(min(np.percentile(s, 1), 0.5 * threshold_multiotsu(s, classes=3)[0]))
-    m = ndimage.binary_fill_holes(_close(v > t, 2))
-    m, n = _components(m, params.min_component)
-    return m, {"threshold": t, "status": status, "valley_ratio": ratio, "volume_cm3": float(m.sum()) * voxel_mm ** 3 / 1e3,
-               "n_components": n, "tissue_valleys_passed": passed}
+    c = 0.5 * (e[1:] + e[:-1])
+    pk = find_peaks(np.sqrt(h), prominence=0.05 * np.sqrt(h.max()), distance=5)[0]
+    t = 0.0
+    for lo, hi in zip(pk[:-1][::-1], pk[1:][::-1]):
+        val = lo + int(np.argmin(h[lo:hi + 1]))
+        if h[val] < params.valley_ratio * min(h[lo], h[hi]):
+            t = float(c[val])
+            break
+    m = _components(ndimage.binary_fill_holes(v > t), params.min_component)
+    return m, {"threshold": t, "volume_cm3": float(m.sum()) * voxel_mm ** 3 / 1e3}
 
 
 # ----------------------------------------------------------------------------- specimen mask (§1)
@@ -171,7 +147,7 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
     for z0 in range(0, D, _CHUNK):
         z1 = min(D, z0 + _CHUNK)
         out[z0:z1] = (_upsample(keep, k, fine.shape, (z0, z1)) > 0.5) & (np.asarray(fine[z0:z1]) > ts)
-    out = _fill_planes(_components(out, P.min_component)[0])
+    out = _fill_planes(_components(out, P.min_component))
     out &= np.asarray(fine) > 0
     return out, {"signal_threshold": ts, "texture_threshold": float(np.exp(lt)),
                  "volume_cm3": float(out.sum()) * voxel_mm ** 3 / 1e3}

@@ -206,7 +206,7 @@ def test_gradient_transport_under_a_displacement():
         n = field.n
         nodes = (field.lo + 2.0 * torch.stack(torch.meshgrid(*[torch.arange(k, dtype=torch.float32) for k in n], indexing="ij"), -1))
         d = (nodes - torch.as_tensor(y0, dtype=torch.float32)) @ torch.as_tensor(B.T, dtype=torch.float32)
-        field.c.copy_(d.permute(3, 0, 1, 2)[None])
+        field.c.copy_(d.permute(3, 0, 1, 2).reshape(3, -1))
     Ta = np.eye(4)
     Ta[:3, :3] = np.eye(3) + B
     Ta[:3, 3] = -B @ y0

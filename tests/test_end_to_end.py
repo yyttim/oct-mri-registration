@@ -139,10 +139,10 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert 0.9 < min(scale) and max(scale) < 1.1
     assert saved["params"] == json.loads(json.dumps(FAST.to_dict()))
 
-    assert saved["foreground"]["oct"]["source"] == "texture" and saved["foreground"]["mri"]["status"] == "ok"
+    assert saved["foreground"]["oct"]["source"] == "texture" and saved["foreground"]["mri"]["threshold"] > 0
     oct_img = nib.load(str(oct_path))                          # equal intensities: no histogram valley; texture: the specimen
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
-    assert pp.foreground(raw_h, 0.15, Params())[1]["status"] == "no_valley"
+    assert pp.foreground(raw_h, 0.15, Params())[1]["threshold"] == 0
     assert 0.9 < saved["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3
 
     ref = nib.load(str(out / "oct_in_mri.nii.gz"))

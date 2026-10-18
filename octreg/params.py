@@ -14,7 +14,6 @@ class Params:
     fine_mm: float = 0.04                     # OCT grid of the specimen mask
     # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
-    medium_fraction: float = 0.5              # ... and its darker peak below this x the brightest peak (medium, not tissue)
     min_component: float = 0.01               # mask components smaller than this fraction of the mask are dropped
     texture_bandpass_mm: float = 0.08         # Gaussian sigma of the band-pass before the directional variation
     texture_window_mm: float = 0.36           # window of the directional local coefficient of variation

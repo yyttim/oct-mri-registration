@@ -22,7 +22,6 @@ import math
 
 import numpy as np
 import torch
-import torch.nn.functional as Fnn
 from scipy import ndimage
 
 from . import geometry as G
@@ -34,25 +33,52 @@ INVERSE_ITERS = 20        # fixed-point iterations of the pull-back field
 HISTORY = 10              # L-BFGS memory
 
 
+class _Trilinear(torch.autograd.Function):
+    """d = sum over the 8 lattice corners of w c[:, idx]. Its gradient is a segment sum over the corners sorted by node, which is
+    deterministic on the GPU (an atomic scatter, as in the backward pass of grid_sample, is not)."""
+
+    @staticmethod
+    def forward(ctx, c, idx, w):
+        ctx.save_for_backward(idx, w)
+        ctx.nodes = c.shape[1]
+        return (c[:, idx] * w).sum(-1).T
+
+    @staticmethod
+    def backward(ctx, g):
+        idx, w = ctx.saved_tensors
+        key, order = torch.sort(idx.reshape(-1), stable=True)
+        counts = torch.bincount(key, minlength=ctx.nodes)
+        v = (g.T[:, :, None] * w).reshape(3, -1)[:, order]
+        return torch.stack([torch.segment_reduce(x, "sum", lengths=counts) for x in v]), None, None
+
+
 class LatticeField(torch.nn.Module):
-    """Displacement d(y) (mm, MRI world axes) at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi."""
+    """Displacement d(y) (mm, MRI world axes) at world points y [N, 3], trilinear on a lattice of spacing h over lo..hi
+    (constant beyond it)."""
 
     def __init__(self, lo, hi, h, device):
         super().__init__()
         self.lo = torch.tensor(np.asarray(lo, float), dtype=torch.float32, device=device)
         self.h = float(h)
         self.n = [int(math.ceil((b - a) / h)) + 1 for a, b in zip(lo, hi)]
-        self.c = torch.nn.Parameter(torch.zeros(1, 3, *self.n, device=device))
+        self.c = torch.nn.Parameter(torch.zeros(3, math.prod(self.n), device=device))
 
     def forward(self, y):
-        q = (y - self.lo) / self.h
-        g = torch.stack([2 * q[:, 2] / (self.n[2] - 1) - 1, 2 * q[:, 1] / (self.n[1] - 1) - 1,
-                         2 * q[:, 0] / (self.n[0] - 1) - 1], -1)
-        d = Fnn.grid_sample(self.c, g.reshape(1, 1, 1, -1, 3), align_corners=True, padding_mode="border")
-        return d.reshape(3, -1).T
+        n = torch.tensor(self.n, device=y.device)
+        q = torch.minimum(((y - self.lo) / self.h).clamp(min=0), n - 1)
+        i0 = torch.minimum(q.floor().long(), n - 2)
+        f = q - i0
+        idx, w = [], []
+        for a in (0, 1):
+            for b in (0, 1):
+                for e in (0, 1):
+                    idx.append(((i0[:, 0] + a) * n[1] + i0[:, 1] + b) * n[2] + i0[:, 2] + e)
+                    w.append((f[:, 0] if a else 1 - f[:, 0]) * (f[:, 1] if b else 1 - f[:, 1]) * (f[:, 2] if e else 1 - f[:, 2]))
+        return _Trilinear.apply(self.c, torch.stack(idx, 1), torch.stack(w, 1))
 
     def strains(self):
-        return [torch.diff(self.c[0], dim=a + 1) / self.h for a in range(3)]
+        c = self.c.reshape(3, *self.n)
+        return [torch.diff(c, dim=a + 1) / self.h for a in range(3)]
 
 
 def smooth_deformation(mri, oct, T, params: Params = Params(), device="cuda"):

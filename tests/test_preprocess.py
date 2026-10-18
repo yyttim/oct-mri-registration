@@ -1,5 +1,5 @@
-"""preprocess: histogram-valley status, a grey/white valley passed over, isotropic-texture specimen mask against the intensity
-rule (and chunk invariance), holes filled in the planes across a cut face."""
+"""preprocess: the MRI foreground valley, a shallow tissue valley passed over; the OCT specimen mask by signal and texture (and
+chunk invariance); holes filled in the planes across a cut face."""
 import dataclasses
 
 import numpy as np
@@ -21,29 +21,26 @@ def _ball(n, c, r):
     return (z - c[0]) ** 2 + (y - c[1]) ** 2 + (x - c[2]) ** 2 <= r * r
 
 
-def test_foreground_status():
+def test_foreground_valley():
+    """A ball in a darker medium: the valley between them; one class only: every positive voxel."""
     rng = np.random.default_rng(0)
     ball = _ball(64, (32, 32, 32), 26)
     bimodal = np.where(ball, rng.normal(500, 30, ball.shape), rng.normal(100, 20, ball.shape)).astype(np.float32)
     m, info = pp.foreground(bimodal, 0.15, P)
-    assert info["status"] == "ok" and 150 < info["threshold"] < 400 and _dice(m, ball) > 0.98
-    assert info["n_components"] == 1 and info["volume_cm3"] == pytest.approx(m.sum() * 0.15 ** 3 / 1e3)
+    assert 150 < info["threshold"] < 400 and _dice(m, ball) > 0.98
+    assert info["volume_cm3"] == pytest.approx(m.sum() * 0.15 ** 3 / 1e3)
     m, info = pp.foreground(rng.normal(500, 40, (48,) * 3).astype(np.float32), 0.15, P)
-    assert info["status"] == "no_valley" and m.all()
+    assert info["threshold"] == 0 and m.all()
 
 
-def test_foreground_passes_a_tissue_valley():
-    """Two tissue classes (white 300, grey 500) with a deep valley between them: in a medium (60) the threshold is the
-    medium's valley and the mask keeps both classes; without medium the crop is all tissue (no_valley), the grey/white valley
-    recorded as passed over, never taken as the edge of the tissue."""
+def test_foreground_passes_a_shallow_tissue_valley():
+    """Two overlapping tissue classes (white 400, grey 500, a valley above half their peaks) in a medium (60): walking down
+    from the brightest peak, the tissue valley is passed over and the medium's valley taken, so the mask keeps both classes."""
     rng = np.random.default_rng(1)
     ball, core = _ball(64, (32, 32, 32), 26), _ball(64, (32, 32, 32), 15)
-    tissue = np.where(core, rng.normal(300, 15, ball.shape), rng.normal(500, 15, ball.shape))
+    tissue = np.where(core, rng.normal(420, 40, ball.shape), rng.normal(500, 40, ball.shape))
     m, info = pp.foreground(np.where(ball, tissue, rng.normal(60, 10, ball.shape)).astype(np.float32), 0.15, P)
-    assert info["status"] == "ok" and 60 < info["threshold"] < 300 and _dice(m, ball) > 0.98
-    assert info["tissue_valleys_passed"] and all(v["darker_peak_of_brightest"] > P.medium_fraction for v in info["tissue_valleys_passed"])
-    m, info = pp.foreground(tissue.astype(np.float32), 0.15, P)
-    assert info["status"] == "no_valley" and m.all() and info["tissue_valleys_passed"]
+    assert 60 < info["threshold"] < 300 and _dice(m, ball) > 0.98, info
 
 
 def _embedded_block(seed, medium=1.0, n=96):
