@@ -59,7 +59,7 @@ DEFORM = [  # the same for the deformable stage, under --deform-baselines
 ABLATION = [  # panel name, under --ablation: a run directory of bench/ablate.py (its oct_in_mri.nii.gz) or a 4x4 text file
     ("no_outline", "no_outline"), ("outline_decides", "outline_decides"), ("no_search", "no_search"),
     ("no_refine", "no_refine"), ("first_choice", "first_choice"), ("no_prior", "no_prior"), ("signed", "signed"),
-    ("signed_neg", "signed_neg"), ("tracefree", "tracefree"), ("df_free", "df_free"),
+    ("signed_neg", "signed_neg"), ("tracefree", "tracefree"), ("search_whole_mask", "search_whole_mask"), ("df_free", "df_free"),
     ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
     ("turned_octreg", "turned/base")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis

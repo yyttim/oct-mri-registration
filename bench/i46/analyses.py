@@ -31,7 +31,7 @@ from common import (OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_na
                     vessel_score)
 
 ABL, STARTS = WORK / "ablation", WORK / "starts"
-VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "tracefree"]
+VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "tracefree", "search_whole_mask"]
 START_CROP = crop_name(PRIMARY, "C3", 0)
 SEED, N_RANDOM = 4646, 10
 

@@ -3,9 +3,10 @@
 
     python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN -o DIR
 
-Writes into DIR: oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm isotropic, its original world header) with its
-field-of-view (FOV) mask oct_fov_0.08mm.nii.gz (voxels > 0) and mri_0.08mm.nii.gz (the crop as given), the inputs of the
-affine stage; and oct_affine_0.08mm.nii.gz, the 20 um OCT through the affine of OCTREG_RUN onto the MRI grid (octreg apply
+Writes into DIR: oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm isotropic, its original world header) with its field-of-view
+(FOV) mask oct_fov_0.08mm.nii.gz (voxels > 0) and mri_0.08mm.nii.gz (the crop as given), the inputs of the affine stage;
+oct_0.15mm.nii.gz, the same at 0.15 mm, for a global search that is too slow at 0.08 mm (the antsAI start of the ANTs affine
+run); and oct_affine_0.08mm.nii.gz, the 20 um OCT through the affine of OCTREG_RUN onto the MRI grid (octreg apply
 --affine-only), the moving image of the deformable stage (deform_tools.py), whose fixed image is mri_0.08mm.nii.gz.
 """
 from __future__ import annotations
@@ -33,6 +34,7 @@ def main():
     arr, A = G.resample_iso(io.load_volume(a.oct), 0.08)
     io.save_nifti(arr, A, a.out / "oct_0.08mm.nii.gz")
     io.save_nifti((arr > 0).astype(np.uint8), A, a.out / "oct_fov_0.08mm.nii.gz")
+    io.save_nifti(*G.resample_iso(io.load_volume(a.oct), 0.15), a.out / "oct_0.15mm.nii.gz")
     shutil.copy(a.mri, a.out / "mri_0.08mm.nii.gz")
     apply(a.run, a.oct, a.out / "mri_0.08mm.nii.gz", a.out / "oct_affine_0.08mm.nii.gz", affine_only=True)
     print("inputs in", a.out)

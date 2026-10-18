@@ -44,6 +44,7 @@ VARIANTS = {
     "signed": "the signed normalised gradient n instead of its tensor n n^T, OCT polarity +1",
     "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, OCT intensities negated (polarity -1)",
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
+    "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not only around the points",
     "df_free": "the deformation without the strain bound (deform.STRAIN_WEIGHT 0)",
 }
 __doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<16} {v}" for k, v in VARIANTS.items()))
@@ -110,6 +111,28 @@ def negated_oct(fine, affine, params, mask=None):
     return (-arr, m, A), valid, info
 
 
+def patched(method, *pairs):
+    """A copy of a search.Searcher method with source replacements (old, new), each of which must occur once."""
+    import inspect
+    import textwrap
+    src = textwrap.dedent(inspect.getsource(method))
+    for old, new in pairs:
+        if src.count(old) != 1:
+            raise RuntimeError(f"{old!r} does not occur once in search.Searcher.{method.__name__}")
+        src = src.replace(old, new)
+    ns = {}
+    exec(compile(src, f"<ablate: Searcher.{method.__name__}>", "exec"), vars(Se), ns)
+    return ns[method.__name__]
+
+
+def whole_mask_searcher():
+    """search.Searcher.__init__ and score with the template gradients and their eps taken inside the whole specimen mask."""
+    wb = "(w > 0.5).float()"
+    return (patched(Se.Searcher.__init__, ("G.nc_gradient(o * inner, inner,", f"G.nc_gradient(o * {wb}, {wb},"),
+                    ("[inner > 0].median()", "[w > 0.5].median()")),
+            patched(Se.Searcher.score, ("G.nc_gradient(v * wt, wt, self.sig)", f"G.nc_gradient(v * {wb}, {wb}, self.sig)")))
+
+
 def turned(oct_paths, rotvec_deg, spacing_um=None):
     """A turn about the OCT image box centre (4x4, OCT world -> turned OCT world) and a stand-in for io.load_volume that reads
     the files of oct_paths with the turned header. spacing_um: as for io.load_volume of the OCT."""
@@ -154,6 +177,10 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None):
         elif name == "tracefree":
             patch(Fe, "orientation_tensor", tracefree)
             patch(Se, "orientation_tensor", tracefree)
+        elif name == "search_whole_mask":
+            init, score = whole_mask_searcher()
+            patch(Se.Searcher, "__init__", init)
+            patch(Se.Searcher, "score", score)
         elif name == "df_free":
             patch(D, "STRAIN_WEIGHT", 0.0)
         elif name != "base":
