@@ -1,12 +1,11 @@
 """End to end on a small synthetic pair, CPU: an agarose-embedded OCT block (equal mean intensity, section offsets, tile seams,
 a black tile, inverted contrast, LPI-like header) and an MRI crop (RIA-like header) related by a known affine. register() runs
-with a reduced search, refinement and deformation (FAST). The pose is recovered to < 0.4 mm and the texture mask
-finds the specimen where the histogram rule has no valley. Without §5 every affine output is written, oct_in_mri is
+with a reduced search, refinement and deformation (FAST). The pose is recovered to < 0.4 mm, and the specimen mask finds the
+specimen where an intensity histogram of the OCT has no valley. Without §5 every affine output is written, oct_in_mri is
 oct_in_mri_affine and the §5 files of an earlier run are removed; with §5 the field is written on the MRI base grid, the affine
-is the same and `octreg apply` reproduces both overlays. `octreg apply` uses a field file put into the run directory;
-user masks replace both foregrounds; the same OCT as an NPY stack, taken in its array
-frame, gives the same pose, and `octreg apply --oct-spacing-um` replays an NPY run from another path; `octreg register` with
---params and --no-deform."""
+is the same and `octreg apply` reproduces both overlays. `octreg apply` uses a field file put into the run directory; user
+masks replace both masks; the same OCT as an NPY stack, taken in its array frame, gives the same pose, and `octreg apply
+--oct-spacing-um` replays an NPY run from another path; `octreg register` with --params and --no-deform."""
 import dataclasses
 import json
 
@@ -139,7 +138,7 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert 0.9 < min(scale) and max(scale) < 1.1
     assert saved["params"] == json.loads(json.dumps(FAST.to_dict()))
 
-    assert saved["foreground"]["oct"]["source"] == "texture" and saved["foreground"]["mri"]["threshold"] > 0
+    assert saved["foreground"]["oct"]["source"] == "octreg" and saved["foreground"]["mri"]["threshold"] > 0
     oct_img = nib.load(str(oct_path))                          # equal intensities: no histogram valley; texture: the specimen
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
     assert pp.foreground(raw_h, 0.15, Params())[1]["threshold"] == 0
@@ -219,7 +218,7 @@ def test_register_with_the_deformation(data, deformed, tmp_path):
 
 
 def test_user_masks(tmp_path):
-    """--oct-mask (the true specimen on its own 0.16 mm grid) and --mri-mask replace the texture mask and the histogram rule."""
+    """--oct-mask (the true specimen on its own 0.16 mm grid) and --mri-mask replace the two masks of §1."""
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=1)
     A = io.load_volume(oct_path).affine.copy()
     A[:3, :3] *= 2

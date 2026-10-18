@@ -34,7 +34,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
 
     oct_path: NIfTI, or TIFF / OME-TIFF / NPY with spacing; mri_path: NIfTI. oct_spacing_um: (z, y, x) um (io.load_volume).
     oct_mask, mri_mask: optional mask files (voxels > 0, in the world of their image; oct_spacing_um applies to a TIFF / NPY
-    OCT mask too) replacing the texture specimen mask and the histogram foreground. device: 'cuda' | 'cpu'. deform: run §5.
+    OCT mask too) replacing the specimen mask and the MRI foreground of §1. device: 'cuda' | 'cpu'. deform: run §5.
     oct_in_mri.nii.gz: the OCT box-averaged to the MRI voxel size (not finer than fine_mm), trilinear through T and the field
     of §5 onto the MRI grid (= apply(out_dir, oct_path, mri_path)); oct_in_mri_affine.nii.gz: the same through T alone;
     mri_in_oct.nii.gz: the MRI through T onto the OCT base grid; qc.png, qc_montage.png: the visual QC of the affine. With §5
@@ -128,7 +128,7 @@ def display_polarity(oct_b, mri_b, T):
 
 def prepare_mri(vol, params: Params = Params(), mask=None):
     """§1 for the MRI (io.Volume): base grid and foreground, the mask file `mask` (io.Volume) if given, else the histogram
-    rule. -> ((mri_h float32 [D, H, W], foreground bool [D, H, W], affine), info)."""
+    valley (preprocess.foreground). -> ((mri_h float32 [D, H, W], foreground bool [D, H, W], affine), info)."""
     h = params.base_mm
     arr, A = G.resample_iso(vol, h)
     fg, info = pp.foreground(arr, h, params) if mask is None else (_mask_on(mask, arr.shape, A, h), {"source": mask.path})
@@ -148,13 +148,13 @@ def prepare_oct(fine, affine, params: Params = Params(), mask=None):
 
 def fine_mask(fine, affine, params: Params = Params(), mask=None):
     """OCT specimen mask on the fine grid (fine [D, H, W] of spacing params.fine_mm, voxel -> world affine): the mask file
-    `mask` (io.Volume) if given, else the isotropic-texture mask; AND fine > 0 (zeros are missing data).
+    `mask` (io.Volume) if given, else preprocess.specimen_mask; AND fine > 0 (zeros are missing data).
     -> (bool [D, H, W], info)."""
     if mask is not None:
         m, info = _mask_on(mask, fine.shape, affine, params.fine_mm), {"source": mask.path}
     else:
         m, info = pp.specimen_mask(fine, params.fine_mm, params)
-        info["source"] = "texture"
+        info["source"] = "octreg"
     return np.logical_and(m, fine > 0, out=m), info
 
 

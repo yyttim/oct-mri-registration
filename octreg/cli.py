@@ -34,8 +34,8 @@ def main(argv=None) -> int:
     r.add_argument("--oct-spacing-um", type=_zyx, metavar="Z,Y,X",
                    help="OCT voxel spacing (um) along the numpy axes of a TIFF / NPY (NIfTI axes k, j, i), also used for a "
                    "TIFF / NPY OCT mask")
-    r.add_argument("--oct-mask", help="OCT specimen mask file (voxels > 0, in the OCT world) instead of the texture mask")
-    r.add_argument("--mri-mask", help="MRI foreground mask file (voxels > 0) instead of the histogram foreground")
+    r.add_argument("--oct-mask", help="OCT specimen mask file (voxels > 0, in the OCT world) instead of octreg's own")
+    r.add_argument("--mri-mask", help="MRI foreground mask file (voxels > 0) instead of octreg's own")
     r.add_argument("--device", choices=("cuda", "cpu"), default="cuda", help="cuda (default) or cpu")
     r.add_argument("--no-deform", action="store_true", help="skip the smooth deformation (§5): affine only")
     r.add_argument("--params", type=Path, metavar="F", help="JSON file with Params overrides, e.g. the params block of a result.json")
