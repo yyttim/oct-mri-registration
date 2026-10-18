@@ -46,27 +46,32 @@ def test_foreground_passes_a_tissue_valley():
     assert info["status"] == "no_valley" and m.all() and info["tissue_valleys_passed"]
 
 
-def _embedded_block(seed, n=96):
-    """Tissue ball (isotropic texture) cut by one face, in a medium of equal mean intensity whose structure is anisotropic
-    (random section offsets along axis 2, tile seams along axis 0, quiet along axis 1) plus a black tile column."""
+def _embedded_block(seed, medium=1.0, n=96):
+    """A tissue slab with isotropic texture, cut by the two faces along axis 2, in a frame of medium of mean intensity
+    `medium` x tissue, plus a black tile column. Medium as bright as tissue has anisotropic structure only (section offsets
+    along axis 2, tile seams along axis 0, quiet along axis 1); dark medium is speckle (exponential intensities). The specimen is
+    the larger part of the measured volume, as in a block imaged with a margin."""
     rng = np.random.default_rng(seed)
-    ball = _ball(n, (48, 46, 66), 36)
+    z, y = np.mgrid[:n, :n]
+    slab = np.broadcast_to((((z - 48) / 36) ** 4 + ((y - 46) / 38) ** 4 <= 1)[:, :, None], (n,) * 3)
     tex = ndimage.gaussian_filter(rng.standard_normal((n,) * 3), 1.5)
     stripes = rng.normal(0, 0.05, n)[None, None, :] + 0.1 * (np.arange(n) % 24 < 2)[:, None, None]
-    vol = 1000 * (1 + stripes) * np.where(ball, 1 + 0.25 * tex / tex.std(), 1.0) * (1 + 0.1 * rng.standard_normal((n,) * 3))
+    noise = 1 + 0.1 * rng.standard_normal((n,) * 3)
+    outside = noise if medium == 1 else rng.exponential(1.0, (n,) * 3)
+    vol = 1000 * (1 + stripes) * np.where(slab, (1 + 0.25 * tex / tex.std()) * noise, medium * outside)
     vol = np.maximum(vol, 1).astype(np.float32)
     vol[:, :20, :20] = 0
-    return vol, ball & (vol > 0)
+    return vol, slab & (vol > 0)
 
 
-@pytest.mark.parametrize("voxel_mm, min_dice", [(0.08, 0.9), (P.fine_mm, 0.85)])   # 0.04 mm: the default fine grid
-def test_specimen_mask_texture_not_intensity(monkeypatch, voxel_mm, min_dice):
-    vol, truth = _embedded_block(0)
+@pytest.mark.parametrize("medium", [1.0, 0.05])            # medium as bright as tissue (texture decides), dark (signal decides)
+@pytest.mark.parametrize("voxel_mm, min_dice", [(0.08, 0.95), (P.fine_mm, 0.95)])   # 0.04 mm: the default fine grid
+def test_specimen_mask_signal_and_texture(monkeypatch, medium, voxel_mm, min_dice):
+    vol, truth = _embedded_block(0, medium)
     Q = dataclasses.replace(P, texture_smooth_mm=0.32)  # a block of a few mm (the default 1.2 mm suits real blocks)
     m, info = pp.specimen_mask(vol, voxel_mm, Q)
-    assert _dice(m, truth) > min_dice and not m[vol == 0].any()
-    assert info["volume_cm3"] == pytest.approx(m.sum() * voxel_mm ** 3 / 1e3) and info["threshold"] > 0
-    assert _dice(pp.foreground(vol, voxel_mm, P)[0], truth) < 0.6        # equal intensities: the histogram rule fails
+    assert _dice(m, truth) > min_dice and not m[vol == 0].any(), _dice(m, truth)
+    assert info["volume_cm3"] == pytest.approx(m.sum() * voxel_mm ** 3 / 1e3)
     monkeypatch.setattr(pp, "_CHUNK", 16)
     assert np.array_equal(pp.specimen_mask(vol, voxel_mm, Q)[0], m)      # chunked == unchunked
 

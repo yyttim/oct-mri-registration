@@ -100,19 +100,38 @@ def foreground(arr, voxel_mm, params: Params = Params()):
 
 
 # ----------------------------------------------------------------------------- specimen mask (§1)
+def threshold(counts, centres):
+    """t = min(Otsu, low-side triangle) of a histogram (counts, bin centres). With two modes Otsu falls between them; with one
+    main mode Otsu would split it, and the foot of that mode on its low side (the triangle threshold of Zack et al. 1977, taken
+    on the low side) lies lower."""
+    h = np.asarray(counts, np.float64)
+    p, lo = int(np.argmax(h)), int(np.flatnonzero(h)[0])
+    w = p - lo
+    foot = centres[lo + int(np.argmax(h[p] * np.arange(w) - w * h[lo:p]))] if w else centres[lo]
+    return min(float(threshold_otsu(hist=(h, centres))), float(foot))
+
+
+def _hist(chunks, nbins=256):
+    """Histogram of the values of the arrays from chunks() (called twice) over their range. -> (counts, bin centres)."""
+    r = [(float(x.min()), float(x.max())) for x in chunks() if x.size]
+    lo, hi = min(a for a, _ in r), max(b for _, b in r)
+    counts = sum(np.histogram(x, nbins, (lo, hi))[0] for x in chunks())
+    e = np.linspace(lo, hi, nbins + 1)
+    return counts, 0.5 * (e[1:] + e[:-1])
+
+
 def specimen_mask(fine, voxel_mm, params: Params = Params()):
-    """Specimen mask from isotropic texture: doped agarose has the intensity of tissue, but its artefacts
-    (section stripes, tile seams) leave it quiet along at least one array axis while tissue texture varies along all three.
-    Measured voxels m = fine > 0; band-pass b = G(fine m) / G(m) (Gaussian sigma texture_bandpass_mm); per array axis the
-    running coefficient of variation of b over texture_window_mm (weights m; counted where >= half the window is measured);
-    C = minimum over the axes, mean over the measured voxels of blocks of ~texture_grid_mm (blocks >= half measured);
-    log C smoothed over those blocks (normalised Gaussian of sigma texture_smooth_mm: single local estimates are too noisy
-    to classify), two-class Otsu threshold; closing (ball texture_close_mm), largest component, holes filled in every array
-    plane (_fill_planes: uniform tissue such as white matter has little texture, the specimen is solid); linear interpolation to
-    the fine grid > 0.5, and m. Chunked along axis 0 (equal to the whole-volume result, ~one fine float32 array of temporaries).
-    fine: [D, H, W] OCT intensities; voxel_mm: spacing (mm).
-    -> (bool [D, H, W], {threshold (C units), volume_cm3, n_components (before the largest-component rule)})."""
+    """§1 specimen mask: a voxel is specimen when it has signal and isotropic texture, each decided by `threshold`.
+    Signal: log intensity of the measured voxels (fine > 0) above t; voxels below count as missing. Texture on the signal
+    voxels: band-pass b = G(x m) / G(m) (sigma texture_bandpass_mm), per array axis the running coefficient of variation of b
+    over texture_window_mm (counted where >= half the window has signal), C = the minimum over the axes, averaged over blocks of
+    ~texture_grid_mm (blocks >= half signal), log C smoothed over the blocks (normalised Gaussian, sigma texture_smooth_mm),
+    above t, linearly interpolated to the fine grid > 0.5. Signal AND texture; components >= min_component of the mask kept,
+    holes filled in every array plane, AND measured. fine: [D, H, W] OCT intensities; voxel_mm: spacing (mm).
+    -> (bool [D, H, W], {signal_threshold (intensity), texture_threshold (C), volume_cm3})."""
     P, D = params, fine.shape[0]
+    logs = lambda: (np.log(x[x > 0]) for x in (np.asarray(fine[z:z + _CHUNK], np.float32) for z in range(0, D, _CHUNK)))
+    ts = float(np.exp(threshold(*_hist(logs))))
     sig = P.texture_bandpass_mm / voxel_mm
     win = int(round(P.texture_window_mm / voxel_mm)) // 2 * 2 + 1
     k = max(1, int(round(P.texture_grid_mm / voxel_mm)))
@@ -123,35 +142,36 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
         for z0 in range(0, D, step):
             a, z1 = max(0, z0 - pad), min(D, z0 + step)
             x = np.asarray(fine[a:min(D, z1 + pad)], np.float32)
-            m = (x > 0).astype(np.float32)
+            m = (x > ts).astype(np.float32)
             x = np.divide(ndimage.gaussian_filter(x * m, sig), ndimage.gaussian_filter(m, sig), out=np.zeros_like(x), where=m > 0)
-            F = np.full(x.shape, np.inf, np.float32)
+            C = np.full(x.shape, np.inf, np.float32)
             for ax in range(3):
                 n = ndimage.uniform_filter1d(m, win, axis=ax)
                 mu = ndimage.uniform_filter1d(x, win, axis=ax) / n
                 cv = ndimage.uniform_filter1d(x * x, win, axis=ax) / n - mu * mu
                 cv = np.sqrt(np.maximum(cv, 0)) / mu
-                np.minimum(F, np.where(n >= 0.5, cv, np.inf), out=F)
+                np.minimum(C, np.where(n >= 0.5, cv, np.inf), out=C)
                 del n, mu, cv
-            ok = (m > 0) & np.isfinite(F)
+            ok = (m > 0) & np.isfinite(C)
             core = slice(z0 - a, z1 - a)
-            pf, pc = _pool(np.where(ok, F, 0)[core], k), _pool(ok[core].astype(np.float32), k)
-            num[z0 // k:z0 // k + len(pf)], cnt[z0 // k:z0 // k + len(pc)] = pf, pc
-            del x, m, F, ok
+            pc, pn = _pool(np.where(ok, C, 0)[core], k), _pool(ok[core].astype(np.float32), k)
+            num[z0 // k:z0 // k + len(pc)], cnt[z0 // k:z0 // k + len(pn)] = pc, pn
+            del x, m, C, ok
         real = np.einsum("i,j,k->ijk", *[np.minimum(k, s - k * np.arange(-(-s // k))) for s in fine.shape])
-        F = num / cnt
-    valid = (cnt >= 0.5 * real) & (F > 0)
+        C = num / cnt
+    valid = (cnt >= 0.5 * real) & (C > 0)
     w, s = valid.astype(np.float64), P.texture_smooth_mm / (k * voxel_mm)
-    L = np.divide(ndimage.gaussian_filter(np.log(np.where(valid, F, 1.0)) * w, s), ndimage.gaussian_filter(w, s),
+    L = np.divide(ndimage.gaussian_filter(np.log(np.where(valid, C, 1.0)) * w, s), ndimage.gaussian_filter(w, s),
                   out=np.zeros_like(w), where=valid)
     if not (valid.sum() > 1 and L[valid].std() > 0):
         raise ValueError("specimen mask: no texture variation in the measured data; supply an OCT mask")
-    lt = float(threshold_otsu(L[valid]))
-    mc, n_comp = _components(_close(valid & (L > lt), int(round(P.texture_close_mm / (k * voxel_mm)))))
-    mc = _fill_planes(mc).astype(np.float32)
+    lt = threshold(*_hist(lambda: [L[valid]]))
+    keep = (valid & (L > lt)).astype(np.float32)
     out = np.empty(fine.shape, bool)
     for z0 in range(0, D, _CHUNK):
         z1 = min(D, z0 + _CHUNK)
-        out[z0:z1] = (_upsample(mc, k, fine.shape, (z0, z1)) > 0.5) & (np.asarray(fine[z0:z1]) > 0)
-    return out, {"threshold": float(np.exp(lt)), "volume_cm3": float(out.sum()) * voxel_mm ** 3 / 1e3,
-                 "n_components": n_comp}
+        out[z0:z1] = (_upsample(keep, k, fine.shape, (z0, z1)) > 0.5) & (np.asarray(fine[z0:z1]) > ts)
+    out = _fill_planes(_components(out, P.min_component)[0])
+    out &= np.asarray(fine) > 0
+    return out, {"signal_threshold": ts, "texture_threshold": float(np.exp(lt)),
+                 "volume_cm3": float(out.sum()) * voxel_mm ** 3 / 1e3}

@@ -63,7 +63,7 @@ def pair(tmp, seed=0):
     mri = np.where(m, 600 + 200 * sample(x, classes), 80) + rng.normal(0, 70, m.shape)    # overlapping classes, one valley
     io.save_nifti(np.maximum(mri, 0).reshape(shape_m).astype(np.float32), A_M, tmp / "mri.nii.gz")
 
-    shape_o = (96, 92, 84)
+    shape_o = (72, 68, 62)
     A_O = np.diag([-0.08, -0.08, -0.08, 1.0])                                            # i -> L, j -> P, k -> I
     A_O[:3, 3] = np.array([12.0, -3.0, 7.0]) - A_O[:3, :3] @ ((np.array(shape_o) - 1) / 2)
     c_o = G.apply_affine(A_O, (np.array(shape_o) - 1) / 2)
@@ -223,7 +223,7 @@ def test_user_masks(tmp_path):
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=1)
     A = io.load_volume(oct_path).affine.copy()
     A[:3, :3] *= 2
-    mask = np.zeros((48, 46, 42), np.uint8)
+    mask = np.zeros((37, 35, 32), np.uint8)
     mask[tuple(np.rint(G.apply_affine(np.linalg.inv(A), pts)).astype(int).T)] = 1
     io.save_nifti(mask, A, tmp_path / "oct_mask.nii.gz")
     mri = nib.load(str(mri_path))

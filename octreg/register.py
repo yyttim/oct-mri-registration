@@ -33,8 +33,8 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     """Register an OCT block to an MRI cropped around it and write OUTPUTS into out_dir.
 
     oct_path: NIfTI, or TIFF / OME-TIFF / NPY with spacing; mri_path: NIfTI. oct_spacing_um: (z, y, x) um (io.load_volume).
-    oct_mask, mri_mask: optional mask files (voxels > 0, in the world of their image; oct_spacing_um applies to the OCT mask
-    too) replacing the texture specimen mask and the histogram foreground. device: 'cuda' | 'cpu'. deform: run §5.
+    oct_mask, mri_mask: optional mask files (voxels > 0, in the world of their image; oct_spacing_um applies to a TIFF / NPY
+    OCT mask too) replacing the texture specimen mask and the histogram foreground. device: 'cuda' | 'cpu'. deform: run §5.
     oct_in_mri.nii.gz: the OCT box-averaged to the MRI voxel size (not finer than fine_mm), trilinear through T and the field
     of §5 onto the MRI grid (= apply(out_dir, oct_path, mri_path)); oct_in_mri_affine.nii.gz: the same through T alone;
     mri_in_oct.nii.gz: the MRI through T onto the OCT base grid; qc.png, qc_montage.png: the visual QC of the affine. With §5
@@ -45,7 +45,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     if cuda and not torch.cuda.is_available():
         raise ValueError("CUDA is not available: use --device cpu (device='cpu' in Python)")
     vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
-    mo = None if oct_mask is None else io.load_volume(oct_mask, oct_spacing_um)
+    mo = None if oct_mask is None else io.load_volume(oct_mask, None if io._kind(oct_mask) == "nii" else oct_spacing_um)
     mm = None if mri_mask is None else io.load_volume(mri_mask)
     out.mkdir(parents=True, exist_ok=True)
     for f in OUTPUTS_DEFORM + ("result.json",):                 # left by an earlier run in this directory

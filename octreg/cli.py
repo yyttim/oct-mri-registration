@@ -32,7 +32,8 @@ def main(argv=None) -> int:
     r.add_argument("mri", help="MRI NIfTI, already cropped to a region containing the block")
     r.add_argument("-o", "--out", required=True, help="output directory")
     r.add_argument("--oct-spacing-um", type=_zyx, metavar="Z,Y,X",
-                   help="OCT (and OCT mask) voxel spacing (um) along the numpy axes of a TIFF / NPY (NIfTI axes k, j, i)")
+                   help="OCT voxel spacing (um) along the numpy axes of a TIFF / NPY (NIfTI axes k, j, i), also used for a "
+                   "TIFF / NPY OCT mask")
     r.add_argument("--oct-mask", help="OCT specimen mask file (voxels > 0, in the OCT world) instead of the texture mask")
     r.add_argument("--mri-mask", help="MRI foreground mask file (voxels > 0) instead of the histogram foreground")
     r.add_argument("--device", choices=("cuda", "cpu"), default="cuda", help="cuda (default) or cpu")

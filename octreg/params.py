@@ -15,12 +15,11 @@ class Params:
     # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
     medium_fraction: float = 0.5              # ... and its darker peak below this x the brightest peak (medium, not tissue)
-    min_component: float = 0.01               # keep MRI foreground components >= this fraction of the foreground volume
+    min_component: float = 0.01               # mask components smaller than this fraction of the mask are dropped
     texture_bandpass_mm: float = 0.08         # Gaussian sigma of the band-pass before the directional variation
     texture_window_mm: float = 0.36           # window of the directional local coefficient of variation
     texture_grid_mm: float = 0.16             # block grid of the texture field
-    texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its two-class (Otsu) threshold
-    texture_close_mm: float = 0.48            # closing radius of the specimen mask
+    texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its threshold
     # score (§2)
     erode_mm: float = 0.8                     # erosion of the OCT points of F, in round(mm / h) steps of the 6-neighbourhood
     outline_min_outside: float = 0.01         # the outline is used when both images have this measured share outside the tissue
