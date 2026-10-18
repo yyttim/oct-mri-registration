@@ -9,7 +9,7 @@ affine, so that every tool starts from the identity and writes its field on the 
 none is) gets the run directory OUT/<tool>/<setting> (default OUT: the folder deform next to DIR) with cmd.sh, its command:
 
     ants/syn_cc         antsRegistrationSyN.sh -t so (SyN, CC radius 2) -n 8 -p f (single precision), ANTS_RANDOM_SEED=1
-    elastix/default     the model-zoo Parameters_BSpline.txt (Mattes MI, 16 mm final grid; BSPLINE), -threads 8
+    elastix/default     the model-zoo Parameters_BSpline.txt (Mattes MI, 16 mm final grid, BSPLINE), -threads 8
     niftyreg/default    reg_f3d with its defaults (NMI 64 bins, control points every 5 voxels), -omp 8
     convexadam/default  convex_adam_pt (MIND-SSC) with the defaults of convex_adam_MIND.py, float16 on the GPU, seed 0
     greedy/wncc         greedy's quick-start deformable command, -m WNCC 2x2x2 -n 100x50x10 -s 1.732vox 0.707vox -sv,
@@ -228,7 +228,7 @@ def main():
     ap.add_argument("--post-only", action="store_true", help="convert and check the outputs on disk, without running the tools")
     a = ap.parse_args()
     if set(a.tools) - set(TOOLS):
-        ap.error(f"unknown tools {sorted(set(a.tools) - set(TOOLS))}; the tools are {', '.join(TOOLS)}")
+        ap.error(f"unknown tools {sorted(set(a.tools) - set(TOOLS))}, the tools are {', '.join(TOOLS)}")
     for f in (a.run / "T_oct2mri.txt", a.run / "result.json", a.inputs / FIXED, a.inputs / MOVING):
         if not f.is_file():
             ap.error(f"{f}: no such file")

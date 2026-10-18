@@ -212,7 +212,7 @@ def _vessels():
 
 def _vessel_distances(T, moved=None):
     """Distance (mm) of every MRI vessel label (moved to `moved` first, if given) placed in the OCT world by T^-1 to the nearest
-    OCT vessel block; NaN outside the inner tissue. Block b covers OCT voxels 2b and 2b + 1, so a point x of the OCT world is
+    OCT vessel block, NaN outside the inner tissue. Block b covers OCT voxels 2b and 2b + 1, so a point x of the OCT world is
     looked up at block index x / (2 S) - 0.25."""
     from scipy import ndimage
     mri_pts, dist, sp, shp, inner = _vessels()

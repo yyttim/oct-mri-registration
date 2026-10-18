@@ -7,9 +7,14 @@ ablate   the variants of bench/ablate.py in VARIANTS on the C3 crops k = 0..9 of
 starts   the method on flip1_C3_k0 from the OCT turned by 90 and 180 deg about each of its array axes and by 10 rotations drawn
          uniformly (scipy Rotation.random, seed 4646), about the centre of the OCT image box
          (bench/ablate.py --only base --turn), into <bench_runs>/I46/starts/<start>/base/
-collect  scores every result against the reference: common.error and common.vessel_score of the affine, and for the ablation
-         common.vessel_field of the deformation -> bench/results/I46/ablation.json and starts.json. The start of a turned
-         run is bench/ablate.py header_start of the turned OCT and the crop, composed with the turn.
+collect  scores the affine of every result against the reference (common.error and common.vessel_score)
+         -> bench/results/I46/ablation.json and starts.json, each row with the octreg version and code (bench/ablate.py
+         code_id) of its run. The start of a turned run is bench/ablate.py header_start of the turned OCT and the crop,
+         composed with the turn. Every run must have been made by the checkout's octreg code, or collect stops with the list
+         of the others and writes nothing.
+
+ablate and starts skip the runs made by the checkout's octreg code, run the others and exit with an error that lists the runs
+that failed.
 
     python bench/i46/analyses.py ablate | starts | collect
 """
@@ -27,8 +32,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import (OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_name, error, vessel_field,  # noqa: E402
-                    vessel_score)
+from common import OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_name, error, vessel_score  # noqa: E402
 
 ABL, STARTS = WORK / "ablation", WORK / "starts"
 VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "tracefree", "search_whole_mask"]
@@ -45,6 +49,8 @@ def starts():
 
 
 def ablate_one(crop, out, only, extra=()):
+    """bench/ablate.py --only `only` on a crop into out/<only>. -> whether it finished with the checkout's octreg code."""
+    from bench.ablate import code_id, made_by
     cmd = [sys.executable, str(REPO / "bench" / "ablate.py"), str(OCT), str(crop_file(crop)), "-o", str(out), "--only", only,
            *extra]
     out.mkdir(parents=True, exist_ok=True)
@@ -53,17 +59,13 @@ def ablate_one(crop, out, only, extra=()):
         rc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONPATH": str(REPO)},
                             cwd=str(REPO)).returncode
     print(f"{out.name} {only}: rc {rc}, {time.time() - t0:.0f} s", flush=True)
+    return rc == 0 and made_by(out / only) == code_id()
 
 
-def scored(run, deform=False):
-    """Scores of the affine of a run directory and, with deform, of its deformation."""
-    from octreg import io
+def scored(run):
+    """Scores of the affine of a run directory."""
     T = np.loadtxt(run / "T_oct2mri.txt")
-    row = {**error(T), **vessel_score(T)}
-    if deform:
-        f = run / "oct2mri_warp.nii.gz"
-        row["deform"] = vessel_field(T, *io.load_field(f)) if f.is_file() else None
-    return row
+    return {**error(T), **vessel_score(T)}
 
 
 def turned_start(turn):
@@ -75,45 +77,49 @@ def turned_start(turn):
 
 
 def collect():
-    rows = []
-    for k in range(SEEDS):
-        crop = crop_name(PRIMARY, "C3", k)
-        for v in VARIANTS:
-            run = ABL / crop / v
-            if not (run / "variant.json").is_file():
-                print("missing", run)
-                continue
-            rows.append({"crop": crop, "variant": v, **scored(run, deform=True)})
+    from bench.ablate import code_id, made_by
+    from octreg import __version__
+    code = code_id()
+    abl = [(crop_name(PRIMARY, "C3", k), v) for k in range(SEEDS) for v in VARIANTS]
+    st = list(starts().items())
+    runs = [ABL / crop / v for crop, v in abl] + [STARTS / name / "base" for name, _ in st]
+    other = [str(run) for run in runs if made_by(run) != code]
+    if other:
+        sys.exit(f"{len(other)} runs missing or not made by the octreg code {code}: " + ", ".join(other))
+    rows = [{"crop": crop, "variant": v, "version": __version__, "code": code, **scored(ABL / crop / v)} for crop, v in abl]
     (RESULTS / "ablation.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(len(rows), "ablation rows")
-    st = []
-    for name, rv in starts().items():
+    rows = []
+    for name, rv in st:
         run = STARTS / name / "base"
-        if not (run / "variant.json").is_file():
-            print("missing", run)
-            continue
         turn = np.array(json.loads((run / "variant.json").read_text(encoding="utf-8"))["turn"])
-        st.append({"start": name, "turn_deg": rv, "start_pose": error(turned_start(turn)), **scored(run)})
-    (RESULTS / "starts.json").write_text(json.dumps(st, indent=1), encoding="utf-8")
-    print(len(st), "start rows")
+        rows.append({"start": name, "turn_deg": rv, "version": __version__, "code": code,
+                     "start_pose": error(turned_start(turn)), **scored(run)})
+    (RESULTS / "starts.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    print(len(rows), "start rows")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("step", choices=["ablate", "starts", "collect"])
     a = ap.parse_args()
+    from bench.ablate import code_id, made_by
+    code, failed = code_id(), []
     if a.step == "ablate":
         for v in VARIANTS:
             for k in range(SEEDS):
                 crop = crop_name(PRIMARY, "C3", k)
-                if not (ABL / crop / v / "variant.json").is_file():
-                    ablate_one(crop, ABL / crop, v)
+                if made_by(ABL / crop / v) != code and not ablate_one(crop, ABL / crop, v):
+                    failed.append(f"{crop}/{v}")
     elif a.step == "starts":
         for name, rv in starts().items():
-            if not (STARTS / name / "base" / "variant.json").is_file():
-                ablate_one(START_CROP, STARTS / name, "base", ["--turn=" + ",".join(map(str, rv))])   # a value may start with -
+            if made_by(STARTS / name / "base") != code and not ablate_one(
+                    START_CROP, STARTS / name, "base", ["--turn=" + ",".join(map(str, rv))]):   # a value may start with -
+                failed.append(name)
     else:
         collect()
+    if failed:
+        sys.exit(f"{len(failed)} runs failed (see their logs): " + ", ".join(failed))
 
 
 if __name__ == "__main__":

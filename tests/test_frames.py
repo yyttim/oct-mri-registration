@@ -67,9 +67,14 @@ def test_params_defaults_and_dict():
     with pytest.raises(ValueError, match="must be a JSON object"):
         Params.from_dict([0.5])
     for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0},
-                {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}):
+                {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}, {"lam": -1},
+                {"lr_mm": 0}, {"texture_window_mm": -0.36}, {"valley_ratio": 0}, {"min_component": 1.0}, {"nms_mm": -3},
+                {"outline_min_outside": -0.1}, json.loads('{"lam": NaN}'), json.loads('{"lam": Infinity}')):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
+    for bad in (lambda: dataclasses.replace(p, iters=10.5), lambda: Params(lam="2"), lambda: Params(lam=float("nan"))):
+        with pytest.raises(ValueError, match="^Params: "):                    # built in Python, not only from JSON
+            bad()
 
 
 # ------------------------------------------------------------------------------------------------------------------- io

@@ -10,7 +10,7 @@ of its transform and the check of that conversion. The caller (bench/i46/baselin
     mri_coreg            --dof 6, then --dof 12 from the rigid result, its brute-force start
     flirt                -dof 6 then -dof 12, normmi, default search, headers scaled x10 for its pyramid in mm
     synthmorph           mri_synthmorph register -m affine, which registers in its own space of 256 voxels of 1 mm, where the
-                         block spans about 14 x 14 x 9 voxels (FLIRT, whose schedule is also in mm, gets headers scaled x10)
+                         block spans about 15 x 15 x 9.5 voxels (FLIRT, whose schedule is also in mm, gets headers scaled x10)
 
 The tools' own global searches, each a setting above with the search option of the I58 comparison added (SEARCH):
 
@@ -61,7 +61,7 @@ the same files as the setting it extends, and is converted and checked the same 
 
 collect(base, score, checked, tools, inputs, start) converts every finished run (it holds time.txt) of tools under
 base/<crop>/<tool>, writes <run>/T_oct2mri.txt and the row score(crop, T), with the convention check on the crops where
-checked(crop) is true; inputs(crop) is the input directory of a crop (default base/<crop>/inputs). start(crop), if given, is
+checked(crop) is true. inputs(crop) is the input directory of a crop (default base/<crop>/inputs). start(crop), if given, is
 the start S that the moving header of the crop carries: the check runs on the converted transform T, which maps the world of
 that header, and T S, which maps the OCT world of the original header, is written and scored.
 
@@ -114,7 +114,7 @@ def wsl(p):
 
 
 def made_from(record, sources):
-    """True if the record file exists and holds these sources, False if it does not exist; ValueError for other sources."""
+    """True if the record file exists and holds these sources, False if it does not exist, ValueError for other sources."""
     if not record.is_file():
         return False
     if json.loads(record.read_text(encoding="utf-8")) != sources:

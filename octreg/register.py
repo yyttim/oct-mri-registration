@@ -33,10 +33,10 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     """Register an OCT block to an MRI cropped around it and write OUTPUTS into out_dir.
 
     oct_path: NIfTI, or TIFF / OME-TIFF / NPY with spacing. mri_path: NIfTI. oct_spacing_um: (z, y, x) um (io.load_volume).
-    oct_mask, mri_mask: optional mask files (voxels > 0, in the world and frame of their image, oct_spacing_um applies to a
-    TIFF / NPY OCT mask too) replacing the specimen mask and the MRI foreground of §1. device: 'cuda' | 'cpu'. deform: run §5.
-    oct_in_mri.nii.gz: the OCT box-averaged from the fine grid to the MRI voxel size (not finer than fine_mm), as apply does
-    from the file, trilinear through T and the field of §5 onto the MRI grid. oct_in_mri_affine.nii.gz: the same through T
+    oct_mask, mri_mask: optional mask files (voxels > 0, in the world and frame of their image, oct_spacing_um applies to an OCT
+    mask of the OCT's array shape too) replacing the specimen mask and the MRI foreground of §1. device: 'cuda' | 'cpu'. deform:
+    run §5. oct_in_mri.nii.gz: the OCT box-averaged from the fine grid to the MRI voxel size (not finer than fine_mm), as apply
+    does from the file, trilinear through T and the field of §5 onto the MRI grid. oct_in_mri_affine.nii.gz: the same through T
     alone. mri_in_oct.nii.gz: the MRI through T onto the OCT base grid. qc.png, qc_montage.png: the visual QC of the affine.
     With §5 also OUTPUTS_DEFORM: oct2mri_warp.nii.gz, the field on the MRI base grid (io.save_field, convention in
     octreg.deform), and qc_deform.png. -> the result.json dict. Raises ValueError for a refused input."""
@@ -45,7 +45,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     if cuda and not torch.cuda.is_available():
         raise ValueError("CUDA is not available: use --device cpu (device='cpu' in Python)")
     vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
-    mo = None if oct_mask is None else io.load_volume(oct_mask, None if io._kind(oct_mask) == "nii" else oct_spacing_um)
+    mo = None if oct_mask is None else io.load_volume(oct_mask, oct_spacing_um)
     mm = None if mri_mask is None else io.load_volume(mri_mask)
     for mask, image, hint in ((mo, vo, "a NIfTI mask for a NIfTI OCT, an array-frame TIFF / NPY mask for a TIFF / NPY OCT read "
                                "in its array frame"),
@@ -53,6 +53,13 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
         if mask is not None and mask.frame != image.frame:
             raise ValueError(f"{mask.path} is in the {mask.frame} frame and {image.path} in the {image.frame} frame: a mask "
                              f"must be in the world of its image ({hint})")
+    if mo is not None and oct_spacing_um is not None and mo.shape != vo.shape:
+        try:
+            mo = io.load_volume(oct_mask)                       # a mask on its own grid keeps the spacing of its file
+        except ValueError:
+            raise ValueError(f"{oct_mask}: an OCT mask of another array shape than the OCT needs a spacing of its own (an "
+                             "OME-TIFF with PhysicalSize X / Y / Z, or a NIfTI without sform or qform), since --oct-spacing-um "
+                             "applies only to a mask of the OCT's shape") from None
     out.mkdir(parents=True, exist_ok=True)
     for f in OUTPUTS_DEFORM + ("result.json",):                 # left by an earlier run in this directory
         (out / f).unlink(missing_ok=True)
@@ -154,14 +161,18 @@ def prepare_oct(fine, affine, params: Params = Params(), mask=None):
 
 def fine_mask(fine, affine, params: Params = Params(), mask=None):
     """OCT specimen mask on the fine grid (fine [D, H, W] of spacing params.fine_mm, voxel -> world affine): the mask file
-    `mask` (io.Volume) if given, else preprocess.specimen_mask, AND fine > 0 (zeros are missing data).
-    -> (bool [D, H, W], info)."""
+    `mask` (io.Volume) if given, else preprocess.specimen_mask, AND fine > 0 (voxels <= 0 are missing data).
+    -> (bool [D, H, W], info). Raises ValueError when no voxel is left."""
     if mask is not None:
         m, info = _mask_on(mask, fine.shape, affine, params.fine_mm), {"source": mask.path}
     else:
         m, info = pp.specimen_mask(fine, params.fine_mm, params)
         info["source"] = "octreg"
-    return np.logical_and(m, fine > 0, out=m), info
+    np.logical_and(m, fine > 0, out=m)
+    if not m.any():
+        raise ValueError("OCT specimen mask: no voxel of the mask has a positive OCT intensity, octreg needs positive OCT "
+                         "intensities on a linear scale (voxels <= 0 are missing data)")
+    return m, info
 
 
 def outline_used(mask_o, valid_o, mask_m, params: Params = Params()):

@@ -14,7 +14,7 @@ FLASH and the C3 k = 0 crops of the 20 and 30 deg FLASH. Each supplement changes
     python bench/i46/baselines.py collect [--search | --mask | --near]   -> bench/results/I46/baselines[_<kind>].json
 
 collect converts every transform (-> <run>/T_oct2mri.txt), scores it against R (common.error and common.vessel_score) and
-checks the conversion on the k = 0 crops (standard_tools.collect); a run without a readable transform is a "tool error".
+checks the conversion on the k = 0 crops (standard_tools.collect). A run without a readable transform is a "tool error".
 """
 from __future__ import annotations
 
@@ -138,7 +138,7 @@ def prepare(kind=None):
 
 
 def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
-    """The rows of every finished run under base (module docstring); a near run also holds its start (start_pose, common.error
+    """The rows of every finished run under base (module docstring). A near run also holds its start (start_pose, common.error
     of H_k) and the distance of H_k from S_k (start_from_S)."""
     def score(crop, T):
         row = {**error(T), **vessel_score(T)}
@@ -149,6 +149,9 @@ def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
     start = (lambda crop: np.array(start_of(crop)["H"])) if kind == "near" else None
     rows = H.collect(base, score, lambda crop: crop.endswith("C3_k0"), tools=list(VARIANTS[kind]) if kind else H.TOOLS,
                      inputs=(lambda crop: BL / crop / "inputs") if kind in ("search", "mask") else None, start=start)
+    missing = sorted(set(runs(kind)) - {(r["crop"], r["tool"]) for r in rows})
+    if missing:
+        sys.exit(f"{len(missing)} runs never ran in {base}: " + ", ".join(f"{c}/{t}" for c, t in missing))
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(len(rows), "runs ->", out)

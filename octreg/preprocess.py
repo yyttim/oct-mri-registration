@@ -1,5 +1,5 @@
 """Masks (docs/METHOD.md §1): the MRI foreground and the OCT specimen mask from isotropic texture. numpy/scipy on the CPU,
-arrays [D, H, W] on isotropic grids of voxel_mm (mm). Exact zeros in the OCT are missing data (black tiles): never specimen."""
+arrays [D, H, W] on isotropic grids of voxel_mm (mm). OCT voxels <= 0 are missing data (black tiles): never specimen."""
 from __future__ import annotations
 
 import numpy as np
@@ -57,17 +57,19 @@ def foreground(arr, voxel_mm, params: Params = Params()):
     than valley_ratio of the smaller of its two peaks and whose darker class lies mostly outside the brighter side: less than
     half of the voxels between the next lower valley (or zero) and this one lie inside the convex hull of the candidate
     foreground (medium lies outside the specimen, while a darker tissue class such as white matter lies within the hull of
-    cortex). Without such a valley, every positive voxel. Histogram of 256 bins of the positive values, peaks of the square
-    root of the counts (so a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the maximum and
-    >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
+    cortex). Without such a valley, every positive voxel. Histogram of 256 bins of the positive values up to their 99.5th
+    percentile (a few hot voxels cannot squeeze the tissue into a few bins), counts averaged over 5 bins (an integer-valued
+    image gives no comb of empty bins), peaks of the square root of the counts with an empty bin added at each end (so a peak
+    in an end bin counts, and a narrow background peak cannot hide the tissue peak) with a prominence >= 5 % of the maximum
+    and >= 5 bins apart. Holes filled, components >= min_component of the mask kept.
     arr: [D, H, W], voxel_mm: spacing. -> (bool [D, H, W], {threshold (arr units), volume_cm3})."""
     v = np.asarray(arr, np.float32)
     s = v[np.isfinite(v) & (v > 0)]
     if s.size == 0:
         raise ValueError("MRI foreground: the image has no positive values")
-    h, e = np.histogram(s, bins=256)
-    c = 0.5 * (e[1:] + e[:-1])
-    pk = find_peaks(np.sqrt(h), prominence=0.05 * np.sqrt(h.max()), distance=5)[0]
+    h, e = np.histogram(s[s <= np.percentile(s, 99.5)], bins=256)
+    c, h = 0.5 * (e[1:] + e[:-1]), ndimage.uniform_filter1d(h.astype(float), 5)
+    pk = find_peaks(np.sqrt(np.pad(h, 1)), prominence=0.05 * np.sqrt(h.max()), distance=5)[0] - 1
     vals = [lo + int(np.argmin(h[lo:hi + 1])) for lo, hi in zip(pk[:-1], pk[1:])]          # between neighbouring peaks
     for i in range(len(vals) - 1, -1, -1):
         val = vals[i]
@@ -113,6 +115,9 @@ def threshold(counts, centres):
 def _hist(chunks, nbins=256):
     """Histogram of the values of the arrays from chunks() (called twice) over their range. -> (counts, bin centres)."""
     r = [(float(x.min()), float(x.max())) for x in chunks() if x.size]
+    if not r:
+        raise ValueError("specimen mask: the OCT has no positive voxels, octreg needs positive OCT intensities on a linear "
+                         "scale (voxels <= 0 are missing data)")
     lo, hi = min(a for a, _ in r), max(b for _, b in r)
     counts = sum(np.histogram(x, nbins, (lo, hi))[0] for x in chunks())
     e = np.linspace(lo, hi, nbins + 1)

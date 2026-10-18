@@ -61,9 +61,16 @@ class Params:
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm")
         if not (self.sigmas_mm and self.df_sigmas_mm and min(self.sigmas_mm + self.df_sigmas_mm) > 0):
             raise ValueError("Params: sigmas_mm and df_sigmas_mm must be non-empty and positive")
-        if not min(self.erode_mm, self.search_sigma_mm, self.df_grid_mm, self.df_max_strain) > 0 or min(
-                self.iters, self.df_evals, self.n_rot, self.topk) < 1:
-            raise ValueError("Params: lengths and the strain bound must be positive, iterations, n_rot and topk >= 1")
+        for names, ok, want in (
+                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
+                  "search_sigma_mm", "lr_mm", "df_grid_mm", "df_max_strain", "valley_ratio"), lambda x: x > 0, "positive"),
+                # outline_min_outside above 1 is a share never met: the outline is then never used
+                (("lam", "nms_mm", "nms_deg", "outline_min_outside"), lambda x: x >= 0, "at least 0"),
+                (("iters", "df_evals", "n_rot", "topk"), lambda x: x >= 1, "at least 1"),
+                (("min_component",), lambda x: 0 <= x < 1, "in [0, 1)")):
+            for name in names:
+                if not ok(getattr(self, name)):
+                    raise ValueError(f"Params: {name} must be {want}, got {getattr(self, name)!r}")
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)

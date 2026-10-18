@@ -221,8 +221,10 @@ def test_register_with_the_deformation(data, deformed, tmp_path):
     assert (fig == list(bytes.fromhex(QC_COLOURS[0][1:]))).all(-1).sum() > 100
 
 
-def test_user_masks(tmp_path):
-    """--oct-mask (the true specimen on its own 0.16 mm grid) and --mri-mask replace the two masks of §1."""
+def test_user_masks(tmp_path, monkeypatch):
+    """--oct-mask (the true specimen on its own 0.16 mm grid) and --mri-mask replace the two masks of §1. The mask keeps the
+    spacing of its own header under --oct-spacing-um, which applies to a mask of the OCT's array shape only."""
+    import octreg.register as reg
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=1)
     A = io.load_volume(oct_path).affine.copy()
     A[:3, :3] *= 2
@@ -231,13 +233,53 @@ def test_user_masks(tmp_path):
     io.save_nifti(mask, A, tmp_path / "oct_mask.nii.gz")
     mri = nib.load(str(mri_path))
     io.save_nifti((np.asarray(mri.dataobj) > 350).astype(np.uint8), mri.affine, tmp_path / "mri_mask.nii.gz")
-    out = tmp_path / "run"
-    res = register(oct_path, mri_path, out, oct_mask=tmp_path / "oct_mask.nii.gz", mri_mask=tmp_path / "mri_mask.nii.gz",
-                   params=FAST, device="cpu", deform=False)
+    out, given, fine_mask = tmp_path / "run", [], reg.fine_mask
+    monkeypatch.setattr(reg, "fine_mask", lambda fine, A, P, mask: given.append(mask) or fine_mask(fine, A, P, mask))
+    res = register(oct_path, mri_path, out, (80, 80, 80), oct_mask=tmp_path / "oct_mask.nii.gz",
+                   mri_mask=tmp_path / "mri_mask.nii.gz", params=FAST, device="cpu", deform=False)
+    assert np.allclose(given[0].spacing_mm, 0.16)
     fg = res["foreground"]
     assert fg["oct"]["source"].endswith("oct_mask.nii.gz") and fg["mri"]["source"].endswith("mri_mask.nii.gz")
     assert res["pose"]["outline_used"]
     assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4
+
+
+def test_oct_spacing_applies_to_a_mask_of_the_oct_shape(data, tmp_path, monkeypatch):
+    """The OCT file as its own mask, its header spacing half the true one: --oct-spacing-um applies to the mask as well. An
+    NPY mask of another shape than an NPY OCT has no spacing of its own and is refused. An OCT of negative values (a dB image)
+    with a mask is refused, since no mask voxel is measured."""
+    import octreg.register as reg
+    oct_path, mri_path, _, _ = data
+    img = nib.load(str(oct_path))
+    A = img.affine.copy()
+    A[:3, :3] /= 2
+    io.save_nifti(np.asarray(img.dataobj, np.float32), A, tmp_path / "oct.nii.gz")
+
+    class Stop(Exception):
+        pass
+
+    def stop(fine, A, P, mask):
+        given.append(mask)
+        raise Stop
+
+    given = []
+    monkeypatch.setattr(reg, "fine_mask", stop)
+    with pytest.raises(Stop):
+        register(tmp_path / "oct.nii.gz", mri_path, tmp_path / "run", (80, 80, 80), oct_mask=tmp_path / "oct.nii.gz",
+                 params=FAST, device="cpu")
+    assert np.allclose(given[0].spacing_mm, 0.08) and np.allclose(given[0].affine, io.load_volume(oct_path).affine)
+    np.save(tmp_path / "oct.npy", np.ones((20, 20, 20), np.float32))
+    np.save(tmp_path / "small.npy", np.ones((10, 10, 10), np.uint8))
+    with pytest.raises(ValueError, match="needs a spacing of its own"):
+        register(tmp_path / "oct.npy", mri_path, tmp_path / "run2", (80, 80, 80), oct_mask=tmp_path / "small.npy", params=FAST,
+                 device="cpu")
+    assert not (tmp_path / "run2").exists()
+    monkeypatch.undo()
+    io.save_nifti(-np.ones(img.shape, np.float32), img.affine, tmp_path / "db.nii.gz")
+    io.save_nifti(np.ones(img.shape, np.uint8), img.affine, tmp_path / "db_mask.nii.gz")
+    with pytest.raises(ValueError, match="no voxel of the mask has a positive OCT intensity"):
+        register(tmp_path / "db.nii.gz", mri_path, tmp_path / "run3", oct_mask=tmp_path / "db_mask.nii.gz", params=FAST,
+                 device="cpu")
 
 
 def test_mask_in_another_frame_is_refused(data, tmp_path):

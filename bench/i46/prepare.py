@@ -102,7 +102,7 @@ def main():
     np.savetxt(INPUTS / "ref_T_oct2mri.txt", R, fmt="%.10f")
     pts = tissue_points()
     np.save(INPUTS / "tissue_oct.npy", pts)
-    print(f"reference det {np.linalg.det(R[:3, :3]):.4f}, singular values {np.round(np.linalg.svd(R[:3, :3])[1], 4)}; "
+    print(f"reference det {np.linalg.det(R[:3, :3]):.4f}, singular values {np.round(np.linalg.svd(R[:3, :3])[1], 4)}, "
           f"{len(pts)} tissue points", flush=True)
 
     f1 = nib.load(str(mri_file("flip1")))

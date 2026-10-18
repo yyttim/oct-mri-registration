@@ -1,6 +1,7 @@
 """§2 structure score (octreg/features.py) and the §4 refinement on it: world gradients of a ramp, the orientation tensor
 ignores the gradient sign, F is 1 for identical volumes and does not change when the OCT contrast is inverted, OCT points over
-MRI background lower F (template form), a displacement field moves the points, the refinement recovers a pose 1 mm and 3
+MRI background lower F (template form), a displacement field moves the points and a linear one turns their gradients as the
+affine it equals, the refinement recovers a pose 1 mm and 3
 degrees off, the tie rule of the selection, and the prior holds the scale where the data do not decide it."""
 import dataclasses
 
@@ -208,9 +209,11 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 
 
-def test_a_linear_field_carries_the_gradients():
-    """A field d(y) = M y scores as the affine (I + M) T to first order in M: the field moves the points and turns their
-    gradients by I - M^T. Leaving the gradients unturned scores farther from the affine."""
+def test_a_linear_field_carries_the_gradients(monkeypatch):
+    """A field d(y) = M y acts as the affine (I + M) T to first order in M: score moves the points by it and turns their
+    gradients by I - M^T, which lies close to the gradients through that affine, ((I + M) A)^-T g, and far closer than the
+    unturned gradients or the gradients turned by I - M (J in place of its transpose). F then scores as the affine."""
+    from octreg import features
     from octreg.deform import LatticeField
     mri, (o, mo, A_O), T = pair(seed=2)
     tpl = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu")
@@ -221,6 +224,8 @@ def test_a_linear_field_carries_the_gradients():
     field = LatticeField(lo, hi, 4.0, "cpu")
     M = np.array([[0.04, 0.02, 0.0], [0.0, -0.03, 0.02], [0.02, 0.0, 0.03]])
     nodes = np.stack(np.meshgrid(*[lo[a] + field.h * np.arange(field.n[a]) for a in range(3)], indexing="ij"), -1).reshape(-1, 3)
+    seen = []
+    monkeypatch.setattr(features, "tensors", lambda g, eps: seen.append(g) or tensors(g, eps))
     with torch.no_grad():
         field.c.copy_(t((nodes @ M.T).T))
         TM = np.eye(4)
@@ -228,6 +233,9 @@ def test_a_linear_field_carries_the_gradients():
         F_field, F_affine = float(score(t(T), tpl, mt, field)), float(score(t(TM @ T), tpl, mt))
         g = torch.linalg.inv(t(T)[:3, :3]).T @ tpl.g
         F_unturned = float(correlation(tensors(g, tpl.eps), mt.at(y + field(y))))
+    want = torch.linalg.inv(t(TM @ T)[:3, :3]).T @ tpl.g
+    err = lambda x: float(((x - want).norm(dim=0) / want.norm(dim=0)).median())
+    assert err(seen[0]) < 0.25 * min(err(g), err(g - t(M) @ g)), (err(seen[0]), err(g), err(g - t(M) @ g))
     assert abs(F_field - F_affine) < 0.25 * abs(F_unturned - F_affine), (F_field, F_affine, F_unturned)
 
 

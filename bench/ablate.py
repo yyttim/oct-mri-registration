@@ -8,7 +8,8 @@ A variant replaces one function or constant of the package for its run, or one v
 
 {variants}
 
-OUT/<variant>/ holds the outputs of octreg register and variant.json (the change). A finished variant is skipped.
+OUT/<variant>/ holds the outputs of octreg register, variant.json (the change) and code.txt (code_id, the identity of the
+octreg code of the run). A variant finished by the same code is skipped (made_by), and one made by other code runs again.
 
 --turn starts every run from the OCT world turned by the rotation vector (RX, RY, RZ) in degrees about the centre of the OCT
 image box: the OCT and its mask file are read with the turned header. T_oct2mri.txt is then rewritten for the original OCT
@@ -21,6 +22,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import dataclasses
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -31,6 +33,7 @@ import torch
 from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import octreg  # noqa: E402
 from octreg import deform as D, features as Fe, geometry as G, io, refine as Rf, register as Reg, search as Se  # noqa: E402
 from octreg.params import Params                                                                              # noqa: E402
 
@@ -204,11 +207,15 @@ def main():
     if unknown:
         ap.error(f"unknown variants {unknown}")
     turn, load = turned([a.oct] + ([a.oct_mask] if a.oct_mask else []), a.turn, a.oct_spacing_um) if a.turn else (None, None)
+    code = code_id()
     for name in names:
         out = a.out / name
-        if (out / "variant.json").is_file():
+        if made_by(out) == code:
             print(f"{name}: done", flush=True)
             continue
+        if made_by(out):
+            print(f"{name}: made by octreg code {made_by(out)}, run again with {code}", flush=True)
+            (out / "code.txt").unlink()
         with contextlib.ExitStack() as st:
             if load is not None:
                 st.enter_context(mock.patch.object(io, "load_volume", load))
@@ -229,7 +236,26 @@ def main():
         (out / "variant.json").write_text(json.dumps({"variant": name, "change": VARIANTS.get(name, "the method"),
                                                       "turn_deg": a.turn, "turn": None if turn is None else turn.tolist(),
                                                       "params": P.to_dict()}, indent=1), encoding="utf-8")
+        (out / "code.txt").write_text(code + "\n", encoding="utf-8")
         print(f"{name}: search rank {res['pose']['search_rank']}, L {res['pose']['L']:.4f} -> {out}", flush=True)
+
+
+def code_id():
+    """The identity of the octreg code this process imports: the first 12 hex digits of the sha256 of the octreg/*.py
+    sources, line ends normalised. A bench run writes it to code.txt when it has finished."""
+    h = hashlib.sha256()
+    for f in sorted(Path(octreg.__file__).parent.glob("*.py")):
+        h.update(f.name.encode() + b"\0" + f.read_bytes().replace(b"\r\n", b"\n") + b"\0")
+    return h.hexdigest()[:12]
+
+
+def made_by(out):
+    """The code_id in out/code.txt of a finished bench run (with a complete result.json), else None."""
+    try:
+        res = json.loads((Path(out) / "result.json").read_text(encoding="utf-8"))
+        return (Path(out) / "code.txt").read_text(encoding="utf-8").strip() if "seconds" in res else None
+    except (OSError, ValueError):
+        return None
 
 
 if __name__ == "__main__":

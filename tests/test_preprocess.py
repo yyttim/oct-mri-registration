@@ -1,10 +1,13 @@
-"""preprocess: the MRI foreground valley, a shallow tissue valley passed over, a deep one inside the tissue rejected. The OCT
-specimen mask by signal and texture (and chunk invariance). Holes filled in the planes across a cut face."""
+"""preprocess: the MRI foreground valley, also on an integer-valued image, with a hot voxel, next to a medium peak in the
+first histogram bin and for tissue a small share of the crop, holes filled and specks dropped, a shallow tissue valley passed
+over, a deep one inside the tissue rejected. The OCT specimen mask by signal and texture (and chunk invariance), an OCT without
+positive voxels refused. Holes filled in the planes across a cut face."""
 import dataclasses
 
 import numpy as np
 import pytest
 from scipy import ndimage
+from scipy.signal import find_peaks
 
 from octreg import preprocess as pp
 from octreg.params import Params
@@ -33,14 +36,69 @@ def test_foreground_valley():
     assert info["threshold"] == 0 and m.all()
 
 
+def test_foreground_on_an_integer_image_and_with_a_hot_voxel():
+    """An integer-valued crop at the base grid (grey matter at 120 levels, white matter, medium, 10 % noise), whose raw
+    histogram is a comb of empty bins, and a crop with one voxel 200 times brighter than the tissue: the medium's valley in
+    both."""
+    for seed in range(10):
+        rng = np.random.default_rng(seed)
+        ball, core = _ball(80, (40, 40, 40), 34), _ball(80, (40, 40, 40), 20)
+        mean = np.where(core, 75.0, np.where(ball, 120.0, 30.0))
+        img = np.maximum(np.round(mean * (1 + 0.1 * rng.standard_normal(ball.shape))), 0).astype(np.float32)
+        m, info = pp.foreground(img, 0.15, P)
+        assert 30 < info["threshold"] < 75 and _dice(m, ball) > 0.98, (seed, info)
+    rng = np.random.default_rng(0)
+    ball = _ball(64, (32, 32, 32), 26)
+    img = np.where(ball, rng.normal(500, 30, ball.shape), rng.normal(100, 20, ball.shape)).astype(np.float32)
+    img[2, 2, 2] = 1e5
+    m, info = pp.foreground(img, 0.15, P)
+    assert 150 < info["threshold"] < 400 and _dice(m, ball) > 0.98, info
+
+
+def test_foreground_next_to_an_end_bin_peak_and_for_a_small_tissue_share():
+    """A medium of low noise (Rayleigh, sigma 3) whose peak falls in the first histogram bin, and a ball holding 2.4 % of the
+    crop, whose peak the 99.5th percentile cuts: the medium's valley in both, since the peaks are found with an empty bin
+    added at each end of the histogram."""
+    rng = np.random.default_rng(0)
+    ball = _ball(64, (32, 32, 32), 26)
+    m, info = pp.foreground(np.where(ball, rng.normal(500, 30, ball.shape), rng.rayleigh(3, ball.shape)).astype(np.float32),
+                            0.15, P)
+    assert 10 < info["threshold"] < 400 and _dice(m, ball) > 0.98, info
+    ball = _ball(100, (50, 50, 50), 18)
+    m, info = pp.foreground(np.where(ball, rng.normal(500, 30, ball.shape), rng.normal(100, 20, ball.shape)).astype(np.float32),
+                            0.15, P)
+    assert 150 < info["threshold"] < 400 and _dice(m, ball) > 0.98, info
+
+
+def test_foreground_fills_holes_and_drops_specks():
+    """A cavity of medium inside the tissue is foreground, and single bright voxels in the medium are not."""
+    rng = np.random.default_rng(5)
+    ball, cavity = _ball(64, (32, 32, 32), 26), _ball(64, (32, 32, 32), 6)
+    img = np.where(ball & ~cavity, rng.normal(500, 30, ball.shape), rng.normal(100, 20, ball.shape)).astype(np.float32)
+    specks = [(2, 2, 2), (2, 61, 30), (61, 3, 60), (30, 2, 61)]
+    for s in specks:
+        img[s] = 600
+    m, info = pp.foreground(img, 0.15, P)
+    assert m[cavity].all() and not any(m[s] for s in specks) and _dice(m, ball) > 0.98, info
+
+
 def test_foreground_passes_a_shallow_tissue_valley():
-    """Two overlapping tissue classes (white 400, grey 500, a valley above half their peaks) in a medium (60): walking down
-    from the brightest peak, the tissue valley is passed over and the medium's valley taken, so the mask keeps both classes."""
-    rng = np.random.default_rng(1)
-    ball, core = _ball(64, (32, 32, 32), 26), _ball(64, (32, 32, 32), 15)
-    tissue = np.where(core, rng.normal(420, 40, ball.shape), rng.normal(500, 40, ball.shape))
-    m, info = pp.foreground(np.where(ball, tissue, rng.normal(60, 10, ball.shape)).astype(np.float32), 0.15, P)
+    """A bright core (500) in a darker tissue shell (387) in a medium (60), the valley between core and shell above half their
+    peaks: walking down from the brightest peak, that valley is passed over and the medium's valley taken, so the mask keeps
+    the shell. With every valley deep enough (valley_ratio 1) the shell, which lies outside the core's hull as a medium would,
+    is cut off, so the depth of the valley is what keeps it."""
+    rng = np.random.default_rng(0)
+    ball, core = _ball(64, (32, 32, 32), 26), _ball(64, (32, 32, 32), 20)
+    img = np.where(core, rng.normal(500, 35, ball.shape), np.where(ball, rng.normal(387, 35, ball.shape),
+                                                                   rng.normal(60, 10, ball.shape))).astype(np.float32)
+    s = img[img <= np.percentile(img, 99.5)]
+    h = ndimage.uniform_filter1d(np.histogram(s, bins=256)[0].astype(float), 5)
+    pk = find_peaks(np.sqrt(np.pad(h, 1)), prominence=0.05 * np.sqrt(h.max()), distance=5)[0] - 1
+    assert len(pk) == 3 and 0.5 < h[pk[1]:pk[2]].min() / min(h[pk[1]], h[pk[2]]) < 1, pk     # the premise: a shallow valley
+    m, info = pp.foreground(img, 0.15, P)
     assert 60 < info["threshold"] < 300 and _dice(m, ball) > 0.98, info
+    m, info = pp.foreground(img, 0.15, dataclasses.replace(P, valley_ratio=1.0))
+    assert info["threshold"] > 387 and _dice(m, ball) < 0.7, info
 
 
 def test_foreground_keeps_a_dark_tissue_class():
@@ -85,16 +143,27 @@ def _embedded_block(seed, medium=1.0, n=96):
     return vol, slab & (vol > 0)
 
 
-@pytest.mark.parametrize("medium", [1.0, 0.05])            # medium as bright as tissue (texture decides), dark (signal decides)
-@pytest.mark.parametrize("voxel_mm, min_dice", [(0.08, 0.95), (P.fine_mm, 0.95)])   # 0.04 mm: the default fine grid
-def test_specimen_mask_signal_and_texture(monkeypatch, medium, voxel_mm, min_dice):
-    vol, truth = _embedded_block(0, medium)
+@pytest.mark.parametrize("seed", [0, 1, 2])
+@pytest.mark.parametrize("medium, voxel_mm", [(1.0, 0.08), (1.0, P.fine_mm), (0.05, 0.08)])
+def test_specimen_mask_signal_and_texture(monkeypatch, seed, medium, voxel_mm):
+    """Medium as bright as tissue (texture decides) on a 0.08 mm grid and on the default 0.04 mm fine grid, and dark medium
+    (signal decides). At 0.04 mm the 4 mm block next to dark medium is too small for the texture statistics, so dark medium is
+    tested at 0.08 mm."""
+    vol, truth = _embedded_block(seed, medium)
     Q = dataclasses.replace(P, texture_smooth_mm=0.32)  # a block of a few mm (the default 1.2 mm suits real blocks)
     m, info = pp.specimen_mask(vol, voxel_mm, Q)
-    assert _dice(m, truth) > min_dice and not m[vol == 0].any(), _dice(m, truth)
+    assert _dice(m, truth) > 0.95 and not m[vol == 0].any(), _dice(m, truth)
     assert info["volume_cm3"] == pytest.approx(m.sum() * voxel_mm ** 3 / 1e3)
-    monkeypatch.setattr(pp, "_CHUNK", 16)
-    assert np.array_equal(pp.specimen_mask(vol, voxel_mm, Q)[0], m)      # chunked == unchunked
+    if seed == 0:
+        monkeypatch.setattr(pp, "_CHUNK", 16)
+        assert np.array_equal(pp.specimen_mask(vol, voxel_mm, Q)[0], m)      # chunked == unchunked
+
+
+def test_specimen_mask_refuses_an_oct_without_positive_voxels():
+    """An OCT of zeros or of negative values (a dB image) has no measured voxel: refused with a message."""
+    for vol in (np.zeros((40,) * 3, np.float32), -np.ones((40,) * 3, np.float32)):
+        with pytest.raises(ValueError, match="no positive voxels"):
+            pp.specimen_mask(vol, 0.08, P)
 
 
 def test_fill_planes_fills_holes_open_to_a_face():
