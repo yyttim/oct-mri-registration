@@ -1,15 +1,12 @@
 """Orientation search (docs/METHOD.md §3) on the search grid (Params.search_mm).
 
-For every rotation of a fixed near-uniform set the OCT template is rotated about its box centre and scored against the MRI crop
-at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012). The score is
-S = (F + O) / 2: F the correlation of the orientation tensors of octreg.features, in the same template form as there (OCT
-points farther than Params.erode_mm inside the specimen mask, OCT gradients inside the specimen mask, MRI tensors inside the
-foreground and zero outside it), computed on the rotated template in the MRI axes; and O the outline correlation of the OCT
-specimen mask w with the MRI foreground M over the measured OCT voxels q, one-sided: weighted by q (1 - (1 - w) E), E = M
-inside the MRI crop and 1 outside. The crop may hold tissue that is not in the block (beyond a face where the block was cut
-out), so embedding over MRI tissue or outside the crop is left out, while OCT tissue over MRI background or outside the crop
-lowers O. Without a measured outside in both images (register.outline_used) S = F. Proper rotations only: the file frames fix
-the handedness.
+For every rotation of a fixed near-uniform set the OCT template is turned about its box centre and scored against the MRI crop
+at every translation by FFT, in the weighted masked form of Padfield (IEEE Trans. Image Process. 21:2706, 2012): F, the
+correlation of the orientation tensors of octreg.features in the same template form as there, computed on the turned template
+in the MRI axes; and, where both images show medium around the tissue (register.outline_used), the outline O, the correlation
+of the OCT specimen mask w with the MRI foreground M over the measured OCT voxels q, weighted by q (1 - (1 - w) E) with E = M
+inside the MRI crop and 1 outside: OCT tissue over MRI background or outside the crop lowers O, medium over MRI tissue does not
+(the crop may hold tissue beyond a face where the block was cut out).
 """
 from __future__ import annotations
 
@@ -39,8 +36,9 @@ class Searcher:
     def __init__(self, mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, sigma_mm, erode_mm, device="cuda"):
         """mri [D, H, W] MRI intensities and mri_mask [D, H, W] foreground fraction M on an isotropic grid (mri_affine); oct_
         [d, h, w] OCT intensities, oct_w the specimen mask and oct_valid the measured fraction (oct_affine). sigma_mm: the
-        smoothing of the gradients; erode_mm: the OCT points lie farther than erode_mm inside the specimen mask. The template is centred on the OCT grid box centre c_o and covers its bounding sphere (+3
-        voxels); the MRI is zero-padded by half a template, so a block over the edge of the crop is still scored."""
+        smoothing of the gradients; erode_mm: the OCT points lie farther than erode_mm inside the specimen mask. The template is
+        centred on the OCT grid box centre c_o and covers its bounding sphere (+3 voxels); the MRI is zero-padded by half a
+        template, so a block over the edge of the crop is still scored."""
         self.dev = device
         I, M, o, w, q = (to_torch(x, device) for x in (mri, mri_mask, oct_, oct_w, oct_valid))
         A_M, A_O = np.asarray(mri_affine, float), np.asarray(oct_affine, float)
@@ -96,9 +94,9 @@ class Searcher:
         return torch.fft.irfftn(X, s=self.shape, dim=DIMS)
 
     @torch.no_grad()
-    def score(self, R):
-        """Orientation R (numpy 3x3) -> (F, O) maps [D', H', W']. Index u means x_mri = R (x_oct - c_o) + t_u; the template
-        lies inside the grid at the indices of self.valid."""
+    def score(self, R, outline=True):
+        """Orientation R (numpy 3x3) -> (F, O) maps [D', H', W'], O None without the outline. Index u means
+        x_mri = R (x_oct - c_o) + t_u; the template lies inside the grid at the indices of self.valid."""
         n = self.n
         pts = self.c_t + self.tgrid @ torch.as_tensor(np.asarray(R), dtype=torch.float32, device=self.dev)   # x_o = c_o + R^T y
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)
@@ -113,6 +111,8 @@ class Searcher:
         num = self._inv((FwT * self.FT).sum(0)) - (ST.reshape(-1, 1, 1, 1) * SI).sum(0) / N
         varI = (self._inv(Fw * self.FT2) - (SI * SI).sum(0) / N).clamp(min=EPS * N)
         Fmap = num / torch.sqrt(((STT - (ST * ST).sum() / N) * varI).clamp(min=EPS))
+        if not outline:
+            return Fmap, None
         b = q * (1 - w)                       # weight q - b E: with E M = M^2 and E M^2 = M^3 every sum is one correlation
         Fq, Fb, Fqw, Fbw, Fbww = (self._ft(x) for x in (q, b, q * w, b * w, b * w * w))
         Nq = q.sum() - self._inv(Fb * self.FE) + EPS
@@ -133,29 +133,30 @@ class Searcher:
 
 
 def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params: Params = Params(), device="cuda", outline=True):
-    """Orientation search at one grid (arguments as Searcher, smoothing params.search_sigma_mm). Rotations: geometry.rotations
-    (n_rot), proper rotations only. Per orientation the argmax over the translations of S = (F + O) / 2, S = F when outline is
-    False. Greedy NMS on S: a pose duplicates a kept one iff centres are closer than nms_mm and rotations closer than nms_deg;
-    the best topk are kept. -> candidates [{T 4x4, S, F, O}], best first."""
+    """Orientation search at one grid (arguments as Searcher, smoothing params.search_sigma_mm) over geometry.rotations(n_rot).
+    Every rotation keeps its best translation by F and, with the outline, by S = (F + O) / 2. Greedy non-maximum suppression
+    keeps a pose unless a kept one has its centre within nms_mm and its rotation within nms_deg: the best topk // 2 by S first
+    (with the outline), then the best by F up to topk. The outline only proposes poses, §4 decides on F.
+    -> candidates [{T 4x4, F, O}] in that order, F and O at the pose (O None without the outline)."""
     P = params
     s = Searcher(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, P.search_sigma_mm, P.erode_mm, device)
     Rs = G.rotations(P.n_rot)
-    found = []
+    lists = ([], []) if outline else ([],)
     for i, R in enumerate(Rs):
-        Fm, Om = s.score(R)
-        X = ((Fm + Om) / 2 if outline else Fm).masked_fill(~s.valid, float("-inf")).reshape(-1)
-        j = torch.argmax(X)
-        x, f, o, j = torch.stack([X[j].double(), Fm.reshape(-1)[j].double(), Om.reshape(-1)[j].double(), j.double()]).tolist()
-        found.append((x, i, int(j), f, o))
+        Fm, Om = s.score(R, outline)
+        for found, X in zip(lists, (((Fm + Om) / 2) if outline else Fm, Fm)):
+            j = int(torch.argmax(X.masked_fill(~s.valid, float("-inf"))))
+            o = None if Om is None else float(Om.reshape(-1)[j])
+            found.append((float(X.reshape(-1)[j]), i, j, float(Fm.reshape(-1)[j]), o))
     kept = []
-    for x, i, j, f, o in sorted(found, key=lambda e: -e[0]):
-        T = s.pose(Rs[i], j)
-        centre = G.apply_affine(T, s.c_o)
-        if any(np.linalg.norm(centre - c) < P.nms_mm and angle_deg(Rs[i], R) < P.nms_deg for _, c, R in kept):
-            continue
-        kept.append((dict(T=T, S=x, F=f, O=o if outline else None), centre, Rs[i]))
-        if len(kept) >= P.topk:
-            break
+    for found, n in zip(lists, (P.topk // 2, P.topk) if outline else (P.topk,)):
+        for x, i, j, f, o in sorted(found, key=lambda e: -e[0]):
+            if len(kept) >= n:
+                break
+            T = s.pose(Rs[i], j)
+            centre = G.apply_affine(T, s.c_o)
+            if not any(np.linalg.norm(centre - c) < P.nms_mm and angle_deg(Rs[i], R) < P.nms_deg for _, c, R in kept):
+                kept.append((dict(T=T, F=f, O=o), centre, Rs[i]))
     return [k[0] for k in kept]
 
 

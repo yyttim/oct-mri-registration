@@ -29,7 +29,7 @@ FAST = dataclasses.replace(Params(), fine_mm=0.08, n_rot=200, topk=4, iters=40, 
 TINY = {"fine_mm": 0.08, "texture_smooth_mm": 0.32, "search_sigma_mm": 0.6, "n_rot": 8, "topk": 1, "iters": 5,
         "df_evals": 2}
 #     for the runs whose pose does not matter
-POSE_KEYS = {"S", "L", "search_rank", "outline_used", "T_search", "F", "scale_per_oct_axis"}
+POSE_KEYS = {"search_rank", "search_F", "search_O", "L", "outline_used", "T_search", "F", "scale_per_oct_axis"}
 
 
 def distance(T1, T2, pts):
@@ -129,10 +129,10 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert set(saved) >= {"octreg_version", "inputs", "params", "T_oct2mri", "pose", "candidates", "foreground", "deform", "seconds"}
     assert set(saved["seconds"]) == {"mri", "oct_fine_grid", "oct_mask", "search", "refine", "deform", "outputs", "total"}
     cands = saved["candidates"]
-    assert len(cands) == FAST.topk and all(set(c) == {"S", "L", "search_rank"} for c in cands)
+    assert len(cands) == FAST.topk and all(set(c) == {"search_rank", "search_F", "search_O", "L"} for c in cands)
     assert [c["L"] for c in cands] == sorted(c["L"] for c in cands)
     assert sorted(c["search_rank"] for c in cands) == list(range(FAST.topk))
-    assert (pose["S"], pose["L"], pose["search_rank"]) == tuple(cands[0][k] for k in ("S", "L", "search_rank"))
+    assert all(pose[k] == cands[0][k] for k in ("search_rank", "search_F", "search_O", "L"))
     assert [f["sigma_mm"] for f in pose["F"]] == list(FAST.sigmas_mm)
     assert all(f["end"] >= f["start"] - 0.01 for f in pose["F"])                  # the prior may trade a little F
     scale = pose["scale_per_oct_axis"]                          # true 1.03 / 1 / 1

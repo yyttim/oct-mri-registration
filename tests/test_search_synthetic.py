@@ -94,7 +94,7 @@ def test_maps_are_the_direct_sums():
         assert s.n % 2 == 1 and all(d % 2 == 1 for d in oct_[0].shape)      # template points on OCT voxels at the identity
         R = T[:3, :3]
         Fm, _ = s.score(R)
-        _, Om = s.score(np.eye(3))
+        _, Om = s.score(np.eye(3), True)
         out = Outline(m[1], m[2], o[1], o[2], o[3], "cpu")
         tissue = G.apply_affine(o[3], np.argwhere(o[1] > 0.5).astype(float))
         beyond = lambda P: np.mean(np.any(np.abs(G.apply_affine(np.linalg.inv(m[2]) @ P, tissue) - 17.5) > 17.5, axis=1))
@@ -113,19 +113,19 @@ def test_maps_are_the_direct_sums():
 @pytest.mark.parametrize("outline", [True, False])
 @pytest.mark.parametrize("rot_index", [5, 17])
 def test_search_recovers_the_pose(rot_index, outline, cut):
-    """The best candidate has the true rotation and a centre within a search voxel of the truth (embedded block); a block cut
-    from a larger specimen can slide about one voxel more towards its cut face, where the MRI tissue continues and no OCT point
-    is scored. O is one-sided: embedding over MRI tissue beyond the cut costs nothing."""
+    """With the outline, the first half of the candidates is proposed by S = (F + O) / 2 and the rest by F, each half best
+    first, every pair apart by the suppression rule. The first candidate has the true rotation and a centre within a search
+    voxel of the truth (embedded block); a block cut from a larger specimen can slide about one voxel more towards its cut face,
+    where the MRI tissue continues and no OCT point is scored. O is one-sided: embedding over MRI tissue beyond the cut costs
+    nothing."""
     mri, oct_, T = phantom(rot_index, cut)
     cands = search(*mri, *oct_, FAST, "cpu", outline)
-    assert len(cands) == FAST.topk
-    assert [c["S"] for c in cands] == sorted((c["S"] for c in cands), reverse=True)
-    for c in cands:
-        assert np.linalg.det(c["T"][:3, :3]) > 0
-        if outline:
-            assert abs(c["S"] - (c["F"] + c["O"]) / 2) < 1e-6
-        else:
-            assert c["O"] is None and c["S"] == c["F"]
+    assert len(cands) == FAST.topk and all(np.linalg.det(c["T"][:3, :3]) > 0 for c in cands)
+    assert all((c["O"] is not None) == outline for c in cands)
+    key = (lambda c: (c["F"] + c["O"]) / 2) if outline else (lambda c: c["F"])
+    half = FAST.topk // 2 if outline else FAST.topk
+    assert [key(c) for c in cands[:half]] == sorted((key(c) for c in cands[:half]), reverse=True)
+    assert [c["F"] for c in cands[half:]] == sorted((c["F"] for c in cands[half:]), reverse=True)
     c_o = G.box(oct_[3], oct_[0].shape)[0]
     centres = [G.apply_affine(c["T"], c_o) for c in cands]
     for i in range(len(cands)):
@@ -136,7 +136,7 @@ def test_search_recovers_the_pose(rot_index, outline, cut):
     assert angle_deg(best["T"][:3, :3], T[:3, :3]) < 1e-3
     err = np.linalg.norm(centres[0] - G.apply_affine(T, c_o))
     assert err < (H if cut is None else 1.5 * H), err
-    assert best["F"] > 0.85 and best["S"] > cands[1]["S"] + 0.1, (best, cands[1])
+    assert best["F"] > 0.85 and key(best) > key(cands[1]) + 0.1, (best, cands[1])
     if outline:
         assert best["O"] > 0.9, best["O"]                        # one-sided: embedding beyond a cut face costs nothing
 
@@ -146,7 +146,7 @@ def test_thin_specimen():
     voxel erode_mm inside it is refused with a ValueError."""
     mri, oct_, _ = phantom(17, cut=10)
     cands = search(*mri, *oct_, FAST, "cpu", False)
-    assert all(np.isfinite(c["S"]) for c in cands)
+    assert all(np.isfinite(c["F"]) for c in cands)
     w = np.zeros_like(oct_[1])
     w[w.shape[0] // 2] = 1                                                  # one plane: nothing 0.8 mm inside
     with pytest.raises(ValueError, match="fewer than 10 OCT points"):

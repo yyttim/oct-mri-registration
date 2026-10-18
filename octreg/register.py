@@ -83,14 +83,16 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     field, info_deform = smooth_deformation(mri_b, oct_b, T, P, device) if deform else (None, None)
     lap("deform")
 
-    pose = {"S": candidates[best["search_rank"]]["S"], "L": best["L"], "search_rank": best["search_rank"], "outline_used": outline,
-            "T_search": candidates[best["search_rank"]]["T"], "F": best["F"],
+    found = candidates[best["search_rank"]]
+    pose = {"search_rank": best["search_rank"], "search_F": found["F"], "search_O": found["O"], "L": best["L"],
+            "outline_used": outline, "T_search": found["T"], "F": best["F"],
             "scale_per_oct_axis": np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm), axis=0).tolist()}
     polarity = display_polarity(oct_b, mri_b, T)
     inputs = {"oct": {**vars(vo), "path": _abs(vo.path)}, "mri": {**vars(vm), "path": _abs(vm.path)},
               "oct_spacing_um": oct_spacing_um, "oct_mask": oct_mask and _abs(oct_mask), "mri_mask": mri_mask and _abs(mri_mask), "device": str(device)}
     result = {"octreg_version": __version__, "inputs": inputs, "params": P.to_dict(), "T_oct2mri": T, "pose": pose, "candidates": [
-                  {"search_rank": c["search_rank"], "S": candidates[c["search_rank"]]["S"], "L": c["L"]} for c in poses],
+                  {"search_rank": c["search_rank"], "search_F": candidates[c["search_rank"]]["F"],
+                   "search_O": candidates[c["search_rank"]]["O"], "L": c["L"]} for c in poses],
               "foreground": {"oct": {**fg_o, "outside_fraction": outside["oct"]},
                              "mri": {"source": "histogram", **fg_m, "outside_fraction": outside["mri"]}},
               "deform": info_deform}
@@ -205,7 +207,8 @@ def deform_label(d):
 def pose_label(pose):
     """One line of the §3 and §4 read-outs (the pose of result.json)."""
     F = ", ".join(f"{p['start']:.4f} -> {p['end']:.4f} at {p['sigma_mm']:g} mm" for p in pose["F"])
-    return f"§3: S {pose['S']:.4f}, rank {pose['search_rank']}; §4: F {F}"
+    O = "" if pose["search_O"] is None else f", O {pose['search_O']:.4f}"
+    return f"§3: rank {pose['search_rank']} (F {pose['search_F']:.4f}{O}); §4: F {F}"
 
 
 def _mm(x):
