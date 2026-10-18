@@ -177,6 +177,11 @@ def test_resample_iso_equals_direct_pooling(tmp_path):
     io.save_nifti((mask * 255).astype(np.uint8), np.diag([0.02, -0.02, 0.02, 1.0]), tmp_path / "mask.nii.gz")
     frac, _ = g.resample_iso(io.load_volume(tmp_path / "mask.nii.gz"), 0.04, binary=True)       # indicator, not the values
     assert np.allclose(frac, mask.reshape(32, 2, 36, 2, 40, 2).mean((1, 3, 5)), atol=1e-6)
+    sparse = np.zeros((90, 90, 66), np.float32)                         # 12 x 12 x 15.15 um, the steps are not exact in binary
+    sparse[::7, ::5, ::4] = 5
+    io.save_nifti(sparse, np.diag([0.012, 0.012, 0.01515, 1]), tmp_path / "sparse.nii.gz")
+    out, _ = g.resample_iso(io.load_volume(tmp_path / "sparse.nii.gz"), 0.04)
+    assert out[out > 0].min() > 1e-6                                    # partial weights only, no float residue near zeros
     A = oblique((0.02, 0.02, 0.02), (0.0, 0.0, 0.0))                  # k = 8, step 0.9375: 15 pooled -> 16 planes, the last
     ones, _ = g.pool_iso(np.ones((120, 24, 120), np.float32), A, 0.15)                 # one past the last pooled centre
     assert ones.shape == (16, 3, 16) and np.allclose(ones[:15, :, :15], 1) and np.allclose(ones[15, :, :15], 0.9375)

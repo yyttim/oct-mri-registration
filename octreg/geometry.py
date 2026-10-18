@@ -80,7 +80,7 @@ def _iso(planes, shape, affine, level_mm):
     A_out[:3, :3] = A[:3, :3] / sp * level_mm
     taps = []
     for a in range(3):
-        u = np.arange(N[a]) * step[a]
+        u = np.round(np.arange(N[a]) * step[a], 9)                             # no float residue weights off a centre
         i0 = np.minimum(np.floor(u).astype(int), n[a] - 1)
         taps.append((i0, u - i0))
     out, stream = np.empty(N, np.float32), _pooled(planes, k, n)
