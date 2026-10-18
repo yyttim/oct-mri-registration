@@ -12,7 +12,7 @@ OUT/<variant>/ holds the outputs of octreg register and variant.json (the change
 
 --turn starts every run from the OCT world turned by the rotation vector (RX, RY, RZ) in degrees about the centre of the OCT
 image box: the OCT and its mask file are read with the turned header. T_oct2mri.txt is then rewritten for the original OCT
-world (T @ turn), and result.json with it (T_oct2mri, pose.T_search, the OCT header affine in inputs, and the turn); the files
+world (T @ turn), and result.json with it (T_oct2mri, pose.T_search, the OCT header affine in inputs, and the turn). The files
 tied to the turned OCT header (oct2mri.lta, oct2mri_itk.txt, mri_in_oct.nii.gz) are removed, and variant.json holds the turn.
 The no_search run also writes T_start.txt, the pose it is refined from, in the original OCT world.
 """
@@ -44,10 +44,10 @@ VARIANTS = {
     "signed": "the signed normalised gradient n instead of its tensor n n^T, OCT polarity +1",
     "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, OCT intensities negated (polarity -1)",
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
-    "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not only around the points",
+    "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
     "df_free": "the deformation without the strain bound (deform.STRAIN_WEIGHT 0)",
 }
-__doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<16} {v}" for k, v in VARIANTS.items()))
+__doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<18} {v}" for k, v in VARIANTS.items()))
 REFINE, TENSOR, PREPARE_OCT = Rf.refine, Fe.orientation_tensor, Reg.prepare_oct
 
 
@@ -66,7 +66,7 @@ def fixed_start(T):
 
 def search_by_S(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params=Params(), device="cuda", outline=True):
     """In place of search.search: with the outline, every rotation keeps its best translation by S = (F + O) / 2 and the same
-    non-maximum suppression keeps the best topk by S; without the outline, search.search. -> candidates [{T, F, O}]."""
+    non-maximum suppression keeps the best topk by S. Without the outline it is search.search. -> candidates [{T, F, O}]."""
     if not outline:
         return Se.search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params, device, outline)
     P = params
@@ -195,7 +195,7 @@ def main():
     ap.add_argument("-o", "--out", type=Path, required=True)
     ap.add_argument("--oct-mask")
     ap.add_argument("--oct-spacing-um", type=lambda s: tuple(float(x) for x in s.split(",")))
-    ap.add_argument("--only", help="comma-separated variants (default all; 'base' runs the method itself)")
+    ap.add_argument("--only", help="comma-separated variants (default all, 'base' runs the method itself)")
     ap.add_argument("--turn", type=lambda s: [float(x) for x in s.split(",")], help="rotation vector of the start, degrees")
     ap.add_argument("--device", default="cuda")
     a = ap.parse_args()
