@@ -14,12 +14,13 @@ zeros where data are missing. The MRI is an ex-vivo scan cropped around the bloc
 may hold tissue that is not in the block, for example beyond a face where the block was cut out of a larger specimen. Both voxel
 sizes are taken as correct, so the true scales are close to 1.
 
-Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the NIfTI header frame
-or, for TIFF and NPY, diag(spacing) on the axes (x, y, z) = numpy axes (2, 1, 0). The two volumes show the same specimen, so
-they differ by a proper rotation and never by a mirror image. The file frames fix the handedness, and §3 searches proper
-rotations only. The OCT is streamed plane by plane into a 0.04 mm fine grid, where the specimen mask is computed. Both volumes
-then have a 0.15 mm base grid, for the OCT the fine grid box-averaged and interpolated linearly onto it (masks kept above 0.5),
-and the MRI foreground is computed on it. The search of §3 runs on a 0.6 mm box average of the base grid.
+Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the header frame of a
+NIfTI, its sform, else its qform, or else the array frame, diag(pixdim) for a NIfTI without either and diag(spacing) for TIFF
+and NPY on the axes (x, y, z) = numpy axes (2, 1, 0). The two volumes show the same specimen, so they differ by a proper
+rotation and never by a mirror image. The file frames fix the handedness, and §3 searches proper rotations only. The OCT is
+streamed plane by plane into a 0.04 mm fine grid, where the specimen mask is computed. Both volumes then have a 0.15 mm base
+grid, for the OCT the fine grid box-averaged and interpolated linearly onto it (masks kept above 0.5), and the MRI foreground is
+computed on it. §3 runs on a 0.6 mm search grid, the base grid box-averaged.
 
 ## §1 Masks
 
@@ -31,9 +32,9 @@ Otsu's threshold. Signal is a log intensity above the threshold of the measured 
 doped agarose, which can be as bright as tissue, from tissue: section stripes vary only along the sectioning axis and tile seams
 only across the seam, while tissue varies along every direction. On the signal voxels the OCT is smoothed (normalised Gaussian,
 σ 0.08 mm), and the running coefficient of variation c_a is computed along each array axis over 0.36 mm where at least half of
-that window is signal. C = min_a c_a is averaged onto a 0.16 mm texture grid, whose blocks count where at least half of their
-voxels have a C, and log C is smoothed over those blocks (normalised Gaussian, σ 1.2 mm). The specimen is the signal voxels
-where log C lies above its threshold, its components holding at least 1 % of it, with holes filled in every array plane: uniform
+that window is signal. C = min_a c_a is averaged onto a 0.16 mm texture grid, whose cells count where at least half of their
+voxels have a C, and log C is smoothed over those cells (normalised Gaussian, σ 1.2 mm). The specimen is the signal voxels where
+log C lies above its threshold, its components holding at least 1 % of it, with holes filled in every array plane: uniform
 tissue such as a white-matter bundle leaves holes, and a hole that reaches a cut face is not enclosed in 3-D. Voxels at or below
 zero are missing data and never specimen. A mask can be given as a file instead (`--oct-mask`).
 
@@ -116,7 +117,7 @@ The parameters are fields of `octreg.params.Params` (override with `--params`).
 
 | parameter | default | role |
 |---|---|---|
-| `search_mm`, `base_mm`, `fine_mm` | 0.6, 0.15, 0.04 mm | search grid, base grid, OCT grid of the specimen mask |
+| `search_mm`, `base_mm`, `fine_mm` | 0.6, 0.15, 0.04 mm | search grid, base grid, fine grid (OCT specimen mask) |
 | `texture_bandpass_mm`, `texture_window_mm` | 0.08, 0.36 mm | §1: smoothing, window of the coefficient of variation |
 | `texture_grid_mm`, `texture_smooth_mm` | 0.16, 1.2 mm | §1: texture grid, smoothing of log C |
 | `valley_ratio`, `min_component` | 0.5, 0.01 | §1: MRI valley depth, smallest mask component kept |
@@ -132,6 +133,6 @@ larger part of the measured volume, as in a block imaged with a margin of medium
 mask otherwise (`--oct-mask`), and the OCT file itself serves when it is exactly zero outside the tissue, since a mask file is
 read as its positive voxels. A TIFF or NPY read in its array frame can be the mirror image of the specimen, which no proper
 rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). `oct2mri.lta` and
-`oct2mri_itk.txt` refer to the world octreg read, so they apply to NIfTI files whose sform or qform holds that world. For a
-TIFF, an NPY, a NIfTI without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the OCT with that
-world as its sform.
+`oct2mri_itk.txt` refer to the world octreg read, so they apply to NIfTI files whose sform and qform, where set, hold that
+world. For a TIFF, an NPY, a NIfTI without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the
+image with that world as its sform and qform, as in octreg's own NIfTI outputs.

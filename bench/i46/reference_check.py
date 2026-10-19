@@ -87,7 +87,7 @@ def oct_blocks():
             a = np.stack([tf.pages[z].asarray()[:n[1] * DS, :n[2] * DS] for z in range(b * DS, (b + 1) * DS)]).astype(float)
             nz = a > 0
             med = np.array([np.median(p[m]) if m.sum() > 1000 else 1.0 for p, m in zip(a, nz)])
-            a /= med[:, None, None]                 # the OCT intensity falls with depth and changes by section
+            a /= med[:, None, None]                 # the OCT intensity falls with depth and changes by slab
             val[b] = a.reshape(DS, n[1], DS, n[2], DS).mean((0, 2, 4))
             frac[b] = nz.reshape(DS, n[1], DS, n[2], DS).mean((0, 2, 4))
     idx = np.argwhere(frac > 0.9)

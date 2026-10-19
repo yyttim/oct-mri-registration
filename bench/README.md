@@ -46,7 +46,8 @@ python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search 
 | **turned 90°, octreg** |  |  |  |
 | <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |  |  |  |
 
-The sagittal plane of the I58 figure in the [README](../README.md) through each variant, with the MRI tissue boundary in red.
+The sagittal plane of the I58 figure in the [README](../README.md) through each variant, with the MRI foreground boundary in
+red.
 
 `figures.py` makes the freeview panels of `docs/figures`: the result, the affine baselines of [baselines/](baselines/README.md)
 and the ablation. It runs after the baseline comparison, whose inputs give the display window of every OCT panel

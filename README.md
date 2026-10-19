@@ -6,16 +6,16 @@ transform from any starting orientation, with no labels and no manual start.
 | sagittal | coronal | axial |
 |---|---|---|
 | <img src="docs/figures/result/sagittal_oct.png" width="300" alt="registered OCT, sagittal"> | <img src="docs/figures/result/coronal_oct.png" width="208" alt="registered OCT, coronal"> | <img src="docs/figures/result/axial_oct.png" width="208" alt="registered OCT, axial"> |
-| <img src="docs/figures/result/sagittal_oct_boundary.png" width="300" alt="registered OCT with the MRI tissue boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="208" alt="registered OCT with the MRI tissue boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="208" alt="registered OCT with the MRI tissue boundary, axial"> |
+| <img src="docs/figures/result/sagittal_oct_boundary.png" width="300" alt="registered OCT with the MRI foreground boundary, sagittal"> | <img src="docs/figures/result/coronal_oct_boundary.png" width="208" alt="registered OCT with the MRI foreground boundary, coronal"> | <img src="docs/figures/result/axial_oct_boundary.png" width="208" alt="registered OCT with the MRI foreground boundary, axial"> |
 | <img src="docs/figures/result/sagittal_mri.png" width="300" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="208" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="208" alt="MRI, axial"> |
 
-The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI tissue in
-red (middle), and the MRI (bottom), on three planes in freeview. The specimen surface runs along the line except at these
-places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below
-the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner of the specimen
-and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends short of the line.
-On the axial plane the specimen ends short of the line along the right side, where the OCT shows a dark band with a few bright
-fragments. On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
+The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI
+foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. The specimen surface runs along the line
+except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright
+band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner
+of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends
+short of the line. On the axial plane the specimen ends short of the line along the right side, where the OCT shows a dark band
+with a few bright fragments. On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
 
 ## Method
 
@@ -33,9 +33,9 @@ al., 2022). F is normalised over the OCT block, with the MRI tensors zero outsid
   texture separates tissue from doped agarose, which can be as bright as tissue but whose section stripes and tile seams vary
   along one axis only. The MRI foreground lies above a histogram valley whose darker class lies mostly outside the convex hull
   of the brighter voxels, as the embedding medium does, and not inside it, as white matter under cortex does.
-- **§3 Orientation search.** For each of 8,000 rotations, F is scored at every translation inside the crop. Poses are proposed
-  by F and, where both images show medium around the tissue, also by (F + O) / 2. The outline term O, the correlation of the OCT
-  specimen mask with the MRI foreground, places a block by its shape. 24 poses are kept.
+- **§3 Orientation search.** For each of 8,000 rotations, F is scored at every translation inside the crop. The outline term O,
+  the correlation of the OCT specimen mask with the MRI foreground, places a block by its shape. Poses are proposed by F and,
+  where both images show medium around the tissue, also by (F + O) / 2. 24 poses are kept.
 - **§4 Affine refinement.** Every pose is refined on F to a 12-parameter affine under a prior on scale and shear, on a 0.15 mm
   grid with gradient scales from 0.6 down to 0.3 mm, and the pose with the lowest final loss, 1 − F plus the prior, wins.
 
@@ -60,25 +60,25 @@ octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--oct-spacing-
 ```
 
 `register` writes the outputs below into `OUT`. The OCT can be NIfTI, TIFF, OME-TIFF or NPY, and the MRI is NIfTI.
-`--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy axes z, y, x, which a TIFF or NPY without spacing needs. It
-overrides the spacing in the file, also that of an `--oct-mask` of the OCT's array shape. `--oct-mask` and `--mri-mask` replace
-the masks of §1 with files whose positive voxels are the mask, the OCT mask kept only where the OCT is positive, and the OCT
-file itself serves when it is exactly zero outside the tissue. `--params` reads overrides of `octreg.params.Params` from JSON.
-`apply` resamples an OCT-frame volume onto an MRI-frame reference through the affine, or an MRI-frame volume onto an OCT-frame
-reference through the inverse affine with `--inverse`. The same functions are available in Python:
-`from octreg.register import register, apply`.
+`--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy axes z, y, x (NIfTI axes k, j, i), which a TIFF or NPY
+without spacing needs. It overrides the spacing in the file, also that of an `--oct-mask` of the OCT's array shape. `--oct-mask`
+and `--mri-mask` replace the masks of §1 with files whose positive voxels are the mask, the specimen mask kept only where the
+OCT is positive. The OCT file itself can be given as `--oct-mask` when it is exactly zero outside the tissue. `--params` reads
+overrides of `octreg.params.Params` from JSON. `apply` resamples an OCT-frame volume onto an MRI-frame reference through the
+affine, or an MRI-frame volume onto an OCT-frame reference through the inverse affine with `--inverse`. The same functions are
+available in Python: `from octreg.register import register, apply`.
 
 | file | content |
 |---|---|
 | `T_oct2mri.txt` | 4×4 affine in mm from the world frame of the OCT file to that of the MRI file |
-| `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK, for NIfTI files whose header holds the world octreg read ([Scope](docs/METHOD.md#scope)) |
+| `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK, for NIfTI files whose sform and qform hold the world octreg read ([Scope](docs/METHOD.md#scope)) |
 | `oct_in_mri.nii.gz` | the OCT on the MRI grid, through the affine |
 | `mri_in_oct.nii.gz` | the MRI on the OCT base grid (0.15 mm), through the affine |
 | `qc.png`, `qc_montage.png` | visual QC of the affine |
 | `result.json` | inputs, parameters, the transform, the scores of every step and the time per step |
 
 A registration is judged by looking at it: the OCT should lie on the same MRI anatomy, and where both images show medium around
-the tissue, the MRI tissue boundary should follow the edge of the OCT specimen.
+the tissue, the MRI foreground boundary should follow the edge of the OCT specimen.
 
 ## Results
 
@@ -90,15 +90,15 @@ OCT box-averaged to the 0.08 mm voxels of the MRI as the moving image, each at t
 FLIRT ran with both headers scaled x10, because its schedule resamples the images to fixed voxel sizes in mm
 ([bench/baselines](bench/baselines/README.md)).
 
-| MRI | image centres aligned (the start) | octreg | NiftyReg reg_aladin |
+| MRI | image box centres aligned (the start) | octreg | NiftyReg reg_aladin |
 |---|---|---|---|
-| <img src="docs/figures/affine/mri_axial.png" width="175" alt="MRI"> | <img src="docs/figures/affine/start_axial.png" width="175" alt="image centres aligned"> | <img src="docs/figures/affine/octreg_axial.png" width="175" alt="octreg"> | <img src="docs/figures/affine/reg_aladin_axial.png" width="175" alt="NiftyReg reg_aladin"> |
+| <img src="docs/figures/affine/mri_axial.png" width="175" alt="MRI"> | <img src="docs/figures/affine/start_axial.png" width="175" alt="image box centres aligned"> | <img src="docs/figures/affine/octreg_axial.png" width="175" alt="octreg"> | <img src="docs/figures/affine/reg_aladin_axial.png" width="175" alt="NiftyReg reg_aladin"> |
 | **greedy** | **elastix** | **mri_robust_register** | **ANTs** |
 | <img src="docs/figures/affine/greedy_axial.png" width="175" alt="greedy"> | <img src="docs/figures/affine/elastix_axial.png" width="175" alt="elastix"> | <img src="docs/figures/affine/mri_robust_register_axial.png" width="175" alt="mri_robust_register"> | <img src="docs/figures/affine/ants_axial.png" width="175" alt="ANTs"> |
 | **mri_coreg** | **FLIRT** | **SynthMorph** | |
 | <img src="docs/figures/affine/mri_coreg_axial.png" width="175" alt="mri_coreg"> | <img src="docs/figures/affine/flirt_axial.png" width="175" alt="FLIRT"> | <img src="docs/figures/affine/synthmorph_axial.png" width="175" alt="SynthMorph"> | |
 
-The axial plane of the I58 figure at the top, the MRI and the OCT through each affine, with the MRI tissue boundary in red.
+The axial plane of the I58 figure at the top, the MRI and the OCT through each affine, with the MRI foreground boundary in red.
 Through the SynthMorph affine only a corner of the OCT image, at the lower right, reaches this plane.
 [BASELINES.md](bench/baselines/BASELINES.md) shows every tool on all three planes, with the scale and determinant of each
 affine.
@@ -106,12 +106,12 @@ affine.
 ### Test on the data of Costantini et al. (2023)
 
 Costantini et al. imaged a block of Broca's area from one fixed human hemisphere with serial-sectioning OCT, scanned the
-hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform ([Science Advances 9:eadg3844,
-2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
+hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform
+([Science Advances 9:eadg3844, 2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
 R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
-on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not read. octreg was developed on I58 and
-checked on these data during its development, so this is not a held-out test.
+on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
+and checked on these data during its development, so this is not a held-out test.
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
@@ -171,8 +171,9 @@ The outline is never used on these crops, whose MRI is all tissue. On I58:
 | **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | |
 | <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | |
 
-The sagittal plane of the I58 figure through each variant, with the MRI tissue boundary in red. The last three panels start from
-the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of `bench/ablate.py`.
+The sagittal plane of the I58 figure through each variant, with the MRI foreground boundary in red. The last three panels start
+from the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of
+`bench/ablate.py`.
 
 ## Reproducing the results
 

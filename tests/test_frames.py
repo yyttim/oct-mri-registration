@@ -274,9 +274,10 @@ def test_transform_txt_lta_itk_roundtrip(tmp_path):
     images = {id(v): sitk.ReadImage(str(tmp_path / f)) for v, f in ((src, "oct.nii.gz"), (dst, "mri.nii.gz"),
                                                                      (arr, "arr_copy.nii.gz"), (nii, "bare_copy.nii.gz"))}
     q = np.array([3.0, 4.0, 5.0])
+    io.write_itk(T, tmp_path / "x_itk.txt")
+    assert b"\r" not in (tmp_path / "x_itk.txt").read_bytes()
+    tr = sitk.ReadTransform(str(tmp_path / "x_itk.txt"))
     for s, d in ((src, dst), (arr, dst), (src, arr), (nii, dst), (src, nii)):
-        io.write_itk(T, tmp_path / "x_itk.txt")
-        assert b"\r" not in (tmp_path / "x_itk.txt").read_bytes()
-        p = sitk.ReadTransform(str(tmp_path / "x_itk.txt")).TransformPoint(images[id(d)].TransformContinuousIndexToPhysicalPoint(tuple(q)))
+        p = tr.TransformPoint(images[id(d)].TransformContinuousIndexToPhysicalPoint(tuple(q)))
         want = g.apply_affine(np.linalg.inv(s.affine) @ np.linalg.inv(T) @ d.affine, q)
         assert np.allclose(images[id(s)].TransformPhysicalPointToContinuousIndex(p), want, atol=1e-4)

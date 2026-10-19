@@ -16,21 +16,20 @@ hardware.
 
 Each panel is one freeview screenshot of the whole MRI crop at one screen pixel per 0.08 mm voxel, showing the MRI or the 20 µm
 OCT resampled through the tool's transform by octreg's resampler. The planes are the sagittal, coronal and axial planes through
-the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.30, 22.18) mm RAS. The red line is the MRI tissue boundary,
-the boundary of the MRI foreground that the rule of octreg's [§1](../../docs/METHOD.md#1-masks) gives on the 0.08 mm grid of the
-crop. On the sagittal and coronal planes it also encloses MRI tissue above and below the block. On the axial plane it also
-encloses MRI tissue along the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright
-fragments. The captions call this the right axial band. The OCT is shown at the default grey window freeview gives the moving
-image (0.00122 to 0.00553), and the MRI at 0.212 to 1.662, both linear
-([docs/figures/figures.json](../../docs/figures/figures.json)). Sagittal planes have anterior on the right, coronal and axial
-planes show the subject's right on the left, and superior is up on sagittal and coronal planes, anterior up on axial planes.
-Left, right, top and bottom in the text and the captions refer to the image. On the sagittal and coronal planes the OCT sections
-show as fine stripes parallel to the top and bottom edges of the block, horizontal at the start. `bench/figures.py` makes the
-panels.
+the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.30, 22.18) mm RAS. The red line is the boundary of the MRI
+foreground that the rule of octreg's [§1](../../docs/METHOD.md#1-masks) gives on the 0.08 mm grid of the crop. On the sagittal
+and coronal planes it also encloses MRI tissue above and below the block. On the axial plane it also encloses MRI tissue along
+the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright fragments. The captions call
+this the right axial band. The OCT is shown at the default grey window freeview gives the moving image (0.00122 to 0.00553), and
+the MRI at 0.212 to 1.662, both linear ([docs/figures/figures.json](../../docs/figures/figures.json)). Sagittal planes have
+anterior on the right, coronal and axial planes show the subject's right on the left, and superior is up on sagittal and coronal
+planes, anterior up on axial planes. Left, right, top and bottom in the text and the captions refer to the image. On the
+sagittal and coronal planes the OCT sections show as fine stripes parallel to the top and bottom edges of the block, horizontal
+at the start. `bench/figures.py` makes the panels.
 
 | method | run | setting | start | scale per OCT axis | det | wall time | hardware |
 |---|---|---|---|---|---|---|---|
-| image centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
+| image box centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image box centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
 | octreg | `octreg` | default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 10 min | GPU |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
 | greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 63 s | CPU, 8 threads |
@@ -44,7 +43,7 @@ panels.
 | | sagittal | coronal | axial |
 |---|---|---|---|
 | **MRI** | <img src="../../docs/figures/affine/mri_sagittal.png" width="240" alt="MRI, sagittal"> | <img src="../../docs/figures/affine/mri_coronal.png" width="166" alt="MRI, coronal"> | <img src="../../docs/figures/affine/mri_axial.png" width="166" alt="MRI, axial"> |
-| **image centres aligned (the start)** | <img src="../../docs/figures/affine/start_sagittal.png" width="240" alt="image centres aligned (the start), sagittal"> | <img src="../../docs/figures/affine/start_coronal.png" width="166" alt="image centres aligned (the start), coronal"> | <img src="../../docs/figures/affine/start_axial.png" width="166" alt="image centres aligned (the start), axial"> |
+| **image box centres aligned (the start)** | <img src="../../docs/figures/affine/start_sagittal.png" width="240" alt="image box centres aligned (the start), sagittal"> | <img src="../../docs/figures/affine/start_coronal.png" width="166" alt="image box centres aligned (the start), coronal"> | <img src="../../docs/figures/affine/start_axial.png" width="166" alt="image box centres aligned (the start), axial"> |
 | **octreg** | <img src="../../docs/figures/affine/octreg_sagittal.png" width="240" alt="octreg, sagittal"> | <img src="../../docs/figures/affine/octreg_coronal.png" width="166" alt="octreg, coronal"> | <img src="../../docs/figures/affine/octreg_axial.png" width="166" alt="octreg, axial"> |
 | **NiftyReg reg_aladin** | <img src="../../docs/figures/affine/reg_aladin_sagittal.png" width="240" alt="NiftyReg reg_aladin, sagittal"> | <img src="../../docs/figures/affine/reg_aladin_coronal.png" width="166" alt="NiftyReg reg_aladin, coronal"> | <img src="../../docs/figures/affine/reg_aladin_axial.png" width="166" alt="NiftyReg reg_aladin, axial"> |
 | **greedy** | <img src="../../docs/figures/affine/greedy_sagittal.png" width="240" alt="greedy, sagittal"> | <img src="../../docs/figures/affine/greedy_coronal.png" width="166" alt="greedy, coronal"> | <img src="../../docs/figures/affine/greedy_axial.png" width="166" alt="greedy, axial"> |
@@ -57,7 +56,7 @@ panels.
 
 | method | what the panels show |
 |---|---|
-| image centres aligned (the start) | The block keeps the header orientation, with its edges parallel to the image axes. Tissue lies outside the line along the right side and at the left of the sagittal plane, along the left side and at the upper right of the coronal plane, and along the left side, at the top and at the lower left of the axial plane. |
+| image box centres aligned (the start) | The block keeps the header orientation, with its edges parallel to the image axes. Tissue lies outside the line along the right side and at the left of the sagittal plane, along the left side and at the upper right of the coronal plane, and along the left side, at the top and at the lower left of the axial plane. |
 | octreg | The block is turned relative to the image axes and the sections are straight. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends short of the line. On the axial plane the specimen ends short of the line at the right axial band. |
 | NiftyReg reg_aladin | As for octreg: the block is turned, the sections are straight, and the specimen surface runs along the line except at the same places. |
 | greedy | The block is sheared: its edges are slanted, the sections run obliquely on the coronal plane and show as nearly vertical stripes on the axial plane. Parts of the area inside the line hold no tissue on all three planes, most at the lower left of the coronal plane, and on the axial plane tissue lies outside the line along the left side. |

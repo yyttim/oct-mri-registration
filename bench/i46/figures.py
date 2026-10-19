@@ -27,7 +27,7 @@ from common import (INPUTS, LABELS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, WO
 from bench.figures import check_sizes, freeview_window, fs_script, view  # noqa: E402
 from bench.paths import WSL, host_path  # noqa: E402
 
-ENFACE_PLANES = (102, 300, 498)                 # the fourth plane of sections 3, 9 and 15
+ENFACE_PLANES = (102, 300, 498)                 # the fourth plane of slabs 11, 17 and 23
 TOOL_PLANE = 300
 INFO = {}                                       # figures.json: enface/<crop>_p<plane> -> windows, plane size, no_line
 

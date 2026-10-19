@@ -1,9 +1,9 @@
 {
  "affine": {
   "reference_centres": {
-   "tool": "image centres aligned (the start)",
+   "tool": "image box centres aligned (the start)",
    "setting": "not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept",
-   "start": "image centres aligned"
+   "start": "image box centres aligned"
   },
   "octreg": {
    "tool": "octreg",

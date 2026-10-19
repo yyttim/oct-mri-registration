@@ -50,7 +50,7 @@ REHEAD = ["$BASELINE_PY - <<PY", "import nibabel as nib, numpy as np", 'w = nib.
           'm = nib.load("$BASELINES/inputs/mri_0.08mm.nii.gz")', "assert w.shape == m.shape, (w.shape, m.shape)",
           "out = nib.Nifti1Image(np.asarray(w.dataobj, dtype=np.float32), m.affine)",
           "out.set_qform(m.affine, code=1); out.set_sform(m.affine, code=1)", 'nib.save(out, "warped_tool.nii.gz")',
-          'print("warped_tool.nii.gz: header rewritten to the 0.08 mm MRI affine; x10-header copy removed")', "PY",
+          'print("warped_tool.nii.gz: header rewritten to the 0.08 mm MRI affine")', "PY",
           "rm -f warped_tool_x10.nii.gz"]
 RESAMPLE_LINEAR = [
     "set -e", ". ~/baselines/tools/env.sh", "E=$BASELINES/affine/elastix", "D=$E/$1", "mkdir -p $D/transformix_linear",
@@ -182,8 +182,8 @@ def rigid_only(run):
     """The rigid step of mri_robust_register/noinit, resampled by mri_vol2vol."""
     return [*fs_head(run), "cp ../noinit/rigid.lta rigid.lta", "cp ../noinit/threads.txt threads.txt",
             "cp ../noinit/time_rigid.txt time.txt", VOL2VOL.format("rigid.lta"),
-            'echo "rigid stage of ../noinit/log.txt (lines 1-226); resample $(date)" > log.txt',
-            "sed -n '1,226p' ../noinit/log.txt >> log.txt"]
+            'echo "rigid stage of ../noinit/log.txt, resampled $(date)" > log.txt',
+            "sed '/^### step 2/,$d' ../noinit/log.txt >> log.txt"]
 
 
 def niftyreg(run, opt=""):

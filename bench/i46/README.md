@@ -50,12 +50,12 @@ against at most 0.19 for any other orientation. The placement of the slabs (slab
 which the most OCT vessels lie within 0.15 mm of an MRI vessel label, 15.8 % against at most 5.9 % for any other choice.
 
 R is an expert registration, not ground truth. An affine fitted to the OCT vessels and the MRI vessel labels alone
-(`labelfit.py`), called L here, lies 0.155 mm (mean) from R, p95 0.31 mm, so distances below about 0.3 mm are not read.
+(`labelfit.py`), called L here, lies 0.155 mm (mean) from R, p95 0.31 mm, so distances below about 0.3 mm are not interpreted.
 
 ## Inputs and protocol
 
 - **OCT.** The OME-TIFF as released, in its array frame, (x, y, z) = TIFF (x, y, plane), with spacing 0.012, 0.012 and
-  0.01515 mm. The depth spacing is the 500 µm section divided by its 33 planes. The dataset's metadata give 12 µm on every axis,
+  0.01515 mm. The depth spacing is the 500 µm slab divided by its 33 planes. The dataset's metadata give 12 µm on every axis,
   and R scales the axes of this frame to 12.46, 11.82 and 14.48 µm ([reference_check.json](../results/I46/reference_check.json),
   `labels`). The block was embedded in agarose, which the 8-bit OCT shows mostly as zero. Of the 2 × 2 × 2 voxel blocks more
   than 0.3 mm outside the specimen mask below, 32 % are not zero (context.json). Every method gets this OCT.
@@ -137,7 +137,7 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 
 `figures.py` shows the crop at the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8) in the OCT's
 own planes, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the released OCT (12 µm in the plane), each
-three planes below the top of its section, 14.76 × 15.25 mm at one screen pixel per two OCT voxels. The red line is the
+three planes below the top of its slab, 14.76 × 15.25 mm at one screen pixel per two OCT voxels. The red line is the
 white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw. lta_convert writes
 each transform as an LTA file, and freeview moves the surface and resamples the MRI through it (nearest neighbour, its
 default). Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the edge of the crop
@@ -157,11 +157,12 @@ and 300 it cuts off a smaller part. The white matter is dark in the MRI panels.
 
 OCT plane 300 with the line placed through R, through octreg, through each standard tool at its documented setting and through
 FLIRT, ANTs and greedy with their own search. The lines through reg_aladin and elastix run diagonally down across the tissue to
-its lower edge, the first from its top near the upper right corner, the second from its right side. The line through
-mri_robust_register crosses the left part of the tissue in one straight horizontal and one straight vertical stretch. The line
-through ANTs runs outside the tissue along its lower right edge, and the line through mri_coreg cuts the upper right corner of
-the tissue and runs outside along its right side and lower right edge. For greedy, FLIRT, SynthMorph and the three searches the
-boundary does not cross this plane inside the OCT field of view, so their panels show no line.
+its lower edge, the first from its top near the upper right corner, the second from its right side. Outside the tissue the line
+through reg_aladin turns back and crosses the bottom of the tissue in a short arc. The line through mri_robust_register crosses
+the left part of the tissue in one straight horizontal and one straight vertical stretch. The line through ANTs runs outside the
+tissue along its lower right edge, and the line through mri_coreg cuts the upper right corner of the tissue and runs outside
+along its right side and lower right edge. For greedy, FLIRT, SynthMorph and the three searches the boundary does not cross this
+plane inside the OCT field of view, so their panels show no line.
 
 | R | octreg | NiftyReg reg_aladin | greedy | ANTs |
 |---|---|---|---|---|

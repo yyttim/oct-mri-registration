@@ -36,7 +36,7 @@ SEED0 = 4600                                # crop k: default_rng(4600 + k)
 TIERS = (0.30, 1.0)                         # mm, mean distance from R
 TIER_NAMES = ("<= 0.30 mm", "<= 1 mm", "beyond")
 
-SLAB = 33                                   # OCT planes per 500 um section
+SLAB = 33                                   # OCT planes per 500 um slab
 SPACING = np.array([0.012, 0.012, 500 / SLAB / 1000])   # mm
 OCT_AFFINE = np.diag([*SPACING, 1.0])
 VESSEL_PLANES = 561

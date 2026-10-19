@@ -39,8 +39,8 @@ def _pool(a, k):
 
 
 def _upsample(a, k, shape, lo, hi):
-    """Linear interpolation of the block grid a onto rows lo:hi along axis 0 of a voxel grid of `shape`, clamped beyond the
-    outer block centres. -> float32"""
+    """Linear interpolation of the cell grid a onto rows lo:hi along axis 0 of a voxel grid of `shape`, clamped beyond the
+    outer cell centres. -> float32"""
     x = np.asarray(a, np.float32)
     for ax, n in enumerate(shape):
         c = np.clip((np.arange(n) - (k - 1) / 2) / k, 0, a.shape[ax] - 1)[slice(lo, hi) if ax == 0 else slice(None)]

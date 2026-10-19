@@ -18,7 +18,7 @@ class Params:
     min_component: float = 0.01               # components below this fraction of the mask are dropped
     texture_bandpass_mm: float = 0.08         # Gaussian sigma of the smoothing before the texture
     texture_window_mm: float = 0.36           # window of the local coefficient of variation
-    texture_grid_mm: float = 0.16             # block grid of the texture field
+    texture_grid_mm: float = 0.16             # cell size of the texture grid
     texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture before the threshold
     # similarity (§2)
     erode_mm: float = 0.8                     # depth of the OCT points of F inside the specimen mask
