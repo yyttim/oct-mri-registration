@@ -2,9 +2,9 @@
 """The I46 ablation and start test (bench/i46/README.md), through bench/ablate.py on the released OCT with octreg's own masks.
 
 ablate   the variants of bench/ablate.py except the outline ones (shown on I58 only), on the C3 crops
-         k = 0..9 of the 10 deg FLASH, into <bench_runs>/I46/ablation/<crop>/<variant>/
+         k = 0..9 of the 10 deg FLASH, into <project root>/bench_runs/I46/ablation/<crop>/<variant>/
 starts   the method on flip1_C3_k0 from the OCT turned about the centre of its image box by 90 and 180 deg about each array
-         axis and by 10 uniform random rotations (seed 4646), into <bench_runs>/I46/starts/<start>/base/
+         axis and by 10 uniform random rotations (seed 4646), into <project root>/bench_runs/I46/starts/<start>/base/
 collect  scores the affine of every run against the reference -> bench/results/I46/ablation.json and starts.json. It stops
          and writes nothing if a run was not made by the checkout's octreg code.
 

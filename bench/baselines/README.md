@@ -32,32 +32,41 @@ its schedule resamples the images to fixed voxel sizes in mm. The other affine r
 | greedy | 1.4.0 | NMI, dof 6 then 12, -n 100x50x10 | header, image centres, -search 1000, + FOV mask (as the moving mask) | `greedy_centers` |
 | FreeSurfer mri_synthmorph | 8.2.0 | mri_synthmorph -m affine as documented (a 1 mm brain model) | none (the network predicts the affine) | `synthmorph_affine` |
 
-[INSTALL.md](INSTALL.md) gives the version and installation route of each tool. The command of every affine run (`cmd.sh`)
-and its output stay in its run directory under `<project root>/baselines/affine`, which holds image data and is not in the
-repository.
+[INSTALL.md](INSTALL.md) gives the version and installation route of each tool and the two environment files that the run
+scripts source. [i58/runs.py](i58/runs.py) holds the commands of every affine run. The run directories under
+`<project root>/baselines/affine` hold image data and are not in the repository.
 
 ## Scripts
 
 | script | role |
 |---|---|
 | `prepare_inputs.py` | the shared inputs, from the two original files |
+| `i58/runs.py` | the affine runs in one table. `prepare` writes the tool script `run.sh` of every run into its run directory `affine/<tool>/<variant>`, the files the runs read besides the shared inputs (the elastix parameter files, the fixed mask of ones of `ants/com_fov` and FLIRT's x10 copies) and `queue.sh`, which runs every run without a `time.txt`. `convert` converts each tool's transform with `convert_affines.py` and writes `T_oct2mri.txt`, `result.json` and `check.json` with `rundir.py`. Files that exist are kept, and `convert` skips a run with a `check.json` unless `--force` |
 | `convert_affines.py` | every tool's affine transform file in one convention (OCT world to MRI world, NIfTI RAS mm) |
 | `rundir.py` | `init` makes a run directory in octreg's layout from a converted 4×4 matrix. `check` compares the OCT resampled by octreg through the converted transform with the image the tool itself warped, and passes when the correlation and the Dice of the two supports both exceed 0.95 |
 | `evaluate_runs.py` | affine runs: the 20 µm OCT through the transform by octreg's resampler (the overlay of the figures), the scale per OCT axis and the determinant, the wall time and the hardware, and with `--octreg-run` the same row for octreg and for the start (the header orientation with the image box centres aligned), whose run directory `reference/centres` it writes |
 | `summarise.py` | the table `affine.md`, the main rows and, where there are other runs, a supplement with every run, from the summary JSON and the tool, setting and start of each run in `notes.json` |
 | `standard_tools.py` | the tools and settings of the I46 test: their inputs and moving masks, run scripts and queue, the conversion of each transform and its check against the tool's own resampling (used by `bench/i46/baselines.py`) |
-| `elastix_defaults/` | the elastix model-zoo rigid and affine parameter files that `standard_tools.py` uses |
+| `elastix_defaults/` | the elastix model-zoo rigid and affine parameter files that `i58/runs.py` and `standard_tools.py` use |
 
 The stored results (summary JSON, `notes.json` and `affine.md`) are in `bench/results/I58/baselines/`, and the figures of
 BASELINES.md in `docs/figures/` (`bench/figures.py`).
 
-The inputs and the table come from these commands, with `OCTREG_PROJECT_ROOT` set to the project root:
+The inputs, the runs, their conversion and check, and the table come from these commands, in this order, with
+`OCTREG_PROJECT_ROOT` set to the project root:
 
 ```bash
-python bench/baselines/prepare_inputs.py --oct OCT --mri MRI -o $OCTREG_PROJECT_ROOT/baselines/inputs
-python bench/baselines/evaluate_runs.py $OCTREG_PROJECT_ROOT/baselines/affine/*/* --octreg-run RUN
+B=$OCTREG_PROJECT_ROOT/baselines
+python bench/baselines/prepare_inputs.py --oct OCT --mri MRI -o $B/inputs
+python bench/baselines/i58/runs.py prepare
+bash $B/affine/queue.sh
+python bench/baselines/i58/runs.py convert
+python bench/baselines/evaluate_runs.py $B/affine/*/* --octreg-run RUN --oct OCT --mri MRI
 python bench/baselines/summarise.py
 ```
 
 `OCT` and `MRI` are the two I58 files and `RUN` the octreg run of [bench/README.md](../README.md), whose `result.json` is stored
-in `bench/results/I58`. Run directories without a passing `check.json` are skipped.
+in `bench/results/I58`. `queue.sh` runs the Linux tools in WSL on Windows and greedy with the Python that ran `runs.py prepare`,
+one run at a time. Run directories without a passing `check.json` are skipped, among them `elastix/identity`, which stops with
+an error and writes no transform, and `mri_robust_register/noinit`, whose affine step maps the OCT outside the MRI crop and
+whose rigid step is the run `noinit_rigid_only`.

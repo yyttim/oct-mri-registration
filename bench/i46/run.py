@@ -6,7 +6,7 @@ run      octreg register at the default parameters on the released OCT and the C
          --oct-mask (<crop>_mask). A run already made by the checkout's octreg code is skipped. Then collect.
 collect  scores the final affine and the search pose of every run against the reference and with the vessel check. It
          stops before writing if a run is missing, incomplete or made by other code.
--> <bench_runs>/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
+-> <project root>/bench_runs/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]
     python bench/i46/run.py collect [--runs DIR] [-o FILE]
@@ -108,7 +108,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("step", nargs="?", choices=["run", "collect"], default="run")
     ap.add_argument("--only", nargs="+", help="run: only these names (and no collect)")
-    ap.add_argument("--runs", type=Path, default=RUNS, help="collect: the folder of runs (default <bench_runs>/I46/runs)")
+    ap.add_argument("--runs", type=Path, default=RUNS, help="collect: the folder of runs "
+                                                               "(default <project root>/bench_runs/I46/runs)")
     ap.add_argument("-o", "--out", type=Path, default=RESULTS / "octreg.json", help="collect: the JSON file to write")
     a = ap.parse_args()
     if a.step == "collect":

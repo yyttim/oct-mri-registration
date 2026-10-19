@@ -59,9 +59,10 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   and R scales the axes of this frame to 12.46, 11.82 and 14.48 µm ([reference_check.json](../results/I46/reference_check.json),
   `labels`). The block was embedded in agarose, which the 8-bit OCT shows mostly as zero. Of the 2 × 2 × 2 voxel blocks more
   than 0.3 mm outside the specimen mask below, 32 % are not zero (context.json). Every method gets this OCT.
-- **Specimen mask.** `octmask_24um.nii.gz`, made from the OCT alone (a threshold of the 24 µm box average, then morphology), one
-  voxel per 2 × 2 × 2 OCT voxels, with its header in the OCT world above. It leaves out the first six and the last nine OCT
-  planes (91 and 136 µm). It gives the tissue points of the metrics, and octreg (`--oct-mask`) and the tools
+- **Specimen mask.** `octmask_24um.nii.gz`, one voxel per 2 × 2 × 2 OCT voxels, with its header in the OCT world above. It is
+  made from the OCT alone by `python bench/i46/prepare.py --mask`: a threshold at 40 of the 2 × 2 × 2 means smoothed by a
+  3 × 3 × 3 box filter, then morphology, hole filling and the largest component. It leaves out the first six and the last nine
+  OCT planes (91 and 136 µm). It gives the tissue points of the metrics, and octreg (`--oct-mask`) and the tools
   (`baselines.py --mask`) get it as a mask in further runs below.
 - **MRI.** The three FLASH images, each with the flip-1 header. The primary image is the 10° FLASH, the one with the strongest
   grey/white contrast measured with the authors' layer labels (context.json).
@@ -120,7 +121,7 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   specimen mask as `--oct-mask` it comes within 1 mm in all 10 runs, 0.37 mm from R.
 - **Starts:** on flip1_C3_k0, from the 16 turned and random starts, octreg ends 0.35 to 0.37 mm from R every time.
 - **The standard tools** come within 1 mm in none of their 96 runs at their documented settings. The pose before any
-  registration, the header orientation with the centres of the two image boxes aligned, is 7.0 mm (median) and 122° from R, and
+  registration, the header orientation with the image box centres aligned, is 7.0 mm (median) and 122° from R, and
   most runs end turned by about as much (median 120°). With their own global search the three tools end 14 to 26 mm away in all
   30 runs. With the test's specimen mask as their moving mask none of the seven tools that take one comes within 1 mm: elastix
   ends without a transform on every crop, and reg_aladin ends where it does without the mask, since NiftyReg 2.1.2 does not use
@@ -176,6 +177,7 @@ boundary does not cross this plane inside the OCT field of view, so their panels
 export OCTREG_DANDI000026_DIR=/path/to/dandi-000026          # bench/paths.py gives the other roots
 bash bench/i46/fetch.sh                                       # needs the DANDI client (pip install dandi) and curl
 python bench/i46/prepare.py                                   # inputs and crops -> crops.json, context.json
+python bench/i46/prepare.py --mask                            # the specimen mask octmask_24um.nii.gz, as committed
 python bench/i46/reference_check.py                           # the checks of the reference and L -> reference_check.json
 python bench/i46/run.py                                       # 60 octreg runs, one at a time, scored -> octreg.json
 python bench/i46/baselines.py prepare                         # and with --search, --mask or --near for the other analyses
@@ -184,7 +186,7 @@ python bench/i46/baselines.py collect                         # -> baselines.jso
 python bench/i46/analyses.py ablate                           # the ablation
 python bench/i46/analyses.py starts                           # the start test
 python bench/i46/analyses.py collect                          # -> ablation.json, starts.json
-python bench/i46/summarize.py                                 # -> tables.md
+python bench/i46/summarise.py                                 # -> tables.md
 python bench/i46/figures.py                                   # -> docs/figures/i46
 ```
 
@@ -205,4 +207,4 @@ root>/bench_runs/I46`, which is not in the repository.
 | `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`) |
 | `crops.json` | the box, shift and centre offset of every crop |
 | `context.json` | the number of tissue points, the grey/white contrast of each MRI image, and properties of the reference and the OCT |
-| `tables.md` | the tables of `summarize.py` |
+| `tables.md` | the tables of `summarise.py` |

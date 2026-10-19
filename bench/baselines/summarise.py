@@ -27,7 +27,7 @@ HEAD = ["| method | run | setting | start | scale per OCT axis | det | wall time
 INTRO = ("The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. "
          "Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
          "of the OCT header (1 = voxel size kept). det: the determinant of its 3x3 (1 = volume kept). Wall times as each "
-         "run recorded them, on a 24-core machine shared with other jobs. octreg's is the sum of "
+         "run recorded them. octreg's is the sum of "
          "its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, because its schedule "
          "resamples the images to fixed voxel sizes in mm, and its run on the unscaled headers is flirt_search_native.")
 MAIN_TITLE = "Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)"

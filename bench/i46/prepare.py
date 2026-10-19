@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Inputs of the I46 test (bench/i46/README.md) from the download of fetch.sh, into <bench_runs>/I46/inputs.
+"""Inputs of the I46 test (bench/i46/README.md) from the download of fetch.sh, into <project root>/bench_runs/I46/inputs.
 
 Writes oct.nii.gz, ref_T_oct2mri.txt, tissue_oct.npy, the crops (crops/<name>.nii.gz and crops.json, also in
 bench/results/I46) and bench/results/I46/context.json: the reference, the grey/white contrast of each image and the OCT noise.
 
     python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
+    python bench/i46/prepare.py --mask [OUT]     (only the specimen mask from the OCT, octmask_24um.nii.gz or OUT)
 """
 from __future__ import annotations
 
@@ -38,6 +39,23 @@ def read_mask(shape):
     if m.shape != tuple(n // 2 for n in shape) or not np.allclose(img.affine, MASK_AFFINE, atol=1e-6):
         sys.exit(f"{MASK}: {m.shape}, expected half of the OCT array {shape} with the header {MASK_AFFINE.tolist()}")
     return m
+
+
+def specimen_mask():
+    """The specimen mask from the OCT alone, on the grid of MASK_AFFINE: the mean over 2 x 2 x 2 OCT voxels, a 3 x 3 x 3 box
+    filter, a threshold at 40, a closing across 15 planes, an opening, a closing, the holes filled slice by slice and in the
+    volume, and the largest component."""
+    from scipy import ndimage
+    p, y, x = (s // 2 for s in TIFF_SHAPE)
+    o = read_oct().transpose(2, 1, 0)[:2 * p, :2 * y, :2 * x].astype(np.float32)      # (plane, y, x)
+    m = ndimage.uniform_filter(o.reshape(p, 2, y, 2, x, 2).mean((1, 3, 5)), 3) > 40
+    del o
+    m = ndimage.binary_closing(np.pad(m, ((8, 8), (0, 0), (0, 0))), structure=np.ones((15, 1, 1), bool))[8:-8]
+    m = ndimage.binary_closing(ndimage.binary_opening(m, iterations=2), iterations=3)
+    for ax in (1, 2, 0):
+        m = np.moveaxis(np.stack([ndimage.binary_fill_holes(s) for s in np.moveaxis(m, ax, 0)]), 0, ax)
+    lab, _ = ndimage.label(ndimage.binary_fill_holes(m))
+    return (lab == np.argmax(np.bincount(lab.ravel())[1:]) + 1).transpose(2, 1, 0).astype(np.uint8)
 
 
 def save(arr, affine, path):
@@ -160,8 +178,15 @@ def context(R=None, contrast=None):
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--context", action="store_true", help="only the context, from the inputs already made")
-    if ap.parse_args().context:
+    one = ap.add_mutually_exclusive_group()
+    one.add_argument("--context", action="store_true", help="only the context, from the inputs already made")
+    one.add_argument("--mask", nargs="?", const=MASK, type=Path, metavar="OUT",
+                     help="only the specimen mask from the OCT, into bench/i46/octmask_24um.nii.gz or OUT")
+    a = ap.parse_args()
+    if a.mask:
+        save(specimen_mask(), MASK_AFFINE, a.mask)
+        print(f"specimen mask -> {a.mask}", flush=True)
+    elif a.context:
         context()
     else:
         main()

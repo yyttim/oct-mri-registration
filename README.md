@@ -62,10 +62,11 @@ octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--oct-spacing-
 `register` writes the outputs below into `OUT`. The OCT can be NIfTI, TIFF, OME-TIFF or NPY, and the MRI is NIfTI.
 `--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy axes z, y, x, which a TIFF or NPY without spacing needs. It
 overrides the spacing in the file, also that of an `--oct-mask` of the OCT's array shape. `--oct-mask` and `--mri-mask` replace
-the masks of §1 with files whose positive voxels are the mask, and the OCT file itself serves when it is exactly zero outside
-the tissue. `--params` reads overrides of `octreg.params.Params` from JSON. `apply` resamples an OCT-frame volume onto an
-MRI-frame reference through the affine, or an MRI-frame volume onto an OCT-frame reference through the inverse affine with
-`--inverse`. The same functions are available in Python: `from octreg.register import register, apply`.
+the masks of §1 with files whose positive voxels are the mask, the OCT mask kept only where the OCT is positive, and the OCT
+file itself serves when it is exactly zero outside the tissue. `--params` reads overrides of `octreg.params.Params` from JSON.
+`apply` resamples an OCT-frame volume onto an MRI-frame reference through the affine, or an MRI-frame volume onto an OCT-frame
+reference through the inverse affine with `--inverse`. The same functions are available in Python:
+`from octreg.register import register, apply`.
 
 | file | content |
 |---|---|
@@ -115,8 +116,8 @@ checked on these data during its development, so this is not a held-out test.
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
-distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made from the OCT by a
-threshold and morphology).
+distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold
+of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`).
 
 | condition | within 1 mm of R | distance from R (mm) |
 |---|---|---|
@@ -129,10 +130,10 @@ threshold and morphology).
 
 The last row gives octreg that mask as `--oct-mask` in place of its own. From the OCT turned by 90° and 180° about each array
 axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm margin, octreg ends 0.35 to 0.37 mm from R every
-time. From the header orientation with the centres of the two image boxes aligned, 7.0 mm (median over the ten crops of the 10°
-FLASH with a 3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a
-global rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving
-image in none with the test's specimen mask as that mask.
+time. From the header orientation with the image box centres aligned, 7.0 mm (median over the ten crops of the 10° FLASH with a
+3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a global
+rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving image
+in none with the test's specimen mask as that mask.
 
 | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|---|

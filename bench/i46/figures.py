@@ -112,7 +112,8 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--out", type=Path, default=REPO / "docs/figures/i46")
-    ap.add_argument("--octreg", type=Path, default=RUNS, help="the folder of the octreg runs (default <bench_runs>/I46/runs)")
+    ap.add_argument("--octreg", type=Path, default=RUNS, help="the folder of the octreg runs "
+                                                                 "(default <project root>/bench_runs/I46/runs)")
     ap.add_argument("--baselines", type=Path, default=WORK / "baselines", help="the folder of the standard-tool runs")
     ap.add_argument("--search", type=Path, default=WORK / "baselines_search",
                     help="the folder of the runs of the tools with their own search")

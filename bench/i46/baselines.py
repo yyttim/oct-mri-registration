@@ -3,14 +3,14 @@
 
 The settings and commands are in bench/baselines/standard_tools.py. The moving image is the OCT box-averaged to 0.15 mm, the
 fixed image the C3 crops k = 0..9 of the 10 deg FLASH and k = 0 of the 20 and 30 deg FLASH. Each option changes one thing on
-the 10 deg C3 crops, into <bench_runs>/I46/baselines_<kind>:
+the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>:
 
 --search   the tools' own global searches
 --mask     the test's specimen mask as the moving mask of the tools that take one
 --near     a start near R as the header of the moving image, each tool started from the header
 
     python bench/i46/baselines.py prepare [--search | --mask | --near]   the inputs, the run.sh of every run and queue.sh
-    bash <bench_runs>/I46/baselines/queue.sh                             runs them one at a time (baselines_<kind>/queue.sh)
+    bash <project root>/bench_runs/I46/baselines/queue.sh                runs them one at a time (baselines_<kind>/queue.sh)
     python bench/i46/baselines.py collect [--search | --mask | --near] [--runs DIR] [-o FILE]
 
 collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion on the k = 0 crops. The scores go to
@@ -160,7 +160,8 @@ if __name__ == "__main__":
     g.add_argument("--search", dest="kind", action="store_const", const="search", help="the tools' own global searches")
     g.add_argument("--mask", dest="kind", action="store_const", const="mask", help="the test's specimen mask as moving mask")
     g.add_argument("--near", dest="kind", action="store_const", const="near", help="the start near R in the moving header")
-    ap.add_argument("--runs", type=Path, help="collect: the folder of runs (default <bench_runs>/I46/baselines, or "
+    ap.add_argument("--runs", type=Path, help="collect: the folder of runs (default "
+                                              "<project root>/bench_runs/I46/baselines, or "
                                               "baselines_<search|mask|near>)")
     ap.add_argument("-o", "--out", type=Path, help="collect: the JSON file to write (default bench/results/I46/baselines.json, "
                                                    "or baselines_<search|mask|near>.json)")

@@ -17,7 +17,7 @@ freeview's default orientation applies: anterior on the right in sagittal planes
 and axial planes.
 
 The baseline overlays are read from the bench/baselines run directories under --baselines (default
-OCTREG_PROJECT_ROOT/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) must be set up in the shell with FS_LICENSE
+<project root>/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) must be set up in the shell with FS_LICENSE
 (default ~/freesurfer/license.txt), or on Windows in WSL (FREESURFER_HOME, default /usr/local/freesurfer/8.2.0, and
 FS_LICENSE passed through WSLENV or at the default path).
 """

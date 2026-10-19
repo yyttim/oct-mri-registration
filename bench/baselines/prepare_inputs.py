@@ -4,8 +4,8 @@
     python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz -o DIR
 
 Writes into DIR the inputs, oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm in its own world), its field-of-view mask
-oct_fov_0.08mm.nii.gz (voxels > 0), mri_0.08mm.nii.gz (the crop as given) and oct_0.15mm.nii.gz for the antsAI search, too
-slow at 0.08 mm.
+oct_fov_0.08mm.nii.gz (voxels > 0), mri_0.08mm.nii.gz (the crop as given) and oct_0.15mm.nii.gz, the moving image of the antsAI
+rotation search.
 """
 from __future__ import annotations
 

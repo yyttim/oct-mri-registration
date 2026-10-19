@@ -18,8 +18,8 @@ Transforms map millimetres in the world frame of the OCT file to that of the MRI
 or, for TIFF and NPY, diag(spacing) on the axes (x, y, z) = numpy axes (2, 1, 0). The two volumes show the same specimen, so
 they differ by a proper rotation and never by a mirror image. The file frames fix the handedness, and §3 searches proper
 rotations only. The OCT is streamed plane by plane into a 0.04 mm fine grid, where the specimen mask is computed. Both volumes
-then have a 0.15 mm base grid, for the OCT a box average of the fine grid (masks kept above 0.5), and the MRI foreground is
-computed on it. The search of §3 runs on a 0.6 mm box average of the base grid.
+then have a 0.15 mm base grid, for the OCT the fine grid box-averaged and interpolated linearly onto it (masks kept above 0.5),
+and the MRI foreground is computed on it. The search of §3 runs on a 0.6 mm box average of the base grid.
 
 ## §1 Masks
 
@@ -131,7 +131,7 @@ Both thresholds of the OCT specimen mask take the tallest histogram mode to be t
 larger part of the measured volume, as in a block imaged with a margin of medium around it. A mask file replaces the specimen
 mask otherwise (`--oct-mask`), and the OCT file itself serves when it is exactly zero outside the tissue, since a mask file is
 read as its positive voxels. A TIFF or NPY read in its array frame can be the mirror image of the specimen, which no proper
-rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). `oct2mri.lta` and `oct2mri_itk.txt` refer to the
-world octreg read, so they apply to NIfTI files whose sform or qform holds that world. For a TIFF, an NPY, a NIfTI
-without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the OCT with that world as its
-sform.
+rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). `oct2mri.lta` and
+`oct2mri_itk.txt` refer to the world octreg read, so they apply to NIfTI files whose sform or qform holds that world. For a
+TIFF, an NPY, a NIfTI without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the OCT with that
+world as its sform.

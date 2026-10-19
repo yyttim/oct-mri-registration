@@ -30,7 +30,6 @@ RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I58
 python -m octreg register $OCT $MRI -o $RUNS/octreg
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search --turn 0,0,90
-python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
 ```
 
 `ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
@@ -54,6 +53,10 @@ and the ablation. It runs after the baseline comparison, whose inputs give the d
 (`--window-from`) and whose runs make the baseline panels. It needs FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) with its
 licence, in WSL on Windows.
 
+```bash
+python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
+```
+
 ## Files
 
 | file | content |
@@ -66,4 +69,4 @@ licence, in WSL on Windows.
 | `results/I58/` | `result.json` of the I58 run, with the input paths cut to file names, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
-The scripts print their options with `--help`.
+The Python scripts print their options with `--help`.

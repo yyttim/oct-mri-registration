@@ -4,7 +4,8 @@ Standard registration tools run on the I58 pair. The fixed image is the MRI crop
 µm OCT box-averaged to 0.08 mm isotropic, the voxel size of the MRI. Eight tools run. Seven of them run from their standard
 starts (the header alignment, the image centres or centres of mass, and the tool's own search where it has one) and, as separate
 runs, with a field-of-view (FOV) mask of the OCT. SynthMorph, which predicts the affine and has no mask option, runs once.
-Versions, settings and scripts are in [README.md](README.md) and [INSTALL.md](INSTALL.md).
+Settings are in [README.md](README.md), the commands of every run in [i58/runs.py](i58/runs.py), versions and installation in
+[INSTALL.md](INSTALL.md).
 
 The figures and tables below show each tool at the setting its documentation gives for this kind of registration, with one
 exception: FLIRT's two headers are scaled x10, because its schedule resamples the images to fixed voxel sizes in mm. The other
@@ -17,8 +18,8 @@ Each panel is one freeview screenshot of the whole MRI crop at one screen pixel 
 OCT resampled through the tool's transform by octreg's resampler. The planes are the sagittal, coronal and axial planes through
 the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.30, 22.18) mm RAS. The red line is the MRI tissue boundary,
 the boundary of the MRI foreground that the rule of octreg's [§1](../../docs/METHOD.md#1-masks) gives on the 0.08 mm grid of the
-crop. On the sagittal and coronal planes it also encloses MRI tissue above and below the OCT specimen. On the axial plane it
-also encloses MRI tissue along the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright
+crop. On the sagittal and coronal planes it also encloses MRI tissue above and below the block. On the axial plane it also
+encloses MRI tissue along the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright
 fragments. The captions call this the right axial band. The OCT is shown at the default grey window freeview gives the moving
 image (0.00122 to 0.00553), and the MRI at 0.212 to 1.662, both linear
 ([docs/figures/figures.json](../../docs/figures/figures.json)). Sagittal planes have anterior on the right, coronal and axial
@@ -42,17 +43,17 @@ panels.
 
 | | sagittal | coronal | axial |
 |---|---|---|---|
-| **MRI** | <img src="../../docs/figures/affine/mri_sagittal.png" width="240" alt="MRI, sagittal"> | <img src="../../docs/figures/affine/mri_coronal.png" width="168" alt="MRI, coronal"> | <img src="../../docs/figures/affine/mri_axial.png" width="168" alt="MRI, axial"> |
-| **image centres aligned (the start)** | <img src="../../docs/figures/affine/start_sagittal.png" width="240" alt="image centres aligned (the start), sagittal"> | <img src="../../docs/figures/affine/start_coronal.png" width="168" alt="image centres aligned (the start), coronal"> | <img src="../../docs/figures/affine/start_axial.png" width="168" alt="image centres aligned (the start), axial"> |
-| **octreg** | <img src="../../docs/figures/affine/octreg_sagittal.png" width="240" alt="octreg, sagittal"> | <img src="../../docs/figures/affine/octreg_coronal.png" width="168" alt="octreg, coronal"> | <img src="../../docs/figures/affine/octreg_axial.png" width="168" alt="octreg, axial"> |
-| **NiftyReg reg_aladin** | <img src="../../docs/figures/affine/reg_aladin_sagittal.png" width="240" alt="NiftyReg reg_aladin, sagittal"> | <img src="../../docs/figures/affine/reg_aladin_coronal.png" width="168" alt="NiftyReg reg_aladin, coronal"> | <img src="../../docs/figures/affine/reg_aladin_axial.png" width="168" alt="NiftyReg reg_aladin, axial"> |
-| **greedy** | <img src="../../docs/figures/affine/greedy_sagittal.png" width="240" alt="greedy, sagittal"> | <img src="../../docs/figures/affine/greedy_coronal.png" width="168" alt="greedy, coronal"> | <img src="../../docs/figures/affine/greedy_axial.png" width="168" alt="greedy, axial"> |
-| **elastix** | <img src="../../docs/figures/affine/elastix_sagittal.png" width="240" alt="elastix, sagittal"> | <img src="../../docs/figures/affine/elastix_coronal.png" width="168" alt="elastix, coronal"> | <img src="../../docs/figures/affine/elastix_axial.png" width="168" alt="elastix, axial"> |
-| **mri_robust_register** | <img src="../../docs/figures/affine/mri_robust_register_sagittal.png" width="240" alt="mri_robust_register, sagittal"> | <img src="../../docs/figures/affine/mri_robust_register_coronal.png" width="168" alt="mri_robust_register, coronal"> | <img src="../../docs/figures/affine/mri_robust_register_axial.png" width="168" alt="mri_robust_register, axial"> |
-| **ANTs** | <img src="../../docs/figures/affine/ants_sagittal.png" width="240" alt="ANTs, sagittal"> | <img src="../../docs/figures/affine/ants_coronal.png" width="168" alt="ANTs, coronal"> | <img src="../../docs/figures/affine/ants_axial.png" width="168" alt="ANTs, axial"> |
-| **mri_coreg** | <img src="../../docs/figures/affine/mri_coreg_sagittal.png" width="240" alt="mri_coreg, sagittal"> | <img src="../../docs/figures/affine/mri_coreg_coronal.png" width="168" alt="mri_coreg, coronal"> | <img src="../../docs/figures/affine/mri_coreg_axial.png" width="168" alt="mri_coreg, axial"> |
-| **FLIRT** | <img src="../../docs/figures/affine/flirt_sagittal.png" width="240" alt="FLIRT, sagittal"> | <img src="../../docs/figures/affine/flirt_coronal.png" width="168" alt="FLIRT, coronal"> | <img src="../../docs/figures/affine/flirt_axial.png" width="168" alt="FLIRT, axial"> |
-| **SynthMorph** | <img src="../../docs/figures/affine/synthmorph_sagittal.png" width="240" alt="SynthMorph, sagittal"> | <img src="../../docs/figures/affine/synthmorph_coronal.png" width="168" alt="SynthMorph, coronal"> | <img src="../../docs/figures/affine/synthmorph_axial.png" width="168" alt="SynthMorph, axial"> |
+| **MRI** | <img src="../../docs/figures/affine/mri_sagittal.png" width="240" alt="MRI, sagittal"> | <img src="../../docs/figures/affine/mri_coronal.png" width="166" alt="MRI, coronal"> | <img src="../../docs/figures/affine/mri_axial.png" width="166" alt="MRI, axial"> |
+| **image centres aligned (the start)** | <img src="../../docs/figures/affine/start_sagittal.png" width="240" alt="image centres aligned (the start), sagittal"> | <img src="../../docs/figures/affine/start_coronal.png" width="166" alt="image centres aligned (the start), coronal"> | <img src="../../docs/figures/affine/start_axial.png" width="166" alt="image centres aligned (the start), axial"> |
+| **octreg** | <img src="../../docs/figures/affine/octreg_sagittal.png" width="240" alt="octreg, sagittal"> | <img src="../../docs/figures/affine/octreg_coronal.png" width="166" alt="octreg, coronal"> | <img src="../../docs/figures/affine/octreg_axial.png" width="166" alt="octreg, axial"> |
+| **NiftyReg reg_aladin** | <img src="../../docs/figures/affine/reg_aladin_sagittal.png" width="240" alt="NiftyReg reg_aladin, sagittal"> | <img src="../../docs/figures/affine/reg_aladin_coronal.png" width="166" alt="NiftyReg reg_aladin, coronal"> | <img src="../../docs/figures/affine/reg_aladin_axial.png" width="166" alt="NiftyReg reg_aladin, axial"> |
+| **greedy** | <img src="../../docs/figures/affine/greedy_sagittal.png" width="240" alt="greedy, sagittal"> | <img src="../../docs/figures/affine/greedy_coronal.png" width="166" alt="greedy, coronal"> | <img src="../../docs/figures/affine/greedy_axial.png" width="166" alt="greedy, axial"> |
+| **elastix** | <img src="../../docs/figures/affine/elastix_sagittal.png" width="240" alt="elastix, sagittal"> | <img src="../../docs/figures/affine/elastix_coronal.png" width="166" alt="elastix, coronal"> | <img src="../../docs/figures/affine/elastix_axial.png" width="166" alt="elastix, axial"> |
+| **mri_robust_register** | <img src="../../docs/figures/affine/mri_robust_register_sagittal.png" width="240" alt="mri_robust_register, sagittal"> | <img src="../../docs/figures/affine/mri_robust_register_coronal.png" width="166" alt="mri_robust_register, coronal"> | <img src="../../docs/figures/affine/mri_robust_register_axial.png" width="166" alt="mri_robust_register, axial"> |
+| **ANTs** | <img src="../../docs/figures/affine/ants_sagittal.png" width="240" alt="ANTs, sagittal"> | <img src="../../docs/figures/affine/ants_coronal.png" width="166" alt="ANTs, coronal"> | <img src="../../docs/figures/affine/ants_axial.png" width="166" alt="ANTs, axial"> |
+| **mri_coreg** | <img src="../../docs/figures/affine/mri_coreg_sagittal.png" width="240" alt="mri_coreg, sagittal"> | <img src="../../docs/figures/affine/mri_coreg_coronal.png" width="166" alt="mri_coreg, coronal"> | <img src="../../docs/figures/affine/mri_coreg_axial.png" width="166" alt="mri_coreg, axial"> |
+| **FLIRT** | <img src="../../docs/figures/affine/flirt_sagittal.png" width="240" alt="FLIRT, sagittal"> | <img src="../../docs/figures/affine/flirt_coronal.png" width="166" alt="FLIRT, coronal"> | <img src="../../docs/figures/affine/flirt_axial.png" width="166" alt="FLIRT, axial"> |
+| **SynthMorph** | <img src="../../docs/figures/affine/synthmorph_sagittal.png" width="240" alt="SynthMorph, sagittal"> | <img src="../../docs/figures/affine/synthmorph_coronal.png" width="166" alt="SynthMorph, coronal"> | <img src="../../docs/figures/affine/synthmorph_axial.png" width="166" alt="SynthMorph, axial"> |
 
 | method | what the panels show |
 |---|---|
