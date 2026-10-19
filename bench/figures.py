@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """The freeview figures of the I58 pair in docs/figures.
 
-    python bench/figures.py [--octreg-run DIR] [--baselines DIR] [--deform-baselines DIR] [--ablation DIR] [--stages S]
+    python bench/figures.py [--mri MRI] [--oct OCT] [--octreg-run DIR] [--baselines DIR] [--ablation DIR] [--stages S]
                             [--window-from OCT] [-o docs/figures] [--work DIR]
 
   result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
                 the registered OCT, and the same OCT with the MRI tissue boundary
   affine/       the affine baselines at their settings in bench/baselines/README.md on the same planes, with the boundary
-  deformable/   the deformable baselines, started from octreg's affine, in the same way
   ablation/     the variants of bench/ablate.py (--ablation, with the turned runs in its turned/ folder) and the turned start
                 on the sagittal plane, with the boundary
 
@@ -18,15 +17,14 @@ freeview's default orientation applies: anterior on the right in sagittal planes
 and axial planes.
 
 The baseline overlays are read from the bench/baselines run directories under --baselines (default
-OCTREG_PROJECT_ROOT/baselines) and --deform-baselines. FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) must be set up in the
-shell with FS_LICENSE (default ~/freesurfer/license.txt), or on Windows in WSL (FREESURFER_HOME, default
-/usr/local/freesurfer/8.2.0, and FS_LICENSE passed through WSLENV or at the default path).
+OCTREG_PROJECT_ROOT/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) must be set up in the shell with FS_LICENSE
+(default ~/freesurfer/license.txt), or on Windows in WSL (FREESURFER_HOME, default /usr/local/freesurfer/8.2.0, and
+FS_LICENSE passed through WSLENV or at the default path).
 """
 from __future__ import annotations
 
 import argparse
 import json
-import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -36,32 +34,19 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
-from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT  # noqa: E402
+from bench.ablate import VARIANTS  # noqa: E402
+from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT, WSL, host_path  # noqa: E402
 
 AFFINE = [  # panel, overlay: RUN/... in the octreg run, else under --baselines
-    ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri_affine.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
+    ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
     ("greedy", "affine/greedy/centers"), ("elastix", "affine/elastix/center"),
     ("mri_robust_register", "affine/mri_robust_register/default_com"), ("ants", "affine/ants/com"),
     ("mri_coreg", "affine/mri_coreg/default"), ("flirt", "affine/flirt/search_x10"), ("synthmorph", "affine/synthmorph/affine")]
-DEFORM = [  # the same under --deform-baselines
-    ("affine", "RUN/oct_in_mri_affine.nii.gz"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("ants_syn", "deform/ants/syn_cc"),
-    ("elastix", "deform/elastix/default"), ("reg_f3d", "deform/niftyreg/default"), ("convexadam", "deform/convexadam/default"),
-    ("greedy", "deform/greedy/wncc")]
-ABLATION = [  # panel, under --ablation: a bench/ablate.py run directory or a 4x4 text file
-    ("no_outline", "no_outline"), ("outline_decides", "outline_decides"), ("no_search", "no_search"),
-    ("no_refine", "no_refine"), ("first_choice", "first_choice"), ("no_prior", "no_prior"), ("signed", "signed"),
-    ("signed_neg", "signed_neg"), ("tracefree", "tracefree"), ("search_whole_mask", "search_whole_mask"), ("df_free", "df_free"),
+ABLATION = [(v, v) for v in VARIANTS] + [  # panel, under --ablation: a bench/ablate.py run directory or a 4x4 text file
     ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
     ("turned_octreg", "turned/base")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
-STAGES = ("result", "affine", "deformable", "ablation")
-WSL = platform.system() == "Windows"
-
-
-def host_path(p: Path) -> str:
-    """Path as the FreeSurfer shell sees it, /mnt/<drive>/... in WSL."""
-    s = str(Path(p).resolve()).replace("\\", "/")
-    return "/mnt/" + s[0].lower() + s[2:] if WSL and len(s) > 1 and s[1] == ":" else s
+STAGES = ("result", "affine", "ablation")
 
 
 def freeview_window(path):
@@ -111,14 +96,14 @@ def overlays(abl, run, oct_path, mri):
             out[name] = abl / sub / "oct_in_mri.nii.gz"
             continue
         T = np.loadtxt(abl / sub)
-        d, f = abl / "overlays" / name, "oct_in_mri_affine.nii.gz"
+        d, f = abl / "overlays" / name, "oct_in_mri.nii.gz"
         res, made_from = {"inputs": inputs, "T_oct2mri": T.tolist()}, d / "result.json"
         if not made_from.is_file() or json.loads(made_from.read_text(encoding="utf-8")) != res:
             d.mkdir(parents=True, exist_ok=True)              # written only when T changes, so its mtime dates T
             io.write_transform_txt(T, d / "T_oct2mri.txt")
             io.write_json(res, made_from)
         if not (d / f).is_file() or (d / f).stat().st_mtime < made_from.stat().st_mtime:
-            apply(d, oct_path, mri, d / f, affine_only=True)
+            apply(d, oct_path, mri, d / f)
         out[name] = d / f
     return out
 
@@ -130,7 +115,7 @@ def mri_tissue(img):
     return pp.foreground(np.asarray(img.dataobj, np.float32), float(np.linalg.norm(img.affine[:3, :3], axis=0).min()), Params())
 
 
-def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, deform_baselines=None, stages=STAGES):
+def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, stages=STAGES):
     """freeview -cmd sessions, one per panel size, for the folders in stages. -> [(name, lines)], {png path: (W, H)}
     middle is the RAS point (mm) of the planes, windows the (lo, hi) of the MRI and of the OCT."""
     img = nib.load(str(mri))
@@ -143,15 +128,14 @@ def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, def
     for plane in PLANES if "result" in stages else ():
         lines, wh = view(img, plane, middle)
         d = out / "result"
-        S.append((f"result_{plane}", [v_mri, *lines, ss(d / f"{plane}_mri.png"), "-hide volume", oct_v(run / "oct_in_mri.nii.gz"),
-                                      ss(d / f"{plane}_oct.png"), f_line, ss(d / f"{plane}_oct_boundary.png"), "-quit"]))
+        S.append((f"result_{plane}", [v_mri, *lines, ss(d / f"{plane}_mri.png"), "-hide volume",
+                                      oct_v(run / "oct_in_mri.nii.gz"), ss(d / f"{plane}_oct.png"), f_line,
+                                      ss(d / f"{plane}_oct_boundary.png"), "-quit"]))
         expect.update({d / f"{plane}_{n}.png": wh for n in ("mri", "oct", "oct_boundary")})
-    for stage, rows, file in (("affine", AFFINE, "oct_in_mri_affine.nii.gz"), ("deformable", DEFORM, "oct_in_mri.nii.gz")):
-        if stage not in stages:
-            continue
-        d = out / stage
-        root = (deform_baselines or baselines) if stage == "deformable" else baselines
-        srcs = {name: run / sub[4:] if sub.startswith("RUN/") else root / sub / file for name, sub in rows}
+    if "affine" in stages:
+        d = out / "affine"
+        srcs = {name: run / sub[4:] if sub.startswith("RUN/") else baselines / sub / "oct_in_mri.nii.gz"
+                for name, sub in AFFINE}
         missing = [str(f) for f in srcs.values() if not f.is_file()]
         if missing:
             raise FileNotFoundError(", ".join(missing))
@@ -160,7 +144,7 @@ def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, def
             cmd = [v_mri, f_line, *lines, ss(d / f"mri_{plane}.png"), "-hide volume"]
             for name, src in srcs.items():
                 cmd += [oct_v(src), ss(d / f"{name}_{plane}.png"), "-unload volume"]
-            S.append((f"{stage}_{plane}", cmd + ["-quit"]))
+            S.append((f"affine_{plane}", cmd + ["-quit"]))
             expect.update({d / f"{n}_{plane}.png": wh for n in ["mri"] + list(srcs)})
     if ablation and "ablation" in stages:
         lines, wh = view(img, "sagittal", middle)
@@ -173,19 +157,33 @@ def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, def
     return S, expect
 
 
+def fs_script(work, body):
+    """bash lines that set up FreeSurfer 8.2 and its licence, change to the folder work and run the lines body."""
+    return ["#!/bin/bash", "set -e", 'if [ -n "$FREESURFER_HOME" ] || [ -d /usr/local/freesurfer/8.2.0 ]; then',
+            '  export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}',
+            '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi',
+            "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}", f"cd {host_path(work)}", *body]
+
+
+def check_sizes(expect):
+    """Exit naming every PNG of expect {path: (W, H)} that is missing or of another size."""
+    from PIL import Image
+    bad = [f"{p}: {Image.open(p).size if p.is_file() else 'missing'}, expected {wh}" for p, wh in expect.items()
+           if not p.is_file() or Image.open(p).size != wh]
+    if bad:
+        sys.exit("\n".join(bad))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--mri", type=Path, default=MRI_I58)
     ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
     ap.add_argument("--baselines", type=Path, default=PROJECT_ROOT / "baselines")
-    ap.add_argument("--deform-baselines", type=Path, default=None,
-                    help="the root of the deformable baseline runs, started from this octreg run's affine "
-                    "(default: --baselines)")
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "ablation",
                     help="the output of bench/ablate.py on the I58 pair (bench/README.md). Its panels are "
                     "skipped when it does not exist")
     ap.add_argument("--oct", type=Path, default=OCT_I58)
-    ap.add_argument("--stages", default=",".join(STAGES), help="comma-separated folders to make (default: all four)")
+    ap.add_argument("--stages", default=",".join(STAGES), help="comma-separated folders to make (default: all three)")
     ap.add_argument("--window-from", type=Path, default=PROJECT_ROOT / "baselines" / "inputs" / "oct_0.08mm.nii.gz",
                     help="the volume whose freeview default window every OCT panel takes (default: the moving image of "
                     "bench/baselines)")
@@ -193,7 +191,7 @@ def main():
     ap.add_argument("--work", type=Path, default=BENCH_RUNS / "I58" / "figures")
     a = ap.parse_args()
     a.work.mkdir(parents=True, exist_ok=True)
-    for d in ("result", "affine", "deformable", "ablation"):
+    for d in STAGES:
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
@@ -217,13 +215,9 @@ def main():
     if abl is None:
         print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again"
               if "ablation" in stages else "the ablation panels are not made (--stages)")
-    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, windows, abl, a.deform_baselines, stages)
-    sh = ["#!/bin/bash", "set -e", 'if [ -n "$FREESURFER_HOME" ] || [ -d /usr/local/freesurfer/8.2.0 ]; then',
-          '  export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}',
-          '  source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1; fi',
-          "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}", f"cd {host_path(a.work)}",
-          "mri_mc mri_tissue.nii.gz 1 mri_tissue_raw.surf > mri_mc.log 2>&1",
-          "mris_smooth -n 3 -nw mri_tissue_raw.surf mri_tissue.surf > mris_smooth.log 2>&1"]
+    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, windows, abl, stages)
+    sh = fs_script(a.work, ["mri_mc mri_tissue.nii.gz 1 mri_tissue_raw.surf > mri_mc.log 2>&1",
+                            "mris_smooth -n 3 -nw mri_tissue_raw.surf mri_tissue.surf > mris_smooth.log 2>&1"])
     for name, lines in S:
         (a.work / f"{name}.cmd").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
         sh.append(f"freeview -cmd {name}.cmd > {name}.log 2>&1")
@@ -231,12 +225,7 @@ def main():
     for p in expect:
         p.unlink(missing_ok=True)
     subprocess.run((["wsl"] if WSL else []) + ["bash", host_path(a.work / "figures.sh")], check=True)
-
-    from PIL import Image
-    bad = [f"{p}: {Image.open(p).size if p.is_file() else 'missing'}, expected {wh}" for p, wh in expect.items()
-           if not p.is_file() or Image.open(p).size != wh]
-    if bad:
-        sys.exit("\n".join(bad))
+    check_sizes(expect)
     (a.out / "figures.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8")
     print(f"{len(expect)} panels in {a.out}")
 

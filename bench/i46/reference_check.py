@@ -19,7 +19,6 @@ import itertools
 import json
 import sys
 import time
-from functools import lru_cache
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -28,10 +27,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import labelfit as lf  # noqa: E402
-from common import (AUTHORS, FLIPS, LABELS, OCT_TIFF, RESULTS, SPACING, TIFF_SHAPE, VESSELS_TIFF,  # noqa: E402
-                    authors_oct_header, error, lta_matrix, mri_file, reference, tissue, vessel_score)
+from common import (AUTHORS, CHOSEN, FLIPS, LABELS, OCT_TIFF, RESULTS, SLAB, SPACING, TIFF_SHAPE, VESSELS_TIFF,  # noqa: E402
+                    error, lta_matrix, mri_file, oct_header, reference, slab_lattices, tissue, vessel_score)
 
-SLAB = 33                                   # OCT planes per 500 um section
 DS = 8                                      # OCT voxels per block and axis for the correlation
 OCT_BLOCKS, VESSEL_VOXELS = 120_000, 100_000
 NEAR_VESSEL = 0.15                          # mm
@@ -40,7 +38,6 @@ SPLITS = 10
 ROTATIONS, PEAKS, CANDIDATES = 20_000, 3, 40
 DISTINCT = 1.5                              # mm
 SHIFTS, DIRECTIONS = (0.5, 1.0), 12
-CHOSEN = {"depth_sign": 1, "slab08": 0, "swap": True, "sign_y": -1, "sign_x": -1}
 ORIENTATION = ("depth_sign", "swap", "sign_y", "sign_x")
 STAGES = ("lattice", "frame", "labels", "search", "vessels")
 
@@ -58,44 +55,15 @@ def compare(T, R):
     return {k: e[k] for k in ("mean_mm", "median_mm", "p95_mm", "max_mm", "rotation_deg")}
 
 
-@lru_cache(None)
-def lattices():
-    """The mean of the 16 lattice centres of the authors' OCT -> LSFM fields and the unit axes of the lattice of svf.08."""
-    centres, ax = [], None
-    for i in range(8, 24):
-        img = nib.load(str(AUTHORS / f"oct2lsfm/svf.{i:02d}.nii.gz"))
-        centres.append((img.affine @ np.r_[(np.array(img.shape[:3]) - 1) / 2, 1])[:3])
-        if ax is None:
-            ax = img.affine[:3, :3] / np.linalg.norm(img.affine[:3, :3], axis=0)
-    return np.mean(centres, 0), ax
-
-
 def lattice_steps():
     """Steps between consecutive slab centres along the depth axis, and the offset of their mean from equal steps."""
-    centres, ax = [], None
-    for i in range(8, 24):
-        img = nib.load(str(AUTHORS / f"oct2lsfm/svf.{i:02d}.nii.gz"))
-        centres.append((img.affine @ np.r_[(np.array(img.shape[:3]) - 1) / 2, 1])[:3])
-        if ax is None:
-            ax = img.affine[:3, :3] / np.linalg.norm(img.affine[:3, :3], axis=0)
-    p = np.array(centres) @ -ax[:, 2]
+    centres, ax = slab_lattices()
+    p = centres @ -ax[:, 2]
     step, n = SLAB * 0.012, len(p)
     first, last = p[0] + step * np.arange(n), p[-1] - step * np.arange(n)[::-1]
     return {"steps_mm": [r4(x) for x in np.diff(p)], "plane_step_mm": round(step, 4),
             "mean_offset_mm": {"equal_steps_from_first": r4(p.mean() - first.mean()),
                                "equal_steps_from_last": r4(p.mean() - last.mean())}}
-
-
-def oct_header(depth_sign, slab08, swap, sign_y, sign_x):
-    """The authors' OCT header for one choice, built like common.authors_oct_header, which is the choice CHOSEN.
-    LSFM slab i lies at OCT slab slab08 + depth_sign (i - 8). swap puts lattice axis 1 along TIFF y and axis 0 along TIFF x."""
-    centre, ax = lattices()
-    ey, ex = (ax[:, 1], ax[:, 0]) if swap else (ax[:, 0], ax[:, 1])
-    M = np.eye(4)
-    M[:3, 0], M[:3, 1], M[:3, 2] = -depth_sign * ax[:, 2] * 0.012, sign_y * ey * 0.012, sign_x * ex * 0.012
-    plane = np.mean([SLAB * (slab08 + depth_sign * (i - 8)) + (SLAB - 1) / 2 for i in range(8, 24)])
-    M[:3, 3] = centre - M[:3, :3] @ np.array([plane, (TIFF_SHAPE[1] - 1) / 2, (TIFF_SHAPE[2] - 1) / 2])
-    return M
 
 
 def headers():
@@ -143,8 +111,6 @@ def frame_check(box, box_aff):
     chain = lta_matrix(AUTHORS / "mri/recon2raw.lta") @ lta_matrix(AUTHORS / "mri2oct/affine.lta")
     hs = headers()
     Ms = [oct_header(**h) for h in hs]
-    if not np.allclose(oct_header(**CHOSEN), authors_oct_header(), atol=1e-9):
-        sys.exit("oct_header(CHOSEN) differs from common.authors_oct_header")
     to_vox = [np.linalg.inv(f1.affine) @ chain @ M for M in Ms]
     n = np.array(TIFF_SHAPE) - 1
     corners = np.array(list(itertools.product((0, n[0]), (0, n[1]), (0, n[2]))), float)

@@ -85,8 +85,8 @@ class Outline:
     OCT mask w with the MRI foreground M over the measured voxels, weighted by q (1 - (1 - w) E), E = M inside the MRI grid
     and 1 outside. As in the search it is one-sided, so medium over MRI tissue or beyond the crop is left out."""
 
-    def __init__(self, mri_mask, A_M, oct_mask, oct_valid, A_O, device="cuda"):
-        q, w = to_torch(oct_valid, device), to_torch(oct_mask, device)
+    def __init__(self, mri_mask, A_M, oct_mask, oct_measured, A_O, device="cuda"):
+        q, w = to_torch(oct_measured, device), to_torch(oct_mask, device)
         idx = torch.nonzero(q > 0)
         self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
         self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
@@ -118,7 +118,7 @@ def test_maps_are_the_direct_sums():
         t = np.array(np.unravel_index(index_of(s, T), s.shape))
         for u in (t, t + (2, -1, 0), t + (-1, 1, 3), t + (-11, 0, 0)):        # (-11, 0, 0): OCT tissue beyond the crop
             idx = int(np.ravel_multi_index(tuple(u), s.shape))
-            assert bool(s.valid.reshape(-1)[idx])
+            assert bool(s.inside.reshape(-1)[idx])
             assert abs(float(Fm.reshape(-1)[idx]) - direct_F(s, m, R, idx)) < 1e-3
             P = s.pose(np.eye(3), idx)
             assert abs(float(Om.reshape(-1)[idx]) - float(out(torch.as_tensor(P, dtype=torch.float32)))) < 1e-4
@@ -167,8 +167,8 @@ def test_thin_specimen():
         search(*mri, oct_[0], w, oct_[2], oct_[3], FAST, "cpu", False)
 
 
-def test_oblique_mri_axes_and_per_mm_eps():
-    """The search recovers the pose on oblique MRI axes, and eps_O is the median of per-mm OCT gradients."""
+def test_oblique_mri_axes_and_eps_over_the_erosion():
+    """The search recovers the pose on oblique MRI axes, and eps_O is taken over the erosion of the specimen mask."""
     from octreg.features import eroded, gradient_field, median_norm
     (_, _, A_M), oct_, T = phantom(5)
     Rq = G.rotations(1000)[37]

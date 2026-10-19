@@ -1,10 +1,10 @@
 # octreg: method
 
 octreg registers an OCT volume of an embedded tissue block to an ex-vivo MRI cropped around it. It finds an affine transform
-from any starting orientation (§1 to §4) and adds a small smooth deformation on top (§5). The search, the refinement and the
-deformation maximise one similarity F, the correlation of gradient-orientation tensors of the two volumes (§2). An outline term
-O proposes further poses in the search. The tensor ignores the sign of an edge, so F needs neither an intensity mapping between
-OCT and MRI nor their contrast polarity.
+from any starting orientation. The search (§3) and the refinement (§4) maximise one similarity F, the correlation of
+gradient-orientation tensors of the two volumes (§2), inside the masks of §1. An outline term O proposes further poses in the
+search. The tensor ignores the sign of an edge, so F needs neither an intensity mapping between OCT and MRI nor their contrast
+polarity.
 
 ## Inputs and frames
 
@@ -18,23 +18,24 @@ Transforms map millimetres in the world frame of the OCT file to that of the MRI
 or, for TIFF and NPY, diag(spacing) on the axes (x, y, z) = numpy axes (2, 1, 0). The two volumes show the same specimen, so
 they differ by a proper rotation and never by a mirror image. The file frames fix the handedness, and §3 searches proper
 rotations only. The OCT is streamed plane by plane into a 0.04 mm fine grid, where the specimen mask is computed. Both volumes
-then have a 0.15 mm base grid, for the OCT a box average of the fine grid (masks kept above 0.5). The search of §3 runs on a 0.6
-mm box average of the base grid.
+then have a 0.15 mm base grid, for the OCT a box average of the fine grid (masks kept above 0.5), and the MRI foreground is
+computed on it. The search of §3 runs on a 0.6 mm box average of the base grid.
 
 ## §1 Masks
 
 **OCT specimen mask.** A voxel is specimen when it has signal and isotropic texture. Both are decided by one threshold rule,
-each on its own histogram: the lower of Otsu's threshold and the foot of the tallest peak on its low side (the triangle
-threshold of Zack et al., J. Histochem. Cytochem. 25:741, 1977, taken on the low side). With two modes Otsu's threshold falls
-between them. With one mode it would split that mode, and the foot of that mode lies below Otsu's threshold. Signal is a log
-intensity above the threshold of the measured voxels, the positive ones. Texture separates doped agarose, which can be as bright
-as tissue, from tissue: section stripes vary only along the sectioning axis and tile seams only across the seam, while tissue
-varies along every direction. On the signal voxels the OCT is smoothed (normalised Gaussian, σ 0.08 mm), the running coefficient
-of variation c_a is computed along each array axis over 0.36 mm, C = min_a c_a is averaged onto a 0.16 mm texture grid, and log
-C is smoothed on that grid (normalised Gaussian, σ 1.2 mm). The specimen is the signal voxels where log C lies above its
-threshold, its components holding at least 1 % of it, with holes filled in every array plane: uniform tissue such as a
-white-matter bundle leaves holes, and a hole that reaches a cut face is not enclosed in 3-D. Voxels at or below zero are missing
-data and never specimen. A mask can be given as a file instead (`--oct-mask`).
+each on its own histogram of 256 bins over the range of its values: the lower of Otsu's threshold and the foot of the tallest
+peak on its low side (the triangle threshold of Zack et al., J. Histochem. Cytochem. 25:741, 1977, taken on the low side). With
+two modes Otsu's threshold falls between them. With one mode it would split that mode, and the foot of that mode lies below
+Otsu's threshold. Signal is a log intensity above the threshold of the measured voxels, the positive ones. Texture separates
+doped agarose, which can be as bright as tissue, from tissue: section stripes vary only along the sectioning axis and tile seams
+only across the seam, while tissue varies along every direction. On the signal voxels the OCT is smoothed (normalised Gaussian,
+σ 0.08 mm), and the running coefficient of variation c_a is computed along each array axis over 0.36 mm where at least half of
+that window is signal. C = min_a c_a is averaged onto a 0.16 mm texture grid, whose blocks count where at least half of their
+voxels have a C, and log C is smoothed over those blocks (normalised Gaussian, σ 1.2 mm). The specimen is the signal voxels
+where log C lies above its threshold, its components holding at least 1 % of it, with holes filled in every array plane: uniform
+tissue such as a white-matter bundle leaves holes, and a hole that reaches a cut face is not enclosed in 3-D. Voxels at or below
+zero are missing data and never specimen. A mask can be given as a file instead (`--oct-mask`).
 
 **MRI foreground.** The candidate foreground of a histogram valley is the voxels above it, with holes filled and components
 below 1 % of it dropped. The threshold is the first valley, walking down from the brightest peak, whose count is less than half
@@ -68,13 +69,15 @@ F is taken over the block, not over the overlap of the two volumes. OCT tissue t
 while MRI tissue outside the block does not enter it.
 
 **Outline O.** O is the correlation of the OCT specimen mask w with the MRI foreground M(T x) over the measured OCT voxels,
-weighted by q (1 − (1 − w) E), with q the measured fraction and E = M inside the MRI crop and 1 outside. OCT tissue has to lie
-on MRI tissue, but medium over MRI tissue is no mismatch, since the crop can hold tissue beyond a face where the block was cut
-out. The weight leaves that case out. O places a block by its shape where its internal structure is weak, as for a whole piece
-of brainstem surrounded by medium. For a block cut out of a larger specimen O is about the same wherever the block lies inside
-the MRI tissue, so O only proposes poses and F decides between them (§3, §4). O is computed when both images show medium around
-the tissue: the measured OCT voxels outside the specimen mask, eroded by one base voxel, are at least 1 % of the measured OCT
-voxels, and the MRI voxels outside the foreground, eroded by one base voxel, are at least 1 % of the MRI grid.
+weighted by q (1 − (1 − w) E), with q the measured fraction and E = M inside the MRI crop and 1 outside. The variance of M under
+that weight counts as at least 2 % of the variance of M over the crop, so O stays near 0 where M hardly varies under the block.
+OCT tissue has to lie on MRI tissue, but medium over MRI tissue is no mismatch, since the crop can hold tissue beyond a face
+where the block was cut out. The weight leaves that case out. O places a block by its shape where its internal structure is
+weak, as for a whole piece of brainstem surrounded by medium. For a block cut out of a larger specimen O is about the same
+wherever the block lies inside the MRI tissue, so O only proposes poses and F decides between them (§3, §4). O is computed when
+both images show medium around the tissue: the measured OCT voxels outside the specimen mask, eroded by one base voxel, are at
+least 1 % of the measured OCT voxels, and the MRI voxels outside the foreground, eroded by one base voxel, are at least 1 % of
+the MRI grid.
 
 ## §3 Orientation search
 
@@ -107,23 +110,6 @@ OCT box corners: 0.06 mm for t and 0.06 mm / ρ for r, ℓ and h, ρ the radius 
 sizes are right, since F alone can reward distorting the block. Of the poses whose final L lies within 10⁻⁵ of the lowest, the
 one proposed first wins.
 
-## §5 Smooth deformation
-
-The specimen deforms slightly between the MRI scan and the OCT embedding, and sectioning adds small distortions. §5 fits a
-displacement d on top of the affine. The OCT point x goes to y = T x + d(T x), with d trilinear on a lattice of 5 mm spacing
-over the MRI grid, and d is fitted to F of §2 over the same OCT points. Their gradients go through the affine and, to first
-order, through the field, (I − ∇dᵀ) A⁻ᵀ g, so that a stretch or turn of the tissue turns its edges with it. The objective is
-
-$$-F + \kappa \sum \max\!\big(0,\; |\Delta d| / \delta - s\big)^2 ,$$
-
-over every component Δd of the differences of d between neighbouring lattice nodes along the lattice axes, with δ = 5 mm the
-lattice spacing, the strain bound s = 0.08 and κ = 1000. Every entry of ∇d then stays near or below s, so d is a contraction for
-s < 1/3 and id + d is invertible. L-BFGS with a strong-Wolfe line search runs one pass at σ 0.6 mm and one at 0.3 mm, each
-stopped once it has used 250 evaluations of the objective. The output is the pull-back field u on the MRI base grid: at an MRI
-point x, x + u(x) = (id + d)⁻¹(x) by fixed-point iteration, and the registered OCT at x is OCT(T⁻¹(x + u(x))). The affine stays
-the primary result: `T_oct2mri.txt`, `oct2mri.lta` and `oct2mri_itk.txt` hold it alone, and u is written to
-`oct2mri_warp.nii.gz`.
-
 ## Parameters
 
 The parameters are fields of `octreg.params.Params` (override with `--params`).
@@ -138,8 +124,6 @@ The parameters are fields of `octreg.params.Params` (override with `--params`).
 | `search_sigma_mm`, `n_rot`, `topk` | 1.2 mm, 8000, 24 | §3: gradient scale, rotations, poses refined |
 | `nms_mm`, `nms_deg` | 3 mm, 20° | §3: poses closer in both count as one |
 | `sigmas_mm`, `iters`, `lam`, `lr_mm` | 0.6, 0.4, 0.3 mm, 150, 2, 0.06 mm | §4: gradient scales of the passes, Adam iterations per pass, prior weight λ, step |
-| `df_grid_mm`, `df_max_strain` | 5 mm, 0.08 | §5: lattice spacing, strain bound |
-| `df_sigmas_mm`, `df_evals` | 0.6, 0.3 mm, 250 | §5: gradient scales, objective evaluations after which a pass stops |
 
 ## Scope
 

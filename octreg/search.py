@@ -9,11 +9,10 @@ import torch
 import torch.nn.functional as F
 
 from . import geometry as G
-from .features import eroded, orientation_tensor, to_torch
+from .features import MIN_POINTS, MRITensors, eroded, gradient_field, median_norm, tensors, to_torch
 from .params import Params
 
 EPS = 1e-6
-MIN_POINTS = 10
 DIMS = (-3, -2, -1)
 
 
@@ -25,16 +24,12 @@ def angle_deg(R1, R2):
 class Searcher:
     """Score maps of one orientation at a time against the zero-padded MRI grid."""
 
-    def __init__(self, mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, sigma_mm, erode_mm, device="cuda"):
+    def __init__(self, mri, mri_mask, mri_affine, oct_, oct_w, oct_measured, oct_affine, sigma_mm, erode_mm, device="cuda"):
         """mri and mri_mask (foreground fraction M) on the isotropic grid mri_affine, oct_, oct_w (specimen mask) and
-        oct_valid (measured fraction) on oct_affine. The OCT points lie farther than erode_mm inside the specimen mask."""
+        oct_measured (measured fraction) on oct_affine. The OCT points lie farther than erode_mm inside the specimen mask."""
         self.dev = device
-        I, M, o, w, q = (to_torch(x, device) for x in (mri, mri_mask, oct_, oct_w, oct_valid))
+        I, M, o, w, q = (to_torch(x, device) for x in (mri, mri_mask, oct_, oct_w, oct_measured))
         A_M, A_O = np.asarray(mri_affine, float), np.asarray(oct_affine, float)
-        if not float(w.sum()) > 0:
-            raise ValueError("OCT specimen mask is empty on the search grid")
-        if not bool((M > 0.5).any()):
-            raise ValueError("no MRI foreground on the search grid")
         h = float(np.linalg.norm(A_M[:3, :3], axis=0).mean())
         self.sig = sigma_mm / h
         self.to_world = torch.as_tensor(np.linalg.inv(A_M[:3, :3]).T, dtype=torch.float32, device=device)
@@ -43,13 +38,9 @@ class Searcher:
         if int(inner.sum()) < MIN_POINTS or int((M > 0.5).sum()) < MIN_POINTS:
             raise ValueError(f"fewer than {MIN_POINTS} OCT points ({erode_mm} mm inside the specimen mask) or MRI foreground "
                              "voxels on the search grid")
-        Mb = (M > 0.5).float()  # gradients inside the binary mask, as in features
-        gM = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(I * Mb, Mb, self.sig))
-        eps_M = gM.norm(dim=0)[Mb > 0].median()
-        TM = orientation_tensor(gM / torch.sqrt((gM * gM).sum(0) + eps_M ** 2))
+        TM = MRITensors(I, M > 0.5, A_M, sigma_mm, device).field
         # gradients inside the erosion, unlike §2: at this scale medium inside the mask adds an edge reaching the points
-        gO = G.nc_gradient(o * inner, inner, sigma_mm / h_o)
-        self.eps_O = gO.norm(dim=0)[inner > 0].median() / h_o         # per mm, as the template gradients
+        self.eps_O = median_norm(gradient_field(o, inner, A_O, sigma_mm, device), inner)
         self.c_o, radius = G.box(A_O, w.shape)
         self.n = n = math.ceil(2 * radius / h) + 3
         pad = n // 2 + 1                                               # so a block over the edge of the crop is still scored
@@ -61,9 +52,8 @@ class Searcher:
         self.FT, self.FT2 = torch.fft.rfftn(TMp, dim=DIMS), torch.fft.rfftn((TMp * TMp).sum(0), dim=DIMS)
         self.FM, self.FM2, self.FM3 = (torch.fft.rfftn(Mp ** k, dim=DIMS) for k in (1, 2, 3))
         self.FE = torch.fft.rfftn(F.pad(M[None], [pad] * 6, value=1.0)[0], dim=DIMS)             # E: M in the crop, 1 outside
-        # variance floor of M per unit weight: O stays near 0 where M is almost constant under the template
-        self.var_floor = float(Mp.var()) * 0.02
-        del TMp, Mp, TM, gM
+        self.var_floor = 0.02 * float(M.var())
+        del TMp, Mp, TM
         self.src = F.pad(torch.stack([o, w, q, inner])[None], [1] * 6)[0]
         self.A_src = A_O.copy()
         self.A_src[:3, 3] -= A_O[:3, :3] @ np.ones(3)
@@ -71,8 +61,8 @@ class Searcher:
         L_M = torch.as_tensor(self.A_M[:3, :3], dtype=torch.float32, device=device)
         self.tgrid = torch.stack(torch.meshgrid(k, k, k, indexing="ij"), -1).reshape(-1, 3) @ L_M.T  # offsets on MRI axes, mm
         self.c_t = torch.as_tensor(self.c_o, dtype=torch.float32, device=device)
-        self.valid = torch.zeros(sh, dtype=torch.bool, device=device)                                 # template inside the grid
-        self.valid[:sh[0] - n + 1, :sh[1] - n + 1, :sh[2] - n + 1] = True
+        self.inside = torch.zeros(sh, dtype=torch.bool, device=device)                                # template inside the grid
+        self.inside[:sh[0] - n + 1, :sh[1] - n + 1, :sh[2] - n + 1] = True
 
     def _ft(self, x):
         """Conjugate FFT of a template x [..., n, n, n] placed at the grid origin."""
@@ -93,7 +83,7 @@ class Searcher:
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)
         wt = (inner > 0.5).float()                                    # the OCT points, also the support of their gradients
         g = torch.einsum("ij,jklm->iklm", self.to_world, G.nc_gradient(v * wt, wt, self.sig))
-        T = orientation_tensor(g / torch.sqrt((g * g).sum(0) + self.eps_O ** 2))
+        T = tensors(g, self.eps_O)
         N = wt.sum() + EPS
         Fw, FwT = self._ft(wt), self._ft(wt[None] * T)
         ST, STT = (wt[None] * T).sum(DIMS), (wt[None] * T * T).sum()
@@ -122,18 +112,19 @@ class Searcher:
         return T
 
 
-def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params: Params = Params(), device="cuda", outline=True):
+def search(mri, mri_mask, mri_affine, oct_, oct_w, oct_measured, oct_affine, params: Params = Params(), device="cuda",
+           outline=True):
     """Orientation search over geometry.rotations(n_rot), arguments as Searcher. -> candidates [{T 4x4, F, O}]
     After non-maximum suppression, with the outline the best topk // 2 by S = (F + O) / 2 come first, then the best by F up
     to topk. Without the outline O is None."""
     P = params
-    s = Searcher(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, P.search_sigma_mm, P.erode_mm, device)
+    s = Searcher(mri, mri_mask, mri_affine, oct_, oct_w, oct_measured, oct_affine, P.search_sigma_mm, P.erode_mm, device)
     Rs = G.rotations(P.n_rot)
     lists = ([], []) if outline else ([],)
     for i, R in enumerate(Rs):
         Fm, Om = s.score(R, outline)
         for found, X in zip(lists, (((Fm + Om) / 2) if outline else Fm, Fm)):
-            j = int(torch.argmax(X.masked_fill(~s.valid, float("-inf"))))
+            j = int(torch.argmax(X.masked_fill(~s.inside, float("-inf"))))
             o = None if Om is None else float(Om.reshape(-1)[j])
             found.append((float(X.reshape(-1)[j]), i, j, float(Fm.reshape(-1)[j]), o))
     kept = []

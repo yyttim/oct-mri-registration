@@ -1,7 +1,7 @@
 # octreg
 
 octreg registers a serial-sectioning OCT volume of a tissue block to an ex-vivo MRI cropped around the block. It finds an affine
-transform from any starting orientation and adds a small smooth deformation on top, with no labels and no manual start.
+transform from any starting orientation, with no labels and no manual start.
 
 | sagittal | coronal | axial |
 |---|---|---|
@@ -20,8 +20,8 @@ On the sagittal and coronal planes the line also runs past the top and bottom of
 
 ## Method
 
-The search, the refinement and the deformation maximise one similarity, the correlation of the gradient-orientation tensors of
-the two volumes (§2 of [docs/METHOD.md](docs/METHOD.md)),
+The search and the refinement maximise one similarity, the correlation of the gradient-orientation tensors of the two volumes
+(§2 of [docs/METHOD.md](docs/METHOD.md)),
 
 $$F = \operatorname{corr}\big(P(n_\text{OCT}),\, P(n_\text{MRI})\big), \qquad P(n) = n n^\top,$$
 
@@ -39,7 +39,6 @@ al., 2022). F is normalised over the OCT block, with the MRI tensors zero outsid
   specimen mask with the MRI foreground, places a block by its shape. 24 poses are kept.
 - **§4 Affine refinement.** Every pose is refined on F to a 12-parameter affine under a prior on scale and shear, on a 0.15 mm
   grid with gradient scales from 0.6 down to 0.3 mm, and the pose with the lowest final loss, 1 − F plus the prior, wins.
-- **§5 Deformation.** A displacement field on a 5 mm lattice is fitted to F under a strain bound of 8 %.
 
 [docs/METHOD.md](docs/METHOD.md) gives the equations and the parameters.
 
@@ -57,28 +56,25 @@ adds the test dependencies, and `pytest` runs the tests on synthetic data on the
 ## Usage
 
 ```
-octreg register OCT MRI -o OUT [--oct-spacing-um Z,Y,X] [--oct-mask F] [--mri-mask F] [--params F] [--no-deform]
-                [--device cuda|cpu]
-octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--affine-only] [--oct-spacing-um Z,Y,X]
+octreg register OCT MRI -o OUT [--oct-spacing-um Z,Y,X] [--oct-mask F] [--mri-mask F] [--params F] [--device cuda|cpu]
+octreg apply --run OUT --moving X --reference Y -o Z [--inverse] [--oct-spacing-um Z,Y,X]
 ```
 
-`register` writes the outputs below into `OUT`, with `--no-deform` all but `oct2mri_warp.nii.gz` and `qc_deform.png`. The OCT
-can be NIfTI, TIFF, OME-TIFF or NPY, and the MRI is NIfTI. `--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy
-axes z, y, x, which a TIFF or NPY without spacing needs. It overrides the spacing in the file, also that of an `--oct-mask` of
-the OCT's array shape. `--oct-mask` and `--mri-mask` replace the masks of §1 with files whose positive voxels are the mask, and
-the OCT file itself serves when it is exactly zero outside the tissue. `--params` reads overrides of `octreg.params.Params` from
-JSON, and `--no-deform` stops after the affine. `apply` resamples an OCT-frame volume onto an MRI-frame reference through the
-affine and the deformation (`--affine-only` leaves it out), or an MRI-frame volume onto an OCT-frame reference through the
-inverse affine with `--inverse`. The same functions are available in Python: `from octreg.register import register, apply`.
+`register` writes the outputs below into `OUT`. The OCT can be NIfTI, TIFF, OME-TIFF or NPY, and the MRI is NIfTI.
+`--oct-spacing-um` gives the OCT voxel spacing in µm along the numpy axes z, y, x, which a TIFF or NPY without spacing needs. It
+overrides the spacing in the file, also that of an `--oct-mask` of the OCT's array shape. `--oct-mask` and `--mri-mask` replace
+the masks of §1 with files whose positive voxels are the mask, and the OCT file itself serves when it is exactly zero outside
+the tissue. `--params` reads overrides of `octreg.params.Params` from JSON. `apply` resamples an OCT-frame volume onto an
+MRI-frame reference through the affine, or an MRI-frame volume onto an OCT-frame reference through the inverse affine with
+`--inverse`. The same functions are available in Python: `from octreg.register import register, apply`.
 
 | file | content |
 |---|---|
 | `T_oct2mri.txt` | 4×4 affine in mm from the world frame of the OCT file to that of the MRI file |
 | `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK |
-| `oct2mri_warp.nii.gz` | the deformation: displacement u in mm along the MRI world axes on a 0.15 mm grid, as a NIfTI vector image. The registered OCT at the MRI point x is OCT(T⁻¹(x + u(x))), with T the affine of `T_oct2mri.txt` |
-| `oct_in_mri.nii.gz`, `oct_in_mri_affine.nii.gz` | the OCT on the MRI grid, through the affine and the deformation, and through the affine alone |
+| `oct_in_mri.nii.gz` | the OCT on the MRI grid, through the affine |
 | `mri_in_oct.nii.gz` | the MRI on the OCT base grid (0.15 mm), through the affine |
-| `qc.png`, `qc_montage.png`, `qc_deform.png` | visual QC of the affine and of the deformation |
+| `qc.png`, `qc_montage.png` | visual QC of the affine |
 | `result.json` | inputs, parameters, the transform, the scores of every step and the time per step |
 
 A registration is judged by looking at it: the OCT should lie on the same MRI anatomy, and where both images show medium around
@@ -105,7 +101,7 @@ FLIRT ran with both headers scaled x10, because its schedule resamples the image
 The axial plane of the I58 figure at the top, the MRI and the OCT through each affine, with the MRI tissue boundary in red.
 Through the SynthMorph affine only a corner of the OCT image, at the lower right, reaches this plane.
 [BASELINES.md](bench/baselines/BASELINES.md) shows every tool on all three planes, with the scale and determinant of each
-affine, and five deformable tools started from octreg's affine.
+affine.
 
 ### Test on the data of Costantini et al. (2023)
 
@@ -132,15 +128,12 @@ threshold and morphology).
 | 10° FLASH, 12 mm margin | 10 of 10 | 0.35 to 0.37 |
 | 10° FLASH, 3 mm margin, the test's specimen mask given | 10 of 10 | 0.37 |
 
-The last row gives octreg that mask as `--oct-mask` in place of its own. With the deformation of §5 the median distance of the
-MRI vessel labels to the nearest OCT vessel, a check independent of what octreg fits, is lower than through the affine alone on
-16 of the 50 runs, and its median over the runs is 0.156 mm with the field against 0.154 mm through the affine. On the 10 runs
-with the test's specimen mask it is higher with the field on every run, 0.168 against 0.157 mm (medians). From the OCT turned by
-90° and 180° about each array axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm margin, octreg
-ends 0.35 to 0.37 mm from R every time. From the header orientation with the centres of the two image boxes aligned, 7.0 mm
-(median over the ten crops of the 10° FLASH with a 3 mm margin) and 122° from R, the eight standard tools come within 1 mm in
-none of their 96 runs, the three with a global rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and
-the seven that take a mask of the moving image in none with the test's specimen mask as that mask.
+The last row gives octreg that mask as `--oct-mask` in place of its own. From the OCT turned by 90° and 180° about each array
+axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm margin, octreg ends 0.35 to 0.37 mm from R every
+time. From the header orientation with the centres of the two image boxes aligned, 7.0 mm (median over the ten crops of the 10°
+FLASH with a 3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a
+global rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving
+image in none with the test's specimen mask as that mask.
 
 | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|---|
@@ -175,8 +168,8 @@ The outline is never used on these crops, whose MRI is all tissue. On I58:
 | no outline term | signed gradients | signed gradients, OCT negated | no refinement |
 |---|---|---|---|
 | <img src="docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> | <img src="docs/figures/ablation/no_refine.png" width="175" alt="no refinement"> |
-| **no strain bound** | **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** |
-| <img src="docs/figures/ablation/df_free.png" width="175" alt="no strain bound"> | <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |
+| **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | |
+| <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | |
 
 The sagittal plane of the I58 figure through each variant, with the MRI tissue boundary in red. The last three panels start from
 the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of `bench/ablate.py`.

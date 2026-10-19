@@ -60,22 +60,22 @@ def fit_adam(objective, c, rho, T0, params: Params = Params(), device="cuda"):
     return T.detach().cpu().double().numpy(), float(v.detach()), float(L.detach()), start
 
 
-def refine(starts, mri, oct, params: Params = Params(), device="cuda"):
-    """Refine every start pose on L, one pass per sigma of params.sigmas_mm. mri, oct: (arr, mask, affine) on the base grid.
+def refine(starts, mri, oct_, params: Params = Params(), device="cuda"):
+    """Refine every start pose on L, one pass per sigma of params.sigmas_mm. mri, oct_: (arr, mask, affine) on the base grid.
     -> [{T, L, F: [{sigma_mm, start, end}], search_rank}], those within TIE of the lowest final L first by search rank, then
     the others by L."""
     P = params
-    (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct
+    (m_arr, m_mask, A_M), (o_arr, o_mask, A_O) = mri, oct_
     h_o = float(np.linalg.norm(np.asarray(A_O)[:3, 0]))
     inner = eroded(o_mask, P.erode_mm, h_o)
-    rho = G.box(A_O, np.shape(o_arr))[1]
+    c, rho = G.box(A_O, np.shape(o_arr))
     poses = [{"T": np.asarray(T, float), "F": [], "search_rank": i} for i, T in enumerate(starts)]
     for s in P.sigmas_mm:
         tpl = OCTTemplate(o_arr, o_mask, A_O, s, inner, device=device)
         mt = MRITensors(m_arr, m_mask, A_M, s, device)
         F = lambda x, tpl=tpl, mt=mt: score(x, tpl, mt)
         for p in poses:
-            p["T"], f1, p["L"], f0 = fit_adam(F, tpl.c, rho, p["T"], P, device)
+            p["T"], f1, p["L"], f0 = fit_adam(F, c, rho, p["T"], P, device)
             p["F"].append({"sigma_mm": s, "start": round(f0, 5), "end": round(f1, 5)})
         del tpl, mt, F
     lo = min(p["L"] for p in poses)

@@ -4,6 +4,6 @@ Python: `from octreg.register import register, apply`. Command line: `octreg reg
 """
 from .params import Params
 
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
 __all__ = ["Params", "__version__"]

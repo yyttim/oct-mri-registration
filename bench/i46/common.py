@@ -36,10 +36,12 @@ SEED0 = 4600                                # crop k: default_rng(4600 + k)
 TIERS = (0.30, 1.0)                         # mm, mean distance from R
 TIER_NAMES = ("<= 0.30 mm", "<= 1 mm", "beyond")
 
-SPACING = np.array([0.012, 0.012, 500 / 33 / 1000])     # mm, a 500 um section has 33 planes
+SLAB = 33                                   # OCT planes per 500 um section
+SPACING = np.array([0.012, 0.012, 500 / SLAB / 1000])   # mm
 OCT_AFFINE = np.diag([*SPACING, 1.0])
 VESSEL_PLANES = 561
 TIFF_SHAPE = (627, 1271, 1230)
+CHOSEN = {"depth_sign": 1, "slab08": 0, "swap": True, "sign_y": -1, "sign_x": -1}   # the authors' OCT header
 
 WORK = BENCH_RUNS / "I46"
 INPUTS = WORK / "inputs"
@@ -66,22 +68,36 @@ def lta_matrix(path):
     return np.array([[float(x) for x in lines[i + 1 + r].split()] for r in range(4)])
 
 
-def authors_oct_header():
-    """The authors' OCT header M, TIFF index (plane, y, x) -> their OCT world (mm), rebuilt from the svf lattices.
-    Slab i holds OCT planes 33 (i - 8) to 33 (i - 8) + 32. The axis order, the signs and the slab placement are the ones
-    reference_check.py frame finds best."""
-    centres, a8 = [], None
+@lru_cache(None)
+def slab_lattices():
+    """The 16 lattice centres [16, 3] of the authors' OCT -> LSFM fields svf.08 to svf.23 and the unit axes of the lattice
+    of svf.08."""
+    centres, ax = [], None
     for i in range(8, 24):
         img = nib.load(str(AUTHORS / f"oct2lsfm/svf.{i:02d}.nii.gz"))
         centres.append((img.affine @ np.r_[(np.array(img.shape[:3]) - 1) / 2, 1])[:3])
-        a8 = img.affine if a8 is None else a8
-    ax = a8[:3, :3] / np.linalg.norm(a8[:3, :3], axis=0)
+        if ax is None:
+            ax = img.affine[:3, :3] / np.linalg.norm(img.affine[:3, :3], axis=0)
+    return np.array(centres), ax
+
+
+def oct_header(depth_sign, slab08, swap, sign_y, sign_x):
+    """An OCT header M, TIFF index (plane, y, x) -> the authors' OCT world (mm), rebuilt from the svf lattices.
+    LSFM slab i lies at OCT slab slab08 + depth_sign (i - 8). swap puts lattice axis 1 along TIFF y and axis 0 along TIFF x."""
+    centres, ax = slab_lattices()
+    ey, ex = (ax[:, 1], ax[:, 0]) if swap else (ax[:, 0], ax[:, 1])
     M = np.eye(4)
     # the planes 12 um apart as in the authors' frame, their affine A sets the depth scale
-    M[:3, 0], M[:3, 1], M[:3, 2] = -ax[:, 2] * 0.012, -ax[:, 1] * 0.012, -ax[:, 0] * 0.012
-    plane = np.mean([33 * (i - 8) + 16 for i in range(8, 24)])
-    M[:3, 3] = np.mean(centres, 0) - M[:3, :3] @ np.array([plane, (TIFF_SHAPE[1] - 1) / 2, (TIFF_SHAPE[2] - 1) / 2])
+    M[:3, 0], M[:3, 1], M[:3, 2] = -depth_sign * ax[:, 2] * 0.012, sign_y * ey * 0.012, sign_x * ex * 0.012
+    plane = np.mean([SLAB * (slab08 + depth_sign * (i - 8)) + (SLAB - 1) / 2 for i in range(8, 24)])
+    M[:3, 3] = centres.mean(0) - M[:3, :3] @ np.array([plane, (TIFF_SHAPE[1] - 1) / 2, (TIFF_SHAPE[2] - 1) / 2])
     return M
+
+
+def authors_oct_header():
+    """The authors' OCT header: oct_header at CHOSEN, the axis order, signs and slab placement that reference_check.py frame
+    finds best. Slab i holds OCT planes 33 (i - 8) to 33 (i - 8) + 32."""
+    return oct_header(**CHOSEN)
 
 
 def reference_matrix():
@@ -182,39 +198,16 @@ def _vessels():
     return mri_pts, dist, sp, vb.shape, inner
 
 
-def _vessel_distances(T, moved=None):
-    """Distance (mm) of each MRI vessel label, or of `moved`, placed by T^-1 to the nearest OCT vessel, NaN outside tissue."""
+def vessel_score(T):
+    """Mean and median distance (mm) of the MRI vessel labels that T^-1 places inside the tissue to the nearest OCT vessel,
+    None below 50 labels."""
     from scipy import ndimage
-    mri_pts, dist, sp, shp, inner = _vessels()
-    x = mri_pts if moved is None else moved
+    x, dist, sp, shp, inner = _vessels()
     q = (np.linalg.inv(T) @ np.c_[x, np.ones(len(x))].T).T[:, :3] / sp - 0.25    # mask voxel b covers OCT voxels 2b, 2b + 1
     inside = np.all((q >= 2) & (q <= np.array(shp) - 3), 1)
     qi = np.round(q[inside]).astype(int)
     inside[np.flatnonzero(inside)[~inner[qi[:, 0], qi[:, 1], qi[:, 2]]]] = False
-    d = np.full(len(q), np.nan)
-    d[inside] = ndimage.map_coordinates(dist, q[inside].T, order=1)
-    return d
-
-
-def vessel_score(T):
-    """Mean and median distance (mm) of the MRI vessel labels inside the tissue to the OCT vessels, None below 50 labels."""
-    d = _vessel_distances(T)
-    d = d[~np.isnan(d)]
+    d = ndimage.map_coordinates(dist, q[inside].T, order=1).astype(float)
     if len(d) < 50:
         return {"vessel_n": len(d), "vessel_mean_mm": None, "vessel_median_mm": None}
     return {"vessel_n": len(d), "vessel_mean_mm": round(float(d.mean()), 4), "vessel_median_mm": round(float(np.median(d)), 4)}
-
-
-def vessel_field(T, field, affine):
-    """Median vessel distance through T alone and through T with the pull-back field, on the labels both place inside.
-    field [3, D, H, W] in mm along the MRI world axes on the grid of `affine`. The label x goes to T^-1 (x + u(x))."""
-    from scipy import ndimage
-    mri_pts = _vessels()[0]
-    idx = (np.linalg.inv(affine) @ np.c_[mri_pts, np.ones(len(mri_pts))].T)[:3]
-    u = np.stack([ndimage.map_coordinates(field[c], idx, order=1, mode="constant", cval=0.0) for c in range(3)], 1)
-    da, df = _vessel_distances(T), _vessel_distances(T, mri_pts + u)
-    both = ~np.isnan(da) & ~np.isnan(df)
-    if both.sum() < 50:
-        return {"n": int(both.sum()), "affine_median_mm": None, "field_median_mm": None}
-    return {"n": int(both.sum()), "affine_median_mm": round(float(np.median(da[both])), 4),
-            "field_median_mm": round(float(np.median(df[both])), 4)}

@@ -53,15 +53,15 @@ def stack(vol):
 def test_params_defaults_and_dict():
     p = Params()
     assert (p.search_mm, p.base_mm, p.fine_mm, p.n_rot, p.topk, p.iters, p.lam) == (0.6, 0.15, 0.04, 8000, 24, 150, 2.0)
-    assert (p.df_grid_mm, p.df_max_strain, p.df_sigmas_mm, p.df_evals) == (5.0, 0.08, (0.6, 0.3), 250)
-    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), df_max_strain=0.1, df_evals=50)
+    assert (p.sigmas_mm, p.lr_mm, p.erode_mm) == ((0.6, 0.4, 0.3), 0.06, 0.8)
+    v = dataclasses.replace(p, topk=12, lam=0.0, sigmas_mm=(0.5,), lr_mm=0.1, iters=50)
     assert Params.from_dict(json.loads(json.dumps(v.to_dict()))) == v                 # JSON lists back to tuples
     assert Params.from_dict({"lam": 1, "sigmas_mm": [1, 0.5]}) == dataclasses.replace(p, lam=1.0, sigmas_mm=(1.0, 0.5))
     with pytest.raises(ValueError, match="unknown keys"):
         Params.from_dict({"no_such_field": 0.8})
     with pytest.raises(ValueError, match="must be a JSON object"):
         Params.from_dict([0.5])
-    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"df_sigmas_mm": [0.3, -0.1]}, {"df_max_strain": -0.1}, {"df_evals": 0},
+    for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"sigmas_mm": [0.3, -0.1]}, {"erode_mm": -0.1}, {"iters": 0},
                 {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}, {"lam": -1},
                 {"lr_mm": 0}, {"texture_window_mm": -0.36}, {"valley_ratio": 0}, {"min_component": 1.0}, {"nms_mm": -3},
                 {"outline_min_outside": -0.1}, json.loads('{"lam": NaN}'), json.loads('{"lam": Infinity}')):
@@ -193,7 +193,7 @@ def test_resample_iso_equals_direct_pooling(tmp_path):
         g.pool_iso(noise[:4, :4, :4], np.diag([0.02, 0.02, 0.02, 1]), 0.6)
 
 
-def test_sampling_primitives():
+def test_sampling_primitives(monkeypatch):
     rng = np.random.default_rng(4)
     shape = (12, 14, 16)
     A = oblique((0.2, 0.3, 0.25), (-1.0, 2.0, 0.5))
@@ -207,8 +207,8 @@ def test_sampling_primitives():
     pts = torch.as_tensor(g.apply_affine(T, g.apply_affine(A_dst, ijk)))
     ref = g.sample_world(torch.as_tensor(x)[None], A, pts)[0].numpy().reshape(out.shape)  # torch grid_sample
     assert (out != 0).mean() > 0.3 and (out == 0).mean() > 0.05 and np.allclose(out, ref, atol=1e-5)
-    m = (x > 0.5).astype(np.uint8)
-    assert np.array_equal(g.resample_to(m, A, shape, A, np.eye(4), order=0), m)
+    monkeypatch.setattr(g, "CHUNK", 13 * 17 * 4)                                   # 15 planes in chunks of 4, 4, 4 and 3
+    assert np.array_equal(g.resample_to(x, A, (15, 13, 17), A_dst, T), out)
 
 
 def _nearest_deg(q, probes):

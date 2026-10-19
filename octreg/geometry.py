@@ -15,8 +15,9 @@ from . import io
 CHUNK = 1 << 22                                  # destination voxels per resample_to chunk, memory only
 
 
-def _np(A) -> np.ndarray:
-    return A.detach().cpu().double().numpy() if isinstance(A, torch.Tensor) else np.asarray(A, float)
+def mm6(x) -> float:
+    """A length to 6 significant digits, dropping float32 header noise."""
+    return float(f"{x:.6g}")
 
 
 def rotations(n) -> np.ndarray:
@@ -41,7 +42,7 @@ def apply_affine(T, pts):
     if isinstance(pts, torch.Tensor):
         T = torch.as_tensor(T, dtype=pts.dtype, device=pts.device)
         return pts @ T[:3, :3].T + T[:3, 3]
-    T = _np(T)
+    T = np.asarray(T, float)
     return np.asarray(pts) @ T[:3, :3].T + T[:3, 3]
 
 
@@ -59,9 +60,9 @@ def pool_iso(arr, affine, level_mm):
 
 
 def _iso(planes, shape, affine, level_mm):
-    A = _np(affine)
+    A = np.asarray(affine, float)
     sp = np.linalg.norm(A[:3, :3], axis=0)
-    spg = np.array([float(f"{s:.6g}") for s in sp])                            # grid arithmetic ignores float32 header noise
+    spg = np.array([mm6(s) for s in sp])                                       # grid arithmetic ignores float32 header noise
     k = np.maximum(1, np.rint(np.round(level_mm / spg, 9))).astype(int)       # round half to even
     n = np.array(shape[:3]) // k
     step = level_mm / (spg * k)                                                # output step in pooled voxels
@@ -109,7 +110,7 @@ def _lin(x, axis, i0, f):
 def sample_world(field, affine, pts):
     """Trilinear sample of field [C, D, H, W] (voxel -> world affine) at world points pts [..., 3], 0 outside. -> [C, ...]"""
     C, D, H, W = field.shape
-    Ainv = torch.as_tensor(np.linalg.inv(_np(affine)), dtype=pts.dtype, device=pts.device)
+    Ainv = torch.as_tensor(np.linalg.inv(np.asarray(affine, float)), dtype=pts.dtype, device=pts.device)
     ijk = pts @ Ainv[:3, :3].T + Ainv[:3, 3]
     size = torch.tensor([D - 1, H - 1, W - 1], dtype=pts.dtype, device=pts.device)
     grid = (ijk / size * 2 - 1)[..., [2, 1, 0]].reshape(1, 1, 1, -1, 3).to(field.dtype)
@@ -117,26 +118,20 @@ def sample_world(field, affine, pts):
     return out.reshape(C, *pts.shape[:-1])
 
 
-def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world, order=1, field=None, affine_field=None):
-    """Resample arr (affine_src) onto the grid (shape_dst, affine_dst) through T, order 1 (float32) or 0 (arr dtype), 0 outside.
-    field [3, d, h, w]: a pull-back displacement u in mm along the destination world axes on the grid affine_field, constant
-    beyond it. The destination point x is sampled at T (x + u(x))."""
+def resample_to(arr, affine_src, shape_dst, affine_dst, T_dst_world_to_src_world):
+    """Resample arr (affine_src) trilinearly onto the grid (shape_dst, affine_dst) through T, float32, 0 outside."""
     src = np.asarray(arr)
-    A_d, B = _np(affine_dst), np.linalg.inv(_np(affine_src)) @ _np(T_dst_world_to_src_world)   # B: dst world -> src voxel
+    A_d = np.asarray(affine_dst, float)
+    B = np.linalg.inv(np.asarray(affine_src, float)) @ np.asarray(T_dst_world_to_src_world, float)   # dst world -> src voxel
     M = B @ A_d                                                                                # dst voxel -> src voxel
     shape = tuple(int(s) for s in shape_dst)
-    out = np.zeros(shape, np.float32 if order else src.dtype)
+    out = np.zeros(shape, np.float32)
     jk = np.stack(np.meshgrid(np.arange(shape[1]), np.arange(shape[2]), indexing="ij"), 0).reshape(2, -1).astype(float)
-    step = max(1, (CHUNK // (1 if field is None else 4)) // jk.shape[1])
-    if field is not None:
-        field, Fm = np.asarray(field, np.float32), np.linalg.inv(_np(affine_field)) @ A_d
+    step = max(1, CHUNK // jk.shape[1])
     for i0 in range(0, shape[0], step):
         i = np.repeat(np.arange(i0, min(shape[0], i0 + step), dtype=float), jk.shape[1])
         c = M[:3, :1] * i + np.tile(M[:3, 1:3] @ jk + M[:3, 3:], len(i) // jk.shape[1])
-        if field is not None:
-            f = Fm[:3, :1] * i + np.tile(Fm[:3, 1:3] @ jk + Fm[:3, 3:], len(i) // jk.shape[1])
-            c += B[:3, :3] @ np.stack([ndimage.map_coordinates(u, f, output=np.float64, order=1, mode="nearest") for u in field])
-        out[i0:i0 + len(i) // jk.shape[1]] = ndimage.map_coordinates(src, c, output=out.dtype, order=order, mode="grid-constant",
+        out[i0:i0 + len(i) // jk.shape[1]] = ndimage.map_coordinates(src, c, output=np.float32, order=1, mode="grid-constant",
                                                                      cval=0).reshape(-1, shape[1], shape[2])
     return out
 

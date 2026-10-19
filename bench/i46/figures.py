@@ -24,7 +24,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from common import (INPUTS, LABELS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, WORK, crop_file, crop_name,  # noqa: E402
                     reference)
-from bench.figures import WSL, freeview_window, host_path, view  # noqa: E402
+from bench.figures import check_sizes, freeview_window, fs_script, view  # noqa: E402
+from bench.paths import WSL, host_path  # noqa: E402
 
 ENFACE_PLANES = (102, 300, 498)                 # the fourth plane of sections 3, 9 and 15
 TOOL_PLANE = 300
@@ -89,16 +90,14 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
     (work / "lines.cmd").write_text("\n".join(line_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
     (work / "mri.cmd").write_text("\n".join(mri_cmd + ["-quit"]) + "\n", encoding="utf-8", newline="\n")
     O, C = host_path(OCT), host_path(crop)
-    sh = ["#!/bin/bash", "export FREESURFER_HOME=${FREESURFER_HOME:-/usr/local/freesurfer/8.2.0}",
-          "export FS_LICENSE=${FS_LICENSE:-$HOME/freesurfer/license.txt}",
-          "source $FREESURFER_HOME/SetUpFreeSurfer.sh >/dev/null 2>&1", "set -e", f"cd {host_path(work)}",
-          "mri_mc boundary.nii.gz 1 boundary_raw.surf > mri_mc.log 2>&1",
-          "mris_smooth -n 3 -nw boundary_raw.surf boundary.surf > mris_smooth.log 2>&1",
-          *(f"lta_convert --inniftyreg {tag}_niftyreg.txt --src {O} --trg {C} --outlta {tag}_oct2mri.lta "
-            f"> lta_{tag}.log 2>&1 && lta_convert --inlta {tag}_oct2mri.lta --invert --outlta {tag}_mri2oct.lta "
-            f">> lta_{tag}.log 2>&1"
-            for tag in transforms),
-          "freeview -cmd lines.cmd > freeview_lines.log 2>&1", "freeview -cmd mri.cmd > freeview_mri.log 2>&1"]
+    sh = fs_script(work, [
+        "mri_mc boundary.nii.gz 1 boundary_raw.surf > mri_mc.log 2>&1",
+        "mris_smooth -n 3 -nw boundary_raw.surf boundary.surf > mris_smooth.log 2>&1",
+        *(f"lta_convert --inniftyreg {tag}_niftyreg.txt --src {O} --trg {C} --outlta {tag}_oct2mri.lta "
+          f"> lta_{tag}.log 2>&1 && lta_convert --inlta {tag}_oct2mri.lta --invert --outlta {tag}_mri2oct.lta "
+          f">> lta_{tag}.log 2>&1"
+          for tag in transforms),
+        "freeview -cmd lines.cmd > freeview_lines.log 2>&1", "freeview -cmd mri.cmd > freeview_mri.log 2>&1"])
     (work / "enface.sh").write_text("\n".join(sh) + "\n", encoding="utf-8", newline="\n")
     for f in expect:
         f.unlink(missing_ok=True)
@@ -106,11 +105,7 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
     for plane in ENFACE_PLANES:
         INFO[f"{out_dir.name}/{prefix}_p{plane}"]["no_line"] = [
             tag for tag in tags[plane] if not crosses(work / "boundary.surf", m, np.asarray(transforms[tag], float), o, plane)]
-    from PIL import Image
-    bad = [f"{f}: {Image.open(f).size if f.is_file() else 'missing'}, expected {wh}" for f, wh in expect.items()
-           if not f.is_file() or Image.open(f).size != wh]
-    if bad:
-        sys.exit("\n".join(bad))
+    check_sizes(expect)
     return sorted(expect)
 
 

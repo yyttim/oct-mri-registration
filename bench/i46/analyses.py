@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The I46 ablation and start test (bench/i46/README.md), through bench/ablate.py on the released OCT with octreg's own masks.
 
-ablate   the variants of bench/ablate.py except the outline and deformation ones (shown on I58 only), on the C3 crops
+ablate   the variants of bench/ablate.py except the outline ones (shown on I58 only), on the C3 crops
          k = 0..9 of the 10 deg FLASH, into <bench_runs>/I46/ablation/<crop>/<variant>/
 starts   the method on flip1_C3_k0 from the OCT turned about the centre of its image box by 90 and 180 deg about each array
          axis and by 10 uniform random rotations (seed 4646), into <bench_runs>/I46/starts/<start>/base/
@@ -28,9 +28,10 @@ from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_name, error, vessel_score  # noqa: E402
+from bench.ablate import VARIANTS as CHANGES, code_id, header_start, made_by  # noqa: E402
 
 ABL, STARTS = WORK / "ablation", WORK / "starts"
-VARIANTS = ["no_search", "no_refine", "first_choice", "no_prior", "signed", "signed_neg", "tracefree", "search_whole_mask"]
+VARIANTS = [v for v in CHANGES if "outline" not in v]
 START_CROP = crop_name(PRIMARY, "C3", 0)
 SEED, N_RANDOM = 4646, 10
 
@@ -45,7 +46,6 @@ def starts():
 
 def ablate_one(crop, out, only, extra=()):
     """bench/ablate.py --only `only` on a crop into out/<only>. -> whether it finished with the checkout's octreg code."""
-    from bench.ablate import code_id, made_by
     cmd = [sys.executable, str(REPO / "bench" / "ablate.py"), str(OCT), str(crop_file(crop)), "-o", str(out), "--only", only,
            *extra]
     out.mkdir(parents=True, exist_ok=True)
@@ -64,14 +64,12 @@ def scored(run):
 
 def turned_start(turn):
     """Start of a turned run in the original OCT world: header_start of the turned OCT and the crop, composed with the turn."""
-    from bench.ablate import header_start
     from octreg import io
     vo, vm = io.load_volume(OCT), io.load_volume(crop_file(START_CROP))
     return header_start(vm.affine, vm.shape, turn @ vo.affine, vo.shape) @ turn
 
 
 def collect():
-    from bench.ablate import code_id, made_by
     from octreg import __version__
     code = code_id()
     abl = [(crop_name(PRIMARY, "C3", k), v) for k in range(SEEDS) for v in VARIANTS]
@@ -97,7 +95,6 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("step", choices=["ablate", "starts", "collect"])
     a = ap.parse_args()
-    from bench.ablate import code_id, made_by
     code, failed = code_id(), []
     if a.step == "ablate":
         for v in VARIANTS:

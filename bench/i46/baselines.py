@@ -11,10 +11,10 @@ the 10 deg C3 crops, into <bench_runs>/I46/baselines_<kind>:
 
     python bench/i46/baselines.py prepare [--search | --mask | --near]   the inputs, the run.sh of every run and queue.sh
     bash <bench_runs>/I46/baselines/queue.sh                             runs them one at a time (baselines_<kind>/queue.sh)
-    python bench/i46/baselines.py collect [--search | --mask | --near]   -> bench/results/I46/baselines[_<kind>].json
+    python bench/i46/baselines.py collect [--search | --mask | --near] [--runs DIR] [-o FILE]
 
-collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion on the k = 0 crops. A run without a
-readable transform is a tool error.
+collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion on the k = 0 crops. The scores go to
+bench/results/I46/baselines[_<kind>].json. A run without a readable transform is a tool error.
 """
 from __future__ import annotations
 

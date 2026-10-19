@@ -7,7 +7,7 @@
   },
   "octreg": {
    "tool": "octreg",
-   "setting": "§1 to §4 with default parameters",
+   "setting": "default parameters",
    "start": "own orientation search (8,000 rotations) inside the MRI crop"
   },
   "ants_com": {
@@ -139,43 +139,6 @@
    "tool": "FreeSurfer 8.2.0 mri_synthmorph",
    "setting": "register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block",
    "start": "none (the network predicts the affine)"
-  }
- },
- "deform": {
-  "none": {
-   "tool": "no deformation",
-   "setting": "octreg's affine, no field",
-   "start": "octreg's affine"
-  },
-  "octreg": {
-   "tool": "octreg",
-   "setting": "§5: displacement field on a 5 mm lattice under a strain bound, default parameters",
-   "start": "octreg's affine"
-  },
-  "deform_ants_syn_cc": {
-   "tool": "ANTs 2.6.5",
-   "setting": "antsRegistrationSyN.sh -t so: SyN, CC radius 2, script defaults in single precision (-p f), no mask",
-   "start": "octreg's affine (both images on the MRI grid, identity start)"
-  },
-  "deform_elastix_default": {
-   "tool": "elastix 5.3.1",
-   "setting": "model-zoo Parameters_BSpline: Mattes MI, 16 mm final grid, no mask",
-   "start": "octreg's affine (both images on the MRI grid, identity start)"
-  },
-  "deform_niftyreg_default": {
-   "tool": "NiftyReg 2.1.2 reg_f3d",
-   "setting": "defaults: NMI 64 bins, control grid 5 voxels (0.4 mm), bending energy 0.001, linear elasticity 0.01, no mask",
-   "start": "octreg's affine (both images on the MRI grid, identity start)"
-  },
-  "deform_convexadam_default": {
-   "tool": "ConvexAdam 0.2.0",
-   "setting": "MIND-SSC, the package's shipped defaults, no mask",
-   "start": "octreg's affine (both images on the MRI grid, identity start)"
-  },
-  "deform_greedy_wncc": {
-   "tool": "greedy 1.4.0",
-   "setting": "the quick-start deformable command: WNCC 2x2x2, -s 1.732vox 0.707vox, -sv, -n 100x50x10, no mask",
-   "start": "octreg's affine (both images on the MRI grid, identity start)"
   }
  }
 }

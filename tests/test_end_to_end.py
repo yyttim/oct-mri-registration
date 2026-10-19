@@ -13,14 +13,12 @@ from octreg import geometry as G, io, preprocess as pp
 from octreg.cli import main
 from octreg.params import Params
 from octreg.refine import TIE
-from octreg.register import OUTPUTS, OUTPUTS_DEFORM, QC_CELL_IN, QC_COLOURS, QC_DPI, QC_HEAD_IN, WARP, deform_label, register
+from octreg.register import OUTPUTS, QC_CELL_IN, QC_COLOURS, QC_DPI, QC_HEAD_IN, register
 
 # the specimen is 6 mm across, so the texture and search smoothings are smaller than the defaults for real blocks
-FAST = dataclasses.replace(Params(), fine_mm=0.08, n_rot=200, topk=4, iters=40, df_evals=30,
-                           texture_smooth_mm=0.32, search_sigma_mm=0.6)
+FAST = dataclasses.replace(Params(), fine_mm=0.08, n_rot=200, topk=4, iters=40, texture_smooth_mm=0.32, search_sigma_mm=0.6)
 # for the runs whose pose does not matter
-TINY = {"fine_mm": 0.08, "texture_smooth_mm": 0.32, "search_sigma_mm": 0.6, "n_rot": 8, "topk": 1, "iters": 5,
-        "df_evals": 2}
+TINY = {"fine_mm": 0.08, "texture_smooth_mm": 0.32, "search_sigma_mm": 0.6, "n_rot": 8, "topk": 1, "iters": 5}
 POSE_KEYS = {"search_rank", "search_F", "search_O", "L", "outline_used", "T_search", "F", "scale_per_oct_axis"}
 
 
@@ -95,32 +93,20 @@ def data(tmp_path_factory):
     return pair(tmp_path_factory.mktemp("pair"))
 
 
-@pytest.fixture(scope="module")
-def deformed(data, tmp_path_factory):
-    """register with §5 on the pair of `data`. -> (run directory, result)."""
-    out = tmp_path_factory.mktemp("deformed")
-    return out, register(data[0], data[1], out, params=FAST, device="cpu", deform=True)
-
-
-def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
-    """Affine outputs and result.json, octreg apply with and without --inverse, and exit code 2 for bad inputs."""
+def test_register_and_apply(data, tmp_path):
+    """The outputs and result.json, octreg apply with and without --inverse, and exit code 2 for bad inputs."""
     oct_path, mri_path, T_true, pts = data
     out = tmp_path / "run"
-    out.mkdir()
-    for f in OUTPUTS_DEFORM:                                   # stale §5 files of an earlier run
-        (out / f).write_bytes(b"stale")
-    register(oct_path, mri_path, out, params=FAST, device="cpu", deform=False)
-    assert all((out / f).is_file() for f in OUTPUTS) and not any((out / f).exists() for f in OUTPUTS_DEFORM)
+    register(oct_path, mri_path, out, params=FAST, device="cpu")
+    assert all((out / f).is_file() for f in OUTPUTS)
     saved = json.loads((out / "result.json").read_text())
     T = np.loadtxt(out / "T_oct2mri.txt")
     assert distance(T, T_true, pts) < 0.4 and np.allclose(saved["T_oct2mri"], T) and np.linalg.det(T[:3, :3]) > 0
-    assert distance(T, np.loadtxt(deformed[0] / "T_oct2mri.txt"), pts) < 1e-3              # §5 does not change the affine
-    assert np.array_equal(nii(out / "oct_in_mri.nii.gz"), nii(out / "oct_in_mri_affine.nii.gz"))
 
     pose = saved["pose"]
-    assert set(pose) == POSE_KEYS and pose["outline_used"] and saved["deform"] is None
-    assert set(saved) >= {"octreg_version", "inputs", "params", "T_oct2mri", "pose", "candidates", "foreground", "deform", "seconds"}
-    assert set(saved["seconds"]) == {"mri", "oct_fine_grid", "oct_mask", "search", "refine", "deform", "outputs", "total"}
+    assert set(pose) == POSE_KEYS and pose["outline_used"]
+    assert set(saved) == {"octreg_version", "inputs", "params", "T_oct2mri", "pose", "candidates", "foreground", "seconds"}
+    assert set(saved["seconds"]) == {"mri", "oct_fine_grid", "oct_mask", "search", "refine", "outputs", "total"}
     cands = saved["candidates"]
     assert len(cands) == FAST.topk and all(set(c) == {"search_rank", "search_F", "search_O", "L"} for c in cands)
     lo = min(c["L"] for c in cands)                            # within TIE of the lowest L the better search rank comes first
@@ -134,7 +120,8 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
     assert 0.9 < min(scale) and max(scale) < 1.1
     assert saved["params"] == json.loads(json.dumps(FAST.to_dict()))
 
-    assert saved["foreground"]["oct"]["source"] == "octreg" and saved["foreground"]["mri"]["threshold"] > 0
+    assert saved["inputs"]["oct_mask"] is None and saved["inputs"]["mri_mask"] is None
+    assert saved["foreground"]["mri"]["threshold"] > 0
     # the OCT histogram has no valley, so the threshold is 0 and the texture finds the specimen
     oct_img = nib.load(str(oct_path))
     raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
@@ -150,6 +137,11 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
                  str(tmp_path / "back.nii.gz"), "--inverse"]) == 0
     back = nib.load(str(tmp_path / "back.nii.gz"))
     assert back.shape == nib.load(str(oct_path)).shape and np.asarray(back.dataobj).max() > 500
+    mio = nib.load(str(out / "mri_in_oct.nii.gz"))
+    assert np.allclose(np.linalg.norm(mio.affine[:3, :3], axis=0), FAST.base_mm)
+    assert main(["apply", "--run", str(out), "--moving", str(mri_path), "--reference", str(out / "mri_in_oct.nii.gz"), "-o",
+                 str(tmp_path / "back_base.nii.gz"), "--inverse"]) == 0
+    np.testing.assert_allclose(nii(tmp_path / "back_base.nii.gz"), mio.get_fdata(), rtol=1e-5, atol=1e-3)
 
     qc, montage = png(out / "qc.png"), png(out / "qc_montage.png")        # 3 and 12 rows of planes, both outlines drawn
     assert [round((x.shape[0] / QC_DPI - QC_HEAD_IN) / QC_CELL_IN, 2) for x in (qc, montage)] == [3, 12]
@@ -160,56 +152,6 @@ def test_register_affine_and_apply(data, deformed, tmp_path, capsys):
                  str(tmp_path / "missing.json")]) == 2
     assert main(["apply", "--run", str(tmp_path / "missing_run"), "--moving", str(oct_path), "--reference", str(mri_path),
                  "-o", str(tmp_path / "never.nii.gz")]) == 2
-
-    # a field of one MRI voxel along array axis 0 moves the OCT content by one voxel
-    A_f = ref.affine.copy()
-    A_f[:3, :3] *= 16
-    io.save_field(np.broadcast_to((ref.affine[:3, 0])[:, None, None, None], (3, 4, 4, 4)), A_f, out / WARP)
-    run = ["apply", "--run", str(out), "--moving", str(oct_path), "--reference", str(mri_path), "-o"]
-    assert main(run + [str(tmp_path / "warped.nii.gz")]) == 0 and main(run + [str(tmp_path / "plain.nii.gz"), "--affine-only"]) == 0
-    warped, plain = (nii(tmp_path / f) for f in ("warped.nii.gz", "plain.nii.gz"))
-    np.testing.assert_allclose(plain, ref.get_fdata(), rtol=1e-5, atol=1e-3)
-    np.testing.assert_allclose(warped[:-1], plain[1:], rtol=1e-4, atol=0.05)
-    capsys.readouterr()
-    assert main(["apply", "--run", str(out), "--moving", str(mri_path), "--reference", str(oct_path), "-o",
-                 str(tmp_path / "back2.nii.gz"), "--inverse"]) == 0 and "not inverted" in capsys.readouterr().out
-    np.testing.assert_array_equal(nii(tmp_path / "back2.nii.gz"), back.get_fdata())
-
-
-def test_register_with_the_deformation(data, deformed, tmp_path):
-    """register with §5: the field on the MRI base grid, the §5 read-outs, and octreg apply with and without it."""
-    oct_path, mri_path, T_true, pts = data
-    out, res = deformed
-    assert all((out / f).is_file() for f in OUTPUTS + OUTPUTS_DEFORM)
-    assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4
-    saved = json.loads((out / "result.json").read_text())
-    d = saved["deform"]
-    assert set(d) == {"passes"}
-    assert [p["sigma_mm"] for p in d["passes"]] == list(FAST.df_sigmas_mm)
-    assert all(set(p) == {"sigma_mm", "F_start", "F_end", "displacement_median_mm", "displacement_max_mm"} for p in d["passes"])
-    assert all(p["F_end"] >= p["F_start"] - 1e-3 for p in d["passes"])
-    u, A_u = io.load_field(out / WARP)
-    warp = nib.load(str(out / WARP))
-    assert warp.shape[3:] == (1, 3) and warp.header.get_intent()[0] == "vector"
-    base, A_base = G.resample_iso(io.load_volume(mri_path), FAST.base_mm)
-    assert u.shape == (3,) + base.shape and np.allclose(A_u, A_base, atol=1e-6)
-    top = np.linalg.norm(u, axis=0).max()
-    assert 0 < top < 1.0 and d["passes"][-1]["displacement_max_mm"] < 1.0                 # a small field on an affine pair
-    T, y = np.loadtxt(out / "T_oct2mri.txt"), G.apply_affine(T_true, pts)
-    moved = G.apply_affine(np.linalg.inv(T), y + np.stack([sample(y, (c, A_u)) for c in u], 1))      # OCT(T^-1 (y + u(y)))
-    assert np.linalg.norm(moved - pts, axis=1).mean() < 0.4
-
-    run = ["apply", "--run", str(out), "--moving", str(oct_path), "--reference", str(mri_path), "-o"]
-    assert main(run + [str(tmp_path / "warped.nii.gz")]) == 0 and main(run + [str(tmp_path / "plain.nii.gz"), "--affine-only"]) == 0
-    both = [nii(out / f) for f in ("oct_in_mri.nii.gz", "oct_in_mri_affine.nii.gz")]
-    np.testing.assert_allclose(nii(tmp_path / "warped.nii.gz"), both[0], rtol=1e-5, atol=1e-3)
-    np.testing.assert_allclose(nii(tmp_path / "plain.nii.gz"), both[1], rtol=1e-5, atol=1e-3)
-    assert np.abs(both[0] - both[1]).max() > 1
-    assert deform_label(saved["deform"]).startswith("§5: F " + ", ".join(f"{p['F_start']:.4f} -> {p['F_end']:.4f} at {p['sigma_mm']:g} mm"
-                                                                          for p in d["passes"]) + ". ")
-    fig = png(out / "qc_deform.png")                           # 3 rows of planes, the MRI foreground outline drawn
-    assert round((fig.shape[0] / QC_DPI - QC_HEAD_IN) / QC_CELL_IN, 2) == 3
-    assert (fig == list(bytes.fromhex(QC_COLOURS[0][1:]))).all(-1).sum() > 100
 
 
 def test_user_masks(tmp_path, monkeypatch):
@@ -227,16 +169,17 @@ def test_user_masks(tmp_path, monkeypatch):
     out, given, fine_mask = tmp_path / "run", [], reg.fine_mask
     monkeypatch.setattr(reg, "fine_mask", lambda fine, A, P, mask: given.append(mask) or fine_mask(fine, A, P, mask))
     res = register(oct_path, mri_path, out, (80, 80, 80), oct_mask=tmp_path / "oct_mask.nii.gz",
-                   mri_mask=tmp_path / "mri_mask.nii.gz", params=FAST, device="cpu", deform=False)
+                   mri_mask=tmp_path / "mri_mask.nii.gz", params=FAST, device="cpu")
     assert np.allclose(given[0].spacing_mm, 0.16)
-    fg = res["foreground"]
-    assert fg["oct"]["source"].endswith("oct_mask.nii.gz") and fg["mri"]["source"].endswith("mri_mask.nii.gz")
+    assert res["inputs"]["oct_mask"].endswith("oct_mask.nii.gz") and res["inputs"]["mri_mask"].endswith("mri_mask.nii.gz")
+    assert set(res["foreground"]["oct"]) == set(res["foreground"]["mri"]) == {"outside_fraction"}    # neither mask of §1 made
     assert res["pose"]["outline_used"]
     assert distance(np.loadtxt(out / "T_oct2mri.txt"), T_true, pts) < 0.4
 
 
 def test_oct_spacing_applies_to_a_mask_of_the_oct_shape(data, tmp_path, monkeypatch):
-    """--oct-spacing-um applies to a mask of the OCT's shape, and masks with no spacing or no measured voxel are refused."""
+    """--oct-spacing-um applies to a mask of the OCT's shape, and masks with no spacing or no measured voxel are refused. A run
+    that stops early leaves no result.json of an earlier run in its directory."""
     import octreg.register as reg
     oct_path, mri_path, _, _ = data
     img = nib.load(str(oct_path))
@@ -253,9 +196,12 @@ def test_oct_spacing_applies_to_a_mask_of_the_oct_shape(data, tmp_path, monkeypa
 
     given = []
     monkeypatch.setattr(reg, "fine_mask", stop)
+    (tmp_path / "run").mkdir()
+    (tmp_path / "run" / "result.json").write_text("{}")
     with pytest.raises(Stop):
         register(tmp_path / "oct.nii.gz", mri_path, tmp_path / "run", (80, 80, 80), oct_mask=tmp_path / "oct.nii.gz",
                  params=FAST, device="cpu")
+    assert not (tmp_path / "run" / "result.json").exists()
     assert np.allclose(given[0].spacing_mm, 0.08) and np.allclose(given[0].affine, io.load_volume(oct_path).affine)
     np.save(tmp_path / "oct.npy", np.ones((20, 20, 20), np.float32))
     np.save(tmp_path / "small.npy", np.ones((10, 10, 10), np.uint8))
@@ -297,7 +243,7 @@ def test_array_frame(data, tmp_path):
     T_arr = T_true @ img.affine @ np.linalg.inv(A_arr)                                          # array world -> MRI world
     pts_arr = G.apply_affine(A_arr @ np.linalg.inv(img.affine), pts)
     out = tmp_path / "run"
-    register(tmp_path / "oct.npy", mri_path, out, (80, 80, 80), params=FAST, device="cpu", deform=False)
+    register(tmp_path / "oct.npy", mri_path, out, (80, 80, 80), params=FAST, device="cpu")
     T = np.loadtxt(out / "T_oct2mri.txt")
     assert np.linalg.det(T_arr[:3, :3]) > 0 and np.linalg.det(T[:3, :3]) > 0
     assert distance(T, T_arr, pts_arr) < 0.4
@@ -314,7 +260,6 @@ def test_apply_moved_npy_with_spacing(data, tmp_path):
     np.save(tmp_path / "moved" / "oct.npy", stack)
     out = tmp_path / "run"
     register(tmp_path / "oct.npy", data[1], out, (80, 80, 80), params=Params.from_dict(TINY), device="cpu")
-    assert (out / WARP).is_file()
     assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(data[1]), "-o",
                  str(tmp_path / "here.nii.gz")]) == 0
     np.testing.assert_allclose(nii(tmp_path / "here.nii.gz"), nii(out / "oct_in_mri.nii.gz"), rtol=1e-5, atol=1e-3)
@@ -326,16 +271,12 @@ def test_apply_moved_npy_with_spacing(data, tmp_path):
 
 
 def test_register_command(data, tmp_path, capsys):
-    """octreg register with --params writes every output, and --no-deform removes the §5 files."""
+    """octreg register with --params writes every output."""
     (tmp_path / "params.json").write_text(json.dumps(TINY))
     out = tmp_path / "run"
     assert main(["register", str(data[0]), str(data[1]), "-o", str(out), "--device", "cpu", "--params",
                  str(tmp_path / "params.json")]) == 0
-    assert all((out / f).is_file() for f in OUTPUTS + OUTPUTS_DEFORM)
+    assert all((out / f).is_file() for f in OUTPUTS)
     res = json.loads((out / "result.json").read_text())
     assert Params.from_dict(res["params"]) == Params.from_dict(TINY)
     assert f"-> {out}" in capsys.readouterr().out
-    assert main(["register", str(data[0]), str(data[1]), "-o", str(out), "--device", "cpu", "--params",
-                 str(tmp_path / "params.json"), "--no-deform"]) == 0
-    assert json.loads((out / "result.json").read_text())["deform"] is None and not any((out / f).exists() for f in OUTPUTS_DEFORM)
-    assert np.array_equal(nii(out / "oct_in_mri.nii.gz"), nii(out / "oct_in_mri_affine.nii.gz"))

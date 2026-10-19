@@ -11,7 +11,7 @@ from scipy import ndimage
 
 from . import geometry as G
 
-JACOBIAN_STEP_MM = 0.5    # central-difference step of the field Jacobian in score
+MIN_POINTS = 10
 
 
 def to_torch(x, device):
@@ -57,20 +57,18 @@ class MRITensors:
 
 
 class OCTTemplate:
-    """OCT side: world positions of every `stride`-th voxel of `points` and their gradients smoothed inside `mask`."""
+    """OCT side: world positions of every second voxel of `points` and their gradients smoothed inside `mask`."""
 
-    def __init__(self, arr, mask, affine, sigma_mm, points, stride=2, device="cuda"):
+    def __init__(self, arr, mask, affine, sigma_mm, points, device="cuda"):
         sel = np.zeros(np.shape(points), bool)
-        sel[::stride, ::stride, ::stride] = True
+        sel[::2, ::2, ::2] = True
         idx = torch.as_tensor(np.argwhere(np.asarray(points, bool) & sel), device=device)
-        if len(idx) < 10:
+        if len(idx) < MIN_POINTS:
             raise ValueError("OCT template has too few points")
         g = gradient_field(arr, mask, affine, sigma_mm, device)
         self.eps = median_norm(g, mask)
         self.g = g[(slice(None),) + tuple(idx.T)]
-        del g
         self.pts = G.apply_affine(np.asarray(affine, float), idx.to(torch.float32))
-        self.c = G.box(affine, np.shape(arr))[0]
 
 
 def correlation(a, b):
@@ -79,17 +77,9 @@ def correlation(a, b):
     return (da * db).sum() / torch.sqrt((da * da).sum() * (db * db).sum() + 1e-24)
 
 
-def score(T, tpl: OCTTemplate, mri: MRITensors, field=None):
-    """F of the pose T (torch 4x4), optionally followed by field: MRI world points [N, 3] -> displacements [N, 3].
-    The OCT gradients go through A^-T, A the linear part of T, and to first order through I - J^T, J the field Jacobian."""
-    y = G.apply_affine(T, tpl.pts)
-    g = torch.linalg.inv(T[:3, :3]).T @ tpl.g
-    if field is not None:
-        E = JACOBIAN_STEP_MM * torch.eye(3, dtype=y.dtype, device=y.device)
-        J = torch.stack([field(y + E[k]) - field(y - E[k]) for k in range(3)], 2) / (2 * JACOBIAN_STEP_MM)   # [N, i, k]
-        g = g - torch.einsum("nki,kn->in", J, g)
-        y = y + field(y)
-    return correlation(tensors(g, tpl.eps), mri.at(y))
+def score(T, tpl: OCTTemplate, mri: MRITensors):
+    """F of the pose T (torch 4x4). The OCT gradients go through A^-T, A the linear part of T."""
+    return correlation(tensors(torch.linalg.inv(T[:3, :3]).T @ tpl.g, tpl.eps), mri.at(G.apply_affine(T, tpl.pts)))
 
 
 def eroded(mask, mm, h):

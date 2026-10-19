@@ -5,8 +5,8 @@ cellular resolution atlas of Broca's area" (Science Advances 9:eadg3844, [doi
 10.1126/sciadv.adg3844](https://doi.org/10.1126/sciadv.adg3844)), the work octreg extends. The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) ("Human brain cell census for BA 44/45", CC BY 4.0), and the
 authors' own OCT→MRI affine, from their code repository, is the reference R. octreg was developed on the I58 block and checked
-on these data during its development, and the strain bound of [§5](../../docs/METHOD.md#5-smooth-deformation) was set with the
-vessel check here, so this is not a held-out test. The results are in [bench/results/I46/tables.md](../results/I46/tables.md).
+on these data during its development, so this is not a held-out test. The results are in
+[bench/results/I46/tables.md](../results/I46/tables.md).
 
 ## Why this case, and its limits
 
@@ -72,7 +72,7 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   - **C6:** m = 6 mm, s = 5 mm, on the 10° FLASH.
   - **C12:** m = 12 mm, s = 10 mm, on the 10° FLASH.
   - Ten crops per condition, k = 0 to 9. The shift of crop k has the same direction in C3, C6 and C12.
-- **octreg.** Version 3.1.0 at its default parameters, `octreg register OCT CROP -o RUN` on every crop, with its own masks (50
+- **octreg.** Version 3.2.0 at its default parameters, `octreg register OCT CROP -o RUN` on every crop, with its own masks (50
   runs). The C3 crops of the 10° FLASH also run with `--oct-mask` and the specimen mask (10 runs).
 - **Standard tools.** One setting each, taken from the tool's documentation, with no tuning and no mask: NiftyReg reg_aladin
   with its defaults (image-centre start), greedy (NMI, rigid then affine, `-ia-image-centers`), elastix (the model-zoo rigid and
@@ -87,8 +87,8 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
 - **Start test and ablation** (`analyses.py`). octreg, with its own masks, starts from the OCT turned by 90° and 180° about each
   array axis and by 10 rotations drawn uniformly on SO(3) (scipy `Rotation.random`, seed 4646), on the C3 crop k = 0 of the 10°
   FLASH (flip1_C3_k0). The variants of `bench/ablate.py` run with octreg's own masks on the C3 crops of the 10° FLASH, except
-  the variants of the outline and of the deformation, which are shown on I58. The MRI of these crops is all tissue, so the
-  outline is not used and its variants equal the method.
+  the variants of the outline, which are shown on I58. The MRI of these crops is all tissue, so the outline is not used and its
+  variants equal the method.
 - **Further tool runs** on the C3 crops of the 10° FLASH (`baselines.py --search`, `--mask` and `--near`): the three tools that
   have a global rotation search, with that search on (FLIRT `-searchrx/ry/rz -180 180`, ANTs antsAI before the same script,
   greedy `-search 1000 any 20`), the tools whose options take a mask of the moving image, with the specimen mask as that mask,
@@ -108,10 +108,8 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 - **Counts:** each condition gives counts over its ten crops, shifted boxes around the same block. Medians are over all runs of
   a row, a run without a transform counted as beyond every other.
 - **Vessels:** the MRI vessel labels that T places in the OCT tissue, at least 0.15 mm from its edge and within the segmented
-  planes 0 to 560, and their distance to the nearest OCT vessel of the dataset's segmentation, median over the labels. For the
-  deformation of §5, the same over the labels that land inside both through T alone and through T with the field u. With the
-  field, an MRI point x goes to the OCT world at T⁻¹(x + u(x)). The vessels are independent of what octreg fits, while R was
-  fitted partly to them.
+  planes 0 to 560, and their distance to the nearest OCT vessel of the dataset's segmentation, median over the labels. The
+  vessels are independent of what octreg fits, while R was fitted partly to them.
 
 ## Results
 
@@ -120,9 +118,6 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 - **octreg** with its own masks comes within 1 mm of R in all 50 runs and within 0.30 mm in none, 0.32 to 0.37 mm from R and
   0.35 to 0.44 mm from L, each turned by 2.9° to 4.0° from R about an axis that differs between the contrasts. With the test's
   specimen mask as `--oct-mask` it comes within 1 mm in all 10 runs, 0.37 mm from R.
-- **Deformation:** with the field of §5 the vessel distance is lower than through the affine alone on 16 of the 50 runs with
-  octreg's own masks, and its median over the runs is 0.156 mm with the field against 0.154 mm through the affine. On the 10
-  runs with the test's specimen mask it is higher with the field on every run, 0.168 against 0.157 mm (medians).
 - **Starts:** on flip1_C3_k0, from the 16 turned and random starts, octreg ends 0.35 to 0.37 mm from R every time.
 - **The standard tools** come within 1 mm in none of their 96 runs at their documented settings. The pose before any
   registration, the header orientation with the centres of the two image boxes aligned, is 7.0 mm (median) and 122° from R, and
@@ -143,10 +138,10 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 own planes, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the released OCT (12 µm in the plane), each
 three planes below the top of its section, 14.76 × 15.25 mm at one screen pixel per two OCT voxels. The red line is the
 white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw. lta_convert writes
-each transform, for octreg its affine without the field of §5, as an LTA file, and freeview moves the surface and resamples the
-MRI through it (nearest neighbour, its default). Outside the OCT tissue the line continues through the MRI, and where the white
-matter reaches the edge of the crop it runs along that edge. The grey levels are linear, at freeview's default window of the OCT
-and of the crop ([figures.json](../../docs/figures/i46/figures.json)).
+each transform as an LTA file, and freeview moves the surface and resamples the MRI through it (nearest neighbour, its
+default). Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the edge of the crop
+it runs along that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop
+([figures.json](../../docs/figures/i46/figures.json)).
 
 From left: the OCT, the OCT with the line placed through R and through octreg, and the MRI crop placed through R and through
 octreg. On every plane the line through octreg follows the line through R, a little lower where it crosses the left half of the
@@ -203,7 +198,7 @@ root>/bench_runs/I46`, which is not in the repository.
 
 | file in `bench/results/I46` | content |
 |---|---|
-| `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, distances from R and L, the vessel check with and without the deformation, the search rank and scores, the outside fractions and time |
+| `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, distances from R and L, the vessel check, the search rank and scores, the outside fractions and time |
 | `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: distances and time, or the tool error |
 | `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the distance of that start |
 | `starts.json`, `ablation.json` | the start test and the ablation of `analyses.py` |

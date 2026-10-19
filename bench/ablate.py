@@ -4,7 +4,7 @@
     python bench/ablate.py OCT MRI -o OUT [--oct-mask MASK] [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ]
                            [--device cuda]
 
-Each variant changes one function, constant or Params value for its run:
+Each variant changes one function or Params value for its run:
 
 {variants}
 
@@ -35,8 +35,8 @@ from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import octreg  # noqa: E402
-from octreg import deform as D, features as Fe, geometry as G, io, refine as Rf, register as Reg, search as Se  # noqa: E402
-from octreg.params import Params                                                                              # noqa: E402
+from octreg import features as Fe, geometry as G, io, refine as Rf, register as Reg, search as Se  # noqa: E402
+from octreg.params import Params                                                                   # noqa: E402
 
 VARIANTS = {
     "no_outline": "the outline never used (outline_min_outside 2): every pose proposed by F",
@@ -49,7 +49,6 @@ VARIANTS = {
     "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, with the OCT intensities negated",
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
     "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
-    "df_free": "the deformation without the strain bound (deform.STRAIN_WEIGHT 0)",
 }
 __doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<18} {v}" for k, v in VARIANTS.items()))
 REFINE, TENSOR, PREPARE_OCT = Rf.refine, Fe.orientation_tensor, Reg.prepare_oct
@@ -65,30 +64,6 @@ def header_start(mri_affine, mri_shape, oct_affine, oct_shape):
 def fixed_start(T):
     """Stand-in for search.search that proposes only the pose T."""
     return lambda *args, **kwargs: [dict(T=np.asarray(T, float), F=float("nan"), O=None)]
-
-
-def search_by_S(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params=Params(), device="cuda", outline=True):
-    """search.search with the translations and the topk chosen by S = (F + O) / 2 when the outline is used."""
-    if not outline:
-        return Se.search(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, params, device, outline)
-    P = params
-    s = Se.Searcher(mri, mri_mask, mri_affine, oct_, oct_w, oct_valid, oct_affine, P.search_sigma_mm, P.erode_mm, device)
-    Rs = G.rotations(P.n_rot)
-    found = []
-    for i, R in enumerate(Rs):
-        Fm, Om = (x.reshape(-1) for x in s.score(R))
-        S = (Fm + Om) / 2
-        j = int(torch.argmax(S.masked_fill(~s.valid.reshape(-1), float("-inf"))))
-        found.append((float(S[j]), i, j, float(Fm[j]), float(Om[j])))
-    kept = []
-    for _, i, j, f, o in sorted(found, key=lambda e: -e[0]):
-        T = s.pose(Rs[i], j)
-        centre = G.apply_affine(T, s.c_o)
-        if not any(np.linalg.norm(centre - c) < P.nms_mm and Se.angle_deg(Rs[i], R) < P.nms_deg for _, c, R in kept):
-            kept.append((dict(T=T, F=f, O=o), centre, Rs[i]))
-            if len(kept) == P.topk:
-                break
-    return [k[0] for k in kept]
 
 
 def no_refine(starts, mri, oct_, params, device):
@@ -107,29 +82,29 @@ def tracefree(n):
 
 def negated_oct(fine, affine, params, mask=None):
     """register.prepare_oct with the base grid OCT intensities negated and the masks of the method."""
-    (arr, m, A), valid, info = PREPARE_OCT(fine, affine, params, mask)
-    return (-arr, m, A), valid, info
+    (arr, m, A), measured, info = PREPARE_OCT(fine, affine, params, mask)
+    return (-arr, m, A), measured, info
 
 
 def patched(method, *pairs):
-    """A copy of a search.Searcher method with source replacements (old, new), each of which must occur once."""
+    """A copy of a function of octreg.search with source replacements (old, new), each of which must occur once."""
     import inspect
     import textwrap
     src = textwrap.dedent(inspect.getsource(method))
     for old, new in pairs:
         if src.count(old) != 1:
-            raise RuntimeError(f"{old!r} does not occur once in search.Searcher.{method.__name__}")
+            raise RuntimeError(f"{old!r} does not occur once in search.{method.__qualname__}")
         src = src.replace(old, new)
     ns = {}
-    exec(compile(src, f"<ablate: Searcher.{method.__name__}>", "exec"), vars(Se), ns)
+    exec(compile(src, f"<ablate: {method.__qualname__}>", "exec"), vars(Se), ns)
     return ns[method.__name__]
 
 
 def whole_mask_searcher():
     """search.Searcher.__init__ and score with the template gradients and their eps taken inside the whole specimen mask."""
     wb = "(w > 0.5).float()"
-    return (patched(Se.Searcher.__init__, ("G.nc_gradient(o * inner, inner,", f"G.nc_gradient(o * {wb}, {wb},"),
-                    ("[inner > 0].median()", "[w > 0.5].median()")),
+    return (patched(Se.Searcher.__init__, ("gradient_field(o, inner, A_O, sigma_mm, device), inner)",
+                                           f"gradient_field(o, {wb}, A_O, sigma_mm, device), {wb})")),
             patched(Se.Searcher.score, ("G.nc_gradient(v * wt, wt, self.sig)", f"G.nc_gradient(v * {wb}, {wb}, self.sig)")))
 
 
@@ -159,7 +134,7 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None):
         if name == "no_outline":
             P = dataclasses.replace(P, outline_min_outside=2.0)        # a share above 1: never met
         elif name == "outline_decides":
-            patch(Reg, "search", search_by_S)
+            patch(Reg, "search", patched(Se.search, ("(P.topk // 2, P.topk) if outline", "(P.topk, P.topk) if outline")))
         elif name == "no_search":
             vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
             patch(Reg, "search", fixed_start(header_start(vm.affine, vm.shape, vo.affine, vo.shape)))
@@ -171,18 +146,14 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None):
             P = dataclasses.replace(P, lam=0.0)
         elif name in ("signed", "signed_neg"):
             patch(Fe, "orientation_tensor", lambda n: n)
-            patch(Se, "orientation_tensor", lambda n: n)
             if name == "signed_neg":
                 patch(Reg, "prepare_oct", negated_oct)
         elif name == "tracefree":
             patch(Fe, "orientation_tensor", tracefree)
-            patch(Se, "orientation_tensor", tracefree)
         elif name == "search_whole_mask":
             init, score = whole_mask_searcher()
             patch(Se.Searcher, "__init__", init)
             patch(Se.Searcher, "score", score)
-        elif name == "df_free":
-            patch(D, "STRAIN_WEIGHT", 0.0)
         elif name != "base":
             raise ValueError(f"unknown variant {name}")
         yield P

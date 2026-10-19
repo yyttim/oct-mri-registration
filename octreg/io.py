@@ -141,34 +141,16 @@ def _finish(plane, slope, inter):
     return np.nan_to_num(x.astype(np.float32), nan=0.0, posinf=0.0, neginf=0.0)
 
 
-def save_nifti(arr, affine, path, intent=None) -> None:
+def save_nifti(arr, affine, path) -> None:
     """NIfTI-1 with sform = qform = affine (code 1, unit mm), arr in (i, j, k) order."""
     import nibabel as nib
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     A = np.asarray(affine, float)
     img = nib.Nifti1Image(np.asarray(arr), A)
-    if intent:
-        img.header.set_intent(intent)
     img.header.set_xyzt_units("mm")
     img.header.set_qform(A, code=1)
     img.header.set_sform(A, code=1)
     nib.save(img, str(path))
-
-
-def save_field(field, affine, path) -> None:
-    """Displacement field [3, D, H, W] in mm along the world axes of `affine` as a NIfTI-1 vector image [D, H, W, 1, 3].
-    The components follow the NIfTI world axes (RAS+). ITK and ANTs read them as LPS, the first two negated."""
-    save_nifti(np.ascontiguousarray(np.moveaxis(np.asarray(field, np.float32), 0, -1)[:, :, :, None, :]), affine, path,
-               "vector")
-
-
-def load_field(path):
-    """A displacement field written by save_field -> (float32 [3, D, H, W], affine 4x4)."""
-    import nibabel as nib
-    img = nib.load(str(path))
-    if len(img.shape) != 5 or img.shape[3:] != (1, 3):
-        raise ValueError(f"{path}: shape {img.shape}, but a displacement field has shape [D, H, W, 1, 3]")
-    return np.moveaxis(np.asarray(img.dataobj, np.float32)[:, :, :, 0, :], -1, 0), np.array(img.affine, float)
 
 
 def _write_text(text, path) -> None:
