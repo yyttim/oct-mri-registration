@@ -71,7 +71,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     lap("refine")
     io.write_transform_txt(T, out / "T_oct2mri.txt")
     io.write_lta(T, vo, vm, out / "oct2mri.lta")
-    io.write_itk(T, vo, vm, out / "oct2mri_itk.txt")
+    io.write_itk(T, out / "oct2mri_itk.txt")
 
     found = candidates[best["search_rank"]]
     pose = {"search_rank": best["search_rank"], "search_F": found["F"], "search_O": found["O"], "L": best["L"],
@@ -105,7 +105,7 @@ def prepare_mri(vol, params: Params = Params(), mask=None):
 
 
 def prepare_oct(fine, affine, params: Params = Params(), mask=None):
-    """§1 for the OCT: specimen mask on the fine grid, then OCT, mask and measured fraction box-averaged to base_mm.
+    """§1 for the OCT: specimen mask on the fine grid, then OCT, mask and measured fraction pooled to base_mm.
     -> ((oct_h float32, mask bool, base affine), measured bool, info)."""
     P = params
     mask_f, info = fine_mask(fine, affine, P, mask)

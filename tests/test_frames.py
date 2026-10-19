@@ -264,18 +264,18 @@ def test_transform_txt_lta_itk_roundtrip(tmp_path):
     sitk = pytest.importorskip("SimpleITK")                   # ITK file: dst voxel -> dst physical -> transform -> src voxel
     np.save(tmp_path / "a.npy", np.zeros((14, 12, 10), np.float32))                  # numpy (z, y, x): volume (10, 12, 14)
     arr = io.load_volume(tmp_path / "a.npy", spacing_um=(40, 30, 20))
-    a_img = sitk.GetImageFromArray(np.zeros((14, 12, 10), np.float32))
-    a_img.SetSpacing(tuple(arr.spacing_mm))                                             # ITK index order (x, y, z)
     bare = nib.Nifti1Image(np.zeros((10, 12, 14), np.float32), None)                   # no sform or qform: array frame
     bare.header.set_zooms((0.04, 0.03, 0.02))
     nib.save(bare, str(tmp_path / "bare.nii.gz"))
     nii = io.load_volume(tmp_path / "bare.nii.gz")
     assert nii.frame == "array"
-    images = {id(src): sitk.ReadImage(str(tmp_path / "oct.nii.gz")), id(dst): sitk.ReadImage(str(tmp_path / "mri.nii.gz")), id(arr): a_img,
-              id(nii): sitk.ReadImage(str(tmp_path / "bare.nii.gz"))}
+    for v, f in ((arr, "arr_copy.nii.gz"), (nii, "bare_copy.nii.gz")):              # a NIfTI copy with the world as sform
+        io.save_nifti(np.zeros(v.shape, np.float32), v.affine, tmp_path / f)
+    images = {id(v): sitk.ReadImage(str(tmp_path / f)) for v, f in ((src, "oct.nii.gz"), (dst, "mri.nii.gz"),
+                                                                     (arr, "arr_copy.nii.gz"), (nii, "bare_copy.nii.gz"))}
     q = np.array([3.0, 4.0, 5.0])
     for s, d in ((src, dst), (arr, dst), (src, arr), (nii, dst), (src, nii)):
-        io.write_itk(T, s, d, tmp_path / "x_itk.txt")
+        io.write_itk(T, tmp_path / "x_itk.txt")
         assert b"\r" not in (tmp_path / "x_itk.txt").read_bytes()
         p = sitk.ReadTransform(str(tmp_path / "x_itk.txt")).TransformPoint(images[id(d)].TransformContinuousIndexToPhysicalPoint(tuple(q)))
         want = g.apply_affine(np.linalg.inv(s.affine) @ np.linalg.inv(T) @ d.affine, q)

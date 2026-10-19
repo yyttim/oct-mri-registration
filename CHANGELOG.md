@@ -8,7 +8,7 @@ octreg returns the affine of §1 to §4, and the smooth deformation is gone.
   is the OCT through the affine. `--no-deform` of `octreg register`, `--affine-only` of `octreg apply`, the `affine_only`
   argument of `apply` and the `deform` argument of `register` are gone. `result.json` has no `deform` entry and no
   `seconds.deform`, and its foreground entries have no `source`: `inputs.oct_mask` and `inputs.mri_mask` show whether a mask
-  file was given. `oct2mri_itk.txt` takes a NIfTI without sform or qform in its array frame, as ITK reads it.
+  file was given. `oct2mri_itk.txt` refers to the same NIfTI files as `oct2mri.lta`, whose header holds the world octreg read, also for a TIFF or NPY OCT.
 - §3: in O the variance of M counts as at least 2 % of the variance of M over the crop, which no longer depends on the size of
   the OCT block, and ε of the search gradients is the median of the OCT gradients in world coordinates also on a sheared OCT
   header.

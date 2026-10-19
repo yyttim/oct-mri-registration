@@ -131,6 +131,7 @@ Both thresholds of the OCT specimen mask take the tallest histogram mode to be t
 larger part of the measured volume, as in a block imaged with a margin of medium around it. A mask file replaces the specimen
 mask otherwise (`--oct-mask`), and the OCT file itself serves when it is exactly zero outside the tissue, since a mask file is
 read as its positive voxels. A TIFF or NPY read in its array frame can be the mirror image of the specimen, which no proper
-rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). A NIfTI without sform
-or qform is read in its array frame, diag(pixdim), as ITK reads it. FreeSurfer reads such a file in another frame, so
-`oct2mri.lta` applies only to NIfTI files with an sform or qform.
+rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). `oct2mri.lta` and `oct2mri_itk.txt` refer to the
+world octreg read, so they apply to NIfTI files whose sform or qform holds that world. For a TIFF, an NPY, a NIfTI
+without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the OCT with that world as its
+sform.

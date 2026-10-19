@@ -1,7 +1,6 @@
 """Volumes in their file frames, read plane by plane, and the output writers.
 Axes follow the storage order with the plane axis last: NIfTI (i, j, k), TIFF and NPY (x, y, z), the numpy axes reversed.
-World: NIfTI sform, else qform, else diag(pixdim), and TIFF and NPY diag(spacing). These array frames are the physical
-frames ITK gives the files."""
+World: NIfTI sform, else qform, else diag(pixdim), and TIFF and NPY diag(spacing)."""
 from __future__ import annotations
 
 import dataclasses
@@ -184,12 +183,11 @@ def write_lta(T, src: Volume, dst: Volume, path) -> None:
                 f"dst volume info\n{_vol_info(dst)}subject unknown\nfscale 0.100000\n", path)
 
 
-def write_itk(T, src: Volume, dst: Volume, path) -> None:
-    """ITK AffineTransform_double_3_3 text for antsApplyTransforms -i src -r dst -t path, the point map dst -> src.
-    It is F_src inv(T) F_dst, F = diag(-1, -1, 1) for a header frame as ITK reads RAS as LPS, and the identity for an
-    array frame."""
-    F_src, F_dst = (np.diag([-1.0, -1.0, 1.0, 1.0] if v.frame == "header" else [1.0] * 4) for v in (src, dst))
-    L = F_src @ np.linalg.inv(np.asarray(T, float)) @ F_dst
+def write_itk(T, path) -> None:
+    """ITK AffineTransform_double_3_3 text for antsApplyTransforms -i OCT -r MRI -t path, the point map MRI -> OCT.
+    It is F inv(T) F, F = diag(-1, -1, 1), as ITK reads the RAS world of a NIfTI header as LPS."""
+    F = np.diag([-1.0, -1.0, 1.0, 1.0])
+    L = F @ np.linalg.inv(np.asarray(T, float)) @ F
     q = " ".join(f"{v:.17g}" for v in [*L[:3, :3].ravel(), *L[:3, 3]])
     _write_text(f"#Insight Transform File V1.0\n#Transform 0\nTransform: AffineTransform_double_3_3\nParameters: {q}\n"
                 "FixedParameters: 0 0 0\n", path)

@@ -70,7 +70,7 @@ MRI-frame reference through the affine, or an MRI-frame volume onto an OCT-frame
 | file | content |
 |---|---|
 | `T_oct2mri.txt` | 4×4 affine in mm from the world frame of the OCT file to that of the MRI file |
-| `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK |
+| `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK, for NIfTI files whose header holds the world octreg read ([Scope](docs/METHOD.md#scope)) |
 | `oct_in_mri.nii.gz` | the OCT on the MRI grid, through the affine |
 | `mri_in_oct.nii.gz` | the MRI on the OCT base grid (0.15 mm), through the affine |
 | `qc.png`, `qc_montage.png` | visual QC of the affine |
