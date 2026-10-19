@@ -1,30 +1,4 @@
 {
- "octreg": {
-  "run": "octreg",
-  "tool": "octreg",
-  "variant": "\u00a71 to \u00a74",
-  "scale_per_oct_axis": [
-   0.9562,
-   0.9519,
-   0.9696
-  ],
-  "det": 0.8824421080598296,
-  "wall_s": 686.0255286693573,
-  "hardware": "GPU"
- },
- "ants_antsai": {
-  "run": "ants_antsai",
-  "tool": "ants",
-  "variant": "antsai",
-  "scale_per_oct_axis": [
-   1.0307,
-   1.0039,
-   1.0324
-  ],
-  "det": 1.0667948430845755,
-  "wall_s": 17670.31,
-  "hardware": "CPU, 12 threads"
- },
  "ants_com": {
   "run": "ants_com",
   "tool": "ants",
@@ -337,6 +311,32 @@
   "wall_s": 205.5,
   "hardware": "CPU, 8 threads"
  },
+ "synthmorph_affine": {
+  "run": "synthmorph_affine",
+  "tool": "synthmorph",
+  "variant": "affine",
+  "scale_per_oct_axis": [
+   0.8208,
+   0.6169,
+   1.1971
+  ],
+  "det": 0.49338642096594865,
+  "wall_s": 38.33,
+  "hardware": "CPU, 20 threads"
+ },
+ "ants_antsai": {
+  "run": "ants_antsai",
+  "tool": "ants",
+  "variant": "antsai",
+  "scale_per_oct_axis": [
+   1.0307,
+   1.0039,
+   1.0324
+  ],
+  "det": 1.0667948430845755,
+  "wall_s": 17670.31,
+  "hardware": "CPU, 12 threads"
+ },
  "reference_centres": {
   "run": "reference_centres",
   "tool": "reference",
@@ -350,17 +350,17 @@
   "wall_s": null,
   "hardware": ""
  },
- "synthmorph_affine": {
-  "run": "synthmorph_affine",
-  "tool": "synthmorph",
-  "variant": "affine",
+ "octreg": {
+  "run": "octreg",
+  "tool": "octreg",
+  "variant": "default",
   "scale_per_oct_axis": [
-   0.8208,
-   0.6169,
-   1.1971
+   0.9562,
+   0.9519,
+   0.9696
   ],
-  "det": 0.49338642096594865,
-  "wall_s": 38.33,
-  "hardware": "CPU, 20 threads"
+  "det": 0.8824421080598296,
+  "wall_s": 495.4792549610138,
+  "hardware": "GPU"
  }
 }

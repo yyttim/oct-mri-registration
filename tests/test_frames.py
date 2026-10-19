@@ -64,7 +64,7 @@ def test_params_defaults_and_dict():
     for bad in ({"fine_mm": 0.2}, {"sigmas_mm": []}, {"sigmas_mm": [0.3, -0.1]}, {"erode_mm": -0.1}, {"iters": 0},
                 {"sigmas_mm": 0.3}, {"lam": "2"}, {"iters": 10.5}, {"topk": True}, {"sigmas_mm": [[0.3]]}, {"lam": -1},
                 {"lr_mm": 0}, {"texture_window_mm": -0.36}, {"valley_ratio": 0}, {"min_component": 1.0}, {"nms_mm": -3},
-                {"outline_min_outside": -0.1}, json.loads('{"lam": NaN}'), json.loads('{"lam": Infinity}')):
+                {"outline_min_outside": 0}, json.loads('{"lam": NaN}'), json.loads('{"lam": Infinity}')):
         with pytest.raises(ValueError, match="^Params: "):
             Params.from_dict(bad)
     for bad in (lambda: dataclasses.replace(p, iters=10.5), lambda: Params(lam="2"), lambda: Params(lam=float("nan"))):
@@ -266,9 +266,15 @@ def test_transform_txt_lta_itk_roundtrip(tmp_path):
     arr = io.load_volume(tmp_path / "a.npy", spacing_um=(40, 30, 20))
     a_img = sitk.GetImageFromArray(np.zeros((14, 12, 10), np.float32))
     a_img.SetSpacing(tuple(arr.spacing_mm))                                             # ITK index order (x, y, z)
-    images = {id(src): sitk.ReadImage(str(tmp_path / "oct.nii.gz")), id(dst): sitk.ReadImage(str(tmp_path / "mri.nii.gz")), id(arr): a_img}
+    bare = nib.Nifti1Image(np.zeros((10, 12, 14), np.float32), None)                   # no sform or qform: array frame
+    bare.header.set_zooms((0.04, 0.03, 0.02))
+    nib.save(bare, str(tmp_path / "bare.nii.gz"))
+    nii = io.load_volume(tmp_path / "bare.nii.gz")
+    assert nii.frame == "array"
+    images = {id(src): sitk.ReadImage(str(tmp_path / "oct.nii.gz")), id(dst): sitk.ReadImage(str(tmp_path / "mri.nii.gz")), id(arr): a_img,
+              id(nii): sitk.ReadImage(str(tmp_path / "bare.nii.gz"))}
     q = np.array([3.0, 4.0, 5.0])
-    for s, d in ((src, dst), (arr, dst), (src, arr)):
+    for s, d in ((src, dst), (arr, dst), (src, arr), (nii, dst), (src, nii)):
         io.write_itk(T, s, d, tmp_path / "x_itk.txt")
         assert b"\r" not in (tmp_path / "x_itk.txt").read_bytes()
         p = sitk.ReadTransform(str(tmp_path / "x_itk.txt")).TransformPoint(images[id(d)].TransformContinuousIndexToPhysicalPoint(tuple(q)))

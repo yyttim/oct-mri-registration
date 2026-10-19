@@ -57,10 +57,10 @@ class Params:
         if min(self.sigmas_mm) <= 0:
             raise ValueError(f"Params: sigmas_mm must be positive, got {self.sigmas_mm!r}")
         for names, ok, want in (
-                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
-                  "search_sigma_mm", "lr_mm", "valley_ratio"), lambda x: x > 0, "positive"),
                 # outline_min_outside above 1 turns the outline off
-                (("lam", "nms_mm", "nms_deg", "outline_min_outside"), lambda x: x >= 0, "at least 0"),
+                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
+                  "search_sigma_mm", "lr_mm", "valley_ratio", "outline_min_outside"), lambda x: x > 0, "positive"),
+                (("lam", "nms_mm", "nms_deg"), lambda x: x >= 0, "at least 0"),
                 (("iters", "n_rot", "topk"), lambda x: x >= 1, "at least 1"),
                 (("min_component",), lambda x: 0 <= x < 1, "in [0, 1)")):
             for name in names:

@@ -10,13 +10,12 @@ transform from any starting orientation, with no labels and no manual start.
 | <img src="docs/figures/result/sagittal_mri.png" width="300" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="208" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="208" alt="MRI, axial"> |
 
 The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI tissue in
-red (middle), and the MRI (bottom), on three planes in freeview. On the sagittal plane the bright rim at the top lies just
-outside the line, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left
-lie outside it, and along the lower right the surface lies inside the line with a dark gap. On the coronal plane the right part
-of the striped upper right corner of the specimen lies outside the line, and so does a separate piece of tissue below it except
-for a thin strip along its lower left edge. Below that piece the specimen ends short of the line. On the axial plane the
-specimen ends short of the line along the right side, where the OCT shows a dark band with bright fragments and then plain grey.
-On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
+red (middle), and the MRI (bottom), on three planes in freeview. The specimen surface runs along the line except at these
+places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below
+the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner of the specimen
+and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends short of the line.
+On the axial plane the specimen ends short of the line along the right side, where the OCT shows a dark band with a few bright
+fragments. On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
 
 ## Method
 

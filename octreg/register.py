@@ -197,7 +197,7 @@ def qc_figures(prefix, oct_grid, mri_grid, T, oct_file_affine, label):
     mri, fg = (G.resample_to(np.asarray(x, np.float32), mri_grid[2], arr.shape, A_o, T) for x in mri_grid[:2])
     tissue = fg > 0.5
     inside = mask & tissue
-    polarity = 1 if inside.sum() < 10 or np.corrcoef(arr[inside], mri[inside])[0, 1] >= 0 else -1
+    polarity = -1 if inside.sum() >= 10 and np.corrcoef(arr[inside], mri[inside])[0, 1] < 0 else 1
     both = inside if inside.any() else mask
     o, m = (np.clip((x - lo) / max(hi - lo, 1e-12), 0, 1)
             for x, w in ((arr, mask), (mri, both)) for lo, hi in [np.percentile(x[w], [1, 99])])

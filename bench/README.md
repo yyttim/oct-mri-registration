@@ -28,7 +28,6 @@ OCT=$I58/I58_Brainstem_mus_Slice_full_20um_corr.nii.gz
 MRI=$I58/I58_brainstem_MRI_cropped_to_OCT.nii.gz
 RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I58
 python -m octreg register $OCT $MRI -o $RUNS/octreg
-cp $RUNS/octreg/result.json bench/results/I58/result.json
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search --turn 0,0,90
 python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
@@ -64,7 +63,7 @@ licence, in WSL on Windows.
 | `figures.py` | the I58 panels in `docs/figures/` |
 | `baselines/` | standard registration tools on the I58 pair, and the tool settings of the I46 test ([README](baselines/README.md), [BASELINES.md](baselines/BASELINES.md)) |
 | `i46/` | the test on block I46 of Costantini et al. (2023) ([README](i46/README.md)) |
-| `results/I58/` | `result.json` of the I58 run and the baseline tables in `baselines/` |
+| `results/I58/` | `result.json` of the I58 run, with the input paths cut to file names, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
 The scripts print their options with `--help`.
