@@ -2,7 +2,7 @@
 """Write bench/results/I46/tables.md from the JSON files in bench/results/I46, and the start rows and the scales of R from the
 inputs of bench/i46/prepare.py.
 
-    python bench/i46/summarize.py
+    python bench/i46/summarise.py
 
     octreg.json                                 the octreg runs (run.py collect)
     baselines.json, baselines_search.json       the standard tools at their documented settings and with their own search
@@ -23,6 +23,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (CONDITIONS, FLIPS, OCT, PRIMARY, RESULTS, SEEDS, TIERS, crop_file, crop_name, error,  # noqa: E402
                     reference)
+from analyses import N_RANDOM, SEED  # noqa: E402
+from baselines import NEAR_DEG, NEAR_MM, NEAR_SEED  # noqa: E402
 from bench.ablate import VARIANTS as CHANGES, header_start  # noqa: E402
 
 INF = float("inf")
@@ -101,7 +103,7 @@ def reference_section(ref, ctx):
         "R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit "
         f"L (reference_check.py, an affine fitted to the vessels alone) lies {a['mean_mm']:.3f} mm from R on average "
         f"(p95 {a['p95_mm']:.2f} mm, rotation {a['rotation_deg']:.2f}°), {th} mm in the upper, middle and deepest third "
-        "of the OCT depth, so distances below 0.30 mm are not interpreted.")
+        f"of the OCT depth, so distances below {TIERS[0]:.2f} mm are not interpreted.")
     return out + para("Grey/white contrast-to-noise ratio of the images inside the box of the OCT: " + ", ".join(
         f"{FLIPS[k][1]}° FLASH {v:.2f}" if k in FLIPS else f"T1 map {v:.2f}"
         for k, v in ctx["grey_white_cnr"].items() if k != "box_voxels") + ".")
@@ -132,27 +134,15 @@ def octreg_section(rows):
         f"{rng(sc[:, 0], 3)}, "
         f"{rng(sc[:, 1], 3)} and {rng(sc[:, 2], 3)}, and that of R "
         f"{', '.join(f'{x:.3f}' for x in np.linalg.norm(reference()[:3, :3], axis=0))}.")
-    def vessels(runs):
-        dv = [x["deform"] for x in runs if x["deform"] and x["deform"]["field_median_mm"] is not None]
-        return (len(dv), sum(v["field_median_mm"] < v["affine_median_mm"] for v in dv),
-                fmt(med([v["affine_median_mm"] for v in dv]), 3), fmt(med([v["field_median_mm"] for v in dv]), 3))
-    n, lower, a, f = vessels(near)
-    nm, lower_m, am, fm = vessels([x for x in rows if x["oct_mask"] and x["mean_mm"] <= TIERS[1]])
-    out += para(
-        "The deformation of §5, scored by the vessel check on the labels that the affine and the affine with the field both "
-        f"place inside (common.vessel_field), over the {n} of those runs with at least 50 such labels: the median distance "
-        f"is lower with the field on {lower} of them, median over the runs {a} mm through the affine and {f} mm with the "
-        f"field. Over the {nm} runs with the test's specimen mask as --oct-mask it is lower on {lower_m}, {am} mm through "
-        f"the affine and {fm} mm with the field.")
     return trim(out)
 
 
 def starts_section(st):
     out = ["## Start test on flip1_C3_k0", ""] + para(
-        "The OCT is turned about the centre of its image box, by 90° and 180° about each array axis (i90 to k180) and by 10 "
-        "rotations drawn uniformly on SO(3) (rand00 to rand09, seed 4646), and octreg runs from each turned start (analyses.py "
-        "starts). The start column gives the distance and rotation from R of the turned OCT with the centres of the two image "
-        "boxes aligned.")
+        "The OCT is turned about the centre of its image box, by 90° and 180° about each array axis (i90 to k180) and by "
+        f"{N_RANDOM} rotations drawn uniformly on SO(3) (rand00 to rand{N_RANDOM - 1:02d}, seed {SEED}), and octreg runs from "
+        "each turned start (analyses.py starts). The start column gives the distance and rotation from R of the turned OCT "
+        "with the image box centres aligned.")
     for group, pre in (("turned", ("i", "j", "k")), ("random", ("rand",))):
         r = [x for x in st if x["start"].startswith(pre)]
         out += para(f"{group} starts: within 1 mm {counts(r)[1]}, distance from R {rng([x['mean_mm'] for x in r])} mm, "
@@ -181,7 +171,7 @@ def tools_section(rows, bl, bls):
         "Each tool at its documented setting (bench/baselines/standard_tools.py), and the three tools that have a global "
         "rotation search with that search turned on, on the C3 crops of the 10° FLASH. The moving image is the released OCT "
         "box-averaged to 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header "
-        "orientation of the OCT with the centres of the two image boxes aligned.")
+        "orientation of the OCT with the image box centres aligned.")
     octreg = [x for x in rows if not x["oct_mask"] and x["name"] in names]
     out += TOOL_HEAD + [tool_row("the start", "no registration", [start_pose(n) for n in names], spread=True),
                         tool_row("octreg", "its default parameters", octreg)]
@@ -255,13 +245,13 @@ def near_section(bln):
     hs = list({x["crop"]: x["start_from_S"] for x in bln if "start_from_S" in x}.values())
     out = ["## Start near R", ""] + para(
         "The tools at their documented settings, started near R, on the C3 crops of the 10° FLASH. The start of crop k is R "
-        "turned by 10° about a random axis through the centre of the OCT tissue and shifted by 1 mm in a random direction "
-        "(numpy default_rng(4700 + k)). The tools get it as the header of the moving image, with the option that starts from "
-        "the header alignment (bench/baselines/standard_tools.py). A NIfTI qform cannot hold the shear of R (ANTs, elastix "
-        "and greedy read the qform), so the start is the pose with a rotation and a scale per axis closest to the turned and "
-        f"shifted R over the OCT tissue: {rng([h['mean_mm'] for h in hs])} mm from it (mean over the tissue, at most "
-        f"{fmt(max([h['max_mm'] for h in hs], default=None))} mm), {rng([x['mean_mm'] for x in st])} mm and "
-        f"{rng([x['rotation_deg'] for x in st], 1)}° from R. The start row is that pose without registration.")
+        f"turned by {NEAR_DEG:g}° about a random axis through the centre of the OCT tissue and shifted by {NEAR_MM:g} mm in a "
+        f"random direction (numpy default_rng({NEAR_SEED} + k)). The tools get it as the header of the moving image, with the "
+        "option that starts from the header alignment (bench/baselines/standard_tools.py). A NIfTI qform cannot hold the "
+        "shear of R (ANTs, elastix and greedy read the qform), so the start is the pose with a rotation and a scale per axis "
+        f"closest to the turned and shifted R over the OCT tissue: {rng([h['mean_mm'] for h in hs])} mm from it (mean over "
+        f"the tissue, at most {fmt(max([h['max_mm'] for h in hs], default=None))} mm), {rng([x['mean_mm'] for x in st])} mm "
+        f"and {rng([x['rotation_deg'] for x in st], 1)}° from R. The start row is that pose without registration.")
     out += TOOL_HEAD + [tool_row("the start", "no registration", st, spread=True)]
     for t in dict.fromkeys(x["tool"] for x in bln):
         r = [x for x in bln if x["tool"] == t]
@@ -292,10 +282,9 @@ def ablation_section(abl, rows):
     out = ["## Ablation", ""] + para(
         "bench/ablate.py: the method with one change, on the C3 crops of the 10° FLASH, on the released OCT with octreg's own "
         "masks as in the main runs (analyses.py). The difference is the variant's distance from R minus the method's on the "
-        "same crop. The variants of the outline and of the deformation are shown on I58 (bench/README.md). The vessel column "
-        "gives the median distance of the MRI vessel labels to the nearest OCT vessel through the affine "
-        "(common.vessel_score), "
-        "median over the crops.")
+        "same crop. The variants of the outline are shown on I58 (bench/README.md). The vessel column gives the median "
+        "distance of the MRI vessel labels to the nearest OCT vessel through the affine (common.vessel_score), median over "
+        "the crops.")
     out += ["| variant | change | <= 1 mm | distance from R, median (range) (mm) | difference, median (range) (mm) "
             "| vessels (mm) |", "|---|---|---|---|---|---|"]
     crops = sorted({x["crop"] for x in abl})
@@ -323,7 +312,7 @@ def main():
         sys.exit(f"octreg.json, ablation.json and starts.json mix octreg versions and codes {sorted(map(str, codes))}")
     bl, bls, blm, bln = (load(f"baselines{s}.json") for s in ("", "_search", "_mask", "_near"))
     out = ["# I46: results", ""] + para(
-        "Generated by bench/i46/summarize.py from the JSON files next to this one, and for the start rows and the scales of R "
+        "Generated by bench/i46/summarise.py from the JSON files next to this one, and for the start rows and the scales of R "
         "from the inputs of prepare.py. bench/i46/README.md describes the test. Distances are the mean displacement over the "
         "OCT tissue from the authors' registration R, or from the label-only fit L where named. Counts are numbers of runs: "
         "the ten crops of a condition are shifted boxes around the same block. Medians are over all runs of a row. A run that "

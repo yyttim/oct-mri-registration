@@ -11,14 +11,14 @@ class Params:
     """Method constants. Variants via dataclasses.replace or from_dict."""
     # grids
     search_mm: float = 0.6                    # orientation search
-    base_mm: float = 0.15                     # refinement and deformation
+    base_mm: float = 0.15                     # refinement
     fine_mm: float = 0.04                     # OCT specimen mask
     # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
     min_component: float = 0.01               # components below this fraction of the mask are dropped
     texture_bandpass_mm: float = 0.08         # Gaussian sigma of the smoothing before the texture
     texture_window_mm: float = 0.36           # window of the local coefficient of variation
-    texture_grid_mm: float = 0.16             # block grid of the texture field
+    texture_grid_mm: float = 0.16             # cell size of the texture grid
     texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture before the threshold
     # similarity (§2)
     erode_mm: float = 0.8                     # depth of the OCT points of F inside the specimen mask
@@ -34,11 +34,6 @@ class Params:
     iters: int = 150                          # Adam iterations per pass
     lam: float = 2.0                          # L = 1 - F + lam (sum log_scale^2 + sum shear^2)
     lr_mm: float = 0.06                       # Adam step in mm of OCT box corner motion
-    # smooth deformation (§5)
-    df_grid_mm: float = 5.0                   # control lattice spacing
-    df_max_strain: float = 0.08               # bound on the first differences of the lattice / spacing
-    df_sigmas_mm: tuple = (0.6, 0.3)          # one L-BFGS pass per sigma
-    df_evals: int = 250                       # objective evaluations per L-BFGS pass
 
     def __post_init__(self):
         real = lambda x: isinstance(x, float) and math.isfinite(x)
@@ -59,14 +54,14 @@ class Params:
                 raise ValueError(f"Params: {f.name} must be {want}, got {given!r}")
         if not 0 < self.fine_mm <= self.base_mm < self.search_mm:
             raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm")
-        if not (self.sigmas_mm and self.df_sigmas_mm and min(self.sigmas_mm + self.df_sigmas_mm) > 0):
-            raise ValueError("Params: sigmas_mm and df_sigmas_mm must be non-empty and positive")
+        if min(self.sigmas_mm) <= 0:
+            raise ValueError(f"Params: sigmas_mm must be positive, got {self.sigmas_mm!r}")
         for names, ok, want in (
-                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
-                  "search_sigma_mm", "lr_mm", "df_grid_mm", "df_max_strain", "valley_ratio"), lambda x: x > 0, "positive"),
                 # outline_min_outside above 1 turns the outline off
-                (("lam", "nms_mm", "nms_deg", "outline_min_outside"), lambda x: x >= 0, "at least 0"),
-                (("iters", "df_evals", "n_rot", "topk"), lambda x: x >= 1, "at least 1"),
+                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
+                  "search_sigma_mm", "lr_mm", "valley_ratio", "outline_min_outside"), lambda x: x > 0, "positive"),
+                (("lam", "nms_mm", "nms_deg"), lambda x: x >= 0, "at least 0"),
+                (("iters", "n_rot", "topk"), lambda x: x >= 1, "at least 1"),
                 (("min_component",), lambda x: 0 <= x < 1, "in [0, 1)")):
             for name in names:
                 if not ok(getattr(self, name)):

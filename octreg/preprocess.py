@@ -38,12 +38,12 @@ def _pool(a, k):
     return a.reshape(D, k, H, k, W, k).sum(axis=(1, 3, 5))
 
 
-def _upsample(a, k, shape, rows=None):
-    """Linear interpolation of the block grid a onto a voxel grid of `shape`, clamped beyond the outer block centres.
-    rows = (lo, hi) returns only rows lo:hi along axis 0. -> float32"""
+def _upsample(a, k, shape, lo, hi):
+    """Linear interpolation of the cell grid a onto rows lo:hi along axis 0 of a voxel grid of `shape`, clamped beyond the
+    outer cell centres. -> float32"""
     x = np.asarray(a, np.float32)
     for ax, n in enumerate(shape):
-        c = np.clip((np.arange(n) - (k - 1) / 2) / k, 0, a.shape[ax] - 1)[slice(*rows) if ax == 0 and rows else slice(None)]
+        c = np.clip((np.arange(n) - (k - 1) / 2) / k, 0, a.shape[ax] - 1)[slice(lo, hi) if ax == 0 else slice(None)]
         i = np.floor(c).astype(int)
         f = (c - i).astype(np.float32).reshape([-1 if d == ax else 1 for d in range(3)])
         x = np.take(x, i, axis=ax) * (1 - f) + np.take(x, np.minimum(i + 1, a.shape[ax] - 1), axis=ax) * f
@@ -156,7 +156,7 @@ def specimen_mask(fine, voxel_mm, params: Params = Params()):
     out = np.empty(fine.shape, bool)
     for z0 in range(0, D, _CHUNK):
         z1 = min(D, z0 + _CHUNK)
-        out[z0:z1] = (_upsample(keep, k, fine.shape, (z0, z1)) > 0.5) & (np.asarray(fine[z0:z1]) > ts)
+        out[z0:z1] = (_upsample(keep, k, fine.shape, z0, z1) > 0.5) & (np.asarray(fine[z0:z1]) > ts)
     out = _fill_planes(_components(out, P.min_component))
     out &= np.asarray(fine) > 0
     return out, {"signal_threshold": ts, "texture_threshold": float(np.exp(lt)),

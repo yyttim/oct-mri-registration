@@ -1,17 +1,17 @@
-# I58, affine stage
+# I58 baselines
 
 The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. Scale per OCT axis: the
 length of the transform applied to a unit step along each array axis of the OCT header (1 = voxel size kept). det: the
-determinant of its 3x3 (1 = volume kept). Wall times as each run recorded them, on a 24-core machine shared with other jobs.
-octreg's is the sum of its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, because its
-schedule resamples the images to fixed voxel sizes in mm, and its run on the unscaled headers is flirt_search_native.
+determinant of its 3x3 (1 = volume kept). Wall times as each run recorded them. octreg's is the sum of its §1 to §4 step
+times in result.json. FLIRT's main run has both headers scaled x10, because its schedule resamples the images to fixed voxel
+sizes in mm, and its run on the unscaled headers is flirt_search_native.
 
 ## Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)
 
 | method | run | setting | start | scale per OCT axis | det | wall time | hardware |
 |---|---|---|---|---|---|---|---|
-| image centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
-| octreg | `octreg` | §1 to §4 with default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 11 min | GPU |
+| image box centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image box centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
+| octreg | `octreg` | default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 10 min | GPU |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
 | greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 63 s | CPU, 8 threads |
 | elastix 5.3.1 | `elastix_center` | model-zoo Parameters_Rigid then Parameters_Affine (AdvancedMattesMutualInformation), no mask | geometric centres (GeometricalCenter) | 0.92 / 0.84 / 0.97 | 0.74 | 26 s | CPU, 12 threads |
@@ -25,8 +25,8 @@ schedule resamples the images to fixed voxel sizes in mm, and its run on the uns
 
 | method | run | setting | start | scale per OCT axis | det | wall time | hardware |
 |---|---|---|---|---|---|---|---|
-| image centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
-| octreg | `octreg` | §1 to §4 with default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 11 min | GPU |
+| image box centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image box centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
+| octreg | `octreg` | default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 10 min | GPU |
 | ANTs 2.6.5 | `ants_antsai` | antsAI rigid rotation search (Mattes MI, 0.15 mm copies), then the stages of ants_com | antsAI global rotation search | 1.03 / 1.00 / 1.03 | 1.07 | 4.9 h | CPU, 12 threads |
 | ANTs 2.6.5 | `ants_com` | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask | centres of mass (script default) | 0.86 / 0.62 / 0.92 | 0.49 | 45 s | CPU, 12 threads |
 | ANTs 2.6.5 | `ants_com_fov` | as ants_com, with the OCT field-of-view (FOV) mask | centres of mass | 1.28 / 1.01 / 1.10 | 1.39 | 68 s | CPU, 12 threads |

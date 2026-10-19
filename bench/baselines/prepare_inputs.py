@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """The shared inputs of the I58 baseline comparison.
 
-    python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz --run OCTREG_RUN -o DIR
+    python bench/baselines/prepare_inputs.py --oct OCT.nii.gz --mri MRI.nii.gz -o DIR
 
-Writes into DIR the inputs of the affine stage, oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm in its own world), its
-field-of-view mask oct_fov_0.08mm.nii.gz (voxels > 0), mri_0.08mm.nii.gz (the crop as given) and oct_0.15mm.nii.gz for the
-antsAI search, too slow at 0.08 mm, and the moving image of the deformable stage, oct_affine_0.08mm.nii.gz, the OCT through
-the affine of OCTREG_RUN on the MRI grid.
+Writes into DIR the inputs, oct_0.08mm.nii.gz (the OCT box-averaged to 0.08 mm in its own world), its field-of-view mask
+oct_fov_0.08mm.nii.gz (voxels > 0), mri_0.08mm.nii.gz (the crop as given) and oct_0.15mm.nii.gz, the moving image of the antsAI
+rotation search.
 """
 from __future__ import annotations
 
@@ -19,14 +18,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from octreg import geometry as G, io  # noqa: E402
-from octreg.register import apply  # noqa: E402
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--oct", required=True, type=Path)
     ap.add_argument("--mri", required=True, type=Path)
-    ap.add_argument("--run", required=True, type=Path, help="octreg run directory (T_oct2mri.txt, result.json)")
     ap.add_argument("-o", "--out", required=True, type=Path)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -35,7 +32,6 @@ def main():
     io.save_nifti((arr > 0).astype(np.uint8), A, a.out / "oct_fov_0.08mm.nii.gz")
     io.save_nifti(*G.resample_iso(io.load_volume(a.oct), 0.15), a.out / "oct_0.15mm.nii.gz")
     shutil.copy(a.mri, a.out / "mri_0.08mm.nii.gz")
-    apply(a.run, a.oct, a.out / "mri_0.08mm.nii.gz", a.out / "oct_affine_0.08mm.nii.gz", affine_only=True)
     print("inputs in", a.out)
 
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.2.0
+
+octreg returns the affine of §1 to §4, and the smooth deformation is gone.
+
+- Outputs and commands: `oct2mri_warp.nii.gz`, `oct_in_mri_affine.nii.gz` and `qc_deform.png` are gone, and `oct_in_mri.nii.gz`
+  is the OCT through the affine. `--no-deform` of `octreg register`, `--affine-only` of `octreg apply`, the `affine_only`
+  argument of `apply` and the `deform` argument of `register` are gone. `result.json` has no `deform` entry and no
+  `seconds.deform`, and its foreground entries have no `source`: `inputs.oct_mask` and `inputs.mri_mask` show whether a mask
+  file was given. `oct2mri_itk.txt` refers to the world octreg read, as `oct2mri.lta` does, also for a TIFF or NPY OCT.
+- §2: in O the variance of M counts as at least 2 % of the variance of M over the crop, which no longer depends on the size of
+  the OCT block.
+- §3: ε of the search gradients is the median of the OCT gradients in world coordinates also on a sheared OCT header.
+- Parameters: `df_grid_mm`, `df_max_strain`, `df_sigmas_mm` and `df_evals` are gone, and `outline_min_outside` must be
+  positive.
+- bench: the deformable baselines on I58, the ablation variant `df_free` and the vessel check through the field are gone, and
+  `bench/baselines/prepare_inputs.py` has no `--run`. `bench/baselines/i58/runs.py` is new: it writes the tool script of every
+  I58 baseline run and converts each transform into its run directory. `bench/baselines/evaluate_runs.py` takes the two I58
+  files as `--oct` and `--mri`, makes the start of the I58 baselines from their headers, as the I46 test does, and the overlay
+  of a baseline run is `oct_in_mri.nii.gz`. `bench/i46/prepare.py --mask` makes the specimen mask of the I46 test, and
+  `bench/i46/summarize.py` is now `summarise.py`.
+
 ## 3.1.0
 
 A specimen mask for OCT in bright, dark or clipped medium, a simpler MRI foreground, the full orientation tensor and a search in

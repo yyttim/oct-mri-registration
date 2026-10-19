@@ -4,7 +4,6 @@ transform to OCT world -> MRI world and the check of that conversion against the
 from __future__ import annotations
 
 import json
-import platform
 import re
 import shutil
 import sys
@@ -14,7 +13,9 @@ import nibabel as nib
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
+sys.path[:0] = [str(HERE), str(HERE.parents[1])]
+from bench.paths import WSL, host_path  # noqa: E402
+
 TOOLS = ["reg_aladin", "greedy", "elastix", "ants", "mri_robust_register", "mri_coreg", "flirt", "synthmorph"]
 SETTING = {"reg_aladin": "defaults (image centres)", "greedy": "NMI, -ia-image-centers",
            "elastix": "model zoo, geometric centre", "ants": "antsRegistrationSyN -t a",
@@ -27,7 +28,6 @@ MASK = {"reg_aladin_mask": "defaults (image centres), -fmask", "greedy_mask": "N
         "elastix_mask": "model zoo, geometric centre, -mMask", "ants_mask": "antsRegistrationSyN -t a, -x NULL,mask",
         "mri_robust_register_mask": "NMI, default start, --maskmov", "mri_coreg_mask": "defaults, --mov-mask",
         "flirt_mask": "normmi, default search, x10 headers, -inweight"}
-NO_MASK = {"synthmorph": "mri_synthmorph register has no option for a mask"}
 NEAR = {"reg_aladin_near": "defaults, -nac", "greedy_near": "NMI, -ia-identity", "elastix_near": "model zoo, no initialisation",
         "ants_near": "antsRegistrationSyN -t a, -i Identity", "mri_robust_register_near": "NMI, --noinit",
         "mri_coreg_near": "defaults, --regheader", "flirt_near": "normmi, default search, -usesqform, x10 headers",
@@ -36,13 +36,6 @@ EXTENDS = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "gre
            **{t: t.removesuffix("_mask") for t in MASK}, **{t: t.removesuffix("_near") for t in NEAR}}
 ELASTIX = HERE / "elastix_defaults"
 PY = sys.executable
-WIN = platform.system() == "Windows"
-
-
-def wsl(p):
-    """The path p as WSL sees it on Windows (/mnt/<drive>/...), else as it is."""
-    s = str(Path(p).resolve()).replace("\\", "/")
-    return "/mnt/" + s[0].lower() + s[2:] if WIN and len(s) > 1 and s[1] == ":" else s
 
 
 def made_from(record, sources):
@@ -91,7 +84,7 @@ def prepare_mask(d, mask):
 
 def script(tool, run, inp):
     """The lines of run.sh for one tool or variant."""
-    R, I = wsl(run), wsl(inp)
+    R, I = host_path(run), host_path(inp)
     fs, tl = "source ~/baselines/fs_env.sh", "source ~/baselines/tools/env.sh"
     t = "/usr/bin/time -f %e -o time.txt"
     t1, t2 = "/usr/bin/time -f %e -o time_rigid.txt", "/usr/bin/time -f %e -o time_affine.txt"
@@ -181,7 +174,7 @@ def prepare(base, runs, inputs):
                         raise ValueError(f"{ELASTIX / f}: not one AutomaticTransformInitialization line")
                     (run / f).write_bytes(b.replace(on, b'(AutomaticTransformInitialization "false")'))
         (run / "run.sh").write_text("\n".join(script(tool, run, inp)) + "\n", encoding="utf-8", newline="\n")
-        launch = (f"MSYS_NO_PATHCONV=1 wsl bash {wsl(run / 'run.sh')}" if WIN and EXTENDS.get(tool, tool) != "greedy"
+        launch = (f"MSYS_NO_PATHCONV=1 wsl bash {host_path(run / 'run.sh')}" if WSL and EXTENDS.get(tool, tool) != "greedy"
                   else f'bash "{str(run / "run.sh").replace(chr(92), "/")}"')
         lines.append(f'[ -f "{str(run / "time.txt").replace(chr(92), "/")}" ] || {launch}; echo "{crop}/{tool} done"')
     (Path(base) / "queue.sh").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
@@ -195,7 +188,7 @@ def convert(tool, run, inp):
     if tool == "elastix":                 # on Windows the files name each other by WSL paths
         for n in (0, 1):
             txt = (run / f"TransformParameters.{n}.txt").read_text()
-            txt = re.sub(r"/mnt/([a-z])/", lambda m: m.group(1).upper() + ":/", txt) if WIN else txt
+            txt = re.sub(r"/mnt/([a-z])/", lambda m: m.group(1).upper() + ":/", txt) if WSL else txt
             txt = txt.replace("TransformParameters.0.txt", "TransformParameters.0.win.txt")
             (run / f"TransformParameters.{n}.win.txt").write_text(txt)
         return C.elastix_tp_to_mov2fix_ras(run / "TransformParameters.1.win.txt")

@@ -1,6 +1,6 @@
 """Volumes in their file frames, read plane by plane, and the output writers.
 Axes follow the storage order with the plane axis last: NIfTI (i, j, k), TIFF and NPY (x, y, z), the numpy axes reversed.
-World: NIfTI sform, else qform, else diag(pixdim). TIFF and NPY diag(spacing), the physical frame ITK gives them."""
+World: NIfTI sform, else qform, else diag(pixdim), and TIFF and NPY diag(spacing)."""
 from __future__ import annotations
 
 import dataclasses
@@ -141,34 +141,16 @@ def _finish(plane, slope, inter):
     return np.nan_to_num(x.astype(np.float32), nan=0.0, posinf=0.0, neginf=0.0)
 
 
-def save_nifti(arr, affine, path, intent=None) -> None:
+def save_nifti(arr, affine, path) -> None:
     """NIfTI-1 with sform = qform = affine (code 1, unit mm), arr in (i, j, k) order."""
     import nibabel as nib
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     A = np.asarray(affine, float)
     img = nib.Nifti1Image(np.asarray(arr), A)
-    if intent:
-        img.header.set_intent(intent)
     img.header.set_xyzt_units("mm")
     img.header.set_qform(A, code=1)
     img.header.set_sform(A, code=1)
     nib.save(img, str(path))
-
-
-def save_field(field, affine, path) -> None:
-    """Displacement field [3, D, H, W] in mm along the world axes of `affine` as a NIfTI-1 vector image [D, H, W, 1, 3].
-    The components follow the NIfTI world axes (RAS+). ITK and ANTs read them as LPS, the first two negated."""
-    save_nifti(np.ascontiguousarray(np.moveaxis(np.asarray(field, np.float32), 0, -1)[:, :, :, None, :]), affine, path,
-               "vector")
-
-
-def load_field(path):
-    """A displacement field written by save_field -> (float32 [3, D, H, W], affine 4x4)."""
-    import nibabel as nib
-    img = nib.load(str(path))
-    if len(img.shape) != 5 or img.shape[3:] != (1, 3):
-        raise ValueError(f"{path}: shape {img.shape}, but a displacement field has shape [D, H, W, 1, 3]")
-    return np.moveaxis(np.asarray(img.dataobj, np.float32)[:, :, :, 0, :], -1, 0), np.array(img.affine, float)
 
 
 def _write_text(text, path) -> None:
@@ -201,11 +183,11 @@ def write_lta(T, src: Volume, dst: Volume, path) -> None:
                 f"dst volume info\n{_vol_info(dst)}subject unknown\nfscale 0.100000\n", path)
 
 
-def write_itk(T, src: Volume, dst: Volume, path) -> None:
-    """ITK AffineTransform_double_3_3 text for antsApplyTransforms -i src -r dst -t path, the point map dst -> src.
-    It is F_src inv(T) F_dst, F = diag(-1, -1, 1) for NIfTI as ITK reads RAS as LPS, and the identity for TIFF and NPY."""
-    F_src, F_dst = (np.diag([-1.0, -1.0, 1.0, 1.0] if _kind(v.path) == "nii" else [1.0] * 4) for v in (src, dst))
-    L = F_src @ np.linalg.inv(np.asarray(T, float)) @ F_dst
+def write_itk(T, path) -> None:
+    """ITK AffineTransform_double_3_3 text for antsApplyTransforms -i OCT -r MRI -t path, the point map MRI -> OCT.
+    It is F inv(T) F, F = diag(-1, -1, 1), as ITK reads the RAS world of a NIfTI header as LPS."""
+    F = np.diag([-1.0, -1.0, 1.0, 1.0])
+    L = F @ np.linalg.inv(np.asarray(T, float)) @ F
     q = " ".join(f"{v:.17g}" for v in [*L[:3, :3].ravel(), *L[:3, 3]])
     _write_text(f"#Insight Transform File V1.0\n#Transform 0\nTransform: AffineTransform_double_3_3\nParameters: {q}\n"
                 "FixedParameters: 0 0 0\n", path)
