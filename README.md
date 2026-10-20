@@ -123,30 +123,64 @@ that of `nms_deg` also with runs on public blocks of [DANDI:000874](https://dand
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
-distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold of
-the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The ten crops of a condition are shifted boxes around
-the same block of one specimen, so the counts show how octreg copes with the placement of the crop and with the MRI contrast,
-not how it generalises to other specimens.
+distance from R is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a
+threshold of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The vessel distance is the median distance
+of the MRI vessel labels placed in the OCT tissue to the nearest OCT vessel of the dataset's segmentation, which does not depend
+on R. Every number is the median over the ten crops of a condition, shifted boxes around the same block of one specimen, a run
+without a transform counted as beyond every other.
 
-| condition | within 1 mm of R | distance from R (mm) |
+| | distance from R (mm) | vessel distance (mm) |
 |---|---|---|
-| 10° FLASH, 3 mm margin | 10 of 10 | 0.35 to 0.36 |
-| 20° FLASH, 3 mm margin | 10 of 10 | 0.36 to 0.37 |
-| 30° FLASH, 3 mm margin | 10 of 10 | 0.32 |
-| 10° FLASH, 6 mm margin | 10 of 10 | 0.35 to 0.36 |
-| 10° FLASH, 12 mm margin | 10 of 10 | 0.35 to 0.37 |
-| 10° FLASH, 3 mm margin, the test's specimen mask given | 10 of 10 | 0.37 |
+| R, the reference | 0 | 0.100 |
+| L, an affine fitted to the vessel labels | 0.16 | 0.093 |
+| octreg, 10° FLASH, 3 mm margin | 0.36 | 0.155 |
+| octreg, 20° FLASH, 3 mm margin | 0.37 | 0.148 |
+| octreg, 30° FLASH, 3 mm margin | 0.32 | 0.134 |
+| octreg, 10° FLASH, 6 mm margin | 0.36 | 0.156 |
+| octreg, 10° FLASH, 12 mm margin | 0.36 | 0.158 |
+| octreg, 10° FLASH, 3 mm margin, the test's specimen mask as `--oct-mask` | 0.37 | 0.157 |
 
-The last row gives octreg that mask as `--oct-mask` in place of its own. From the OCT turned by 90° and 180° about each array
-axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm margin, octreg ends 0.35 to 0.37 mm from R every
-time. From the header orientation with the image box centres aligned, 7.0 mm (median over the ten crops of the 10° FLASH with a
-3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a global
-rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving image
-in none with the test's specimen mask as that mask. Started 1.1 to 1.2 mm and 10° from R, ANTs comes within 1 mm on seven of the
-ten crops and the other tools on none. Started at the shear-free pose closest to R, 0.09 mm from R, ANTs stays within 1 mm on
-all ten (median 0.52 mm, and 0.35 mm with the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm),
-and every other tool ends 2.2 to 29 mm from R or without a transform. octreg's refinement alone, from the start 1.1 to 1.2 mm
-from R, ends 0.35 to 0.36 mm from R on all ten crops.
+From the OCT turned by 90° and 180° about each array axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a
+3 mm margin, octreg ends 0.35 to 0.37 mm from R.
+
+The standard tools ran on the ten crops of the 10° FLASH with a 3 mm margin, each at the setting its documentation gives, from
+the header orientation with the image box centres aligned (7.0 mm and 122° from R), and FLIRT, ANTs and greedy also with their
+own global rotation search:
+
+| method | distance from R (mm) |
+|---|---|
+| octreg | 0.36 |
+| NiftyReg reg_aladin | 8.44 |
+| greedy | 14.32 |
+| elastix | 7.50 |
+| ANTs | 9.28 |
+| mri_robust_register | 13.31 |
+| mri_coreg | 9.25 |
+| FLIRT | 17.26 |
+| SynthMorph | 16.49 |
+| FLIRT, its search over ±180° | 18.60 |
+| ANTs, antsAI start | 16.96 |
+| greedy, its search | 23.95 |
+
+The same tools started near R (R turned by 10° and shifted by 1 mm) and at R (the pose with a rotation and a scale per axis
+closest to R), without and with the test's specimen mask as their moving mask, and octreg's refinement (§4) alone from the same
+starts with its own masks:
+
+| method | near R | near R, moving mask | at R | at R, moving mask |
+|---|---|---|---|---|
+| the start | 1.18 | 1.18 | 0.09 | 0.09 |
+| octreg, §4 alone | 0.36 | | 0.36 | |
+| NiftyReg reg_aladin | 3.02 | 3.02 | 2.98 | 2.98 |
+| greedy | 11.32 | 1.55 | 7.42 | 0.62 |
+| elastix | 4.05 | no transform | 4.04 | no transform |
+| ANTs | 0.84 | 0.82 | 0.52 | 0.35 |
+| mri_robust_register | 11.09 | 11.60 | 10.40 | 10.47 |
+| mri_coreg | 5.87 | 5.90 | 5.91 | 6.09 |
+| FLIRT | 17.83 | 17.93 | 20.19 | 16.72 |
+| SynthMorph | 9.80 | | 11.06 | |
+
+Distance from R in mm. SynthMorph takes no moving mask, NiftyReg 2.1.2 does not use it, and elastix ends without a transform on
+every crop with it.
 
 | OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|
@@ -163,28 +197,28 @@ planes and every standard tool, and [bench/results/I46/tables.md](bench/results/
 ### Ablations
 
 Each variant changes one thing in the method or its input (`bench/ablate.py`). On the ten crops of the 10° FLASH with a
-3 mm margin:
+3 mm margin, medians as above:
 
-| variant | within 1 mm of R | distance from R, median (mm) |
+| variant | distance from R (mm) | vessel distance (mm) |
 |---|---|---|
-| octreg | 10 of 10 | 0.36 |
-| no orientation search: the refinement from the header orientation with the image box centres aligned | 0 of 10 | 6.53 |
-| no refinement: the first search pose | 7 of 10 | 0.87 |
-| only the first search pose refined | 10 of 10 | 0.36 |
-| signed normalised gradients instead of their tensor | 0 of 10 | 1.28 |
-| the same, with the OCT intensities negated | 0 of 10 | 8.82 |
-| no scale and shear prior | 10 of 10 | 0.47 |
-| the scale and shear prior at a quarter of its weight (λ = 0.5) | 10 of 10 | 0.36 |
-| the scale and shear prior at four times its weight (λ = 8) | 10 of 10 | 0.37 |
-| rigid refinement | 10 of 10 | 0.38 |
-| the trace-free tensor n nᵀ − \|n\|² I / 3 instead of n nᵀ | 10 of 10 | 0.38 |
-| F without the subtraction of the means | 10 of 10 | 0.34 |
-| in the search, OCT gradients over the whole specimen mask instead of only its part more than 0.8 mm inside | 8 of 10 | 0.36 |
-| the MRI divided by its Gaussian blur (σ 5 mm) inside the foreground | 10 of 10 | 0.35 |
-| the OCT specimen mask from the signal threshold alone, without the texture rule | 10 of 10 | 0.35 |
-| the OCT voxel size given 5 % too large | 10 of 10 | 0.42 |
-| the OCT voxel size given 5 % too small | 10 of 10 | 0.48 |
-| the OCT array mirrored along one axis, a mirror image of the block | 0 of 10 | 7.25 |
+| octreg | 0.36 | 0.155 |
+| no orientation search: the refinement from the header orientation with the image box centres aligned | 6.53 | 0.243 |
+| no refinement: the first search pose | 0.87 | 0.214 |
+| only the first search pose refined | 0.36 | 0.155 |
+| signed normalised gradients instead of their tensor | 1.28 | 0.202 |
+| the same, with the OCT intensities negated | 8.82 | 0.279 |
+| no scale and shear prior | 0.47 | 0.148 |
+| the scale and shear prior at a quarter of its weight (λ = 0.5) | 0.36 | 0.150 |
+| the scale and shear prior at four times its weight (λ = 8) | 0.37 | 0.161 |
+| rigid refinement | 0.38 | 0.162 |
+| the trace-free tensor n nᵀ − \|n\|² I / 3 instead of n nᵀ | 0.38 | 0.159 |
+| F without the subtraction of the means | 0.34 | 0.151 |
+| in the search, OCT gradients over the whole specimen mask instead of only its part more than 0.8 mm inside | 0.36 | 0.155 |
+| the MRI divided by its Gaussian blur (σ 5 mm) inside the foreground | 0.35 | 0.153 |
+| the OCT specimen mask from the signal threshold alone, without the texture rule | 0.35 | 0.154 |
+| the OCT voxel size given 5 % too large | 0.42 | 0.163 |
+| the OCT voxel size given 5 % too small | 0.48 | 0.173 |
+| the OCT array mirrored along one axis, a mirror image of the block | 7.25 | 0.236 |
 
 The outline is never used on these crops, whose MRI is all tissue. On I58:
 

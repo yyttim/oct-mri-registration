@@ -103,8 +103,9 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   that starts from the header alignment. Four controls on the same crops: the near start with the specimen mask as moving
   mask (`--near-mask`, the mask written with the header of the start, seven tools), the near start on the moving OCT zeroed
   outside the specimen mask (`--near-zeroed`, every tool), and the start at R, the pose with a rotation and a scale per
-  axis closest to R, without and with the mask (`--atR`, `--atR-mask`). octreg's refinement alone from the near start of each
-  crop (`baselines.py octreg --near`, `bench/ablate.py --only no_search --start`, octreg's own masks) is the row `octreg_near`.
+  axis closest to R, without and with the mask (`--atR`, `--atR-mask`). octreg's refinement alone from the near start and from
+  the start at R of each crop (`baselines.py octreg --near` and `--atR`, `bench/ablate.py --only no_search --start`, octreg's
+  own masks) gives the rows `octreg_near` and `octreg_atR`.
 
 ## Metrics
 
@@ -113,9 +114,8 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 - **Distance from R:** |T x − R x| over the OCT tissue points, reported as mean, median, p95 and maximum, with the rotation
   angle and axis of T R⁻¹. The points are the specimen mask on a grid of every eighth OCT voxel (96 × 96 × 121 µm), 843,465
   points (context.json). The mean distance from L is given beside it.
-- **Tiers:** a mean distance up to 0.30 mm (the precision of the reference) and up to 1 mm.
-- **Counts:** each condition gives counts over its ten crops, shifted boxes around the same block. Medians are over all runs of
-  a row, a run without a transform counted as beyond every other.
+- **Medians:** over the ten crops of a condition, shifted boxes around the same block, a run without a transform counted as
+  beyond every other. Distances from R below about 0.3 mm, the precision of the reference, are not interpreted.
 - **Vessels:** the MRI vessel labels that T places in the OCT tissue, at least 0.15 mm from its edge and within the segmented
   planes 0 to 560, and their distance to the nearest OCT vessel of the dataset's segmentation, median over the labels. The
   vessels are independent of what octreg fits, while R was fitted partly to them.
@@ -124,33 +124,19 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 
 [tables.md](../results/I46/tables.md) gives every number. In brief:
 
-- **octreg** with its own masks comes within 1 mm of R in all 50 runs and within 0.30 mm in none, 0.32 to 0.37 mm from R and
-  0.35 to 0.44 mm from L, each turned by 2.9° to 4.0° from R about an axis that differs between the contrasts. With the test's
-  specimen mask as `--oct-mask` it comes within 1 mm in all 10 runs, 0.37 mm from R.
-- **Starts:** on flip1_C3_k0, from the 16 turned and random starts, octreg ends 0.35 to 0.37 mm from R every time.
-- **The standard tools** come within 1 mm in none of their 96 runs at their documented settings. The pose before any
-  registration, the header orientation with the image box centres aligned, is 7.0 mm (median) and 122° from R, and
-  most runs end turned by about as much (median 120°). With their own global search the three tools end 14 to 26 mm away in all
-  30 runs. With the test's specimen mask as their moving mask none of the seven tools that take one comes within 1 mm: elastix
-  ends without a transform on every crop, and reg_aladin ends where it does without the mask, since NiftyReg 2.1.2 does not use
-  that mask.
-- **Start near R:** from a start 1.14 to 1.20 mm and 9.7° to 10.4° from R, ANTs comes within 1 mm on seven crops (median over
-  the ten crops 0.84 mm) and the other tools on none. octreg's refinement alone from that start comes within 1 mm on every crop,
-  0.35 to 0.36 mm from R.
-- **Controls on the near start:** with the specimen mask as moving mask, ANTs comes within 1 mm on seven crops (median 0.82 mm)
-  and greedy on two, the other tools on none, and elastix ends without a transform on every crop. On the OCT zeroed outside the
-  specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none, and for mri_robust_register and
-  mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R (0.09 mm from R), ANTs
-  comes within 1 mm on every crop (0.52 mm) and the other tools on none. With the mask as well, ANTs (0.35 mm, three crops
-  within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none.
-- **Ablation** on the 10° FLASH with a 3 mm margin: without the orientation search no crop comes within 1 mm, with signed
-  normalised gradients, with or without the OCT intensities negated, none does, without the refinement 3 of the 10 crops end
-  beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. With the OCT array mirrored no crop
-  comes within 1 mm. Every other variant keeps all ten crops within 1 mm, at a median from R of 0.47 mm without the scale and
-  shear prior, 0.36 and 0.37 mm with the prior at a quarter or four times its weight, 0.38 mm with a rigid refinement or the
-  trace-free tensor, 0.34 mm without the subtraction of the means in F, 0.35 mm with the MRI divided by its blur or the specimen
-  mask from the signal threshold alone, 0.36 mm with only the first search pose refined, and 0.42 and 0.48 mm with the OCT voxel
-  size given 5 % too large or too small.
+- **octreg** with its own masks ends 0.32 to 0.37 mm from R (the medians of the conditions), turned by 2.9° to 4.0° from R
+  about an axis that differs between the contrasts, and 0.37 mm with the test's specimen mask as `--oct-mask`. Its vessel
+  distance is 0.134 to 0.158 mm, that of R 0.100 mm.
+- **Starts:** from the 16 turned and random starts on flip1_C3_k0, octreg ends 0.35 to 0.37 mm from R.
+- **The standard tools** at their documented settings end 7.5 to 17.3 mm from R, turned by about as much as their start, the
+  header orientation 7.0 mm and 122° from R (median rotation over the 96 runs 120°). With their own global search they end
+  17.0 to 24.0 mm from R, and with the test's specimen mask as their moving mask 7.0 to 16.6 mm, elastix without a transform.
+- **Started near R** (1.18 mm and 10° from R), ANTs ends 0.84 mm from R and the other tools 3.0 to 17.8 mm, with the moving mask
+  ANTs 0.82 mm and greedy 1.55 mm, and on the OCT zeroed outside the mask ANTs 0.85 mm. octreg's refinement alone ends 0.36 mm
+  from R.
+- **Started at R** (0.09 mm from R), ANTs ends 0.52 mm from R and the other tools 3.0 to 20.2 mm, and with the moving mask ANTs
+  0.35 mm and greedy 0.62 mm. octreg's refinement alone ends 0.36 mm from R.
+- **Ablation:** the [README](../../README.md#ablations) gives every variant.
 
 ## Pictures
 
@@ -204,7 +190,7 @@ python bench/i46/run.py                                       # 60 octreg runs, 
 python bench/i46/baselines.py prepare                         # and with --search, --mask, --near, --near-mask, --near-zeroed,
                                                               #   --atR or --atR-mask for the other analyses
 bash "${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46/baselines/queue.sh"   # baselines_<kind>/queue.sh for those
-python bench/i46/baselines.py octreg --near                   # octreg's refinement from the near start of each crop
+python bench/i46/baselines.py octreg --near                   # octreg's refinement from the near start (and with --atR)
 python bench/i46/baselines.py collect                         # -> baselines.json (with a kind option: baselines_<kind>.json)
 python bench/i46/analyses.py ablate                           # the ablation
 python bench/i46/analyses.py starts                           # the start test
@@ -228,7 +214,7 @@ root>/bench_runs/I46`, which is not in the repository.
 | `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, the affine, distances from R and L and their decomposition, the vessel check, the search rank, scores and candidates, the outside fractions and time |
 | `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: the affine, distances from R and L and their decomposition, the vessel check, the convention check and time, or the tool error |
 | `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the start (`H`) and its distance from R (`start_pose`). `baselines_near.json` also holds octreg's refinement from that start (`octreg_near`) |
-| `baselines_near_mask.json`, `baselines_near_zeroed.json`, `baselines_atR.json`, `baselines_atR_mask.json` | the controls: the near start with the mask, the near start on the OCT zeroed outside the mask, and the start at R without and with the mask |
+| `baselines_near_mask.json`, `baselines_near_zeroed.json`, `baselines_atR.json`, `baselines_atR_mask.json` | the controls: the near start with the mask, the near start on the OCT zeroed outside the mask, and the start at R without and with the mask. `baselines_atR.json` also holds octreg's refinement from that start (`octreg_atR`) |
 | `starts.json`, `ablation.json` | the start test (with the distance of its search pose from R) and the ablation of `analyses.py`, each entry with its affine |
 | `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`), and the vessel check of R, of L and of R moved by small shifts, rotations and depth scales |
 | `crops.json` | the box, shift and centre offset of every crop |

@@ -78,12 +78,6 @@ def dist(x):
     return x["mean_mm"] if "mean_mm" in x else INF
 
 
-def counts(rows):
-    """The runs of rows within 1 mm of R, as "k/n"."""
-    d = [dist(x) for x in rows]
-    return f"{sum(m <= TIERS[1] for m in d)}/{len(d)}"
-
-
 def tails(rows):
     """p95 / max (mm) of the distance from R, medians over rows."""
     return f"{fmt(med([x['p95_mm'] for x in rows]))} / {fmt(med([x['max_mm'] for x in rows]))}"
@@ -137,20 +131,14 @@ def vessel_text(v):
             f"{shifts}, turned about the depth axis {turns}, turned about an in-plane axis {tilts}, and {scales}.")
 
 
-def reference_section(ref, ctx, runs):
-    """runs: every scored run of the tables, counted against the floor TIERS[0]."""
+def reference_section(ref, ctx):
     a = ref["labels"]["A12"]
     th = " / ".join(f"{t['mean_mm']:.2f}" for t in a["by_depth_third"])
-    close = Counter(x.get("tool") or x.get("variant") or x.get("start") or "octreg" for x in runs if dist(x) <= TIERS[0])
-    n = sum(close.values())
-    who = f"all {next(iter(close))}" if len(close) == 1 else ", ".join(f"{k} {t}" for t, k in close.most_common())
     out = ["## Reference", ""] + para(
         "R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit "
         f"L (reference_check.py, an affine fitted to the vessels alone) lies {a['mean_mm']:.3f} mm from R on average "
         f"(p95 {a['p95_mm']:.2f} mm, rotation {a['rotation_deg']:.2f}°), {th} mm in the upper, middle and deepest third "
-        f"of the OCT depth, so distances below {TIERS[0]:.2f} mm are not interpreted. "
-        + (f"No run in these tables comes within {TIERS[0]:.2f} mm of R (0 of {len(runs)})." if n == 0 else
-           f"{n} of the {len(runs)} runs in these tables come within {TIERS[0]:.2f} mm of R, {who}."))
+        f"of the OCT depth, so distances below {TIERS[0]:.2f} mm are not interpreted.")
     if "vessels" in ref:
         out += para(vessel_text(ref["vessels"]))
     return out + para("Grey/white contrast-to-noise ratio of the images inside the box of the OCT: " + ", ".join(
@@ -165,24 +153,23 @@ def octreg_section(rows, st):
         "are medians over the runs of the row. The vessel check is the median distance of the MRI vessel labels to the "
         "nearest OCT vessel through the affine (common.vessel_score), the search rank the rank of the search pose that won "
         "the refinement, with its number of runs.")
-    out += ["| condition | <= 1 mm | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) "
-            "| rotation from R (°) | vessels (mm) | search rank |", "|---|---|---|---|---|---|---|---|"]
+    out += ["| condition | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) "
+            "| rotation from R (°) | vessels (mm) | search rank |", "|---|---|---|---|---|---|---|"]
     for im, cond, masked in conditions():
         r = [x for x in rows if x["image"] == im and x["cond"] == cond and x["oct_mask"] == masked]
         d = [x["mean_mm"] for x in r]
-        out.append(f"| {label(im, cond, masked)} | {counts(r)} | {fmt(med(d))} ({rng(d)}) | {tails(r)} | "
+        out.append(f"| {label(im, cond, masked)} | {fmt(med(d))} ({rng(d)}) | {tails(r)} | "
                    f"{fmt(med([x['mean_L_mm'] for x in r if 'mean_L_mm' in x]))} | {rng([x['rotation_deg'] for x in r], 1)} | "
                    f"{vessels(r)} | {ranks(r)} |")
     main = [x for x in rows if not x["oct_mask"]]
-    near = [x for x in main if x["mean_mm"] <= TIERS[1]]
     axes = []
     for im in FLIPS:
-        a = np.array([x["rotation_axis"] for x in near if x["image"] == im and x["cond"] == "C3"]).reshape(-1, 3)
+        a = np.array([x["rotation_axis"] for x in main if x["image"] == im and x["cond"] == "C3"]).reshape(-1, 3)
         axes.append(f"{FLIPS[im][1]}° FLASH " + (str((a.mean(0) / np.linalg.norm(a.mean(0))).round(2).tolist()) if len(a)
                                                   else "none"))
-    sc = np.array([x["scales"] for x in near]).reshape(-1, 3)
+    sc = np.array([x["scales"] for x in main]).reshape(-1, 3)
     out += [""] + para(
-        f"Over the {len(near)} runs without --oct-mask that end within 1 mm of R: the rotation axis of T R^-1 (MRI world), "
+        f"Over the {len(main)} runs without --oct-mask: the rotation axis of T R^-1 (MRI world), "
         "mean over the C3 runs of each image, " + ", ".join(axes) + f". Over the same runs the scale along the OCT axes is "
         f"{rng(sc[:, 0], 3)}, "
         f"{rng(sc[:, 1], 3)} and {rng(sc[:, 2], 3)}, and that of R "
@@ -275,7 +262,7 @@ def starts_section(st):
         "with the image box centres aligned, the search column the same for the search pose that won the refinement.")
     for group, pre in (("turned", ("i", "j", "k")), ("random", ("rand",))):
         r = [x for x in st if x["start"].startswith(pre)]
-        out += para(f"{group} starts: within 1 mm {counts(r)}, distance from R {rng([x['mean_mm'] for x in r])} mm, "
+        out += para(f"{group} starts: distance from R {rng([x['mean_mm'] for x in r])} mm, "
                     f"rotation {rng([x['rotation_deg'] for x in r], 1)}°.")
     out += ["| start | the start: distance from R (mm), rotation (°) | the search pose: distance from R (mm), rotation (°) "
             "| octreg (mm) | p95 / max (mm) | vessels (mm) | search rank |", "|---|---|---|---|---|---|---|"]
@@ -286,16 +273,15 @@ def starts_section(st):
     return out
 
 
-TOOL_HEAD = ["| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | "
-             "vessels (mm) |", "|---|---|---|---|---|---|---|"]
+TOOL_HEAD = ["| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |",
+             "|---|---|---|---|---|"]
 
 
-def tool_row(method, setting, r, spread=False):
-    """One row of TOOL_HEAD over the runs r, the median distance with its range if spread."""
+def tool_row(method, setting, r):
+    """One row of TOOL_HEAD over the runs r."""
     d = [dist(x) for x in r]
-    return (f"| {method} | {setting} | {counts(r)} | {sum('mean_mm' not in x for x in r)} | "
-            f"{fmt(med(d))}{f' ({rng(d)})' if spread else ''} | {fmt(med([x.get('rotation_deg', INF) for x in r]), 0)} | "
-            f"{vessels(r) if any('vessel_median_mm' in x for x in r) else ''} |")
+    return (f"| {method} | {setting} | {fmt(med(d))} ({rng(d)}) | "
+            f"{vessels(r) if any('vessel_median_mm' in x for x in r) else ''} | {sum('mean_mm' not in x for x in r)} |")
 
 
 def tools_section(rows, bl, bls):
@@ -306,7 +292,7 @@ def tools_section(rows, bl, bls):
         "box-averaged to 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header "
         "orientation of the OCT with the image box centres aligned.")
     octreg = [x for x in rows if not x["oct_mask"] and x["name"] in names]
-    out += TOOL_HEAD + [tool_row("the start", "no registration", [start_pose(n) for n in names], spread=True),
+    out += TOOL_HEAD + [tool_row("the start", "no registration", [start_pose(n) for n in names]),
                         tool_row("octreg", "its default parameters", octreg)]
     for tr in (bl, bls):
         for t in dict.fromkeys(x["tool"] for x in tr):
@@ -387,10 +373,10 @@ def near_section(bln):
         f"closest to the turned and shifted R over the OCT tissue: {rng([h['mean_mm'] for h in hs])} mm from it (mean over "
         f"the tissue, at most {fmt(max([h['max_mm'] for h in hs], default=None))} mm), {rng([x['mean_mm'] for x in st])} mm "
         f"and {rng([x['rotation_deg'] for x in st], 1)}° from R. The start row is that pose without registration.")
-    out += TOOL_HEAD + [tool_row("the start", "no registration", st, spread=True)]
+    out += TOOL_HEAD + [tool_row("the start", "no registration", st)]
     for t in dict.fromkeys(x["tool"] for x in bln):
         r = [x for x in bln if x["tool"] == t]
-        out.append(tool_row(t, r[0]["setting"], r, spread=True))
+        out.append(tool_row(t, r[0]["setting"], r))
     return trim(out + [""] + errors_text(bln))
 
 
@@ -414,10 +400,10 @@ def controls_section(groups):
             continue
         st = list({x["crop"]: x["start_pose"] for x in rows if "start_pose" in x}.values())
         out += para(f"baselines.py --{kind.replace('_', '-')}: {what}.")
-        out += TOOL_HEAD + [tool_row("the start", "no registration", st, spread=True)]
+        out += TOOL_HEAD + [tool_row("the start", "no registration", st)]
         for t in dict.fromkeys(x["tool"] for x in rows):
             r = [x for x in rows if x["tool"] == t]
-            out.append(tool_row(t, r[0]["setting"], r, spread=True))
+            out.append(tool_row(t, r[0]["setting"], r))
         out += [""] + errors_text(rows)
     return trim(out)
 
@@ -456,18 +442,18 @@ def ablation_section(abl, rows):
         "same crop. The variants of the outline are shown on I58 (bench/README.md). The vessel column gives the median "
         "distance of the MRI vessel labels to the nearest OCT vessel through the affine (common.vessel_score), median over "
         "the crops.")
-    out += ["| variant | change | <= 1 mm | distance from R, median (range) (mm) | difference, median (range) (mm) "
-            "| vessels (mm) |", "|---|---|---|---|---|---|"]
+    out += ["| variant | change | distance from R, median (range) (mm) | difference, median (range) (mm) "
+            "| vessels (mm) |", "|---|---|---|---|---|"]
     crops = sorted({x["crop"] for x in abl})
     base = [main[c] for c in crops if c in main]
-    out.append(f"| octreg | the method | {counts(base)} | {fmt(med([x['mean_mm'] for x in base]))} "
+    out.append(f"| octreg | the method | {fmt(med([x['mean_mm'] for x in base]))} "
                f"({rng([x['mean_mm'] for x in base])}) | | {vessels(base)} |")
     for v in dict.fromkeys(x["variant"] for x in abl):
         r = [x for x in abl if x["variant"] == v]
         d = [dist(x) for x in r]
         diff = [dist(x) - main[x["crop"]]["mean_mm"] for x in r if x["crop"] in main and "mean_mm" in x]
         change = CHANGES[v].replace("|", r"\|")                      # | would end the table cell
-        out.append(f"| {v} | {change} | {counts(r)} | {fmt(med(d))} ({rng(d)}) | {fmt(med(diff), 3)} ({rng(diff, 3)}) | "
+        out.append(f"| {v} | {change} | {fmt(med(d))} ({rng(d)}) | {fmt(med(diff), 3)} ({rng(diff, 3)}) | "
                    f"{vessels(r)} |")
     return out
 
@@ -488,11 +474,10 @@ def main():
     out = ["# I46: results", ""] + para(
         "Generated by bench/i46/summarise.py from the JSON files next to this one, and for the start rows, the scales of R "
         "and the residual of L from the inputs of prepare.py. bench/i46/README.md describes the test. Distances are the mean "
-        "displacement over the OCT tissue from the authors' registration R, or from the label-only fit L where named. Counts "
-        "are numbers of runs: the ten crops of a condition are shifted boxes around the same block. Medians are over all runs "
-        "of a row. A run that ended without a readable transform (a tool error) counts as beyond every other.")
-    out += reference_section(load("reference_check.json"), load("context.json"),
-                             rows + st + abl + [x for g in groups for x in g])
+        "displacement over the OCT tissue from the authors' registration R, or from the label-only fit L where named. Medians "
+        "are over all runs of a row, the ten crops of a condition being shifted boxes around the same block. A run that ended "
+        "without a readable transform (a tool error) counts as beyond every other.")
+    out += reference_section(load("reference_check.json"), load("context.json"))
     if rows:
         out += octreg_section(rows, st) + [""]
     if st:
