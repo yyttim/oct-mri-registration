@@ -4,7 +4,7 @@
     python bench/ablate.py OCT MRI -o OUT [--oct-mask MASK] [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ]
                            [--start FILE] [--params F] [--device cuda]
 
-Each variant changes one function or Params value for its run:
+Each variant changes one function or Params value for its run, or the OCT it is given:
 
 {variants}
 
@@ -21,8 +21,8 @@ JSON file (the start.json of bench/i46/baselines.py --near) or a text matrix. It
 The spacing variants give octreg the OCT voxel size of the file (or of --oct-spacing-um) scaled by their factor. Their
 T_oct2mri.txt and result.json are rewritten for the OCT world of the file as for --turn, with the 4x4 from that world to
 the one the run used as the key turn, and the scale per OCT axis and the OCT voxel size recomputed in it. The foreground
-entries of result.json stay in the voxel size the run used. A spacing variant needs an --oct-mask of the OCT's array shape,
-since a mask on its own grid keeps the spacing of its file.
+entries of result.json stay in the voxel size the run used. An --oct-mask given with a spacing variant must have the
+OCT's array shape, since a mask on its own grid keeps the spacing of its file.
 
 --params F applies the Params overrides of F, a JSON file or JSON text, on top of the variant's change, as octreg register
 --params.
@@ -66,15 +66,15 @@ VARIANTS = {
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
     "uncentred": "F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised)",
     "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
-    "flatfield": "the MRI divided by its Gaussian blur (normalised convolution, 5 mm) inside the foreground",
-    "signal_only": "the OCT specimen mask from the signal threshold alone (components and holes kept, no texture rule)",
+    "flatfield": "the MRI divided by its Gaussian blur (normalised convolution, σ 5 mm) inside the foreground",
+    "signal_only": "the OCT specimen mask from the signal threshold alone (small components dropped, holes filled as in §1)",
     "spacing_p5": "the OCT voxel size given 5 % too large",
     "spacing_m5": "the OCT voxel size given 5 % too small",
     "mirrored": "the OCT array mirrored along its first axis: a mirror image of the block, which no rotation aligns",
 }
 __doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<18} {v}" for k, v in VARIANTS.items()))
 REFINE, TENSOR, PREPARE_OCT, PREPARE_MRI = Rf.refine, Fe.orientation_tensor, Reg.prepare_oct, Reg.prepare_mri
-COMPOSE, CORRELATION, PLANES = Rf.compose, Fe.correlation, io.iter_planes
+COMPOSE, PLANES = Rf.compose, io.iter_planes
 SPACING = {"spacing_p5": 1.05, "spacing_m5": 0.95}
 FLAT_MM = 5.0
 
@@ -213,7 +213,7 @@ def turned(oct_paths, rotvec_deg, spacing_um=None):
 @contextlib.contextmanager
 def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=None):
     """Context with the change of variant `name` in force, yielding the Params of the run.
-    oct_path, mri_path and oct_spacing_um give no_search its start, unless the pose `start` is given; oct_path and
+    oct_path, mri_path and oct_spacing_um give no_search its start, unless the pose `start` is given. oct_path and
     oct_mask are the files mirrored. The spacing variants change nothing here (main gives them their voxel size)."""
     P = Params()
     with contextlib.ExitStack() as st:
@@ -258,7 +258,7 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=
             patch(Reg, "prepare_mri", flatfield_mri)
         elif name == "signal_only":
             patch(pp, "specimen_mask", signal_only_mask)
-        elif name != "base":
+        else:
             raise ValueError(f"unknown variant {name}")
         yield P
 
@@ -287,7 +287,7 @@ def main():
         ap.error("--turn excludes the spacing variants")
     if a.oct_mask and set(names) & set(SPACING) and (io.load_volume(a.oct_mask, a.oct_spacing_um).shape
                                                      != io.load_volume(a.oct, a.oct_spacing_um).shape):
-        ap.error("the spacing variants need an --oct-mask of the OCT's array shape")
+        ap.error("an --oct-mask with the spacing variants must have the OCT's array shape")
     start = read_start(a.start) if a.start else None
     over = json.loads(Path(a.params).read_text(encoding="utf-8") if Path(a.params).is_file() else a.params) if a.params else {}
     turn, load = turned([a.oct] + ([a.oct_mask] if a.oct_mask else []), a.turn, a.oct_spacing_um) if a.turn else (None, None)

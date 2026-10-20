@@ -102,7 +102,7 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   rotation and a scale per axis closest to that start over the tissue points as the header of the moving image, with the option
   that starts from the header alignment. Four controls on the same crops: the near start with the specimen mask as moving
   mask (`--near-mask`, the mask written with the header of the start, seven tools), the near start on the moving OCT zeroed
-  outside the specimen mask (`--near-zeroed`, every tool), and the start at R itself, the pose with a rotation and a scale per
+  outside the specimen mask (`--near-zeroed`, every tool), and the start at R, the pose with a rotation and a scale per
   axis closest to R, without and with the mask (`--atR`, `--atR-mask`). octreg's refinement alone from the near start of each
   crop (`baselines.py octreg --near`, `bench/ablate.py --only no_search --start`, octreg's own masks) is the row `octreg_near`.
 
@@ -135,32 +135,32 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   ends without a transform on every crop, and reg_aladin ends where it does without the mask, since NiftyReg 2.1.2 does not use
   that mask.
 - **Start near R:** from a start 1.14 to 1.20 mm and 9.7° to 10.4° from R, ANTs comes within 1 mm on seven crops (median over
-  the ten crops 0.84 mm) and the other tools on none.
-- **Controls on the near start:** with the specimen mask as moving mask, ANTs comes within 1 mm on seven crops (median 0.82
-  mm) and greedy on two, the other tools on none, and elastix ends without a transform on every crop. On the OCT zeroed outside
-  the specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none, and for mri_robust_register
-  and mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R itself (0.09 mm
-  from R), ANTs comes within 1 mm on every crop (0.52 mm) and the other tools on none. With the mask as well, ANTs (0.35 mm,
-  three crops within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none. octreg's
-  refinement alone from the near start comes within 1 mm on every crop, 0.35 to 0.36 mm from R.
+  the ten crops 0.84 mm) and the other tools on none. octreg's refinement alone from that start comes within 1 mm on every crop,
+  0.35 to 0.36 mm from R.
+- **Controls on the near start:** with the specimen mask as moving mask, ANTs comes within 1 mm on seven crops (median 0.82 mm)
+  and greedy on two, the other tools on none, and elastix ends without a transform on every crop. On the OCT zeroed outside the
+  specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none, and for mri_robust_register and
+  mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R (0.09 mm from R), ANTs
+  comes within 1 mm on every crop (0.52 mm) and the other tools on none. With the mask as well, ANTs (0.35 mm, three crops
+  within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none.
 - **Ablation** on the 10° FLASH with a 3 mm margin: without the orientation search no crop comes within 1 mm, with signed
   normalised gradients, with or without the OCT intensities negated, none does, without the refinement 3 of the 10 crops end
-  beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. With the OCT array mirrored no
-  crop comes within 1 mm. Every other variant keeps all ten crops within 1 mm: without the scale and shear prior 0.47 mm
-  (median) from R, with the prior at a quarter or four times its weight 0.36 and 0.37 mm, with a rigid refinement 0.38 mm,
-  without the subtraction of the means in F 0.34 mm, and with the OCT voxel size given 5 % too large or too small 0.42 and
-  0.48 mm.
+  beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. With the OCT array mirrored no crop
+  comes within 1 mm. Every other variant keeps all ten crops within 1 mm, at a median from R of 0.47 mm without the scale and
+  shear prior, 0.36 and 0.37 mm with the prior at a quarter or four times its weight, 0.38 mm with a rigid refinement or the
+  trace-free tensor, 0.34 mm without the subtraction of the means in F, 0.35 mm with the MRI divided by its blur or the specimen
+  mask from the signal threshold alone, 0.36 mm with only the first search pose refined, and 0.42 and 0.48 mm with the OCT voxel
+  size given 5 % too large or too small.
 
 ## Pictures
 
 `figures.py` shows the crop at the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8) in the OCT's
 own planes, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the released OCT (12 µm in the plane), each
 three planes below the top of its slab, 14.76 × 15.25 mm at one screen pixel per two OCT voxels. The red line is the
-white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw, and in the panels
-with two lines the yellow line is the same boundary placed through octreg. lta_convert writes
-each transform as an LTA file, and freeview moves the surface and resamples the MRI through it (nearest neighbour, its
-default). Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the edge of the crop
-it runs along that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop
+white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw. lta_convert writes
+each transform as an LTA file, and freeview moves the surface and resamples the MRI through it (nearest neighbour, its default).
+Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the edge of the crop it runs along
+that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop
 ([figures.json](../../docs/figures/i46/figures.json)).
 
 From left: the OCT, the OCT with the line placed through R in red and through octreg in yellow, and the MRI crop placed
@@ -211,8 +211,8 @@ python bench/i46/analyses.py starts                           # the start test
 python bench/i46/analyses.py collect                          # -> ablation.json, starts.json
 python bench/i46/summarise.py                                 # -> tables.md
 python bench/i46/figures.py                                   # -> docs/figures/i46
-R=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46                    # octreg once more on the k = 0 crop, against the stored run
-python bench/repeat.py $R/inputs/oct.nii.gz $R/inputs/crops/flip1_C3_k0.nii.gz --run $R/runs/flip1_C3_k0 -o $R/repeat/flip1_C3_k0
+RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46                 # octreg once more on the k = 0 crop, against the stored run
+python bench/repeat.py $RUNS/inputs/oct.nii.gz $RUNS/inputs/crops/flip1_C3_k0.nii.gz --run $RUNS/runs/flip1_C3_k0 -o $RUNS/repeat/flip1_C3_k0
 ```
 
 `python bench/i46/run.py collect --runs DIR -o FILE` scores a folder that holds the 60 runs, made by the checked-out octreg
@@ -226,7 +226,7 @@ root>/bench_runs/I46`, which is not in the repository.
 | file in `bench/results/I46` | content |
 |---|---|
 | `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, the affine, distances from R and L and their decomposition, the vessel check, the search rank, scores and candidates, the outside fractions and time |
-| `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: distances and time, or the tool error |
+| `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: the affine, distances from R and L and their decomposition, the vessel check, the convention check and time, or the tool error |
 | `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the start (`H`) and its distance from R (`start_pose`). `baselines_near.json` also holds octreg's refinement from that start (`octreg_near`) |
 | `baselines_near_mask.json`, `baselines_near_zeroed.json`, `baselines_atR.json`, `baselines_atR_mask.json` | the controls: the near start with the mask, the near start on the OCT zeroed outside the mask, and the start at R without and with the mask |
 | `starts.json`, `ablation.json` | the start test (with the distance of its search pose from R) and the ablation of `analyses.py`, each entry with its affine |

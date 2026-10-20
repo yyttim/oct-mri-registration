@@ -12095,7 +12095,7 @@
  {
   "crop": "flip1_C3_k0",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3521,
   "median_mm": 0.3252,
   "p95_mm": 0.6853,
@@ -12241,7 +12241,7 @@
  {
   "crop": "flip1_C3_k1",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3574,
   "median_mm": 0.327,
   "p95_mm": 0.7202,
@@ -12387,7 +12387,7 @@
  {
   "crop": "flip1_C3_k2",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3511,
   "median_mm": 0.3232,
   "p95_mm": 0.6895,
@@ -12533,7 +12533,7 @@
  {
   "crop": "flip1_C3_k3",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.351,
   "median_mm": 0.3231,
   "p95_mm": 0.6893,
@@ -12679,7 +12679,7 @@
  {
   "crop": "flip1_C3_k4",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3527,
   "median_mm": 0.3253,
   "p95_mm": 0.692,
@@ -12825,7 +12825,7 @@
  {
   "crop": "flip1_C3_k5",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3617,
   "median_mm": 0.3298,
   "p95_mm": 0.7355,
@@ -12971,7 +12971,7 @@
  {
   "crop": "flip1_C3_k6",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3573,
   "median_mm": 0.3269,
   "p95_mm": 0.7196,
@@ -13117,7 +13117,7 @@
  {
   "crop": "flip1_C3_k7",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3611,
   "median_mm": 0.3297,
   "p95_mm": 0.7321,
@@ -13263,7 +13263,7 @@
  {
   "crop": "flip1_C3_k8",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3571,
   "median_mm": 0.3263,
   "p95_mm": 0.7217,
@@ -13409,7 +13409,7 @@
  {
   "crop": "flip1_C3_k9",
   "tool": "octreg_near",
-  "setting": "section 4 from the start, no search",
+  "setting": "\u00a74 from the start, no search",
   "mean_mm": 0.3613,
   "median_mm": 0.3295,
   "p95_mm": 0.7347,

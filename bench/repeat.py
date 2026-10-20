@@ -5,17 +5,20 @@
 
 OUT gets the outputs of octreg register at its defaults. bench/results/repeat.json records, under the path of STORED inside
 <project root>/bench_runs (else its name), the octreg version and code, the largest absolute difference between the two
-T_oct2mri.txt and whether the two files are identical. A stored run of another octreg version, whose code.txt names
-another octreg code, or that was not made at the defaults on the two files given, without masks or a voxel size, is refused.
+T_oct2mri.txt, whether the two files are identical, and the Python, PyTorch, CUDA, GPU and OS of the run. A stored run of
+another octreg version, whose code.txt names another octreg code, or that was not made at the defaults on the two files
+given, without masks or a voxel size, is refused.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import platform
 import sys
 from pathlib import Path
 
 import numpy as np
+import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bench.ablate import code_id  # noqa: E402
@@ -59,7 +62,9 @@ def main():
     rows = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.is_file() else {}
     k = key(a.run)
     rows[k] = {"version": version, "code": code, "stored_code": stored,
-               "max_abs_difference": float(np.abs(t1 - t0).max()), "identical": same}
+               "max_abs_difference": float(np.abs(t1 - t0).max()), "identical": same,
+               "python": platform.python_version(), "torch": torch.__version__, "cuda": torch.version.cuda,
+               "gpu": torch.cuda.get_device_name(a.device) if a.device.startswith("cuda") else None, "os": platform.platform()}
     RESULTS.write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(f"{k}: {'identical' if same else 'differs by ' + str(rows[k]['max_abs_difference'])} -> {RESULTS}")
 

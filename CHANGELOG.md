@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- New in bench, with octreg unchanged: `bench/repeat.py` and `bench/results/repeat.json`, the ablation variants with the scale
+  and shear prior at other weights, a rigid refinement, F without the subtraction of the means, the MRI divided by its blur, the
+  OCT specimen mask from the signal threshold alone, the OCT voxel size 5 % off and the OCT mirrored, the options `--start` and
+  `--params` of `bench/ablate.py`, the I58 ablation poses in `bench/results/I58/ablation.json` and the search candidates in
+  `search.md`, the tools started near R with the mask or on the zeroed OCT and started at R, and octreg's refinement alone from
+  the near start, in `bench/results/I46/`, the SHA-256 sums of the I46 download in `bench/i46/checksums.txt`, which `fetch.sh`
+  checks, and one I46 panel per plane with the lines through R and octreg.
+
 ## 3.2.0
 
 octreg returns the affine of §1 to §4, and the smooth deformation is gone.

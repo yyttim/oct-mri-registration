@@ -10,7 +10,7 @@ the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>:
 --near         a start near R as the header of the moving image, each tool started from the header
 --near-mask    --near and --mask together, for the tools that take a mask
 --near-zeroed  --near on the moving OCT zeroed outside the specimen mask, every tool
---atR          the start at R itself, its closest shear-free pose, as the header, each tool started from the header
+--atR          the start at R, its closest shear-free pose, as the header, each tool started from the header
 --atR-mask     --atR and --mask together
 
     python bench/i46/baselines.py prepare [--search | --mask | --near | ...]   the inputs, the run.sh of every run and queue.sh
@@ -49,7 +49,7 @@ HEADER = {"near": "near", "near_mask": "near", "near_zeroed": "near", "atR": "at
 SHARED = {"search": BL, "mask": BL, "near_mask": BASE["near"], "atR_mask": BASE["atR"]}                  # whose inputs
 NEAR_SEED, NEAR_DEG, NEAR_MM = 4700, 10.0, 1.0
 TURN = {"near": (NEAR_DEG, NEAR_MM), "atR": (0.0, 0.0)}                                                 # degrees, mm
-OCTREG_NEAR = {"octreg_near": "section 4 from the start, no search"}
+OCTREG_NEAR = {"octreg_near": "§4 from the start, no search"}
 ZEROED = "the OCT zeroed outside the specimen mask"
 
 

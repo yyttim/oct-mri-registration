@@ -7,7 +7,7 @@
   result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
                 the registered OCT, and the same OCT with the MRI foreground boundary
   affine/       the affine baselines at their settings in bench/baselines/README.md on the same planes, with the boundary
-  ablation/     the variants of bench/ablate.py (--ablation, with the turned runs in its turned/ folder, the turned start
+  ablation/     the variants of bench/ablate.py (--ablation, with the turned runs and the turned start in its turned/ folder
                 and the variant without the outline on the finer search grid in its fine/ folder) on the sagittal plane,
                 with the boundary
 

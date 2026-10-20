@@ -14,11 +14,11 @@ R is the authors' registration, from the OCT world to the MRI world in the test'
 interpreted. 3 of the 832 runs in these tables come within 0.30 mm of R, all ants_atR_mask.
 
 Vessel check (common.vessel_score): the distance of the MRI vessel labels placed in the OCT tissue to the nearest OCT
-vessel, median over the labels, is 0.100 mm (mean 0.130 mm) for R and 0.093 mm (mean 0.129 mm) for L. With the 2952 labels R
-places inside held fixed, the median through R moved is: shifted along an OCT axis (mean over the six directions) 0.1 mm
-0.107, 0.2 mm 0.130, 0.3 mm 0.158, 0.5 mm 0.206, 1 mm 0.252, turned 2° 0.121 about the depth axis and 0.110 about an in-
-plane axis, 4° 0.157 about the depth axis and 0.131 about an in-plane axis, and with the depth scaled by 1.05 0.100, 1.1
-0.106, 1.17 0.121.
+vessel, median over the labels, is 0.100 mm (mean 0.130 mm) for R and 0.093 mm (mean 0.129 mm) for L. Over the 2952 labels R
+places inside, R moved gives: shifted along an OCT axis (mean over the six directions) 0.107 mm at 0.1 mm, 0.130 mm at
+0.2 mm, 0.158 mm at 0.3 mm, 0.206 mm at 0.5 mm, 0.252 mm at 1 mm, turned about the depth axis 0.121 mm at 2°, 0.157 mm at
+4°, turned about an in-plane axis 0.110 mm at 2°, 0.131 mm at 4°, and 0.100 mm at a depth scale of 1.05, 0.106 mm at a depth
+scale of 1.1, 0.121 mm at a depth scale of 1.17.
 
 Grey/white contrast-to-noise ratio of the images inside the box of the OCT: 10° FLASH 3.49, 20° FLASH 2.87, 30° FLASH 1.98,
 T1 map 0.49.
@@ -45,10 +45,10 @@ runs of each image, 10° FLASH [0.25, 0.95, 0.18], 20° FLASH [0.51, 0.86, 0.04]
 runs the scale along the OCT axes is 1.000 to 1.008, 0.983 to 1.019 and 1.008 to 1.023, and that of R 1.038, 0.985, 0.956.
 
 Precision. The mean displacement over the tissue between the ten affines of a condition is 10° FLASH C3 0.001 to 0.076 mm,
-20° FLASH C3 0.000 to 0.016 mm, 30° FLASH C3 0.000 to 0.016 mm, 10° FLASH C6 0.000 to 0.077 mm, 10° FLASH C12 0.001 to 0.095
-mm, 10° FLASH C3 with --oct-mask 0.000 to 0.012 mm, between the contrasts on the same C3 crop k 10° vs 20° 0.284 to 0.358 mm
-and 1.45 to 1.50°, 10° vs 30° 0.193 to 0.261 mm and 1.64 to 1.95°, 20° vs 30° 0.176 to 0.190 mm and 1.76 to 2.03°, and
-between the 16 affines of the start test 0.001 to 0.051 mm and 0.00 to 0.41°. The rigid transform closest to R over the
+20° FLASH C3 0.000 to 0.016 mm, 30° FLASH C3 0.000 to 0.016 mm, 10° FLASH C6 0.000 to 0.077 mm, 10° FLASH C12 0.001 to
+0.095 mm, 10° FLASH C3 with --oct-mask 0.000 to 0.012 mm, between the contrasts on the same C3 crop k 10° vs 20° 0.284 to
+0.358 mm and 1.45 to 1.50°, 10° vs 30° 0.193 to 0.261 mm and 1.64 to 1.95°, 20° vs 30° 0.176 to 0.190 mm and 1.76 to 2.03°,
+and between the 16 affines of the start test 0.001 to 0.051 mm and 0.00 to 0.41°. The rigid transform closest to R over the
 tissue points (least squares) lies 0.193 mm from R. Over the 50 runs without --oct-mask, R's rotation and translation (that
 rigid transform) with octreg's stretch (T with its own closest rigid transform removed) lies 0.180 mm (0.175 to 0.227) from
 R, and octreg's rotation and translation with R's stretch 0.318 mm (0.259 to 0.337).
@@ -63,8 +63,8 @@ axis 0.114 mm, in the plane 0.099 mm.
 Search. The search pose of rank 0 won the refinement in 50 of the 60 runs, the winning ranks 0 (50), 1 (4), 3 (1), 4 (1), 8
 (1), 12 (1), 15 (1), 17 (1). Where it lost, it ended at a refinement score L of 0.664 to 0.835 against the winner's 0.417 to
 0.447. The outline was used in 3 runs (flip1_C12_k0, flip1_C12_k2, flip1_C12_k3), where the first 12 search poses are
-proposed by S = (F + O) / 2 and the rest by F. Their winners, of rank 12 (1), 15 (1), 17 (1), ended at L 0.429 to 0.440, 0
-of them proposed by S, whose poses ended at L 0.714 to 0.861.
+proposed by S = (F + O) / 2 and the rest by F. Their winners, of rank 12 (1), 15 (1), 17 (1), ended at L 0.429 to 0.440,
+none of them proposed by S. The poses proposed by S ended at L 0.714 to 0.861.
 
 ## Start test on flip1_C3_k0
 
@@ -189,7 +189,7 @@ row is that pose without registration.
 | mri_coreg_near | defaults, --regheader | 0/10 | 0 | 5.87 (5.54 to 7.20) | 14 | 0.280 |
 | flirt_near | normmi, default search, -usesqform, x10 headers | 0/10 | 0 | 17.83 (1.47 to 26.11) | 152 | 0.240 |
 | synthmorph_near | -m affine | 0/10 | 0 | 9.80 (8.34 to 13.18) | 17 | 0.259 |
-| octreg_near | section 4 from the start, no search | 10/10 | 0 | 0.36 (0.35 to 0.36) | 4 | 0.155 |
+| octreg_near | §4 from the start, no search | 10/10 | 0 | 0.36 (0.35 to 0.36) | 4 | 0.155 |
 
 Tool errors. elastix_near ended without a transform on k = 0, its log: "ITK ERROR: AdvancedMattesMutualInformationMetric:
 Too many samples map outside moving image buffer: n / m".
@@ -197,8 +197,8 @@ Too many samples map outside moving image buffer: n / m".
 ## Controls on the start near R
 
 The tools at their documented settings on the C3 crops of the 10° FLASH, from the start near R of the previous table or from
-R itself, with the test's specimen mask as the moving mask or with the moving OCT zeroed outside it (bench/i46/README.md).
-The start row of each table is its start without registration.
+the shear-free pose closest to R, with the test's specimen mask as the moving mask or with the moving OCT zeroed outside it
+(bench/i46/README.md). The start row of each table is its start without registration.
 
 baselines.py --near-mask: the near start with the test's specimen mask as the moving mask, for the tools that take one, the
 mask written with the OCT header of the start.
@@ -234,7 +234,7 @@ baselines.py --near-zeroed: the near start on the moving OCT zeroed outside the 
 Tool errors. elastix_near_zeroed ended without a transform on k = 0, its log: "ITK ERROR:
 AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: n / m".
 
-baselines.py --atR: the start at R itself, the pose with a rotation and a scale per axis closest to R.
+baselines.py --atR: the start at R, the pose with a rotation and a scale per axis closest to R.
 
 | method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
 |---|---|---|---|---|---|---|
@@ -271,12 +271,12 @@ mri_robust_register_atR_mask ended without a transform on k = 4, its log: "MyMat
 ## Convention check
 
 Each converted transform against the tool's own resampling of the OCT it ran on (bench/baselines/standard_tools.py check),
-on the k = 0 crops of the first three tables and on every run from a header start: the Pearson r over the voxels where
-either is non-zero, the Dice of the two supports, and the number of non-zero voxels of each. Where few voxels of the
-registered OCT fall inside the crop, r and Dice are over those few. r is none where neither image has a voxel inside the
-crop and nan where one of them is zero on every voxel compared. elastix resamples with a cubic B-spline
-(FinalBSplineInterpolationOrder 3), which overshoots at the hard edge of the zeroed OCT and leaves small non-zero values
-around the tissue, so on that OCT its own resampling has more non-zero voxels than the converted one.
+on every run: the Pearson r over the voxels where either is non-zero, the Dice of the two supports, and the number of
+non-zero voxels of each. Where few voxels of the registered OCT fall inside the crop, r and Dice are over those few. r is
+none where neither image has a voxel inside the crop and nan where one of them is zero on every voxel compared. elastix
+resamples with a cubic B-spline (FinalBSplineInterpolationOrder 3), which overshoots at the hard edge of the zeroed OCT and
+leaves small non-zero values around the tissue, so on that OCT its own resampling has more non-zero voxels than the
+converted one.
 
 | tool | setting | crop | r | Dice | voxels: the tool's, the converted |
 |---|---|---|---|---|---|
@@ -288,6 +288,77 @@ around the tissue, so on that OCT its own resampling has more non-zero voxels th
 | mri_coreg | defaults | flip1_C3_k0 | none | none | 0, 0 |
 | flirt | normmi, default search, x10 headers | flip1_C3_k0 | 0.64 | 0.44 | 62, 221 |
 | synthmorph | -m affine | flip1_C3_k0 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k1 | 1.00 | 1.00 | 1310391, 1310392 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k1 | 1.00 | 1.00 | 151, 151 |
+| elastix | model zoo, geometric centre | flip1_C3_k1 | 0.99 | 0.98 | 631845, 632958 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k1 | 1.00 | 0.99 | 810733, 824403 |
+| mri_robust_register | NMI, default start | flip1_C3_k1 | 0.99 | 0.99 | 402274, 413422 |
+| mri_coreg | defaults | flip1_C3_k1 | 1.00 | 0.99 | 430188, 439778 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k1 | 0.75 | 0.55 | 170, 452 |
+| synthmorph | -m affine | flip1_C3_k1 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k2 | 1.00 | 1.00 | 1370949, 1370949 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k2 | 1.00 | 1.00 | 2111, 2111 |
+| elastix | model zoo, geometric centre | flip1_C3_k2 | 0.99 | 0.98 | 576306, 579621 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k2 | 1.00 | 0.99 | 696069, 707396 |
+| mri_robust_register | NMI, default start | flip1_C3_k2 | 1.00 | 0.99 | 173854, 178856 |
+| mri_coreg | defaults | flip1_C3_k2 | 1.00 | 0.99 | 512805, 522096 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k2 | 0.16 | 0.05 | 10, 369 |
+| synthmorph | -m affine | flip1_C3_k2 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k3 | 1.00 | 1.00 | 1492403, 1492403 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k3 | 1.00 | 1.00 | 148, 148 |
+| elastix | model zoo, geometric centre | flip1_C3_k3 | 0.99 | 0.98 | 657241, 662088 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k3 | 1.00 | 0.99 | 600772, 614745 |
+| mri_robust_register | NMI, default start | flip1_C3_k3 | 1.00 | 0.99 | 148715, 151013 |
+| mri_coreg | defaults | flip1_C3_k3 | 1.00 | 0.99 | 78424, 80425 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k3 | 0.61 | 0.30 | 116, 668 |
+| synthmorph | -m affine | flip1_C3_k3 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k4 | 1.00 | 1.00 | 1384765, 1384765 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k4 | none | none | 0, 0 |
+| elastix | model zoo, geometric centre | flip1_C3_k4 | 0.99 | 0.98 | 629467, 633469 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k4 | 1.00 | 0.99 | 638489, 645604 |
+| mri_robust_register | NMI, default start | flip1_C3_k4 | 0.99 | 0.99 | 158249, 163029 |
+| mri_coreg | defaults | flip1_C3_k4 | 1.00 | 0.99 | 410977, 419163 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k4 | 0.51 | 0.14 | 17, 233 |
+| synthmorph | -m affine | flip1_C3_k4 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k5 | 1.00 | 1.00 | 1333302, 1333302 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k5 | 1.00 | 1.00 | 4766, 4766 |
+| elastix | model zoo, geometric centre | flip1_C3_k5 | 0.99 | 0.98 | 590208, 591481 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k5 | 0.99 | 0.99 | 718060, 729640 |
+| mri_coreg | defaults | flip1_C3_k5 | 1.00 | 0.99 | 435654, 446763 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k5 | 0.54 | 0.49 | 26, 80 |
+| synthmorph | -m affine | flip1_C3_k5 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k6 | 1.00 | 1.00 | 1177626, 1177626 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k6 | 1.00 | 1.00 | 2202, 2202 |
+| elastix | model zoo, geometric centre | flip1_C3_k6 | 0.99 | 0.98 | 669202, 670014 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k6 | 0.99 | 0.99 | 734646, 746494 |
+| mri_robust_register | NMI, default start | flip1_C3_k6 | 0.99 | 0.99 | 464177, 471679 |
+| mri_coreg | defaults | flip1_C3_k6 | 1.00 | 0.99 | 160544, 162449 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k6 | 0.56 | 0.26 | 101, 688 |
+| synthmorph | -m affine | flip1_C3_k6 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k7 | 1.00 | 1.00 | 1103114, 1103114 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k7 | 1.00 | 1.00 | 1902, 1902 |
+| elastix | model zoo, geometric centre | flip1_C3_k7 | 0.99 | 0.98 | 683164, 686133 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k7 | 1.00 | 0.99 | 707163, 718573 |
+| mri_robust_register | NMI, default start | flip1_C3_k7 | 1.00 | 0.99 | 574128, 586616 |
+| mri_coreg | defaults | flip1_C3_k7 | 1.00 | 0.99 | 336969, 345259 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k7 | 0.66 | 0.47 | 145, 476 |
+| synthmorph | -m affine | flip1_C3_k7 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k8 | 1.00 | 1.00 | 1217137, 1217137 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k8 | 1.00 | 1.00 | 1654, 1654 |
+| elastix | model zoo, geometric centre | flip1_C3_k8 | 0.99 | 0.98 | 641584, 645377 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k8 | 1.00 | 0.99 | 487478, 497675 |
+| mri_robust_register | NMI, default start | flip1_C3_k8 | 1.00 | 0.99 | 216867, 222789 |
+| mri_coreg | defaults | flip1_C3_k8 | 1.00 | 0.99 | 267946, 274460 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k8 | 0.82 | 0.60 | 135, 318 |
+| synthmorph | -m affine | flip1_C3_k8 | none | none | 0, 0 |
+| reg_aladin | defaults (image centres) | flip1_C3_k9 | 1.00 | 1.00 | 1153775, 1153775 |
+| greedy | NMI, -ia-image-centers | flip1_C3_k9 | 1.00 | 1.00 | 114948, 114948 |
+| elastix | model zoo, geometric centre | flip1_C3_k9 | 0.99 | 0.98 | 666149, 669960 |
+| ants | antsRegistrationSyN -t a | flip1_C3_k9 | 1.00 | 0.99 | 566188, 578309 |
+| mri_robust_register | NMI, default start | flip1_C3_k9 | 1.00 | 0.99 | 555292, 568968 |
+| mri_coreg | defaults | flip1_C3_k9 | 0.99 | 0.99 | 621155, 636660 |
+| flirt | normmi, default search, x10 headers | flip1_C3_k9 | 0.61 | 0.45 | 21, 73 |
+| synthmorph | -m affine | flip1_C3_k9 | none | none | 0, 0 |
 | reg_aladin | defaults (image centres) | flip2_C3_k0 | 1.00 | 1.00 | 1376875, 1376875 |
 | greedy | NMI, -ia-image-centers | flip2_C3_k0 | 1.00 | 1.00 | 1444, 1444 |
 | elastix | model zoo, geometric centre | flip2_C3_k0 | 0.99 | 0.98 | 657386, 661899 |
@@ -306,12 +377,91 @@ around the tissue, so on that OCT its own resampling has more non-zero voxels th
 | flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k0 | 0.62 | 0.35 | 67, 311 |
 | ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k0 | 0.99 | 0.98 | 29912, 31108 |
 | greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k0 | 1.00 | 1.00 | 331, 331 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k1 | 0.63 | 0.39 | 51, 213 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k1 | 0.99 | 0.99 | 86100, 87932 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k1 | 1.00 | 1.00 | 45, 45 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k2 | 0.79 | 0.67 | 168, 335 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k2 | 0.98 | 0.96 | 6280, 6828 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k2 | 1.00 | 1.00 | 57682, 57682 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k3 | 0.55 | 0.34 | 19, 92 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k3 | 0.98 | 0.97 | 20873, 22164 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k3 | 1.00 | 1.00 | 25, 25 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k4 | 0.69 | 0.52 | 31, 89 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k4 | 0.99 | 0.99 | 72127, 74108 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k4 | 1.00 | 1.00 | 29, 29 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k5 | 0.67 | 0.57 | 199, 502 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k5 | 0.98 | 0.97 | 10506, 11196 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k5 | 1.00 | 1.00 | 190, 190 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k6 | 0.55 | 0.31 | 53, 289 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k6 | 0.99 | 0.99 | 153474, 157886 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k6 | none | none | 0, 0 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k7 | 0.46 | 0.13 | 19, 284 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k7 | 0.99 | 0.98 | 77491, 80118 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k7 | 1.00 | 1.00 | 3058, 3058 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k8 | 0.75 | 0.28 | 5, 31 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k8 | 0.98 | 0.97 | 27538, 29192 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k8 | 1.00 | 1.00 | 13, 13 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | flip1_C3_k9 | 0.61 | 0.25 | 40, 277 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | flip1_C3_k9 | 0.99 | 0.99 | 40212, 41023 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | flip1_C3_k9 | 1.00 | 1.00 | 2790, 2790 |
 | reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k0 | 1.00 | 1.00 | 1390712, 1390712 |
 | greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k0 | 1.00 | 1.00 | 595485, 595485 |
 | ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k0 | 1.00 | 0.99 | 551513, 566039 |
 | mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k0 | 0.99 | 0.98 | 670830, 702656 |
 | mri_coreg_mask | defaults, --mov-mask | flip1_C3_k0 | 1.00 | 0.99 | 304749, 310523 |
 | flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k0 | 0.97 | 0.97 | 490, 519 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k1 | 1.00 | 1.00 | 1310391, 1310392 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k1 | 1.00 | 1.00 | 232210, 232210 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k1 | 1.00 | 0.99 | 631683, 644736 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k1 | 1.00 | 0.99 | 564541, 578560 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k1 | 1.00 | 0.99 | 435079, 443740 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k1 | 0.96 | 0.84 | 1979, 2729 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k2 | 1.00 | 1.00 | 1370949, 1370949 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k2 | 1.00 | 1.00 | 10825, 10825 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k2 | 1.00 | 0.99 | 521748, 535251 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k2 | 1.00 | 0.99 | 533228, 542985 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k2 | 0.94 | 0.96 | 22567, 24358 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k3 | 1.00 | 1.00 | 1492403, 1492403 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k3 | 1.00 | 1.00 | 158570, 158570 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k3 | 1.00 | 0.99 | 566750, 580593 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k3 | 0.99 | 0.99 | 796892, 814130 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k3 | 1.00 | 0.99 | 99777, 102413 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k3 | 1.00 | 0.97 | 274, 290 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k4 | 1.00 | 1.00 | 1384765, 1384765 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k4 | 1.00 | 1.00 | 18682, 18682 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k4 | 1.00 | 0.99 | 549221, 563867 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k4 | 1.00 | 0.98 | 274672, 283895 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k4 | 0.99 | 0.99 | 227188, 232434 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k4 | 0.98 | 0.77 | 2380, 3827 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k5 | 1.00 | 1.00 | 1333302, 1333302 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k5 | 1.00 | 1.00 | 58093, 58093 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k5 | 1.00 | 0.99 | 479316, 491867 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k5 | 1.00 | 0.99 | 199450, 204026 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k5 | 1.00 | 0.99 | 262077, 268200 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k5 | 0.99 | 0.97 | 272, 289 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k6 | 1.00 | 1.00 | 1177626, 1177626 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k6 | 1.00 | 1.00 | 2166, 2166 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k6 | 1.00 | 0.99 | 549781, 563957 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k6 | 0.99 | 0.99 | 586078, 599453 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k6 | none | none | 0, 0 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k6 | 0.91 | 0.80 | 488, 736 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k7 | 1.00 | 1.00 | 1103114, 1103114 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k7 | 1.00 | 1.00 | 6850, 6850 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k7 | 1.00 | 0.99 | 604049, 619497 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k7 | 1.00 | 0.99 | 329951, 337934 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k7 | 0.87 | 0.91 | 197, 235 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k8 | 1.00 | 1.00 | 1217137, 1217137 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k8 | 1.00 | 1.00 | 1331, 1331 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k8 | 1.00 | 0.99 | 629540, 645331 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k8 | 0.99 | 0.98 | 212568, 219755 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k8 | 1.00 | 0.99 | 392629, 402418 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k8 | 0.93 | 0.95 | 35, 39 |
+| reg_aladin_mask | defaults (image centres), -fmask | flip1_C3_k9 | 1.00 | 1.00 | 1153775, 1153775 |
+| greedy_mask | NMI, -ia-image-centers, -mm | flip1_C3_k9 | 1.00 | 1.00 | 6162, 6162 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | flip1_C3_k9 | 1.00 | 0.99 | 568188, 583457 |
+| mri_robust_register_mask | NMI, default start, --maskmov | flip1_C3_k9 | 1.00 | 0.99 | 565452, 580379 |
+| mri_coreg_mask | defaults, --mov-mask | flip1_C3_k9 | 1.00 | 0.99 | 650150, 664621 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | flip1_C3_k9 | 0.71 | 0.61 | 289, 661 |
 | reg_aladin_near | defaults, -nac | flip1_C3_k0 | 1.00 | 1.00 | 1100403, 1100403 |
 | greedy_near | NMI, -ia-identity | flip1_C3_k0 | 1.00 | 1.00 | 28, 28 |
 | ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k0 | 0.99 | 0.99 | 312780, 318133 |
@@ -669,9 +819,10 @@ around the tissue, so on that OCT its own resampling has more non-zero voxels th
 | mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k9 | 1.00 | 0.99 | 357562, 365628 |
 | flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k9 | 1.00 | 0.96 | 48614, 52845 |
 
-Runs on a k = 0 crop without a transform, so without a check: mri_robust_register on flip2_C3_k0, elastix_mask on
-flip1_C3_k0, elastix_near on flip1_C3_k0, elastix_near_mask on flip1_C3_k0, elastix_near_zeroed on flip1_C3_k0, elastix_atR
-on flip1_C3_k0, elastix_atR_mask on flip1_C3_k0.
+Runs without a transform, so without a check: mri_robust_register on flip1_C3 k = 5, mri_robust_register on flip2_C3 k = 0,
+elastix_mask on flip1_C3 k = 0 to 9, mri_robust_register_mask on flip1_C3 k = 2, 7, elastix_near on flip1_C3 k = 0,
+elastix_near_mask on flip1_C3 k = 0 to 9, elastix_near_zeroed on flip1_C3 k = 0, elastix_atR on flip1_C3 k = 0,
+elastix_atR_mask on flip1_C3 k = 0 to 9, mri_robust_register_atR_mask on flip1_C3 k = 4.
 
 ## Ablation
 
@@ -695,8 +846,8 @@ labels to the nearest OCT vessel through the affine (common.vessel_score), media
 | tracefree | the trace-free tensor n n^T - \|n\|^2 I / 3 instead of n n^T | 10/10 | 0.38 (0.38) | 0.023 (0.020 to 0.028) | 0.159 |
 | uncentred | F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised) | 10/10 | 0.34 (0.33 to 0.34) | -0.018 (-0.021 to -0.016) | 0.151 |
 | search_whole_mask | in the search, the OCT gradients taken inside the whole specimen mask, not its erosion | 8/10 | 0.36 (0.35 to 11.61) | 0.000 (-0.001 to 11.243) | 0.155 |
-| flatfield | the MRI divided by its Gaussian blur (normalised convolution, 5 mm) inside the foreground | 10/10 | 0.35 (0.34 to 0.36) | -0.003 (-0.009 to 0.001) | 0.153 |
-| signal_only | the OCT specimen mask from the signal threshold alone (components and holes kept, no texture rule) | 10/10 | 0.35 (0.34 to 0.36) | -0.011 (-0.015 to -0.005) | 0.154 |
+| flatfield | the MRI divided by its Gaussian blur (normalised convolution, σ 5 mm) inside the foreground | 10/10 | 0.35 (0.34 to 0.36) | -0.003 (-0.009 to 0.001) | 0.153 |
+| signal_only | the OCT specimen mask from the signal threshold alone (small components dropped, holes filled as in §1) | 10/10 | 0.35 (0.34 to 0.36) | -0.011 (-0.015 to -0.005) | 0.154 |
 | spacing_p5 | the OCT voxel size given 5 % too large | 10/10 | 0.42 (0.40 to 0.42) | 0.060 (0.055 to 0.063) | 0.163 |
 | spacing_m5 | the OCT voxel size given 5 % too small | 10/10 | 0.48 (0.47 to 0.48) | 0.119 (0.113 to 0.126) | 0.173 |
 | mirrored | the OCT array mirrored along its first axis: a mirror image of the block, which no rotation aligns | 0/10 | 7.25 (7.23 to 7.26) | 6.894 (6.884 to 6.898) | 0.236 |

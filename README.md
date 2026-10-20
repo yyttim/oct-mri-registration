@@ -117,16 +117,16 @@ on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm a
 and run on these data during its development, so this is not a held-out test. Results on I46 led to changes of the MRI
 foreground rule and the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression
 and the erosion of the search gradients (§3), the rounding of the resampling positions and the removal of a deformable stage
-([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set with runs on I46, the
-second also with runs on blocks of DANDI:000874 (2.1).
+([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set in 2.1 with runs on I46,
+that of `nms_deg` also with runs on public blocks of [DANDI:000874](https://dandiarchive.org/dandiset/000874/draft).
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
-distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold
-of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The ten crops of a condition are shifted boxes
-around the same block of one specimen, so the counts measure the placement of the crop and the MRI contrast, not other
-specimens.
+distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold of
+the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The ten crops of a condition are shifted boxes around
+the same block of one specimen, so the counts show how octreg copes with the placement of the crop and with the MRI contrast,
+not how it generalises to other specimens.
 
 | condition | within 1 mm of R | distance from R (mm) |
 |---|---|---|
@@ -142,11 +142,11 @@ axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm
 time. From the header orientation with the image box centres aligned, 7.0 mm (median over the ten crops of the 10° FLASH with a
 3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a global
 rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving image
-in none with the test's specimen mask as that mask. Started 1.1 to 1.2 mm and 10° from R, ANTs comes within 1 mm on seven of
-the ten crops and the other tools on none. Started at R itself, ANTs stays within 1 mm on all ten (0.52 mm, and 0.35 mm with
-the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm), and every other tool ends 2.2 to 29 mm
-from R or without a transform. octreg's refinement alone, from the start 1.1 to 1.2 mm from R, ends 0.35 to 0.36 mm from R on
-all ten crops.
+in none with the test's specimen mask as that mask. Started 1.1 to 1.2 mm and 10° from R, ANTs comes within 1 mm on seven of the
+ten crops and the other tools on none. Started at the shear-free pose closest to R, 0.09 mm from R, ANTs stays within 1 mm on
+all ten (median 0.52 mm, and 0.35 mm with the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm),
+and every other tool ends 2.2 to 29 mm from R or without a transform. octreg's refinement alone, from the start 1.1 to 1.2 mm
+from R, ends 0.35 to 0.36 mm from R on all ten crops.
 
 | OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|
@@ -162,7 +162,8 @@ planes and every standard tool, and [bench/results/I46/tables.md](bench/results/
 
 ### Ablations
 
-Each variant changes one thing in the method (`bench/ablate.py`). On the ten crops of the 10° FLASH with a 3 mm margin:
+Each variant changes one thing in the method or its input (`bench/ablate.py`). On the ten crops of the 10° FLASH with a
+3 mm margin:
 
 | variant | within 1 mm of R | distance from R, median (mm) |
 |---|---|---|
@@ -179,7 +180,7 @@ Each variant changes one thing in the method (`bench/ablate.py`). On the ten cro
 | the trace-free tensor n nᵀ − \|n\|² I / 3 instead of n nᵀ | 10 of 10 | 0.38 |
 | F without the subtraction of the means | 10 of 10 | 0.34 |
 | in the search, OCT gradients over the whole specimen mask instead of only its part more than 0.8 mm inside | 8 of 10 | 0.36 |
-| the MRI divided by its Gaussian blur at 5 mm inside the foreground | 10 of 10 | 0.35 |
+| the MRI divided by its Gaussian blur (σ 5 mm) inside the foreground | 10 of 10 | 0.35 |
 | the OCT specimen mask from the signal threshold alone, without the texture rule | 10 of 10 | 0.35 |
 | the OCT voxel size given 5 % too large | 10 of 10 | 0.42 |
 | the OCT voxel size given 5 % too small | 10 of 10 | 0.48 |
@@ -201,8 +202,7 @@ start from the OCT turned by 90° about its sectioning axis. [bench/README.md](b
 
 [bench/README.md](bench/README.md) gives the commands of the I58 benchmark, whose data are not distributed with the repository,
 and [bench/i46/README.md](bench/i46/README.md) those of the test on the data of Costantini et al. (2023), from the download to
-the tables and figures. The stored results are in `bench/results/`. octreg has no random element: run once more on the same
-GPU it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
-[bench/results/repeat.json](bench/results/repeat.json)). Another GPU or PyTorch build can change the order of the
-floating-point sums and move an affine at round-off level, and among poses within 10⁻⁵ of the lowest L the one proposed first
-wins. The stored octreg results were made with Python 3.13, PyTorch 2.7.0 with CUDA 12.8 and one RTX 5090 under Windows 11.
+the tables and figures. The stored results are in `bench/results/`. octreg has no random element: run once more on the same GPU,
+it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
+[bench/results/repeat.json](bench/results/repeat.json), which also records the Python, PyTorch, CUDA, GPU and OS of these runs).
+Another GPU or PyTorch build can change the order of the floating-point sums and move an affine at round-off level.

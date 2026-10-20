@@ -36,7 +36,7 @@ equals the one proposed first. The runs under fine/ search on a 0.4 mm grid with
 | 20 | F | 0.1626 | 0.0601 | 0.95473 |  |
 | 5 | S | 0.0223 | 0.5661 | 0.97480 |  |
 
-## fine/base: the method, with search_mm 0.4, search_sigma_mm 0.8
+## fine/base: the method
 
 | rank | proposed by | search F | search O | final L | winner |
 |---|---|---|---|---|---|
@@ -65,7 +65,7 @@ equals the one proposed first. The runs under fine/ search on a 0.4 mm grid with
 | 10 | S | 0.0336 | 0.5488 | 0.96486 |  |
 | 11 | S | 0.0178 | 0.5523 | 0.98216 |  |
 
-## fine/no_outline: the outline never used (outline_min_outside 2): every pose proposed by F, with search_mm 0.4, outline_min_outside 2.0, search_sigma_mm 0.8
+## fine/no_outline: the outline never used (outline_min_outside 2): every pose proposed by F
 
 | rank | proposed by | search F | search O | final L | winner |
 |---|---|---|---|---|---|
@@ -94,7 +94,7 @@ equals the one proposed first. The runs under fine/ search on a 0.4 mm grid with
 | 13 | F | 0.1169 |  | 0.95587 |  |
 | 19 | F | 0.1145 |  | 0.95589 |  |
 
-## no_outline: the outline never used (outline_min_outside 2): every pose proposed by F, with outline_min_outside 2.0
+## no_outline: the outline never used (outline_min_outside 2): every pose proposed by F
 
 | rank | proposed by | search F | search O | final L | winner |
 |---|---|---|---|---|---|

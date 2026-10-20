@@ -61,8 +61,11 @@ def rng(x, nd=2):
 
 
 def para(text):
-    """text as lines of at most 124 characters, never broken inside "k = 0", and an empty line"""
-    return [line.replace(NBSP, " ") for line in textwrap.wrap(text.replace(" = ", f"{NBSP}={NBSP}"), 124)] + [""]
+    """text as lines of at most 124 characters, never broken inside "k = 0" or between a number and its unit, and an empty
+    line"""
+    text = re.sub(r"(\d) (mm|°)", rf"\1{NBSP}\2", text.replace(" = ", f"{NBSP}={NBSP}"))
+    lines = textwrap.wrap(text, 124, break_on_hyphens=False)
+    return [line.replace(NBSP, " ") for line in lines] + [""]
 
 
 def trim(lines):
@@ -121,17 +124,17 @@ def start_pose(crop):
 
 
 def vessel_text(v):
-    """The vessel check of R, of L and of R moved with the labels R places inside held (reference_check.py vessels)."""
+    """The vessel check of R, of L and of R moved, over the labels R places inside (reference_check.py vessels)."""
     score = lambda x: f"{x['vessel_median_mm']:.3f} mm (mean {x['vessel_mean_mm']:.3f} mm)"
     m = v["moved"]
-    shifts = ", ".join(f"{k} mm {x['mean']['vessel_median_mm']:.3f}" for k, x in m["shift_mm"].items())
-    turns = ", ".join(f"{k}° {x['z']['vessel_median_mm']:.3f} about the depth axis and {x['x']['vessel_median_mm']:.3f} "
-                      f"about an in-plane axis" for k, x in m["rotation_deg"].items())
-    scales = ", ".join(f"{k} {x['vessel_median_mm']:.3f}" for k, x in m["depth_scale"].items())
+    shifts = ", ".join(f"{x['mean']['vessel_median_mm']:.3f} mm at {k} mm" for k, x in m["shift_mm"].items())
+    turns = ", ".join(f"{x['z']['vessel_median_mm']:.3f} mm at {k}°" for k, x in m["rotation_deg"].items())
+    tilts = ", ".join(f"{x['x']['vessel_median_mm']:.3f} mm at {k}°" for k, x in m["rotation_deg"].items())
+    scales = ", ".join(f"{x['vessel_median_mm']:.3f} mm at a depth scale of {k}" for k, x in m["depth_scale"].items())
     return ("Vessel check (common.vessel_score): the distance of the MRI vessel labels placed in the OCT tissue to the nearest "
-            f"OCT vessel, median over the labels, is {score(v['reference'])} for R and {score(v['A12'])} for L. With the "
-            f"{m['labels']} labels R places inside held fixed, the median through R moved is: shifted along an OCT axis "
-            f"(mean over the six directions) {shifts}, turned {turns}, and with the depth scaled by {scales}.")
+            f"OCT vessel, median over the labels, is {score(v['reference'])} for R and {score(v['A12'])} for L. Over the "
+            f"{m['labels']} labels R places inside, R moved gives: shifted along an OCT axis (mean over the six directions) "
+            f"{shifts}, turned about the depth axis {turns}, turned about an in-plane axis {tilts}, and {scales}.")
 
 
 def reference_section(ref, ctx, runs):
@@ -259,7 +262,8 @@ def search_text(rows):
         by_s = [c["L"] for x in outl for c in x["candidates"] if c["search_rank"] < x["search_topk"] // 2]
         text += (f" ({', '.join(x['name'] for x in outl)}), where the first {half} search poses are proposed by "
                  f"S = (F + O) / 2 and the rest by F. Their winners, of rank {ranks(outl)}, ended at L "
-                 f"{rng([x['L'] for x in outl], 3)}, {won_s} of them proposed by S, whose poses ended at L {rng(by_s, 3)}")
+                 f"{rng([x['L'] for x in outl], 3)}, {won_s or 'none'} of them proposed by S. The poses proposed by S "
+                 f"ended at L {rng(by_s, 3)}")
     return para(text + ".")
 
 
@@ -393,7 +397,7 @@ def near_section(bln):
 CONTROLS = (("near_mask", "the near start with the test's specimen mask as the moving mask, for the tools that take one, the "
                           "mask written with the OCT header of the start"),
             ("near_zeroed", "the near start on the moving OCT zeroed outside the specimen mask, every tool"),
-            ("atR", "the start at R itself, the pose with a rotation and a scale per axis closest to R"),
+            ("atR", "the start at R, the pose with a rotation and a scale per axis closest to R"),
             ("atR_mask", "the start at R with the specimen mask as the moving mask"))
 
 
@@ -402,8 +406,8 @@ def controls_section(groups):
     names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
     out = ["## Controls on the start near R", ""] + para(
         "The tools at their documented settings on the C3 crops of the 10° FLASH, from the start near R of the previous "
-        "table or from R itself, with the test's specimen mask as the moving mask or with the moving OCT zeroed outside it "
-        "(bench/i46/README.md). The start row of each table is its start without registration.")
+        "table or from the shear-free pose closest to R, with the test's specimen mask as the moving mask or with the moving "
+        "OCT zeroed outside it (bench/i46/README.md). The start row of each table is its start without registration.")
     for kind, what in CONTROLS:
         rows = [x for x in groups.get(kind) or [] if x["crop"] in names]
         if not rows:
@@ -423,9 +427,9 @@ def check_section(*groups):
     rows = [x for g in groups for x in g]
     out = ["## Convention check", ""] + para(
         "Each converted transform against the tool's own resampling of the OCT it ran on (bench/baselines/standard_tools.py "
-        "check), on the k = 0 crops of the first three tables and on every run from a header start: the Pearson r over the "
-        "voxels where either is non-zero, the Dice of the two supports, and the number of non-zero voxels of each. Where few "
-        "voxels of the registered OCT fall inside the crop, r and Dice are over those few. r is none where neither image has "
+        "check), on every run: the Pearson r over the voxels where either is non-zero, the Dice of the two supports, and the "
+        "number of non-zero voxels of each. Where few voxels of the registered OCT fall inside the crop, r and Dice are over "
+        "those few. r is none where neither image has "
         "a voxel inside the crop and nan where one of them is zero on every voxel compared. elastix resamples with a cubic "
         "B-spline (FinalBSplineInterpolationOrder 3), which overshoots at the hard edge of the zeroed OCT and leaves small "
         "non-zero values around the tissue, so on that OCT its own resampling has more non-zero voxels than the converted one.")
@@ -435,8 +439,12 @@ def check_section(*groups):
             v = x.get("check_voxels")
             out.append(f"| {x['tool']} | {x['setting']} | {x['crop']} | {fmt(x['check_r'])} | {fmt(x['check_dice'])} | "
                        + ("" if v is None else f"{v['tool']}, {v['converted']}") + " |")
-    none = [f"{x['tool']} on {x['crop']}" for x in rows if x["crop"].endswith("_C3_k0") and "mean_mm" not in x]
-    return trim(out + [""] + para("Runs on a k = 0 crop without a transform, so without a check: "
+    by = {}
+    for x in rows:
+        if "mean_mm" not in x:
+            by.setdefault((x["tool"], x["crop"].rsplit("_k", 1)[0]), []).append(x)
+    none = [f"{t} on {c} k = {ks(r)}" for (t, c), r in by.items()]
+    return trim(out + [""] + para("Runs without a transform, so without a check: "
                                   + (", ".join(none) if none else "none") + "."))
 
 

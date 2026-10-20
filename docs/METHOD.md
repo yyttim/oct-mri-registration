@@ -13,8 +13,8 @@ in either image, agarose in the OCT. The OCT has section stripes along one array
 zeros where data are missing. The MRI is an ex-vivo scan cropped around the block. The crop must hold the whole block, and it
 may hold tissue that is not in the block, for example beyond a face where the block was cut out of a larger specimen. The crop
 is the one manual input. It fixes the position to within its box and nothing else: on the I46 test the block centre lay up to
-15 mm from the centre of crops of 39 × 38 × 33 mm, 12 mm wider than the block on every side (bench/results/I46/crops.json). Both
-voxel sizes are taken as correct, so the true scales are close to 1.
+15 mm from the centre of crops with a 12 mm margin around the block, shifted at random by up to 10 mm along each axis
+(bench/results/I46/crops.json). Both voxel sizes are taken as correct, so the true scales are close to 1.
 
 Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the header frame of a
 NIfTI, its sform, else its qform, or else the array frame, diag(pixdim) for a NIfTI without either and diag(spacing) for TIFF
@@ -70,9 +70,9 @@ $$F(T) = \frac{\sum_i \langle a_i - \bar a,\; b_i - \bar b\rangle}{\sqrt{\sum_i 
 
 F is taken over the block, not over the overlap of the two volumes. OCT tissue that lands on MRI background therefore lowers F,
 while MRI tissue outside the block does not enter it. Without the subtraction of the means, F would be Σ(n·n′)² over
-√(Σ|n|⁴ Σ|n′|⁴), the squared normalised gradient field similarity of Cross-Sim-NGF (Öfverstedt et al., WBIR 2022), which divides
-by the number of points instead. The centring removes the term the mean tensors alone would give, so F is zero for unrelated
-structure and negative where edges cross.
+√(Σ|n|⁴ Σ|n′|⁴). Cross-Sim-NGF (Öfverstedt et al., WBIR 2022) sums the same squared products and divides by the number of
+points in the overlap of the two masks. The centring removes the term the mean tensors alone would give, so F is zero for
+unrelated structure and negative where edges cross.
 
 **Outline O.** O is the correlation of the OCT specimen mask w with the MRI foreground M(T x) over the measured OCT voxels,
 weighted by q (1 − (1 − w) E), with q the measured fraction and E = M inside the MRI crop and 1 outside. The variance of M under
@@ -95,13 +95,13 @@ grid spacing h. Its tensors are computed after the turn, in the MRI axes, with �
 voxels of the turned erosion, except that the OCT gradients are taken inside that erosion too: at this scale a margin of medium
 inside the specimen mask would add an edge that reaches the points. Their ε is the median |g| of the unturned OCT over the
 erosion, held for every rotation. F and O at every translation are masked correlations, and each of their sums is an FFT
-correlation of a template channel with a channel of the MRI zero-padded by ⌊N/2⌋ + 1 voxels beyond the crop, so that a block
-over the edge of the crop is still scored, or with E (Padfield, IEEE Trans. Image Process. 21:2706, 2012). The translations are
-those that place the cube inside the padded grid. The six tensor channels enter as one sum, as in Cross-Sim-NGF
-(Öfverstedt et al., WBIR 2022). Each rotation keeps its best translation by F and, when O is computed, its best translation by
-S = (F + O) / 2. Greedy non-maximum suppression drops a pose when a pose already kept places the OCT box centre within 3 mm of
-where it does and differs from it by less than 20° in rotation. The best 12 poses by S and then the best by F up to 24 in all go
-to §4, or the best 24 by F when O is not computed.
+correlation of a template channel with a channel of the MRI or with E (Padfield, IEEE Trans. Image Process. 21:2706, 2012). The
+MRI channels are padded with zeros and E with ones by ⌊N/2⌋ + 1 voxels beyond the crop, so that a block over the edge of the
+crop is still scored. The translations are those that place the cube inside the padded grid. The six tensor channels enter as
+one sum, as in Cross-Sim-NGF (Öfverstedt et al., WBIR 2022). Each rotation keeps its best translation by F and, when O is
+computed, its best translation by S = (F + O) / 2. Greedy non-maximum suppression drops a pose when a pose already kept places
+the OCT box centre within 3 mm of where it does and differs from it by less than 20° in rotation. The best 12 poses by S and
+then the best by F up to 24 in all go to §4, or the best 24 by F when O is not computed.
 
 ## §4 Affine refinement
 
