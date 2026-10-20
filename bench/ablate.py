@@ -20,7 +20,9 @@ JSON file (the start.json of bench/i46/baselines.py --near) or a text matrix. It
 
 The spacing variants give octreg the OCT voxel size of the file (or of --oct-spacing-um) scaled by their factor. Their
 T_oct2mri.txt and result.json are rewritten for the OCT world of the file as for --turn, with the 4x4 from that world to
-the one the run used as the key turn, and the scale per OCT axis recomputed in it.
+the one the run used as the key turn, and the scale per OCT axis and the OCT voxel size recomputed in it. The foreground
+entries of result.json stay in the voxel size the run used. A spacing variant needs an --oct-mask of the OCT's array shape,
+since a mask on its own grid keeps the spacing of its file.
 
 --params F applies the Params overrides of F, a JSON file or JSON text, on top of the variant's change, as octreg register
 --params.
@@ -283,6 +285,9 @@ def main():
         ap.error("--start and --turn exclude each other")
     if a.turn and set(names) & set(SPACING):
         ap.error("--turn excludes the spacing variants")
+    if a.oct_mask and set(names) & set(SPACING) and (io.load_volume(a.oct_mask, a.oct_spacing_um).shape
+                                                     != io.load_volume(a.oct, a.oct_spacing_um).shape):
+        ap.error("the spacing variants need an --oct-mask of the OCT's array shape")
     start = read_start(a.start) if a.start else None
     over = json.loads(Path(a.params).read_text(encoding="utf-8") if Path(a.params).is_file() else a.params) if a.params else {}
     turn, load = turned([a.oct] + ([a.oct_mask] if a.oct_mask else []), a.turn, a.oct_spacing_um) if a.turn else (None, None)
@@ -312,7 +317,7 @@ def main():
             saved["pose"]["T_search"] = T0
             saved["pose"]["scale_per_oct_axis"] = np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm),
                                                                  axis=0).tolist()
-            saved["inputs"]["oct"]["affine"] = vo.affine
+            saved["inputs"]["oct"]["affine"], saved["inputs"]["oct"]["spacing_mm"] = vo.affine, vo.spacing_mm
             saved["inputs"]["oct_spacing_um"] = a.oct_spacing_um
             io.write_json({**saved, "T_oct2mri": T, "turn": to_run}, out / "result.json")
             io.write_transform_txt(T, out / "T_oct2mri.txt")

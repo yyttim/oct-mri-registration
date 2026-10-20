@@ -5,7 +5,7 @@ search keeps (docs/METHOD.md §3) in the order of result.json, by final L after 
 the lowest first by rank. rank: the order in which the search kept the pose. proposed by: S = (F + O) / 2 for the first 12
 ranks and F for the rest where the outline is used, F for all 24 in no_outline and S for all 24 in outline_decides. search F
 and search O: at the search pose. final L: after the refinement. The winner is the pose with the lowest final L, among
-equals the one proposed first.
+equals the one proposed first. The runs under fine/ search on a 0.4 mm grid with σ 0.8 mm (bench/README.md).
 
 ## the I58 run
 
@@ -36,7 +36,65 @@ equals the one proposed first.
 | 20 | F | 0.1626 | 0.0601 | 0.95473 |  |
 | 5 | S | 0.0223 | 0.5661 | 0.97480 |  |
 
-## no_outline: the outline never used (outline_min_outside 2): every pose proposed by F
+## fine/base: the method, with search_mm 0.4, search_sigma_mm 0.8
+
+| rank | proposed by | search F | search O | final L | winner |
+|---|---|---|---|---|---|
+| 0 | S | 0.0760 | 0.5961 | 0.88792 | yes |
+| 1 | S | 0.0589 | 0.5902 | 0.88792 |  |
+| 3 | S | 0.0399 | 0.5802 | 0.88792 |  |
+| 6 | S | 0.0209 | 0.5784 | 0.88792 |  |
+| 9 | S | 0.0157 | 0.5666 | 0.88792 |  |
+| 18 | F | 0.1207 | 0.0847 | 0.91965 |  |
+| 21 | F | 0.1175 | 0.1127 | 0.92378 |  |
+| 22 | F | 0.1174 | 0.1153 | 0.92632 |  |
+| 8 | S | 0.0308 | 0.5534 | 0.93391 |  |
+| 5 | S | 0.0516 | 0.5483 | 0.93744 |  |
+| 14 | F | 0.1281 | 0.0156 | 0.94466 |  |
+| 13 | F | 0.1282 | 0.0609 | 0.94466 |  |
+| 4 | S | 0.0576 | 0.5429 | 0.94476 |  |
+| 17 | F | 0.1243 | 0.0219 | 0.94617 |  |
+| 15 | F | 0.1274 | 0.0552 | 0.94951 |  |
+| 20 | F | 0.1179 | 0.0548 | 0.94954 |  |
+| 16 | F | 0.1257 | 0.0251 | 0.94955 |  |
+| 19 | F | 0.1180 | 0.0603 | 0.95010 |  |
+| 23 | F | 0.1173 | 0.0312 | 0.95151 |  |
+| 12 | F | 0.1356 | 0.0473 | 0.95297 |  |
+| 2 | S | 0.0301 | 0.6001 | 0.95650 |  |
+| 7 | S | 0.0301 | 0.5571 | 0.95719 |  |
+| 10 | S | 0.0336 | 0.5488 | 0.96486 |  |
+| 11 | S | 0.0178 | 0.5523 | 0.98216 |  |
+
+## fine/no_outline: the outline never used (outline_min_outside 2): every pose proposed by F, with search_mm 0.4, outline_min_outside 2.0, search_sigma_mm 0.8
+
+| rank | proposed by | search F | search O | final L | winner |
+|---|---|---|---|---|---|
+| 6 | F | 0.1207 |  | 0.91965 | yes |
+| 9 | F | 0.1175 |  | 0.92378 |  |
+| 15 | F | 0.1159 |  | 0.92524 |  |
+| 10 | F | 0.1174 |  | 0.92632 |  |
+| 16 | F | 0.1155 |  | 0.92668 |  |
+| 12 | F | 0.1173 |  | 0.92834 |  |
+| 23 | F | 0.1140 |  | 0.93494 |  |
+| 17 | F | 0.1154 |  | 0.94200 |  |
+| 22 | F | 0.1140 |  | 0.94245 |  |
+| 20 | F | 0.1145 |  | 0.94289 |  |
+| 2 | F | 0.1281 |  | 0.94466 |  |
+| 1 | F | 0.1282 |  | 0.94466 |  |
+| 18 | F | 0.1148 |  | 0.94478 |  |
+| 5 | F | 0.1243 |  | 0.94617 |  |
+| 14 | F | 0.1163 |  | 0.94653 |  |
+| 21 | F | 0.1142 |  | 0.94911 |  |
+| 3 | F | 0.1274 |  | 0.94951 |  |
+| 8 | F | 0.1179 |  | 0.94954 |  |
+| 4 | F | 0.1257 |  | 0.94955 |  |
+| 7 | F | 0.1180 |  | 0.95010 |  |
+| 11 | F | 0.1173 |  | 0.95151 |  |
+| 0 | F | 0.1356 |  | 0.95297 |  |
+| 13 | F | 0.1169 |  | 0.95587 |  |
+| 19 | F | 0.1145 |  | 0.95589 |  |
+
+## no_outline: the outline never used (outline_min_outside 2): every pose proposed by F, with outline_min_outside 2.0
 
 | rank | proposed by | search F | search O | final L | winner |
 |---|---|---|---|---|---|

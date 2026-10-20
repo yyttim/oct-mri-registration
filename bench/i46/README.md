@@ -224,9 +224,9 @@ root>/bench_runs/I46`, which is not in the repository.
 |---|---|
 | `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, the affine, distances from R and L and their decomposition, the vessel check, the search rank, scores and candidates, the outside fractions and time |
 | `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: distances and time, or the tool error |
-| `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the start H_k and its distance from R; `baselines_near.json` also holds octreg's refinement from that start (`octreg_near`) |
+| `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the start (`H`) and its distance from R (`start_pose`). `baselines_near.json` also holds octreg's refinement from that start (`octreg_near`) |
 | `baselines_near_mask.json`, `baselines_near_zeroed.json`, `baselines_atR.json`, `baselines_atR_mask.json` | the controls: the near start with the mask, the near start on the OCT zeroed outside the mask, and the start at R without and with the mask |
-| `starts.json`, `ablation.json` | the start test (with its search poses) and the ablation of `analyses.py`, each entry with its affine |
+| `starts.json`, `ablation.json` | the start test (with the distance of its search pose from R) and the ablation of `analyses.py`, each entry with its affine |
 | `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`), and the vessel check of R, of L and of R moved by small shifts, rotations and depth scales |
 | `crops.json` | the box, shift and centre offset of every crop |
 | `context.json` | the number of tissue points, the grey/white contrast of each MRI image, the 4x4 of R and of L, and properties of the reference and the OCT |

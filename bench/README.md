@@ -35,12 +35,11 @@ python bench/repeat.py $OCT $MRI --run $RUNS/octreg -o $RUNS/repeat
 ```
 
 `ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
-`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world. The runs
-under `fine` search on a 0.4 mm grid with σ 0.8 mm in place of 0.6 and 1.2 mm, with and without the outline.
-`baselines/summarise.py` stores the pose and the search candidates of every ablation run in `results/I58/ablation.json`
-and lists the candidates of the search in the I58 run, in the two outline variants and in the `fine` runs in
-`results/I58/search.md`. `repeat.py` runs octreg once more and compares the affine with the stored run byte for byte
-(`results/repeat.json`).
+`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world. The runs under
+`fine` search on a 0.4 mm grid with σ 0.8 mm in place of 0.6 and 1.2 mm, with and without the outline. `baselines/summarise.py`
+stores the pose and the search candidates of every ablation run in `results/I58/ablation.json` and lists the candidates of the
+search in the I58 run, in the two outline variants and in the `fine` runs in `results/I58/search.md`. `repeat.py` runs octreg
+once more at its defaults and compares the affine with the stored run byte for byte (`results/repeat.json`).
 
 | | | | |
 |---|---|---|---|
@@ -71,11 +70,11 @@ python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
 |---|---|
 | `paths.py` | the run and data roots, the two I58 files and the form of a path in WSL |
 | `ablate.py` | the ablation: one change to the method per variant, on any pair |
-| `repeat.py` | octreg once more on a pair, its affine against a stored run of the same code, into `results/repeat.json` |
+| `repeat.py` | octreg once more on a pair, its affine against a stored run of the same version, into `results/repeat.json` |
 | `figures.py` | the I58 panels in `docs/figures/` |
 | `baselines/` | standard registration tools on the I58 pair, and the tool settings of the I46 test ([README](baselines/README.md), [BASELINES.md](baselines/BASELINES.md)) |
 | `i46/` | the test on block I46 of Costantini et al. (2023) ([README](i46/README.md)) |
-| `results/I58/` | `result.json` of the I58 run and `ablation/no_outline.json` of that variant, with the input paths cut to file names, the pose and the search candidates of every ablation run in `ablation.json`, the candidates of the search in the I58 run and in the outline variants in `search.md`, and the baseline tables in `baselines/` |
+| `results/I58/` | `result.json` of the I58 run and `ablation/no_outline.json` of that variant, with the input paths cut to file names, the pose and the search candidates of every ablation run in `ablation.json`, the candidates of the search in the I58 run, the outline variants and the `fine` runs in `search.md`, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
 The Python scripts print their options with `--help`.

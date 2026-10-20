@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Run octreg once more on a pair and compare its affine with a stored run of the same octreg code.
+"""Run octreg once more on a pair and compare its affine with a stored run of the same octreg version.
 
     python bench/repeat.py OCT MRI --run STORED -o OUT [--device cuda]
 
 OUT gets the outputs of octreg register at its defaults. bench/results/repeat.json records, under the path of STORED inside
 <project root>/bench_runs (else its name), the octreg version and code, the largest absolute difference between the two
-T_oct2mri.txt and whether the two files are identical. A stored run of another octreg version, or whose code.txt names
-another octreg code, is refused.
+T_oct2mri.txt and whether the two files are identical. A stored run of another octreg version, whose code.txt names
+another octreg code, or that was not made at the defaults on the two files given, without masks or a voxel size, is refused.
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bench.ablate import code_id  # noqa: E402
 from bench.paths import BENCH_RUNS  # noqa: E402
 from octreg import __version__  # noqa: E402
+from octreg.params import Params  # noqa: E402
 from octreg.register import register  # noqa: E402
 
 RESULTS = Path(__file__).resolve().parent / "results" / "repeat.json"
@@ -44,9 +45,14 @@ def main():
     a = ap.parse_args()
     code = code_id()
     stored = (a.run / "code.txt").read_text(encoding="utf-8").strip() if (a.run / "code.txt").is_file() else None
-    version = json.loads((a.run / "result.json").read_text(encoding="utf-8"))["octreg_version"]
+    res = json.loads((a.run / "result.json").read_text(encoding="utf-8"))
+    version, inp = res["octreg_version"], res["inputs"]
     if version != __version__ or stored not in (None, code):
         sys.exit(f"{a.run}: octreg {version}, code {stored}, not {__version__} with code {code}")
+    same_files = [Path(inp[k]["path"]).name for k in ("oct", "mri")] == [Path(a.oct).name, Path(a.mri).name]
+    plain = all(inp[k] is None for k in ("oct_mask", "mri_mask", "oct_spacing_um"))
+    if not (same_files and plain and Params.from_dict(res["params"]) == Params()):
+        sys.exit(f"{a.run}: not made at the defaults on {Path(a.oct).name} and {Path(a.mri).name}")
     register(a.oct, a.mri, a.out, device=a.device)
     t0, t1 = (np.loadtxt(p / "T_oct2mri.txt") for p in (a.run, a.out))
     same = (a.run / "T_oct2mri.txt").read_bytes() == (a.out / "T_oct2mri.txt").read_bytes()

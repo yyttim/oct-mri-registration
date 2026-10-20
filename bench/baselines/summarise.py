@@ -30,7 +30,7 @@ from bench.figures import AFFINE  # noqa: E402
 from bench.paths import BENCH_RUNS, PROJECT_ROOT as ROOT, REPO  # noqa: E402
 from octreg.params import Params  # noqa: E402
 
-DEFAULTS = Params().to_dict()
+DEFAULTS = json.loads(json.dumps(Params().to_dict()))      # as variant.json stores them
 
 I58 = REPO / "bench" / "results" / "I58"
 MAIN = ["octreg" if sub.startswith("RUN/") else "_".join(sub.split("/")[1:]) for _, sub in AFFINE]

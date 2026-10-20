@@ -11,14 +11,14 @@ transform from any starting orientation, with no labels and no manual start.
 
 The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI
 foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. Each panel is the whole MRI crop at one
-pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm on the coronal and 27.4 × 39.6 mm on the
-axial, in freeview's default orientation, anterior on the right of the sagittal plane and the subject's right on the left of
-the coronal and axial planes. The specimen surface runs along the line
-except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright
-band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner
-of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends
-short of the line. On the axial plane the specimen ends short of the line along the right side, where the OCT shows a dark band
-with a few bright fragments. On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
+pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm on the coronal and 27.4 × 39.6 mm on the axial, in
+freeview's default orientation, anterior on the right of the sagittal plane and the subject's right on the left of the coronal
+and axial planes. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the
+top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside
+the line. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly
+outside the line, and below that piece the specimen ends short of the line. On the axial plane the specimen ends short of the
+line along the right side, where the OCT shows a dark band with a few bright fragments. On the sagittal and coronal planes the
+line also runs past the top and bottom of the OCT image.
 
 ## Method
 
@@ -114,11 +114,11 @@ hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an aff
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
 R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
 on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
-and run on these data during its development, so this is not a held-out test: after results on I46 the valley rule of the MRI
-foreground, the gate on the outline and the suppression of near-duplicate search poses (2.1), the threshold rule of the
-specimen mask for clipped medium, the eroded region of the search gradients and the rounding of the resampling positions (3.1)
-were changed, and the I46 vessel check was among the evidence for dropping the deformation (3.2). No parameter value was set by
-its result on I46.
+and run on these data during its development, so this is not a held-out test. Results on I46 led to changes of the MRI
+foreground rule and the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression
+and the erosion of the search gradients (§3), the rounding of the resampling positions and the removal of a deformable stage
+([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set with runs on I46, the
+second also with runs on blocks of DANDI:000874 (2.1).
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
@@ -144,7 +144,7 @@ time. From the header orientation with the image box centres aligned, 7.0 mm (me
 rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving image
 in none with the test's specimen mask as that mask. Started 1.1 to 1.2 mm and 10° from R, ANTs comes within 1 mm on seven of
 the ten crops and the other tools on none. Started at R itself, ANTs stays within 1 mm on all ten (0.52 mm, and 0.35 mm with
-the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm), and every other tool ends 2.2 to 22 mm
+the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm), and every other tool ends 2.2 to 29 mm
 from R or without a transform. octreg's refinement alone, from the start 1.1 to 1.2 mm from R, ends 0.35 to 0.36 mm from R on
 all ten crops.
 
@@ -154,11 +154,11 @@ all ten crops.
 
 Plane 300 of the OCT (12 µm in the plane), shown in the OCT's own planes as Costantini et al. show their OCT, for the crop at
 the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8). The red line is the white-matter boundary of
-the authors' manual MRI labels placed through R, the yellow line the same boundary placed through octreg's affine, and the
-last two panels show the MRI crop resampled through each, all in freeview at its default window. The yellow line follows the
-red line, a little lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper left corner of
-the tissue. The white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the protocol, the other planes and
-every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
+the authors' manual MRI labels placed through R, the yellow line the same boundary placed through octreg's affine, and the last
+two panels show the MRI crop resampled through each, all in freeview at its default window. The yellow line follows the red
+line, a little lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper left corner of the
+tissue. The white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the protocol, the other
+planes and every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
 
 ### Ablations
 
