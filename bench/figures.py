@@ -7,8 +7,9 @@
   result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
                 the registered OCT, and the same OCT with the MRI foreground boundary
   affine/       the affine baselines at their settings in bench/baselines/README.md on the same planes, with the boundary
-  ablation/     the variants of bench/ablate.py (--ablation, with the turned runs in its turned/ folder) and the turned start
-                on the sagittal plane, with the boundary
+  ablation/     the variants of bench/ablate.py (--ablation, with the turned runs in its turned/ folder, the turned start
+                and the variant without the outline on the finer search grid in its fine/ folder) on the sagittal plane,
+                with the boundary
 
 The boundary is octreg's MRI foreground on the grid of the crop, made a surface by mri_mc and mris_smooth -n 3 -nw and drawn
 as a 2-pixel red line. Every panel shows the whole plane at one screen pixel per MRI voxel. The MRI takes freeview's default
@@ -44,7 +45,7 @@ AFFINE = [  # panel, overlay: RUN/... in the octreg run, else under --baselines
     ("mri_coreg", "affine/mri_coreg/default"), ("flirt", "affine/flirt/search_x10"), ("synthmorph", "affine/synthmorph/affine")]
 ABLATION = [(v, v) for v in VARIANTS] + [  # panel, under --ablation: a bench/ablate.py run directory or a 4x4 text file
     ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
-    ("turned_octreg", "turned/base")]
+    ("turned_octreg", "turned/base"), ("fine_no_outline", "fine/no_outline")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
 STAGES = ("result", "affine", "ablation")
 

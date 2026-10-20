@@ -49,8 +49,12 @@ once more at its defaults and compares the affine with the stored run byte for b
 | <img src="../docs/figures/ablation/first_choice.png" width="175" alt="only the first search pose refined"> | <img src="../docs/figures/ablation/no_prior.png" width="175" alt="no scale and shear prior"> | <img src="../docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="../docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> |
 | **the trace-free tensor** | **search gradients over the whole specimen mask** | **turned 90°, the start** | **turned 90°, no orientation search** |
 | <img src="../docs/figures/ablation/tracefree.png" width="175" alt="the trace-free tensor"> | <img src="../docs/figures/ablation/search_whole_mask.png" width="175" alt="search gradients over the whole specimen mask"> | <img src="../docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="../docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> |
-| **turned 90°, octreg** |  |  |  |
-| <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |  |  |  |
+| **turned 90°, octreg** | **scale and shear prior at a quarter of its weight** | **scale and shear prior at four times its weight** | **rigid refinement** |
+| <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | <img src="../docs/figures/ablation/prior_0.5.png" width="175" alt="scale and shear prior at a quarter of its weight"> | <img src="../docs/figures/ablation/prior_8.png" width="175" alt="scale and shear prior at four times its weight"> | <img src="../docs/figures/ablation/rigid.png" width="175" alt="rigid refinement"> |
+| **F without the subtraction of the means** | **MRI divided by its 5 mm blur** | **OCT specimen mask from the signal threshold alone** | **OCT voxel size 5 % too large** |
+| <img src="../docs/figures/ablation/uncentred.png" width="175" alt="F without the subtraction of the means"> | <img src="../docs/figures/ablation/flatfield.png" width="175" alt="MRI divided by its 5 mm blur"> | <img src="../docs/figures/ablation/signal_only.png" width="175" alt="OCT specimen mask from the signal threshold alone"> | <img src="../docs/figures/ablation/spacing_p5.png" width="175" alt="OCT voxel size 5 % too large"> |
+| **OCT voxel size 5 % too small** | **OCT array mirrored** | **search on a 0.4 mm grid with σ 0.8 mm, no outline term** | |
+| <img src="../docs/figures/ablation/spacing_m5.png" width="175" alt="OCT voxel size 5 % too small"> | <img src="../docs/figures/ablation/mirrored.png" width="175" alt="OCT array mirrored"> | <img src="../docs/figures/ablation/fine_no_outline.png" width="175" alt="search on a 0.4 mm grid with σ 0.8 mm, no outline term"> | |
 
 The sagittal plane of the I58 figure in the [README](../README.md) through each variant, with the MRI foreground boundary in
 red.
