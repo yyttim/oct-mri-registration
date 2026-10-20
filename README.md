@@ -49,7 +49,7 @@ cd oct-mri-registration
 pip install -e .
 ```
 
-octreg requires Python 3.9 or newer and PyTorch. A CUDA GPU is recommended for full-size volumes. `pip install -e ".[test]"`
+octreg requires Python 3.10 or newer and PyTorch. A CUDA GPU is recommended for full-size volumes. `pip install -e ".[test]"`
 adds the test dependencies, and `pytest` runs the tests on synthetic data on the CPU.
 
 ## Usage
