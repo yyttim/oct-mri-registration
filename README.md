@@ -10,7 +10,9 @@ transform from any starting orientation, with no labels and no manual start.
 | <img src="docs/figures/result/sagittal_mri.png" width="300" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="208" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="208" alt="MRI, axial"> |
 
 The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI
-foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. The specimen surface runs along the line
+foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. Each panel is the whole MRI crop at one
+pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm on the coronal and 27.4 × 39.6 mm on the
+axial. The specimen surface runs along the line
 except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright
 band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner
 of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends
@@ -111,13 +113,19 @@ hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an aff
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
 R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
 on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
-and checked on these data during its development, so this is not a held-out test.
+and run on these data during its development, so this is not a held-out test: after results on I46 the valley rule of the MRI
+foreground, the gate on the outline and the suppression of near-duplicate search poses (2.1), the threshold rule of the
+specimen mask for clipped medium, the eroded region of the search gradients and the rounding of the resampling positions (3.1)
+were changed, and the I46 vessel check was among the evidence for dropping the deformation (3.2). No parameter value was set by
+its result on I46.
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
 distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold
-of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`).
+of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The ten crops of a condition are shifted boxes
+around the same block of one specimen, so the counts measure the placement of the crop and the MRI contrast, not other
+specimens.
 
 | condition | within 1 mm of R | distance from R (mm) |
 |---|---|---|

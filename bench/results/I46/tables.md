@@ -11,7 +11,7 @@ without a readable transform (a tool error) counts as beyond every other.
 R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit L
 (reference_check.py, an affine fitted to the vessels alone) lies 0.155 mm from R on average (p95 0.31 mm, rotation 0.57°),
 0.09 / 0.17 / 0.28 mm in the upper, middle and deepest third of the OCT depth, so distances below 0.30 mm are not
-interpreted. No run in these tables comes within 0.30 mm of R (0 of 432).
+interpreted. 3 of the 742 runs in these tables come within 0.30 mm of R: ants_atR_mask (3).
 
 Vessel check (common.vessel_score): the distance of the MRI vessel labels placed in the OCT tissue to the nearest OCT
 vessel, median over the labels, is 0.100 mm (mean 0.130 mm) for R and 0.093 mm (mean 0.129 mm) for L. With the 2952 labels R
@@ -103,21 +103,21 @@ search with that search turned on, on the C3 crops of the 10° FLASH. The moving
 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header orientation of the OCT with the
 image box centres aligned.
 
-| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) |
-|---|---|---|---|---|---|
-| the start | no registration | 0/10 | 0 | 7.02 (6.54 to 7.48) | 122 |
-| octreg | its default parameters | 10/10 | 0 | 0.36 | 4 |
-| reg_aladin | defaults (image centres) | 0/10 | 0 | 8.44 | 118 |
-| greedy | NMI, -ia-image-centers | 0/10 | 0 | 14.32 | 120 |
-| elastix | model zoo, geometric centre | 0/10 | 0 | 7.50 | 122 |
-| ants | antsRegistrationSyN -t a | 0/10 | 0 | 9.28 | 125 |
-| mri_robust_register | NMI, default start | 0/10 | 1 | 13.31 | 121 |
-| mri_coreg | defaults | 0/10 | 0 | 9.25 | 116 |
-| flirt | normmi, default search, x10 headers | 0/10 | 0 | 17.26 | 140 |
-| synthmorph | -m affine | 0/10 | 0 | 16.49 | 105 |
-| flirt_search | normmi, search -180 180 about every axis, x10 headers | 0/10 | 0 | 18.60 | 115 |
-| ants_antsai | antsAI start, antsRegistrationSyN -t a | 0/10 | 0 | 16.96 | 95 |
-| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | 0/10 | 0 | 23.95 | 157 |
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 0/10 | 0 | 7.02 (6.54 to 7.48) | 122 |  |
+| octreg | its default parameters | 10/10 | 0 | 0.36 | 4 | 0.155 |
+| reg_aladin | defaults (image centres) | 0/10 | 0 | 8.44 | 118 | 0.258 |
+| greedy | NMI, -ia-image-centers | 0/10 | 0 | 14.32 | 120 | 0.279 |
+| elastix | model zoo, geometric centre | 0/10 | 0 | 7.50 | 122 | 0.249 |
+| ants | antsRegistrationSyN -t a | 0/10 | 0 | 9.28 | 125 | 0.249 |
+| mri_robust_register | NMI, default start | 0/10 | 1 | 13.31 | 121 | 0.250 |
+| mri_coreg | defaults | 0/10 | 0 | 9.25 | 116 | 0.243 |
+| flirt | normmi, default search, x10 headers | 0/10 | 0 | 17.26 | 140 | 0.259 |
+| synthmorph | -m affine | 0/10 | 0 | 16.49 | 105 | 0.239 |
+| flirt_search | normmi, search -180 180 about every axis, x10 headers | 0/10 | 0 | 18.60 | 115 | 0.246 |
+| ants_antsai | antsAI start, antsRegistrationSyN -t a | 0/10 | 0 | 16.96 | 95 | 0.282 |
+| greedy_search | NMI, -ia-image-centers, -search 1000 any 20 | 0/10 | 0 | 23.95 | 157 | 0.248 |
 
 Over all 96 runs at the documented settings, on the crops of this table and of the next, the median rotation from R is 120°.
 
@@ -143,30 +143,30 @@ mri_synthmorph register has no mask option, and NiftyReg 2.1.2 does not use the 
 (bench/baselines/INSTALL.md). elastix counts a sample that maps outside the moving mask as invalid and stops when fewer than
 a quarter of its samples are valid (RequiredRatioOfValidSamples, 0.25 by default).
 
-| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) |
-|---|---|---|---|---|---|
-| reg_aladin | defaults (image centres) | 0/10 | 0 | 8.44 | 118 |
-| reg_aladin_mask | defaults (image centres), -fmask | 0/10 | 0 | 8.44 | 118 |
-| greedy | NMI, -ia-image-centers | 0/10 | 0 | 14.32 | 120 |
-| greedy_mask | NMI, -ia-image-centers, -mm | 0/10 | 0 | 16.55 | 123 |
-| elastix | model zoo, geometric centre | 0/10 | 0 | 7.50 | 122 |
-| elastix_mask | model zoo, geometric centre, -mMask | 0/10 | 10 | beyond | beyond |
-| ants | antsRegistrationSyN -t a | 0/10 | 0 | 9.28 | 125 |
-| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | 0/10 | 0 | 7.04 | 122 |
-| mri_robust_register | NMI, default start | 0/10 | 1 | 13.31 | 121 |
-| mri_robust_register_mask | NMI, default start, --maskmov | 0/10 | 2 | 11.81 | 121 |
-| mri_coreg | defaults | 0/10 | 0 | 9.25 | 116 |
-| mri_coreg_mask | defaults, --mov-mask | 0/10 | 0 | 9.48 | 114 |
-| flirt | normmi, default search, x10 headers | 0/10 | 0 | 17.26 | 140 |
-| flirt_mask | normmi, default search, x10 headers, -inweight | 0/10 | 0 | 13.07 | 158 |
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| reg_aladin | defaults (image centres) | 0/10 | 0 | 8.44 | 118 | 0.258 |
+| reg_aladin_mask | defaults (image centres), -fmask | 0/10 | 0 | 8.44 | 118 | 0.258 |
+| greedy | NMI, -ia-image-centers | 0/10 | 0 | 14.32 | 120 | 0.279 |
+| greedy_mask | NMI, -ia-image-centers, -mm | 0/10 | 0 | 16.55 | 123 | 0.259 |
+| elastix | model zoo, geometric centre | 0/10 | 0 | 7.50 | 122 | 0.249 |
+| elastix_mask | model zoo, geometric centre, -mMask | 0/10 | 10 | beyond | beyond |  |
+| ants | antsRegistrationSyN -t a | 0/10 | 0 | 9.28 | 125 | 0.249 |
+| ants_mask | antsRegistrationSyN -t a, -x NULL,mask | 0/10 | 0 | 7.04 | 122 | 0.238 |
+| mri_robust_register | NMI, default start | 0/10 | 1 | 13.31 | 121 | 0.250 |
+| mri_robust_register_mask | NMI, default start, --maskmov | 0/10 | 2 | 11.81 | 121 | 0.251 |
+| mri_coreg | defaults | 0/10 | 0 | 9.25 | 116 | 0.243 |
+| mri_coreg_mask | defaults, --mov-mask | 0/10 | 0 | 9.48 | 114 | 0.252 |
+| flirt | normmi, default search, x10 headers | 0/10 | 0 | 17.26 | 140 | 0.259 |
+| flirt_mask | normmi, default search, x10 headers, -inweight | 0/10 | 0 | 13.07 | 158 | 0.282 |
 
 Masked runs that end at the distance from R of the unmasked run (to 0.1 µm), or in a tool error where it does:
 reg_aladin_mask 10/10, greedy_mask 0/10, elastix_mask 0/10, ants_mask 0/10, mri_robust_register_mask 0/10, mri_coreg_mask
 0/10, flirt_mask 0/10.
 
 Tool errors. elastix_mask ended without a transform on k = 0 to 9, its log: "ITK ERROR:
-AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: 511 / 3264".
-mri_robust_register_mask ended without a transform on k = 2, 7, its log: "MyMatrix::MatrixSqrt Internal Error:".
+AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: n / m". mri_robust_register_mask
+ended without a transform on k = 2, 7, its log: "MyMatrix::MatrixSqrt Internal Error:".
 
 ## Start near R
 
@@ -178,26 +178,102 @@ qform), so the start is the pose with a rotation and a scale per axis closest to
 tissue: 0.06 to 0.11 mm from it (mean over the tissue, at most 0.30 mm), 1.14 to 1.20 mm and 9.7 to 10.4° from R. The start
 row is that pose without registration.
 
-| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) |
-|---|---|---|---|---|---|
-| the start | no registration | 0/10 | 0 | 1.18 (1.14 to 1.20) | 10 |
-| reg_aladin_near | defaults, -nac | 0/10 | 0 | 3.02 (2.21 to 3.40) | 19 |
-| greedy_near | NMI, -ia-identity | 0/10 | 0 | 11.32 (4.50 to 22.38) | 16 |
-| elastix_near | model zoo, no initialisation | 0/10 | 1 | 4.05 (1.72 to beyond) | 6 |
-| ants_near | antsRegistrationSyN -t a, -i Identity | 7/10 | 0 | 0.84 (0.55 to 7.11) | 5 |
-| mri_robust_register_near | NMI, --noinit | 0/10 | 0 | 11.09 (6.37 to 16.95) | 37 |
-| mri_coreg_near | defaults, --regheader | 0/10 | 0 | 5.87 (5.54 to 7.20) | 14 |
-| flirt_near | normmi, default search, -usesqform, x10 headers | 0/10 | 0 | 17.83 (1.47 to 26.11) | 152 |
-| synthmorph_near | -m affine | 0/10 | 0 | 9.80 (8.34 to 13.18) | 17 |
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 0/10 | 0 | 1.18 (1.14 to 1.20) | 10 |  |
+| reg_aladin_near | defaults, -nac | 0/10 | 0 | 3.02 (2.21 to 3.40) | 19 | 0.242 |
+| greedy_near | NMI, -ia-identity | 0/10 | 0 | 11.32 (4.50 to 22.38) | 16 | 0.260 |
+| elastix_near | model zoo, no initialisation | 0/10 | 1 | 4.05 (1.72 to beyond) | 6 | 0.242 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | 7/10 | 0 | 0.84 (0.55 to 7.11) | 5 | 0.230 |
+| mri_robust_register_near | NMI, --noinit | 0/10 | 0 | 11.09 (6.37 to 16.95) | 37 | 0.278 |
+| mri_coreg_near | defaults, --regheader | 0/10 | 0 | 5.87 (5.54 to 7.20) | 14 | 0.280 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | 0/10 | 0 | 17.83 (1.47 to 26.11) | 152 | 0.240 |
+| synthmorph_near | -m affine | 0/10 | 0 | 9.80 (8.34 to 13.18) | 17 | 0.259 |
+| octreg_near | section 4 from the start, no search | 10/10 | 0 | 0.36 (0.35 to 0.36) | 4 | 0.155 |
 
 Tool errors. elastix_near ended without a transform on k = 0, its log: "ITK ERROR: AdvancedMattesMutualInformationMetric:
-Too many samples map outside moving image buffer: 505 / 2048".
+Too many samples map outside moving image buffer: n / m".
+
+## Controls on the start near R
+
+The tools at their documented settings on the C3 crops of the 10° FLASH, from the start near R of the previous table or from
+R itself, with the test's specimen mask as the moving mask or with the moving OCT zeroed outside it (bench/i46/README.md).
+The start row of each table is its start without registration.
+
+baselines.py --near-mask: the near start with the test's specimen mask as the moving mask, for the tools that take one, the
+mask written with the OCT header of the start.
+
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 0/10 | 0 | 1.18 (1.14 to 1.20) | 10 |  |
+| reg_aladin_near_mask | defaults, -nac, -fmask | 0/10 | 0 | 3.02 (2.21 to 3.40) | 19 | 0.242 |
+| greedy_near_mask | NMI, -ia-identity, -mm | 2/10 | 0 | 1.55 (0.87 to 17.05) | 10 | 0.229 |
+| elastix_near_mask | model zoo, no initialisation, -mMask | 0/10 | 10 | beyond (beyond) | beyond |  |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | 7/10 | 0 | 0.82 (0.45 to 1.88) | 9 | 0.215 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | 0/10 | 0 | 11.60 (9.47 to 16.29) | 39 | 0.276 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | 0/10 | 0 | 5.90 (5.33 to 7.19) | 16 | 0.271 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | 0/10 | 0 | 17.93 (6.47 to 21.33) | 92 | 0.285 |
+
+Tool errors. elastix_near_mask ended without a transform on k = 0 to 9, its log: "ITK ERROR:
+AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: n / m".
+
+baselines.py --near-zeroed: the near start on the moving OCT zeroed outside the specimen mask, every tool.
+
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 0/10 | 0 | 1.18 (1.14 to 1.20) | 10 |  |
+| reg_aladin_near | defaults, -nac | 0/10 | 0 | 3.55 (2.38 to 4.48) | 16 | 0.240 |
+| greedy_near | NMI, -ia-identity | 0/10 | 0 | 11.71 (6.56 to 18.11) | 12 | 0.286 |
+| elastix_near | model zoo, no initialisation | 0/10 | 1 | 3.82 (1.13 to beyond) | 7 | 0.242 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | 7/10 | 0 | 0.85 (0.64 to 2.92) | 4 | 0.219 |
+| mri_robust_register_near | NMI, --noinit | 0/10 | 0 | 11.60 (9.47 to 16.29) | 39 | 0.276 |
+| mri_coreg_near | defaults, --regheader | 0/10 | 0 | 5.90 (5.33 to 7.19) | 16 | 0.271 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | 0/10 | 0 | 20.17 (1.50 to 24.52) | 125 | 0.258 |
+| synthmorph_near | -m affine | 0/10 | 0 | 9.91 (7.96 to 13.59) | 16 | 0.280 |
+
+Tool errors. elastix_near ended without a transform on k = 0, its log: "ITK ERROR: AdvancedMattesMutualInformationMetric:
+Too many samples map outside moving image buffer: n / m".
+
+baselines.py --atR: the start at R itself, the pose with a rotation and a scale per axis closest to R.
+
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 10/10 | 0 | 0.09 (0.09) | 1 |  |
+| reg_aladin_atR | defaults, -nac | 0/10 | 0 | 2.98 (2.17 to 3.36) | 20 | 0.242 |
+| greedy_atR | NMI, -ia-identity | 0/10 | 0 | 7.42 (4.91 to 13.93) | 18 | 0.272 |
+| elastix_atR | model zoo, no initialisation | 0/10 | 1 | 4.04 (3.10 to beyond) | 6 | 0.243 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | 10/10 | 0 | 0.52 (0.44 to 0.94) | 2 | 0.193 |
+| mri_robust_register_atR | NMI, --noinit | 0/10 | 0 | 10.40 (8.36 to 13.32) | 36 | 0.273 |
+| mri_coreg_atR | defaults, --regheader | 0/10 | 0 | 5.91 (5.43 to 7.71) | 13 | 0.264 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | 0/10 | 0 | 20.19 (16.78 to 22.43) | 102 | 0.286 |
+| synthmorph_atR | -m affine | 0/10 | 0 | 11.06 (9.40 to 13.02) | 7 | 0.280 |
+
+Tool errors. elastix_atR ended without a transform on k = 0, its log: "ITK ERROR: AdvancedMattesMutualInformationMetric: Too
+many samples map outside moving image buffer: n / m".
+
+baselines.py --atR-mask: the start at R with the specimen mask as the moving mask.
+
+| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | vessels (mm) |
+|---|---|---|---|---|---|---|
+| the start | no registration | 10/10 | 0 | 0.09 (0.09) | 1 |  |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | 0/10 | 0 | 2.98 (2.17 to 3.36) | 20 | 0.242 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | 10/10 | 0 | 0.62 (0.53 to 0.99) | 1 | 0.183 |
+| elastix_atR_mask | model zoo, no initialisation, -mMask | 0/10 | 10 | beyond (beyond) | beyond |  |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | 10/10 | 0 | 0.35 (0.27 to 0.67) | 1 | 0.170 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | 0/10 | 1 | 10.47 (4.01 to beyond) | 30 | 0.274 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | 0/10 | 0 | 6.09 (5.40 to 28.79) | 12 | 0.275 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | 0/10 | 0 | 16.72 (10.81 to 20.25) | 123 | 0.294 |
+
+Tool errors. elastix_atR_mask ended without a transform on k = 0 to 9, its log: "ITK ERROR:
+AdvancedMattesMutualInformationMetric: Too many samples map outside moving image buffer: n / m".
+mri_robust_register_atR_mask ended without a transform on k = 4, its log: "MyMatrix::MatrixSqrt Internal Error:".
 
 ## Convention check
 
-On the k = 0 crops, each converted transform against the tool's own resampling of the OCT it ran on
-(bench/baselines/standard_tools.py check): the Pearson r over the voxels where either is non-zero, the Dice of the two
-supports, and the number of non-zero voxels of each.
+Each converted transform against the tool's own resampling of the OCT it ran on (bench/baselines/standard_tools.py check),
+on the k = 0 crops of the first three tables and on every run from a header start: the Pearson r over the voxels where
+either is non-zero, the Dice of the two supports, and the number of non-zero voxels of each. Where only tens or hundreds of
+voxels of the registered OCT fall inside the crop, as for FLIRT 15 to 26 mm from R, r and Dice are over that overlap.
 
 | tool | setting | crop | r | Dice | voxels: the tool's, the converted |
 |---|---|---|---|---|---|
@@ -240,9 +316,359 @@ supports, and the number of non-zero voxels of each.
 | mri_coreg_near | defaults, --regheader | flip1_C3_k0 | 1.00 | 0.99 | 302101, 308797 |
 | flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k0 | 0.75 | 0.57 | 31, 77 |
 | synthmorph_near | -m affine | flip1_C3_k0 | 1.00 | 0.99 | 126901, 129613 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k1 | 1.00 | 1.00 | 1205185, 1205185 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k1 | 1.00 | 1.00 | 1482, 1482 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k1 | 0.99 | 0.98 | 767613, 772325 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k1 | 1.00 | 0.99 | 603490, 619665 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k1 | 1.00 | 0.99 | 509356, 519594 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k1 | 1.00 | 0.99 | 416584, 426277 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k1 | 0.57 | 0.33 | 65, 334 |
+| synthmorph_near | -m affine | flip1_C3_k1 | 1.00 | 0.99 | 72091, 73853 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k2 | 1.00 | 1.00 | 1274716, 1274716 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k2 | 1.00 | 1.00 | 517, 517 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k2 | 0.99 | 0.99 | 844828, 853036 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k2 | 1.00 | 0.99 | 615537, 629847 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k2 | 0.99 | 0.99 | 275009, 281290 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k2 | 1.00 | 0.99 | 189093, 193643 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k2 | 0.32 | 0.13 | 16, 235 |
+| synthmorph_near | -m affine | flip1_C3_k2 | 1.00 | 0.98 | 25862, 26967 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k3 | 1.00 | 1.00 | 1096170, 1096171 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k3 | 1.00 | 1.00 | 570, 570 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k3 | 0.99 | 0.98 | 819571, 822119 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k3 | 1.00 | 0.99 | 572168, 586310 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k3 | 1.00 | 0.99 | 304461, 308807 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k3 | 1.00 | 0.99 | 412590, 420993 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k3 | 0.25 | 0.06 | 8, 252 |
+| synthmorph_near | -m affine | flip1_C3_k3 | 1.00 | 0.99 | 141048, 144064 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k4 | 1.00 | 1.00 | 1223610, 1223610 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k4 | 1.00 | 1.00 | 9, 9 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k4 | 0.99 | 0.98 | 739719, 746473 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k4 | 1.00 | 0.99 | 643486, 659414 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k4 | 1.00 | 0.99 | 242836, 246140 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k4 | 1.00 | 0.99 | 364650, 374210 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k4 | 0.86 | 0.41 | 18, 70 |
+| synthmorph_near | -m affine | flip1_C3_k4 | 0.99 | 0.96 | 2444, 2661 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k5 | 1.00 | 1.00 | 1242579, 1242579 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k5 | 1.00 | 1.00 | 1814, 1814 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k5 | 0.99 | 0.98 | 836521, 847516 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k5 | 1.00 | 0.99 | 657861, 675314 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k5 | 1.00 | 0.99 | 791777, 806805 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k5 | 1.00 | 0.99 | 412245, 421596 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k5 | 0.26 | 0.18 | 8, 79 |
+| synthmorph_near | -m affine | flip1_C3_k5 | 1.00 | 0.98 | 45677, 47207 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k6 | 1.00 | 1.00 | 1274746, 1274747 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k6 | 1.00 | 1.00 | 1126, 1126 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k6 | 0.99 | 0.99 | 1063439, 1074741 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k6 | 1.00 | 0.99 | 617029, 633329 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k6 | 1.00 | 0.99 | 591676, 603843 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k6 | 1.00 | 0.99 | 294615, 301147 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k6 | 0.97 | 0.58 | 114, 277 |
+| synthmorph_near | -m affine | flip1_C3_k6 | 1.00 | 0.99 | 91114, 93364 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k7 | 1.00 | 1.00 | 1283058, 1283058 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k7 | 1.00 | 1.00 | 3816, 3816 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k7 | 0.99 | 0.99 | 1006658, 1010998 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k7 | 1.00 | 0.99 | 685165, 702904 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k7 | 1.00 | 0.99 | 638473, 650380 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k7 | 1.00 | 0.99 | 438625, 447079 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k7 | 0.75 | 0.79 | 45, 69 |
+| synthmorph_near | -m affine | flip1_C3_k7 | 1.00 | 0.99 | 84107, 86079 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k8 | 1.00 | 1.00 | 1216845, 1216845 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k8 | 1.00 | 1.00 | 2449, 2449 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k8 | 0.99 | 0.98 | 908185, 917109 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k8 | 1.00 | 0.99 | 651514, 668274 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k8 | 1.00 | 0.99 | 554490, 566250 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k8 | 1.00 | 0.99 | 382098, 391011 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k8 | 0.99 | 0.97 | 551073, 580861 |
+| synthmorph_near | -m affine | flip1_C3_k8 | 1.00 | 0.98 | 41331, 42641 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k9 | 1.00 | 1.00 | 1211855, 1211855 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k9 | 1.00 | 1.00 | 845, 845 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k9 | 0.99 | 0.99 | 814763, 828316 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k9 | 1.00 | 0.99 | 592494, 608078 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k9 | 1.00 | 0.99 | 1523208, 1539474 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k9 | 1.00 | 0.99 | 572893, 584632 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k9 | 0.94 | 0.53 | 20, 55 |
+| synthmorph_near | -m affine | flip1_C3_k9 | 1.00 | 0.99 | 75276, 77199 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k0 | 1.00 | 1.00 | 1100403, 1100403 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k0 | 1.00 | 1.00 | 620, 620 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k0 | 1.00 | 0.99 | 459187, 469903 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k0 | 1.00 | 0.99 | 461072, 470195 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k0 | 1.00 | 0.99 | 308386, 314991 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k0 | 0.91 | 0.97 | 65798, 70251 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k1 | 1.00 | 1.00 | 1205185, 1205185 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k1 | 1.00 | 1.00 | 570741, 570741 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k1 | 1.00 | 0.99 | 684501, 701681 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k1 | 1.00 | 0.99 | 556538, 567664 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k1 | 1.00 | 0.99 | 423349, 433054 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k1 | 0.99 | 0.97 | 210, 225 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k2 | 1.00 | 1.00 | 1274716, 1274716 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k2 | 1.00 | 1.00 | 532837, 532837 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k2 | 1.00 | 0.99 | 552187, 565012 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k2 | 1.00 | 0.99 | 642630, 654882 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k2 | 1.00 | 0.99 | 234471, 239932 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k2 | 1.00 | 0.95 | 17693, 19559 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k3 | 1.00 | 1.00 | 1096170, 1096171 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k3 | 1.00 | 1.00 | 544982, 544982 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k3 | 1.00 | 0.99 | 558158, 573389 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k3 | 1.00 | 0.99 | 316735, 323473 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k3 | 1.00 | 0.99 | 354897, 363091 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k3 | 1.00 | 0.95 | 29725, 32794 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k4 | 1.00 | 1.00 | 1223610, 1223610 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k4 | 1.00 | 1.00 | 362, 362 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k4 | 1.00 | 0.99 | 564230, 579546 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k4 | 1.00 | 0.99 | 360568, 367771 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k4 | 1.00 | 0.99 | 417695, 427772 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k4 | 1.00 | 0.98 | 16118, 16919 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k5 | 1.00 | 1.00 | 1242579, 1242579 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k5 | 1.00 | 1.00 | 574631, 574631 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k5 | 1.00 | 0.99 | 595598, 611209 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k5 | 1.00 | 0.99 | 218744, 222654 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k5 | 1.00 | 0.99 | 421194, 430781 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k5 | 1.00 | 0.95 | 52095, 57345 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k6 | 1.00 | 1.00 | 1274746, 1274747 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k6 | 1.00 | 1.00 | 574512, 574512 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k6 | 1.00 | 0.99 | 653728, 670004 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k6 | 1.00 | 0.99 | 573805, 585008 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k6 | 1.00 | 0.99 | 316216, 323442 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k6 | 1.00 | 0.95 | 21017, 23043 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k7 | 1.00 | 1.00 | 1283058, 1283058 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k7 | 1.00 | 1.00 | 582477, 582477 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k7 | 1.00 | 0.99 | 720424, 737761 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k7 | 1.00 | 0.99 | 708975, 721690 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k7 | 1.00 | 0.99 | 402931, 410533 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k7 | 0.99 | 0.96 | 23048, 25024 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k8 | 1.00 | 1.00 | 1216845, 1216845 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k8 | 1.00 | 1.00 | 575888, 575888 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k8 | 1.00 | 0.99 | 617603, 633965 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k8 | 1.00 | 0.99 | 480515, 489144 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k8 | 1.00 | 0.99 | 396457, 405567 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k8 | 1.00 | 0.94 | 17699, 19762 |
+| reg_aladin_near_mask | defaults, -nac, -fmask | flip1_C3_k9 | 1.00 | 1.00 | 1211855, 1211855 |
+| greedy_near_mask | NMI, -ia-identity, -mm | flip1_C3_k9 | 1.00 | 1.00 | 570289, 570289 |
+| ants_near_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k9 | 1.00 | 0.99 | 649272, 665903 |
+| mri_robust_register_near_mask | NMI, --noinit, --maskmov | flip1_C3_k9 | 1.00 | 0.99 | 789740, 805901 |
+| mri_coreg_near_mask | defaults, --regheader, --mov-mask | flip1_C3_k9 | 1.00 | 0.99 | 665608, 678774 |
+| flirt_near_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k9 | 1.00 | 0.97 | 93, 99 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k0 | 1.00 | 1.00 | 902538, 902538 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k0 | none | none | 0, 0 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k0 | 1.00 | 1.00 | 417611, 417611 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k0 | 1.00 | 1.00 | 204547, 204547 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k0 | 1.00 | 1.00 | 164713, 164752 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k0 | 1.00 | 1.00 | 2, 2 |
+| synthmorph_near | -m affine | flip1_C3_k0 | 1.00 | 1.00 | 42327, 42336 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k1 | 1.00 | 1.00 | 878623, 878623 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k1 | 1.00 | 1.00 | 2839, 2839 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k1 | 1.00 | 0.69 | 870086, 462768 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k1 | 1.00 | 1.00 | 328026, 328101 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k1 | 1.00 | 1.00 | 261093, 261093 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k1 | 1.00 | 1.00 | 222106, 222153 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k1 | none | none | 0, 0 |
+| synthmorph_near | -m affine | flip1_C3_k1 | 1.00 | 1.00 | 4650, 4650 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k2 | 1.00 | 1.00 | 1056355, 1056356 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k2 | 1.00 | 1.00 | 1851, 1851 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k2 | 1.00 | 0.75 | 775741, 465799 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k2 | 1.00 | 1.00 | 316071, 316139 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k2 | 1.00 | 1.00 | 288700, 288700 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k2 | 1.00 | 1.00 | 131193, 131236 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k2 | 0.95 | 0.88 | 60, 77 |
+| synthmorph_near | -m affine | flip1_C3_k2 | 1.00 | 1.00 | 548, 548 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k3 | 1.00 | 1.00 | 994828, 994828 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k3 | 1.00 | 1.00 | 353, 353 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k3 | 1.00 | 0.73 | 935945, 542318 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k3 | 1.00 | 1.00 | 330269, 330348 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k3 | 1.00 | 1.00 | 167886, 167886 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k3 | 1.00 | 1.00 | 196482, 196559 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k3 | 1.00 | 1.00 | 160, 160 |
+| synthmorph_near | -m affine | flip1_C3_k3 | 1.00 | 1.00 | 38433, 38456 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k4 | 1.00 | 1.00 | 955751, 955751 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k4 | 1.00 | 1.00 | 114, 114 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k4 | 1.00 | 0.71 | 739848, 409758 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k4 | 1.00 | 1.00 | 308633, 308698 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k4 | 1.00 | 1.00 | 195187, 195203 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k4 | 1.00 | 1.00 | 217677, 217797 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k4 | nan | 0.00 | 0, 39 |
+| synthmorph_near | -m affine | flip1_C3_k4 | none | none | 0, 0 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k5 | 1.00 | 1.00 | 1005582, 1005582 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k5 | 1.00 | 1.00 | 1158, 1158 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k5 | 1.00 | 0.71 | 996846, 543480 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k5 | 1.00 | 1.00 | 338725, 338803 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k5 | 1.00 | 1.00 | 110045, 110045 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k5 | 1.00 | 1.00 | 224468, 224518 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k5 | 1.00 | 1.00 | 283977, 284104 |
+| synthmorph_near | -m affine | flip1_C3_k5 | 1.00 | 1.00 | 2189, 2189 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k6 | 1.00 | 1.00 | 1057483, 1057482 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k6 | 1.00 | 1.00 | 129, 129 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k6 | 1.00 | 0.67 | 824778, 416456 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k6 | 1.00 | 1.00 | 341417, 341500 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k6 | 1.00 | 1.00 | 279903, 279918 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k6 | 1.00 | 1.00 | 172164, 172187 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k6 | 1.00 | 1.00 | 64, 64 |
+| synthmorph_near | -m affine | flip1_C3_k6 | 1.00 | 1.00 | 8490, 8490 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k7 | 1.00 | 1.00 | 961701, 961701 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k7 | 1.00 | 1.00 | 150, 150 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k7 | 1.00 | 0.73 | 1002982, 578250 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k7 | 1.00 | 1.00 | 374273, 374359 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k7 | 1.00 | 1.00 | 331843, 331845 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k7 | 1.00 | 1.00 | 221236, 221288 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k7 | 1.00 | 1.00 | 294, 294 |
+| synthmorph_near | -m affine | flip1_C3_k7 | 1.00 | 1.00 | 9778, 9778 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k8 | 1.00 | 1.00 | 913763, 913763 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k8 | 1.00 | 1.00 | 131, 131 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k8 | 1.00 | 0.73 | 994586, 567865 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k8 | 1.00 | 1.00 | 342992, 343072 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k8 | 1.00 | 1.00 | 222503, 222503 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k8 | 1.00 | 1.00 | 206702, 206752 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k8 | 1.00 | 1.00 | 17, 17 |
+| synthmorph_near | -m affine | flip1_C3_k8 | 1.00 | 1.00 | 8183, 8183 |
+| reg_aladin_near | defaults, -nac | flip1_C3_k9 | 1.00 | 1.00 | 883915, 883917 |
+| greedy_near | NMI, -ia-identity | flip1_C3_k9 | 1.00 | 1.00 | 365, 365 |
+| elastix_near | model zoo, no initialisation | flip1_C3_k9 | 1.00 | 0.76 | 964459, 595665 |
+| ants_near | antsRegistrationSyN -t a, -i Identity | flip1_C3_k9 | 1.00 | 1.00 | 304524, 304593 |
+| mri_robust_register_near | NMI, --noinit | flip1_C3_k9 | 1.00 | 1.00 | 349290, 349290 |
+| mri_coreg_near | defaults, --regheader | flip1_C3_k9 | 1.00 | 1.00 | 398814, 398856 |
+| flirt_near | normmi, default search, -usesqform, x10 headers | flip1_C3_k9 | 1.00 | 1.00 | 280725, 280852 |
+| synthmorph_near | -m affine | flip1_C3_k9 | 1.00 | 1.00 | 21785, 21785 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k0 | 1.00 | 1.00 | 1142021, 1142021 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k0 | 1.00 | 1.00 | 155837, 155837 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k0 | 1.00 | 0.99 | 632286, 645966 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k0 | 1.00 | 0.99 | 278577, 283117 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k0 | 1.00 | 0.99 | 158477, 162488 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k0 | 0.00 | 0.09 | 7, 152 |
+| synthmorph_atR | -m affine | flip1_C3_k0 | 1.00 | 0.98 | 49388, 50972 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k1 | 1.00 | 1.00 | 1197536, 1197536 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k1 | 1.00 | 1.00 | 6460, 6460 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k1 | 0.99 | 0.98 | 866417, 871459 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k1 | 1.00 | 0.99 | 619294, 635830 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k1 | 1.00 | 0.99 | 490030, 499839 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k1 | 1.00 | 0.99 | 451390, 460356 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k1 | 0.31 | 0.14 | 6, 78 |
+| synthmorph_atR | -m affine | flip1_C3_k1 | 1.00 | 0.97 | 13527, 14248 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k2 | 1.00 | 1.00 | 1212800, 1212800 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k2 | 1.00 | 1.00 | 498, 498 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k2 | 0.99 | 0.99 | 841704, 847736 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k2 | 1.00 | 0.99 | 581293, 595080 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k2 | 1.00 | 0.99 | 447165, 456537 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k2 | 1.00 | 0.99 | 197955, 202593 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k2 | 0.61 | 0.22 | 31, 246 |
+| synthmorph_atR | -m affine | flip1_C3_k2 | 1.00 | 0.98 | 15492, 16236 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k3 | 1.00 | 1.00 | 1111532, 1111532 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k3 | 1.00 | 1.00 | 154, 154 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k3 | 0.99 | 0.98 | 811940, 814761 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k3 | 1.00 | 0.99 | 615955, 630477 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k3 | 1.00 | 0.99 | 530403, 540996 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k3 | 1.00 | 0.99 | 338895, 346798 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k3 | 0.63 | 0.32 | 56, 290 |
+| synthmorph_atR | -m affine | flip1_C3_k3 | 1.00 | 0.99 | 62250, 64075 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k4 | 1.00 | 1.00 | 1272223, 1272223 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k4 | 1.00 | 1.00 | 703, 703 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k4 | 0.99 | 0.98 | 779778, 787433 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k4 | 1.00 | 0.99 | 563773, 578122 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k4 | 1.00 | 0.99 | 491946, 501903 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k4 | 1.00 | 0.99 | 352634, 360870 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k4 | 0.60 | 0.44 | 22, 79 |
+| synthmorph_atR | -m affine | flip1_C3_k4 | 0.99 | 0.95 | 2052, 2246 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k5 | 1.00 | 1.00 | 1255982, 1255982 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k5 | 1.00 | 1.00 | 2576, 2576 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k5 | 0.99 | 0.99 | 1020138, 1032027 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k5 | 1.00 | 0.99 | 613834, 630217 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k5 | 0.99 | 0.99 | 258145, 264627 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k5 | 1.00 | 0.99 | 410996, 420322 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k5 | 0.84 | 0.59 | 23, 55 |
+| synthmorph_atR | -m affine | flip1_C3_k5 | 1.00 | 0.98 | 14847, 15604 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k6 | 1.00 | 1.00 | 1309036, 1309036 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k6 | 1.00 | 1.00 | 424, 424 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k6 | 0.99 | 0.99 | 1000159, 1012253 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k6 | 1.00 | 0.99 | 662324, 679432 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k6 | 1.00 | 0.99 | 577445, 589213 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k6 | 1.00 | 0.99 | 316817, 324116 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k6 | 0.90 | 0.65 | 34, 70 |
+| synthmorph_atR | -m affine | flip1_C3_k6 | 1.00 | 0.98 | 15954, 16674 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k7 | 1.00 | 1.00 | 1384988, 1384988 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k7 | 1.00 | 1.00 | 118, 118 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k7 | 0.99 | 0.99 | 1084237, 1090626 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k7 | 1.00 | 0.99 | 608984, 625588 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k7 | 1.00 | 0.99 | 472065, 481315 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k7 | 1.00 | 0.99 | 379222, 386398 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k7 | 0.67 | 0.33 | 79, 401 |
+| synthmorph_atR | -m affine | flip1_C3_k7 | 1.00 | 0.98 | 19690, 20572 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k8 | 1.00 | 1.00 | 1263457, 1263457 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k8 | 1.00 | 1.00 | 30, 30 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k8 | 0.99 | 0.98 | 862862, 872236 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k8 | 1.00 | 0.99 | 656629, 673489 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k8 | 1.00 | 1.00 | 1226638, 1236285 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k8 | 1.00 | 0.99 | 407339, 416811 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k8 | 0.95 | 0.74 | 686, 1167 |
+| synthmorph_atR | -m affine | flip1_C3_k8 | 0.99 | 0.97 | 10346, 10913 |
+| reg_aladin_atR | defaults, -nac | flip1_C3_k9 | 1.00 | 1.00 | 1208604, 1208604 |
+| greedy_atR | NMI, -ia-identity | flip1_C3_k9 | 1.00 | 1.00 | 1188, 1188 |
+| elastix_atR | model zoo, no initialisation | flip1_C3_k9 | 0.99 | 0.99 | 970044, 983864 |
+| ants_atR | antsRegistrationSyN -t a, -i Identity | flip1_C3_k9 | 1.00 | 0.99 | 569715, 584722 |
+| mri_robust_register_atR | NMI, --noinit | flip1_C3_k9 | 1.00 | 0.99 | 580630, 593407 |
+| mri_coreg_atR | defaults, --regheader | flip1_C3_k9 | 1.00 | 0.99 | 356760, 365447 |
+| flirt_atR | normmi, default search, -usesqform, x10 headers | flip1_C3_k9 | 0.94 | 0.54 | 47, 127 |
+| synthmorph_atR | -m affine | flip1_C3_k9 | 1.00 | 0.98 | 33034, 34224 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k0 | 1.00 | 1.00 | 1142021, 1142021 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k0 | 1.00 | 1.00 | 536427, 536427 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k0 | 1.00 | 0.99 | 549415, 561976 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k0 | 1.00 | 0.99 | 273818, 278505 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k0 | 1.00 | 0.99 | 306742, 313468 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k0 | 0.88 | 0.84 | 336, 467 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k1 | 1.00 | 1.00 | 1197536, 1197536 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k1 | 1.00 | 1.00 | 575416, 575416 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k1 | 1.00 | 0.99 | 594933, 610839 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k1 | 1.00 | 0.99 | 755334, 770285 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k1 | 1.00 | 0.99 | 294031, 301404 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k1 | 1.00 | 0.97 | 36766, 38846 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k2 | 1.00 | 1.00 | 1212800, 1212800 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k2 | 1.00 | 1.00 | 551074, 551074 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k2 | 1.00 | 0.99 | 573788, 587398 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k2 | 1.00 | 0.99 | 464444, 474599 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k2 | 1.00 | 0.99 | 464375, 471864 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k2 | 0.85 | 0.77 | 512, 823 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k3 | 1.00 | 1.00 | 1111532, 1111532 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k3 | 1.00 | 1.00 | 551009, 551009 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k3 | 1.00 | 0.99 | 590448, 604530 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k3 | 1.00 | 0.99 | 545851, 556675 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k3 | 1.00 | 0.99 | 356526, 365154 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k3 | 1.00 | 0.95 | 16301, 17978 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k4 | 1.00 | 1.00 | 1272223, 1272223 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k4 | 1.00 | 1.00 | 572399, 572399 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k4 | 1.00 | 0.99 | 560581, 575423 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k4 | 1.00 | 0.99 | 408709, 418003 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k4 | 0.85 | 0.96 | 13390, 14603 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k5 | 1.00 | 1.00 | 1255982, 1255982 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k5 | 1.00 | 1.00 | 580969, 580969 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k5 | 1.00 | 0.99 | 613673, 630169 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k5 | 1.00 | 0.99 | 810457, 825531 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k5 | 1.00 | 0.99 | 323813, 331632 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k5 | 1.00 | 0.96 | 73332, 79043 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k6 | 1.00 | 1.00 | 1309036, 1309036 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k6 | 1.00 | 1.00 | 579644, 579644 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k6 | 1.00 | 0.99 | 594722, 610465 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k6 | 1.00 | 0.99 | 616531, 628991 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k6 | 1.00 | 0.99 | 337178, 345850 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k6 | 1.00 | 0.92 | 42521, 49560 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k7 | 1.00 | 1.00 | 1384988, 1384988 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k7 | 1.00 | 1.00 | 585413, 585413 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k7 | 1.00 | 0.99 | 593890, 610087 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k7 | 0.99 | 0.99 | 1462349, 1485374 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k7 | 1.00 | 0.99 | 317977, 325487 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k7 | 1.00 | 0.95 | 30318, 33353 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k8 | 1.00 | 1.00 | 1263457, 1263457 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k8 | 1.00 | 1.00 | 572856, 572856 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k8 | 1.00 | 0.99 | 632862, 649509 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k8 | 1.00 | 1.00 | 1174282, 1182641 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k8 | 1.00 | 0.99 | 364535, 373326 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k8 | 1.00 | 0.96 | 62115, 66741 |
+| reg_aladin_atR_mask | defaults, -nac, -fmask | flip1_C3_k9 | 1.00 | 1.00 | 1208604, 1208604 |
+| greedy_atR_mask | NMI, -ia-identity, -mm | flip1_C3_k9 | 1.00 | 1.00 | 561422, 561422 |
+| ants_atR_mask | antsRegistrationSyN -t a, -i Identity, -x NULL,mask | flip1_C3_k9 | 1.00 | 0.99 | 559746, 574558 |
+| mri_robust_register_atR_mask | NMI, --noinit, --maskmov | flip1_C3_k9 | 0.99 | 0.99 | 1324262, 1347318 |
+| mri_coreg_atR_mask | defaults, --regheader, --mov-mask | flip1_C3_k9 | 1.00 | 0.99 | 357562, 365628 |
+| flirt_atR_mask | normmi, default search, -usesqform, x10 headers, -inweight | flip1_C3_k9 | 1.00 | 0.96 | 48614, 52845 |
 
 Runs on a k = 0 crop without a transform, so without a check: mri_robust_register on flip2_C3_k0, elastix_mask on
-flip1_C3_k0, elastix_near on flip1_C3_k0.
+flip1_C3_k0, elastix_near on flip1_C3_k0, elastix_near_mask on flip1_C3_k0, elastix_near on flip1_C3_k0, elastix_atR on
+flip1_C3_k0, elastix_atR_mask on flip1_C3_k0.
 
 ## Ablation
 

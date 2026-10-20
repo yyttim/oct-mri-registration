@@ -30,12 +30,15 @@ RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I58
 python -m octreg register $OCT $MRI -o $RUNS/octreg
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search --turn 0,0,90
+python bench/ablate.py $OCT $MRI -o $RUNS/ablation/fine --only base,no_outline --params '{"search_mm": 0.4, "search_sigma_mm": 0.8}'
 ```
 
 `ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
-`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world.
+`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world. The runs
+under `fine` search on a 0.4 mm grid with σ 0.8 mm in place of 0.6 and 1.2 mm, with and without the outline.
 `baselines/summarise.py` stores the pose and the search candidates of every ablation run in `results/I58/ablation.json`
-and lists the candidates of the search in the I58 run and in the two outline variants in `results/I58/search.md`.
+and lists the candidates of the search in the I58 run, in the two outline variants and in the `fine` runs in
+`results/I58/search.md`.
 
 | | | | |
 |---|---|---|---|

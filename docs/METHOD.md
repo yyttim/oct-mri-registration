@@ -11,7 +11,9 @@ polarity.
 The OCT is a scattering or intensity map of a block embedded in agarose, plain or doped. The medium is what surrounds the tissue
 in either image, agarose in the OCT. The OCT has section stripes along one array axis, tile seams in the section plane and exact
 zeros where data are missing. The MRI is an ex-vivo scan cropped around the block. The crop must hold the whole block, and it
-may hold tissue that is not in the block, for example beyond a face where the block was cut out of a larger specimen. Both voxel
+may hold tissue that is not in the block, for example beyond a face where the block was cut out of a larger specimen. The crop
+is the one manual input. It fixes the position to within its box and nothing else: on the I46 test the block centre lay up to
+15 mm from the centre of crops of 39 × 38 × 33 mm around a block of 15 × 15 × 10 mm (bench/results/I46/crops.json). Both voxel
 sizes are taken as correct, so the true scales are close to 1.
 
 Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the header frame of a
@@ -54,7 +56,8 @@ a file instead (`--mri-mask`).
 ## §2 Similarity
 
 **Orientation tensors.** A volume I with mask m is differentiated inside the mask by normalised convolution (Knutsson and
-Westin, CVPR 1993), g = ∇[G_σ ∗ (I m) / G_σ ∗ m], so the mask edge adds no gradient, and g is taken to world coordinates. The
+Westin, CVPR 1993), g = ∇[G_σ ∗ (I m) / G_σ ∗ m], with the kernels cut at 4σ and the denominator floored at 10⁻³, so the mask
+edge adds no gradient, and g is taken to world coordinates. The
 normalised gradient is n = g / √(|g|² + ε²), with ε the median |g| over the mask, and its tensor P(n) = n nᵀ is stored as six
 channels, (xx, yy, zz) and √2 (xy, xz, yz), whose dot product is ⟨P(n), P(n′)⟩ = (n·n′)², the squared product of normalised
 gradient fields (Haber and Modersitzki, Methods Inf. Med. 46:292, 2007). P(n) = P(−n), so an edge counts the same whichever side
@@ -67,7 +70,9 @@ pose, A⁻ᵀg, and the MRI tensor b_i = P(n_MRI)(T x_i) is sampled trilinearly,
 $$F(T) = \frac{\sum_i \langle a_i - \bar a,\; b_i - \bar b\rangle}{\sqrt{\sum_i |a_i - \bar a|^2 \,\sum_i |b_i - \bar b|^2}} .$$
 
 F is taken over the block, not over the overlap of the two volumes. OCT tissue that lands on MRI background therefore lowers F,
-while MRI tissue outside the block does not enter it.
+while MRI tissue outside the block does not enter it. Without the subtraction of the means, F would be the normalised sum of
+(n·n′)², the squared normalised gradient field similarity of Cross-Sim-NGF (Öfverstedt et al., WBIR 2022). The centring
+removes the term the mean tensors alone would give, so F is zero for unrelated structure and negative where edges cross.
 
 **Outline O.** O is the correlation of the OCT specimen mask w with the MRI foreground M(T x) over the measured OCT voxels,
 weighted by q (1 − (1 − w) E), with q the measured fraction and E = M inside the MRI crop and 1 outside. The variance of M under
@@ -85,11 +90,14 @@ the MRI grid.
 The crop bounds the position, so the search is over all rotations and every translation inside the crop. The rotations are 8,000
 points of the Super-Fibonacci spiral, a deterministic near-uniform set on SO(3) (Alexa, CVPR 2022). For each rotation R, the OCT
 on the search grid (intensities, specimen mask, its erosion by 0.8 mm and measured fraction) is turned about its box centre and
-resampled onto a cube of MRI voxels that holds its bounding sphere. Its tensors are computed after the turn, in the MRI axes,
-with σ 1.2 mm, and F takes the form of §2 over the voxels of the turned erosion, except that the OCT gradients are taken inside
-that erosion too: at this scale a margin of medium inside the specimen mask would add an edge that reaches the points. F and O
-at every translation are masked correlations, and each of their sums is an FFT correlation of a template channel with a channel
-of the MRI zero-padded beyond the crop, or with E (Padfield, IEEE Trans. Image Process. 21:2706, 2012). The six tensor channels
+resampled onto a cube of MRI voxels that holds its bounding sphere, ⌈2r/h⌉ + 3 voxels on a side for the radius r and the grid
+spacing h. Its tensors are computed after the turn, in the MRI axes, with σ 1.2 mm, and F takes the form of §2 over the voxels
+of the turned erosion, except that the OCT gradients are taken inside that erosion too: at this scale a margin of medium inside
+the specimen mask would add an edge that reaches the points. Their ε is the median |g| of the unturned OCT over the erosion,
+held for every rotation. F and O at every translation are masked correlations, and each of their sums is an FFT correlation of
+a template channel with a channel of the MRI zero-padded by half the cube beyond the crop, so that a block over the edge of the
+crop is still scored, or with E (Padfield, IEEE Trans. Image Process. 21:2706, 2012). The translations are those that place the
+cube inside the padded grid. The six tensor channels
 enter as one sum, as in Cross-Sim-NGF (Öfverstedt et al., WBIR 2022). Each rotation keeps its best translation by F and, when O
 is computed, its best translation by S = (F + O) / 2. Greedy non-maximum suppression drops a pose when a pose already kept
 places the OCT box centre within 3 mm of where it does and differs from it by less than 20° in rotation. The best 12 poses by S
@@ -106,8 +114,9 @@ search poses is refined on the base grid by Adam on
 
 $$L = 1 - F + \lambda \Big(\sum_i \ell_i^2 + \sum_i h_i^2\Big), \qquad \lambda = 2,$$
 
-in one pass of 150 iterations at each of σ = 0.6, 0.4 and 0.3 mm, with a cosine schedule. The step is 0.06 mm of motion of the
-OCT box corners: 0.06 mm for t and 0.06 mm / ρ for r, ℓ and h, ρ the radius of the box. The penalty is the prior that the voxel
+in one pass of 150 iterations at each of σ = 0.6, 0.4 and 0.3 mm. Each pass starts Adam afresh at the step below, lets a cosine
+schedule take it to zero and keeps its last iterate. The step is 0.06 mm of motion of the OCT box corners: 0.06 mm for t and
+0.06 mm / ρ for r, ℓ and h, ρ the radius of the box. The penalty is the prior that the voxel
 sizes are right, since F alone can reward distorting the block. Of the poses whose final L lies within 10⁻⁵ of the lowest, the
 one proposed first wins.
 

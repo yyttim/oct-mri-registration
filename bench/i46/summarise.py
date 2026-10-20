@@ -7,6 +7,8 @@ residual of L from the inputs of bench/i46/prepare.py.
     octreg.json                                 the octreg runs (run.py collect)
     baselines.json, baselines_search.json       the standard tools at their documented settings and with their own search
     baselines_mask.json, baselines_near.json    the tools with the test's specimen mask as moving mask, and from a start near R
+    baselines_near_mask.json, baselines_near_zeroed.json, baselines_atR.json, baselines_atR_mask.json
+                                                the controls on the start near R (baselines.py --near-mask and the others)
     ablation.json, starts.json                  analyses.py collect
     reference_check.json, context.json          the reference and the contrast of the images
 """
@@ -136,14 +138,16 @@ def reference_section(ref, ctx, runs):
     """runs: every scored run of the tables, counted against the floor TIERS[0]."""
     a = ref["labels"]["A12"]
     th = " / ".join(f"{t['mean_mm']:.2f}" for t in a["by_depth_third"])
-    n = sum(dist(x) <= TIERS[0] for x in runs)
+    close = Counter(x.get("tool") or x.get("variant") or x.get("start") or "octreg" for x in runs if dist(x) <= TIERS[0])
+    n = sum(close.values())
     out = ["## Reference", ""] + para(
         "R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit "
         f"L (reference_check.py, an affine fitted to the vessels alone) lies {a['mean_mm']:.3f} mm from R on average "
         f"(p95 {a['p95_mm']:.2f} mm, rotation {a['rotation_deg']:.2f}°), {th} mm in the upper, middle and deepest third "
         f"of the OCT depth, so distances below {TIERS[0]:.2f} mm are not interpreted. "
         + (f"No run in these tables comes within {TIERS[0]:.2f} mm of R (0 of {len(runs)})." if n == 0 else
-           f"{n} of the {len(runs)} runs in these tables come within {TIERS[0]:.2f} mm of R."))
+           f"{n} of the {len(runs)} runs in these tables come within {TIERS[0]:.2f} mm of R: "
+           + ", ".join(f"{who} ({k})" for who, k in close.most_common()) + "."))
     if "vessels" in ref:
         out += para(vessel_text(ref["vessels"]))
     return out + para("Grey/white contrast-to-noise ratio of the images inside the box of the OCT: " + ", ".join(
@@ -278,15 +282,16 @@ def starts_section(st):
     return out
 
 
-TOOL_HEAD = ["| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) |",
-             "|---|---|---|---|---|---|"]
+TOOL_HEAD = ["| method | setting | <= 1 mm | tool errors | distance from R, median (mm) | rotation, median (°) | "
+             "vessels (mm) |", "|---|---|---|---|---|---|---|"]
 
 
 def tool_row(method, setting, r, spread=False):
     """One row of TOOL_HEAD over the runs r, the median distance with its range if spread."""
     d = [dist(x) for x in r]
     return (f"| {method} | {setting} | {counts(r)} | {sum('mean_mm' not in x for x in r)} | "
-            f"{fmt(med(d))}{f' ({rng(d)})' if spread else ''} | {fmt(med([x.get('rotation_deg', INF) for x in r]), 0)} |")
+            f"{fmt(med(d))}{f' ({rng(d)})' if spread else ''} | {fmt(med([x.get('rotation_deg', INF) for x in r]), 0)} | "
+            f"{vessels(r) if any('vessel_median_mm' in x for x in r) else ''} |")
 
 
 def tools_section(rows, bl, bls):
@@ -330,7 +335,9 @@ def errors_text(rows):
             by.setdefault(x["tool"], []).append(x)
     parts = []
     for t, r in by.items():
-        msgs = list(dict.fromkeys(re.sub(r"^Description:\s*", "", x.get("log_error") or x["error"][0]) for x in r))
+        msgs = list(dict.fromkeys(re.sub(r"\b\d+ / \d+\b", "n / m", re.sub(r"^Description:\s*", "",
+                                                                             x.get("log_error") or x["error"][0]))
+                                  for x in r))
         parts.append(f"{t} ended without a transform on k = {ks(r)}, its log: " + " or ".join(f'"{m}"' for m in msgs) + ".")
     return para("Tool errors. " + (" ".join(parts) if parts else "None."))
 
@@ -383,13 +390,43 @@ def near_section(bln):
     return trim(out + [""] + errors_text(bln))
 
 
+CONTROLS = (("near_mask", "the near start with the test's specimen mask as the moving mask, for the tools that take one, the "
+                          "mask written with the OCT header of the start"),
+            ("near_zeroed", "the near start on the moving OCT zeroed outside the specimen mask, every tool"),
+            ("atR", "the start at R itself, the pose with a rotation and a scale per axis closest to R"),
+            ("atR_mask", "the start at R with the specimen mask as the moving mask"))
+
+
+def controls_section(groups):
+    """The controls on the start near R (baselines.py --near-mask, --near-zeroed, --atR, --atR-mask), one table each."""
+    names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
+    out = ["## Controls on the start near R", ""] + para(
+        "The tools at their documented settings on the C3 crops of the 10° FLASH, from the start near R of the previous "
+        "table or from R itself, with the test's specimen mask as the moving mask or with the moving OCT zeroed outside it "
+        "(bench/i46/README.md). The start row of each table is its start without registration.")
+    for kind, what in CONTROLS:
+        rows = [x for x in groups.get(kind) or [] if x["crop"] in names]
+        if not rows:
+            continue
+        st = list({x["crop"]: x["start_pose"] for x in rows if "start_pose" in x}.values())
+        out += para(f"baselines.py --{kind.replace('_', '-')}: {what}.")
+        out += TOOL_HEAD + [tool_row("the start", "no registration", st, spread=True)]
+        for t in dict.fromkeys(x["tool"] for x in rows):
+            r = [x for x in rows if x["tool"] == t]
+            out.append(tool_row(t, r[0]["setting"], r, spread=True))
+        out += [""] + errors_text(rows)
+    return trim(out)
+
+
 def check_section(*groups):
     """One convention-check table over the tool runs of every file."""
     rows = [x for g in groups for x in g]
     out = ["## Convention check", ""] + para(
-        "On the k = 0 crops, each converted transform against the tool's own resampling of the OCT it ran on "
-        "(bench/baselines/standard_tools.py check): the Pearson r over the voxels where either is non-zero, the Dice of the "
-        "two supports, and the number of non-zero voxels of each.")
+        "Each converted transform against the tool's own resampling of the OCT it ran on (bench/baselines/standard_tools.py "
+        "check), on the k = 0 crops of the first three tables and on every run from a header start: the Pearson r over the "
+        "voxels where either is non-zero, the Dice of the two supports, and the number of non-zero voxels of each. Where only "
+        "tens or hundreds of voxels of the registered OCT fall inside the crop, as for FLIRT 15 to 26 mm from R, r and Dice "
+        "are over that overlap.")
     out += ["| tool | setting | crop | r | Dice | voxels: the tool's, the converted |", "|---|---|---|---|---|---|"]
     for x in rows:
         if "check_r" in x:
@@ -435,6 +472,8 @@ def main():
         sys.exit(f"octreg.json, ablation.json and starts.json mix octreg versions and codes {sorted(map(str, codes))}")
     st, abl = load("starts.json") or [], load("ablation.json") or []
     bl, bls, blm, bln = (load(f"baselines{s}.json") for s in ("", "_search", "_mask", "_near"))
+    ctl = {kind: load(f"baselines_{kind}.json") for kind, _ in CONTROLS}
+    groups = [g for g in (bl, bls, blm, bln, *ctl.values()) if g]
     out = ["# I46: results", ""] + para(
         "Generated by bench/i46/summarise.py from the JSON files next to this one, and for the start rows, the scales of R "
         "and the residual of L from the inputs of prepare.py. bench/i46/README.md describes the test. Distances are the mean "
@@ -442,7 +481,7 @@ def main():
         "are numbers of runs: the ten crops of a condition are shifted boxes around the same block. Medians are over all runs "
         "of a row. A run that ended without a readable transform (a tool error) counts as beyond every other.")
     out += reference_section(load("reference_check.json"), load("context.json"),
-                             rows + st + abl + [x for g in (bl, bls, blm, bln) if g for x in g])
+                             rows + st + abl + [x for g in groups for x in g])
     if rows:
         out += octreg_section(rows, st) + [""]
     if st:
@@ -453,8 +492,10 @@ def main():
         out += mask_section(bl, blm) + [""]
     if bln:
         out += near_section(bln) + [""]
-    if any((bl, bls, blm, bln)):
-        out += check_section(*(g for g in (bl, bls, blm, bln) if g)) + [""]
+    if any(ctl.values()):
+        out += controls_section(ctl) + [""]
+    if groups:
+        out += check_section(*groups) + [""]
     if abl:
         out += ablation_section(abl, rows) + [""]
     (RESULTS / "tables.md").write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")

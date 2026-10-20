@@ -4,8 +4,9 @@ These scripts run octreg and eight standard registration tools on the OCT block 
 cellular resolution atlas of Broca's area" (Science Advances 9:eadg3844, [doi
 10.1126/sciadv.adg3844](https://doi.org/10.1126/sciadv.adg3844)), the work octreg extends. The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) ("Human brain cell census for BA 44/45", CC BY 4.0), and the
-authors' own OCT→MRI affine, from their code repository, is the reference R. octreg was developed on the I58 block and checked
-on these data during its development, so this is not a held-out test. The results are in
+authors' own OCT→MRI affine, from their code repository, is the reference R. octreg was developed on the I58 block and run on
+these data during its development, so this is not a held-out test: the changes made after results on I46 are listed in the
+[README](../../README.md#test-on-the-data-of-costantini-et-al-2023). The results are in
 [bench/results/I46/tables.md](../results/I46/tables.md).
 
 ## Why this case, and its limits
@@ -83,8 +84,9 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   centre-of-mass start), FreeSurfer mri_robust_register (`--cost NMI`, rigid then `--affine`, its default start) and mri_coreg
   (`--dof 6` then 12, its brute-force start), FSL FLIRT (normmi, dof 6 then 12, its default search, both headers scaled x10,
   because its schedule resamples the images to fixed voxel sizes in mm) and SynthMorph (`-m affine`, which works in its own 1 mm
-  space). The moving image is the OCT box-averaged to 0.15 mm, the fixed image the crop. Every tool runs on the C3 crops k = 0
-  to 9 of the 10° FLASH and on the C3 k = 0 crops of the 20° and 30° FLASH. The commands are in
+  space). antsRegistrationSyN.sh runs without a fixed random seed, so its metric sampling can differ between runs, while antsAI
+  and greedy run with one. The moving image is the OCT box-averaged to 0.15 mm, the fixed image the crop. Every tool runs on the
+  C3 crops k = 0 to 9 of the 10° FLASH and on the C3 k = 0 crops of the 20° and 30° FLASH. The commands are in
   [bench/baselines/standard_tools.py](../baselines/standard_tools.py). A run that ends without a readable transform counts as a
   tool error.
 - **Start test and ablation** (`analyses.py`). octreg, with its own masks, starts from the OCT turned by 90° and 180° about each
@@ -98,7 +100,11 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   and every tool from a start near R. That start is R turned by 10° about a random axis through the centre of the OCT tissue and
   shifted by 1 mm (numpy `default_rng(4700 + k)`). A NIfTI qform cannot hold the shear of R, so the tools get the pose with a
   rotation and a scale per axis closest to that start over the tissue points as the header of the moving image, with the option
-  that starts from the header alignment.
+  that starts from the header alignment. Four controls on the same crops: the near start with the specimen mask as moving
+  mask (`--near-mask`, the mask written with the header of the start, seven tools), the near start on the moving OCT zeroed
+  outside the specimen mask (`--near-zeroed`, every tool), and the start at R itself, the pose with a rotation and a scale per
+  axis closest to R, without and with the mask (`--atR`, `--atR-mask`). octreg's refinement alone from the near start of each
+  crop (`baselines.py octreg --near`, `bench/ablate.py --only no_search --start`, octreg's own masks) is the row `octreg_near`.
 
 ## Metrics
 
@@ -130,6 +136,13 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   that mask.
 - **Start near R:** from a start 1.14 to 1.20 mm and 9.7° to 10.4° from R, ANTs comes within 1 mm on seven crops (median over
   the ten crops 0.84 mm) and the other tools on none.
+- **Controls on the near start:** with the specimen mask as moving mask, ANTs comes within 1 mm on seven crops (median 0.82
+  mm) and greedy on two, the other tools on none, and elastix ends without a transform on every crop. On the OCT zeroed outside
+  the specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none; for mri_robust_register and
+  mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R itself (0.09 mm from
+  R), ANTs comes within 1 mm on every crop (0.52 mm) and the other tools on none; with the mask as well, ANTs (0.35 mm, three
+  crops within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none. octreg's refinement
+  alone from the near start comes within 1 mm on every crop, 0.35 to 0.36 mm from R.
 - **Ablation** on the 10° FLASH with a 3 mm margin: without the orientation search no crop comes within 1 mm, with signed
   normalised gradients, with or without the OCT intensities negated, none does, without the refinement 3 of the 10 crops end
   beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. Without the scale and shear prior
@@ -184,9 +197,11 @@ python bench/i46/prepare.py --mask                            # the specimen mas
 python bench/i46/reference_check.py                           # the checks of the reference and L -> reference_check.json
 python bench/i46/prepare.py --context                         # context.json again, now with the 4x4 of L
 python bench/i46/run.py                                       # 60 octreg runs, one at a time, scored -> octreg.json
-python bench/i46/baselines.py prepare                         # and with --search, --mask or --near for the other analyses
-bash "${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46/baselines/queue.sh"   # baselines_search, _mask, _near/queue.sh for those
-python bench/i46/baselines.py collect                         # -> baselines.json (--search, --mask, --near: baselines_*.json)
+python bench/i46/baselines.py prepare                         # and with --search, --mask, --near, --near-mask, --near-zeroed,
+                                                              #   --atR or --atR-mask for the other analyses
+bash "${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46/baselines/queue.sh"   # baselines_<kind>/queue.sh for those
+python bench/i46/baselines.py octreg --near                   # octreg's refinement from the near start of each crop
+python bench/i46/baselines.py collect                         # -> baselines.json (with a kind option: baselines_<kind>.json)
 python bench/i46/analyses.py ablate                           # the ablation
 python bench/i46/analyses.py starts                           # the start test
 python bench/i46/analyses.py collect                          # -> ablation.json, starts.json
@@ -206,7 +221,8 @@ root>/bench_runs/I46`, which is not in the repository.
 |---|---|
 | `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, the affine, distances from R and L and their decomposition, the vessel check, the search rank, scores and candidates, the outside fractions and time |
 | `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: distances and time, or the tool error |
-| `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the distance of that start |
+| `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the start H_k and its distance from R; `baselines_near.json` also holds octreg's refinement from that start (`octreg_near`) |
+| `baselines_near_mask.json`, `baselines_near_zeroed.json`, `baselines_atR.json`, `baselines_atR_mask.json` | the controls: the near start with the mask, the near start on the OCT zeroed outside the mask, and the start at R without and with the mask |
 | `starts.json`, `ablation.json` | the start test (with its search poses) and the ablation of `analyses.py`, each entry with its affine |
 | `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`), and the vessel check of R, of L and of R moved by small shifts, rotations and depth scales |
 | `crops.json` | the box, shift and centre offset of every crop |
