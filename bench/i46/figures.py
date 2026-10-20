@@ -3,7 +3,8 @@
 
 The crop is the C3 crop of the 10 deg FLASH at the lower median distance from R under octreg (--scores, default
 bench/results/I46/octreg.json). On OCT planes 102, 300 and 498 the panels show the OCT, the OCT with the white-matter boundary
-placed through R and octreg, and the MRI crop placed through each. Plane 300 also has the boundary through each standard tool
+placed through R and octreg, one panel each and both in one (R red, octreg yellow), and the MRI crop placed through each.
+Plane 300 also has the boundary through each standard tool
 (--baselines, --search). The panels go to -o/enface and figures.json to -o. Needs FreeSurfer 8.2 with its licence (in WSL on
 Windows).
 
@@ -83,6 +84,9 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
             line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor=red", ss(f"{prefix}_p{plane}_oct_line_{tag}.png"),
                          "-unload surface"]
             expect[out_dir / f"{prefix}_p{plane}_oct_line_{tag}.png"] = size
+        line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor={colour}" for tag, colour in zip(main, ("red", "yellow"))]
+        line_cmd += [ss(f"{prefix}_p{plane}_oct_lines.png")] + ["-unload surface"] * len(main)
+        expect[out_dir / f"{prefix}_p{plane}_oct_lines.png"] = size
         for tag in main:
             mri_cmd += ["-v {}:reg={}:grayscale={!r},{!r}".format(host_path(crop), reg(tag), *gm), *once(mri_cmd, lines),
                         ss(f"{prefix}_p{plane}_mri_{tag}.png"), "-unload volume"]

@@ -36,7 +36,8 @@ NEAR = {"reg_aladin_near": "defaults, -nac", "greedy_near": "NMI, -ia-identity",
 NEAR_MASK = {"reg_aladin_near_mask": "defaults, -nac, -fmask", "greedy_near_mask": "NMI, -ia-identity, -mm",
              "elastix_near_mask": "model zoo, no initialisation, -mMask",
              "ants_near_mask": "antsRegistrationSyN -t a, -i Identity, -x NULL,mask",
-             "mri_robust_register_near_mask": "NMI, --noinit, --maskmov", "mri_coreg_near_mask": "defaults, --regheader, --mov-mask",
+             "mri_robust_register_near_mask": "NMI, --noinit, --maskmov",
+             "mri_coreg_near_mask": "defaults, --regheader, --mov-mask",
              "flirt_near_mask": "normmi, default search, -usesqform, x10 headers, -inweight"}
 AT_R = {t.replace("_near", "_atR"): s for t, s in NEAR.items()}
 AT_R_MASK = {t.replace("_near", "_atR"): s for t, s in NEAR_MASK.items()}

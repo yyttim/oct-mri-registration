@@ -14,7 +14,7 @@ the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>:
 --atR-mask     --atR and --mask together
 
     python bench/i46/baselines.py prepare [--search | --mask | --near | ...]   the inputs, the run.sh of every run and queue.sh
-    bash <project root>/bench_runs/I46/baselines/queue.sh                     runs them one at a time (baselines_<kind>/queue.sh)
+    bash <project root>/bench_runs/I46/baselines/queue.sh                     one run at a time (baselines_<kind>/queue.sh)
     python bench/i46/baselines.py octreg --near                               octreg's refinement from the start of every crop
     python bench/i46/baselines.py collect [--search | --mask | --near | ...] [--runs DIR] [-o FILE]
 

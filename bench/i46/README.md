@@ -138,11 +138,11 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   the ten crops 0.84 mm) and the other tools on none.
 - **Controls on the near start:** with the specimen mask as moving mask, ANTs comes within 1 mm on seven crops (median 0.82
   mm) and greedy on two, the other tools on none, and elastix ends without a transform on every crop. On the OCT zeroed outside
-  the specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none; for mri_robust_register and
-  mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R itself (0.09 mm from
-  R), ANTs comes within 1 mm on every crop (0.52 mm) and the other tools on none; with the mask as well, ANTs (0.35 mm, three
-  crops within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none. octreg's refinement
-  alone from the near start comes within 1 mm on every crop, 0.35 to 0.36 mm from R.
+  the specimen mask, ANTs comes within 1 mm on seven crops (0.85 mm) and the other tools on none, and for mri_robust_register
+  and mri_coreg the zeroed OCT and the mask give the same transforms. From the shear-free pose closest to R itself (0.09 mm
+  from R), ANTs comes within 1 mm on every crop (0.52 mm) and the other tools on none. With the mask as well, ANTs (0.35 mm,
+  three crops within 0.30 mm) and greedy (0.62 mm) come within 1 mm on every crop and the other tools on none. octreg's
+  refinement alone from the near start comes within 1 mm on every crop, 0.35 to 0.36 mm from R.
 - **Ablation** on the 10° FLASH with a 3 mm margin: without the orientation search no crop comes within 1 mm, with signed
   normalised gradients, with or without the OCT intensities negated, none does, without the refinement 3 of the 10 crops end
   beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. Without the scale and shear prior
@@ -153,22 +153,23 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 `figures.py` shows the crop at the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8) in the OCT's
 own planes, the way Costantini et al. show their OCT: planes 102, 300 and 498 of the released OCT (12 µm in the plane), each
 three planes below the top of its slab, 14.76 × 15.25 mm at one screen pixel per two OCT voxels. The red line is the
-white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw. lta_convert writes
+white-matter boundary of the authors' manual MRI labels, made a surface by mri_mc and mris_smooth -n 3 -nw, and in the panels
+with two lines the yellow line is the same boundary placed through octreg. lta_convert writes
 each transform as an LTA file, and freeview moves the surface and resamples the MRI through it (nearest neighbour, its
 default). Outside the OCT tissue the line continues through the MRI, and where the white matter reaches the edge of the crop
 it runs along that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop
 ([figures.json](../../docs/figures/i46/figures.json)).
 
-From left: the OCT, the OCT with the line placed through R and through octreg, and the MRI crop placed through R and through
-octreg. On every plane the line through octreg follows the line through R, a little lower where it crosses the left half of the
-tissue on planes 102 and 300 and the middle of the tissue on plane 498. Across the upper left corner of the tissue on planes 102
-and 300 it cuts off a smaller part. The white matter is dark in the MRI panels.
+From left: the OCT, the OCT with the line placed through R in red and through octreg in yellow, and the MRI crop placed
+through R and through octreg. On every plane the yellow line follows the red line, a little lower where it crosses the left
+half of the tissue on planes 102 and 300 and the middle of the tissue on plane 498. Across the upper left corner of the
+tissue on planes 102 and 300 it cuts off a smaller part. The white matter is dark in the MRI panels.
 
-| OCT plane | OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
-|---|---|---|---|---|---|
-| 102 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_oct.png" width="140" alt="OCT, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_mri_reference.png" width="140" alt="MRI through R, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_mri_octreg.png" width="140" alt="MRI through octreg, plane 102"> |
-| 300 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_oct.png" width="140" alt="OCT, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_mri_reference.png" width="140" alt="MRI through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_mri_octreg.png" width="140" alt="MRI through octreg, plane 300"> |
-| 498 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_oct.png" width="140" alt="OCT, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_oct_line_reference.png" width="140" alt="OCT with the line through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_oct_line_octreg.png" width="140" alt="OCT with the line through octreg, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_mri_reference.png" width="140" alt="MRI through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_mri_octreg.png" width="140" alt="MRI through octreg, plane 498"> |
+| OCT plane | OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
+|---|---|---|---|---|
+| 102 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_oct.png" width="175" alt="OCT, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_oct_lines.png" width="175" alt="OCT with the lines through R and through octreg, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_mri_reference.png" width="175" alt="MRI through R, plane 102"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p102_mri_octreg.png" width="175" alt="MRI through octreg, plane 102"> |
+| 300 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_oct.png" width="175" alt="OCT, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_oct_lines.png" width="175" alt="OCT with the lines through R and through octreg, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_mri_reference.png" width="175" alt="MRI through R, plane 300"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p300_mri_octreg.png" width="175" alt="MRI through octreg, plane 300"> |
+| 498 | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_oct.png" width="175" alt="OCT, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_oct_lines.png" width="175" alt="OCT with the lines through R and through octreg, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_mri_reference.png" width="175" alt="MRI through R, plane 498"> | <img src="../../docs/figures/i46/enface/flip1_C3_k8_p498_mri_octreg.png" width="175" alt="MRI through octreg, plane 498"> |
 
 OCT plane 300 with the line placed through R, through octreg, through each standard tool at its documented setting and through
 FLIRT, ANTs and greedy with their own search. The lines through reg_aladin and elastix run diagonally down across the tissue to
@@ -207,6 +208,8 @@ python bench/i46/analyses.py starts                           # the start test
 python bench/i46/analyses.py collect                          # -> ablation.json, starts.json
 python bench/i46/summarise.py                                 # -> tables.md
 python bench/i46/figures.py                                   # -> docs/figures/i46
+R=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46                    # octreg once more on the k = 0 crop, against the stored run
+python bench/repeat.py $R/inputs/oct.nii.gz $R/inputs/crops/flip1_C3_k0.nii.gz --run $R/runs/flip1_C3_k0 -o $R/repeat/flip1_C3_k0
 ```
 
 `python bench/i46/run.py collect --runs DIR -o FILE` scores a folder that holds the 60 runs, made by the checked-out octreg
