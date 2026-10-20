@@ -4,8 +4,9 @@
 run      octreg register at the default parameters on the released OCT and the C3 crops of the 10, 20 and 30 deg FLASH,
          the C6 and C12 crops of the 10 deg FLASH, and the C3 crops of the 10 deg FLASH with the test's specimen mask as
          --oct-mask (<crop>_mask). A run already made by the checkout's octreg code is skipped. Then collect.
-collect  scores the final affine and the search pose of every run against the reference and with the vessel check. It
-         stops before writing if a run is missing, incomplete or made by other code.
+collect  scores the final affine and the search pose of every run against the reference and with the vessel check, and
+         keeps the affine and the search candidates. It stops before writing if a run is missing, incomplete or made by
+         other code.
 -> <project root>/bench_runs/I46/runs/<name>/ and bench/results/I46/octreg.json (one entry per run)
 
     python bench/i46/run.py [run] [--only NAME ...]
@@ -49,10 +50,11 @@ def entry(name, crop, masked, run):
     T, T4 = np.loadtxt(run / "T_oct2mri.txt"), np.array(pose["T_search"], float)
     s4 = {**error(T4), **vessel_score(T4)}
     return {"name": name, "crop": crop, "image": image, "cond": cond, "k": int(k[1:]), "oct_mask": masked,
-            "version": res["octreg_version"], "code": (run / "code.txt").read_text(encoding="utf-8").strip(), **error(T),
-            **vessel_score(T),
+            "version": res["octreg_version"], "code": (run / "code.txt").read_text(encoding="utf-8").strip(),
+            "T_oct2mri": np.round(T, 10).tolist(), **error(T), **vessel_score(T),
             "search": {x: s4[x] for x in ("mean_mm", "rotation_deg", "tier", "vessel_median_mm")},
             **{x: pose[x] for x in ("search_rank", "search_F", "search_O", "L", "outline_used")},
+            "search_topk": res["params"]["topk"], "candidates": res["candidates"],
             "outside_fraction": {x: res["foreground"][x]["outside_fraction"] for x in ("oct", "mri")},
             "seconds": round(res["seconds"]["total"], 1)}
 

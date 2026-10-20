@@ -137,13 +137,54 @@ def label_fit():
     return None if T is None else np.array(T, float)
 
 
-def rotation(T, R):
-    """Angle (deg) and unit axis (MRI world) of the polar rotation of T R^-1."""
-    U, _, Vt = np.linalg.svd((T @ np.linalg.inv(R))[:3, :3])
-    Q = U @ Vt
+@lru_cache(None)
+def homogeneous():
+    """The tissue points as homogeneous columns, 4 x n."""
+    return np.c_[tissue(), np.ones(len(tissue()))].T
+
+
+def polar(M):
+    """The rotation Q and the stretch P of M = Q P."""
+    U, s, Vt = np.linalg.svd(M)
+    return U @ Vt, (Vt.T * s) @ Vt
+
+
+def axis_angle(Q):
+    """Angle (deg) and unit axis of the rotation Q."""
     ax = np.array([Q[2, 1] - Q[1, 2], Q[0, 2] - Q[2, 0], Q[1, 0] - Q[0, 1]])
     n = np.linalg.norm(ax)
     return float(np.degrees(np.arccos(np.clip((np.trace(Q) - 1) / 2, -1, 1)))), (ax / n if n > 1e-12 else ax)
+
+
+def rotation(T, R):
+    """Angle (deg) and unit axis (MRI world) of the polar rotation of T R^-1."""
+    return axis_angle(polar((T @ np.linalg.inv(R))[:3, :3])[0])
+
+
+def rigid_fit(T):
+    """The rigid transform closest to T over the tissue points (least squares)."""
+    X = tissue()
+    Y = (T[:3, :3] @ X.T).T + T[:3, 3]
+    U, _, Vt = np.linalg.svd((X - X.mean(0)).T @ (Y - Y.mean(0)))
+    Q = Vt.T @ np.diag([1.0, 1.0, np.sign(np.linalg.det(Vt.T @ U.T))]) @ U.T
+    K = np.eye(4)
+    K[:3, :3], K[:3, 3] = Q, Y.mean(0) - Q @ X.mean(0)
+    return K
+
+
+def distance(T1, T2):
+    """Mean displacement (mm) between two affines over the tissue points."""
+    X = homogeneous()
+    return float(np.linalg.norm((T1 @ X - T2 @ X)[:3], axis=0).mean())
+
+
+def by_thirds(T, R):
+    """Mean distance (mm) of T from R over the tissue points in each third of the OCT depth."""
+    X = homogeneous()
+    e = np.linalg.norm((T @ X - R @ X)[:3], axis=0)
+    plane = tissue()[:, 2] / SPACING[2]
+    edges = np.linspace(0, TIFF_SHAPE[0], 4)
+    return [round(float(e[(plane >= a) & (plane < b)].mean()), 4) for a, b in zip(edges[:-1], edges[1:])]
 
 
 def tier(mean):
@@ -151,23 +192,37 @@ def tier(mean):
 
 
 def error(T, R=None):
-    """Distances (mm) and rotation (deg) of T from R over the tissue points, and from L once it exists."""
+    """Distances (mm) and rotation (deg) of T from R over the tissue points, and from L once it exists. T R^-1 about the
+    tissue centroid is split into its polar rotation, its stretch and the shift of the centroid, and the displacement into
+    its parts along the OCT depth axis placed by R and in the plane."""
     R = reference() if R is None else R
     T = np.asarray(T, float)
-    X = np.c_[tissue(), np.ones(len(tissue()))].T
-    e = np.linalg.norm((T @ X - R @ X)[:3], axis=0)
-    ang, ax = rotation(T, R)
+    X = homogeneous()
+    d = (T @ X - R @ X)[:3]
+    e = np.linalg.norm(d, axis=0)
+    Q, P = polar((T @ np.linalg.inv(R))[:3, :3])
+    ang, ax = axis_angle(Q)
     mean = float(e.mean())
     c = np.r_[tissue().mean(0), 1]
+    Y = (R @ X)[:3] - (R @ c)[:3, None]
+    u = R[:3, 2] / np.linalg.norm(R[:3, 2])
+    along = u @ d
     out = {"mean_mm": round(mean, 4), "median_mm": round(float(np.median(e)), 4),
            "p95_mm": round(float(np.percentile(e, 95)), 4), "max_mm": round(float(e.max()), 4), "rotation_deg": round(ang, 3),
            "rotation_axis": ax.round(3).tolist(), "centroid_mm": round(float(np.linalg.norm((T @ c - R @ c)[:3])), 4),
            "scales": np.linalg.norm(T[:3, :3], axis=0).round(4).tolist(),
-           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(), "tier": tier(mean)}
+           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(), "tier": tier(mean),
+           "rotation_only_mm": round(float(np.linalg.norm(Q @ Y - Y, axis=0).mean()), 4),
+           "strain_only_mm": round(float(np.linalg.norm(P @ Y - Y, axis=0).mean()), 4),
+           "rotation_axis_cos_depth": round(float(abs(ax @ u)), 3),
+           "along_depth_mm": round(float(np.abs(along).mean()), 4),
+           "in_plane_mm": round(float(np.linalg.norm(d - np.outer(u, along), axis=0).mean()), 4),
+           "by_depth_third_mm": by_thirds(T, R)}
     L = label_fit()
     if L is not None:
         out["mean_L_mm"] = round(float(np.linalg.norm((T @ X - L @ X)[:3], axis=0).mean()), 4)
         out["rotation_L_deg"] = round(rotation(T, L)[0], 3)
+        out["by_depth_third_L_mm"] = by_thirds(T, L)
     return out
 
 

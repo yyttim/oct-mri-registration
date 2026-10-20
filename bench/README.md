@@ -30,10 +30,16 @@ RUNS=${OCTREG_PROJECT_ROOT:-.}/bench_runs/I58
 python -m octreg register $OCT $MRI -o $RUNS/octreg
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation
 python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search --turn 0,0,90
+python bench/ablate.py $OCT $MRI -o $RUNS/ablation/fine --only base,no_outline --params '{"search_mm": 0.4, "search_sigma_mm": 0.8}'
+python bench/repeat.py $OCT $MRI --run $RUNS/octreg -o $RUNS/repeat
 ```
 
 `ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
-`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world.
+`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world. The runs under
+`fine` search on a 0.4 mm grid with σ 0.8 mm in place of 0.6 and 1.2 mm, with and without the outline. `baselines/summarise.py`
+stores the pose and the search candidates of every ablation run in `results/I58/ablation.json` and lists the candidates of the
+search in the I58 run, in the two outline variants and in the `fine` runs in `results/I58/search.md`. `repeat.py` runs octreg
+once more at its defaults and compares the affine with the stored run byte for byte (`results/repeat.json`).
 
 | | | | |
 |---|---|---|---|
@@ -43,8 +49,12 @@ python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search 
 | <img src="../docs/figures/ablation/first_choice.png" width="175" alt="only the first search pose refined"> | <img src="../docs/figures/ablation/no_prior.png" width="175" alt="no scale and shear prior"> | <img src="../docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="../docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> |
 | **the trace-free tensor** | **search gradients over the whole specimen mask** | **turned 90°, the start** | **turned 90°, no orientation search** |
 | <img src="../docs/figures/ablation/tracefree.png" width="175" alt="the trace-free tensor"> | <img src="../docs/figures/ablation/search_whole_mask.png" width="175" alt="search gradients over the whole specimen mask"> | <img src="../docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="../docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> |
-| **turned 90°, octreg** |  |  |  |
-| <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> |  |  |  |
+| **turned 90°, octreg** | **scale and shear prior at a quarter of its weight** | **scale and shear prior at four times its weight** | **rigid refinement** |
+| <img src="../docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | <img src="../docs/figures/ablation/prior_0.5.png" width="175" alt="scale and shear prior at a quarter of its weight"> | <img src="../docs/figures/ablation/prior_8.png" width="175" alt="scale and shear prior at four times its weight"> | <img src="../docs/figures/ablation/rigid.png" width="175" alt="rigid refinement"> |
+| **F without the subtraction of the means** | **MRI divided by its Gaussian blur, σ 5 mm** | **OCT specimen mask from the signal threshold alone** | **OCT voxel size 5 % too large** |
+| <img src="../docs/figures/ablation/uncentred.png" width="175" alt="F without the subtraction of the means"> | <img src="../docs/figures/ablation/flatfield.png" width="175" alt="MRI divided by its Gaussian blur, σ 5 mm"> | <img src="../docs/figures/ablation/signal_only.png" width="175" alt="OCT specimen mask from the signal threshold alone"> | <img src="../docs/figures/ablation/spacing_p5.png" width="175" alt="OCT voxel size 5 % too large"> |
+| **OCT voxel size 5 % too small** | **OCT array mirrored** | **search on a 0.4 mm grid with σ 0.8 mm, no outline term** | |
+| <img src="../docs/figures/ablation/spacing_m5.png" width="175" alt="OCT voxel size 5 % too small"> | <img src="../docs/figures/ablation/mirrored.png" width="175" alt="OCT array mirrored"> | <img src="../docs/figures/ablation/fine_no_outline.png" width="175" alt="search on a 0.4 mm grid with σ 0.8 mm, no outline term"> | |
 
 The sagittal plane of the I58 figure in the [README](../README.md) through each variant, with the MRI foreground boundary in
 red.
@@ -63,11 +73,12 @@ python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
 | file | content |
 |---|---|
 | `paths.py` | the run and data roots, the two I58 files and the form of a path in WSL |
-| `ablate.py` | the ablation: one change to the method per variant, on any pair |
+| `ablate.py` | the ablation: one change to the method or its input per variant, on any pair |
+| `repeat.py` | octreg once more on a pair, its affine against a stored run of the same version, into `results/repeat.json` |
 | `figures.py` | the I58 panels in `docs/figures/` |
 | `baselines/` | standard registration tools on the I58 pair, and the tool settings of the I46 test ([README](baselines/README.md), [BASELINES.md](baselines/BASELINES.md)) |
 | `i46/` | the test on block I46 of Costantini et al. (2023) ([README](i46/README.md)) |
-| `results/I58/` | `result.json` of the I58 run, with the input paths cut to file names, and the baseline tables in `baselines/` |
+| `results/I58/` | `result.json` of the I58 run and `ablation/no_outline.json` of the variant without the outline term, both with the input paths cut to file names, `ablation.json` with the pose and the search candidates of every ablation run, `search.md` with the candidates of the search in the I58 run, the two outline variants and the `fine` runs, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
 The Python scripts print their options with `--help`.

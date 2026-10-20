@@ -1,6 +1,7 @@
 """The standard registration tools on the I46 test data, each at one setting from its own documentation, and variants
-that each make one change (SEARCH, MASK, NEAR). For each run: the inputs, the tool's script, the conversion of its
-transform to OCT world -> MRI world and the check of that conversion against the tool's own resampling."""
+that each make one change (SEARCH, MASK, NEAR) or two (NEAR_MASK). AT_R and AT_R_MASK are the NEAR options under another
+name, for the runs whose moving header holds the pose at R. For each run: the inputs, the tool's script, the conversion
+of its transform to OCT world -> MRI world and the check of that conversion against the tool's own resampling."""
 from __future__ import annotations
 
 import json
@@ -32,8 +33,18 @@ NEAR = {"reg_aladin_near": "defaults, -nac", "greedy_near": "NMI, -ia-identity",
         "ants_near": "antsRegistrationSyN -t a, -i Identity", "mri_robust_register_near": "NMI, --noinit",
         "mri_coreg_near": "defaults, --regheader", "flirt_near": "normmi, default search, -usesqform, x10 headers",
         "synthmorph_near": "-m affine"}
+NEAR_MASK = {"reg_aladin_near_mask": "defaults, -nac, -fmask", "greedy_near_mask": "NMI, -ia-identity, -mm",
+             "elastix_near_mask": "model zoo, no initialisation, -mMask",
+             "ants_near_mask": "antsRegistrationSyN -t a, -i Identity, -x NULL,mask",
+             "mri_robust_register_near_mask": "NMI, --noinit, --maskmov",
+             "mri_coreg_near_mask": "defaults, --regheader, --mov-mask",
+             "flirt_near_mask": "normmi, default search, -usesqform, x10 headers, -inweight"}
+AT_R = {t.replace("_near", "_atR"): s for t, s in NEAR.items()}
+AT_R_MASK = {t.replace("_near", "_atR"): s for t, s in NEAR_MASK.items()}
+MASKED = set(MASK) | set(NEAR_MASK) | set(AT_R_MASK)                          # the moving mask given
+FROM_HEADER = set(NEAR) | set(NEAR_MASK) | set(AT_R) | set(AT_R_MASK)         # started from the moving header
 EXTENDS = {"flirt_search": "flirt", "ants_antsai": "ants", "greedy_search": "greedy",
-           **{t: t.removesuffix("_mask") for t in MASK}, **{t: t.removesuffix("_near") for t in NEAR}}
+           **{t: t.removesuffix("_mask").removesuffix("_near").removesuffix("_atR") for t in MASKED | FROM_HEADER}}
 ELASTIX = HERE / "elastix_defaults"
 PY = sys.executable
 
@@ -91,9 +102,9 @@ def script(tool, run, inp):
     times = lambda a, b: "awk '{s+=$1} END {printf \"%.2f\\n\", s}' " + f"{a} {b} > time.txt"
     total = times("time_rigid.txt", "time_affine.txt")
     head = ["#!/bin/bash", "set -o pipefail", f"cd {R} || exit 1"]
-    base, mask, near = EXTENDS.get(tool, tool), tool in MASK, tool in NEAR
+    base, mask, near = EXTENDS.get(tool, tool), tool in MASKED, tool in FROM_HEADER
     if base == "reg_aladin":    # NiftyReg 2.1.2 ignores -fmask (INSTALL.md)
-        x = f" -fmask {I}/oct_mask.nii.gz" if mask else " -nac" if near else ""
+        x = (f" -fmask {I}/oct_mask.nii.gz" if mask else "") + (" -nac" if near else "")
         return head + [tl, f"{t} reg_aladin -ref {I}/mri.nii.gz -flo {I}/oct.nii.gz{x} -aff {R}/aff.txt -res {R}/warped_tool.nii.gz -omp 8 > log.txt 2>&1",
                        f"reg_resample -ref {I}/mri.nii.gz -flo {I}/oct.nii.gz -trans {R}/aff.txt -inter 1 -pad 0 -res {R}/warped_check.nii.gz -omp 8 >> log.txt 2>&1"]
     if base == "elastix":       # elastix_near differs only in its parameter files (prepare)
@@ -109,7 +120,7 @@ def script(tool, run, inp):
                        f"-m {I}/oct.nii.gz -o {R}/ants_ -t a -n 12 -i {R}/init.mat >> log.txt 2>&1",
                        times("time_antsai.txt", "time_ants.txt"), "cp ants_Warped.nii.gz warped_check.nii.gz"]
     if base == "ants":
-        x = f" -x NULL,{I}/oct_mask.nii.gz" if mask else " -i Identity" if near else ""
+        x = (f" -x NULL,{I}/oct_mask.nii.gz" if mask else "") + (" -i Identity" if near else "")
         return head + [tl, "export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=12",
                        f"{t} antsRegistrationSyN.sh -d 3 -f {I}/mri.nii.gz -m {I}/oct.nii.gz -o {R}/ants_ -t a -n 12{x} "
                        f"> log.txt 2>&1", "cp ants_Warped.nii.gz warped_check.nii.gz"]
@@ -160,7 +171,7 @@ def script(tool, run, inp):
 def prepare(base, runs, inputs):
     """Write base/<crop>/<tool>/run.sh for every (crop, tool) in runs, and base/queue.sh that runs them."""
     lines = ["#!/bin/bash", "# every prepared baseline run without time.txt, one at a time"]
-    order = TOOLS + list(SEARCH) + list(MASK) + list(NEAR)
+    order = TOOLS + list(SEARCH) + list(MASK) + list(NEAR) + list(NEAR_MASK) + list(AT_R) + list(AT_R_MASK)
     for crop, tool in sorted(runs, key=lambda r: (order.index(r[1]), r[0])):
         inp = inputs(crop)
         run = Path(base) / crop / tool
@@ -168,7 +179,7 @@ def prepare(base, runs, inputs):
         if EXTENDS.get(tool, tool) == "elastix":
             for f in ("rigid.txt", "affine.txt"):
                 shutil.copy(ELASTIX / f, run / f)
-                if tool in NEAR:
+                if tool in FROM_HEADER:
                     b, on = (run / f).read_bytes(), b'(AutomaticTransformInitialization "true")'
                     if b.count(on) != 1:
                         raise ValueError(f"{ELASTIX / f}: not one AutomaticTransformInitialization line")
@@ -242,10 +253,15 @@ def log_error(run):
     return next((re.sub(r"\(0x[0-9a-f]+\)", "", s).strip() for s in lines if LOG_ERROR.search(s)), None)
 
 
+def as_list(T):
+    """T as nested floats of 10 decimals, the values T_oct2mri.txt holds."""
+    return [[float(f"{v:.10f}") for v in row] for row in np.asarray(T, float)]
+
+
 def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
     """Convert, write and score every finished run base/<crop>/<tool>, with the check where checked(crop). -> list of rows.
     start(crop) is the start S that the moving header carries: the check runs on T, and T S is written and scored."""
-    rows, setting = [], {**SETTING, **SEARCH, **MASK, **NEAR}
+    rows, setting = [], {**SETTING, **SEARCH, **MASK, **NEAR, **NEAR_MASK, **AT_R, **AT_R_MASK}
     for crop in sorted(p for p in Path(base).iterdir() if p.is_dir()):
         inp = Path(inputs(crop.name)) if inputs else crop / "inputs"
         for tool in tools:
@@ -264,6 +280,6 @@ def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
                 T = T @ start(crop.name)
             np.savetxt(run / "T_oct2mri.txt", T, fmt="%.10f")
             rows.append({"crop": crop.name, "tool": tool, "setting": setting[tool], **score(crop.name, T), **chk,
-                         "seconds": round(float((run / "time.txt").read_text().split()[-1]), 1)})
+                         "T_oct2mri": as_list(T), "seconds": round(float((run / "time.txt").read_text().split()[-1]), 1)})
             print(crop.name, tool, rows[-1]["tier"], flush=True)
     return rows

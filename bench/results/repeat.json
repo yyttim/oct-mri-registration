@@ -1,0 +1,26 @@
+{
+ "I58/octreg": {
+  "version": "3.2.0",
+  "code": "7c83d529d87c",
+  "stored_code": null,
+  "max_abs_difference": 0.0,
+  "identical": true,
+  "python": "3.13.4",
+  "torch": "2.7.0+cu128",
+  "cuda": "12.8",
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "os": "Windows-11-10.0.26300-SP0"
+ },
+ "I46/runs/flip1_C3_k0": {
+  "version": "3.2.0",
+  "code": "7c83d529d87c",
+  "stored_code": "7c83d529d87c",
+  "max_abs_difference": 0.0,
+  "identical": true,
+  "python": "3.13.4",
+  "torch": "2.7.0+cu128",
+  "cuda": "12.8",
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "os": "Windows-11-10.0.26300-SP0"
+ }
+}

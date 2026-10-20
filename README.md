@@ -10,12 +10,15 @@ transform from any starting orientation, with no labels and no manual start.
 | <img src="docs/figures/result/sagittal_mri.png" width="300" alt="MRI, sagittal"> | <img src="docs/figures/result/coronal_mri.png" width="208" alt="MRI, coronal"> | <img src="docs/figures/result/axial_mri.png" width="208" alt="MRI, axial"> |
 
 The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top), the same with the boundary of the MRI
-foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. The specimen surface runs along the line
-except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright
-band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner
-of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends
-short of the line. On the axial plane the specimen ends short of the line along the right side, where the OCT shows a dark band
-with a few bright fragments. On the sagittal and coronal planes the line also runs past the top and bottom of the OCT image.
+foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. Each panel is the whole MRI crop at one
+pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm on the coronal and 27.4 × 39.6 mm on the axial, in
+freeview's default orientation, anterior on the right of the sagittal plane and the subject's right on the left of the coronal
+and axial planes. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the
+top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside
+the line. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly
+outside the line, and below that piece the specimen ends short of the line. On the axial plane the specimen ends short of the
+line along the right side, where the OCT shows a dark band with a few bright fragments. On the sagittal and coronal planes the
+line also runs past the top and bottom of the OCT image.
 
 ## Method
 
@@ -111,13 +114,19 @@ hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an aff
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
 R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
 on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
-and checked on these data during its development, so this is not a held-out test.
+and run on these data during its development, so this is not a held-out test. Results on I46 led to changes of the MRI
+foreground rule and the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression
+and the erosion of the search gradients (§3), the rounding of the resampling positions and the removal of a deformable stage
+([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set in 2.1 with runs on I46,
+that of `nms_deg` also with runs on public blocks of [DANDI:000874](https://dandiarchive.org/dandiset/000874/draft).
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
-distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold
-of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`).
+distance is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a threshold of
+the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The ten crops of a condition are shifted boxes around
+the same block of one specimen, so the counts show how octreg copes with the placement of the crop and with the MRI contrast,
+not how it generalises to other specimens.
 
 | condition | within 1 mm of R | distance from R (mm) |
 |---|---|---|
@@ -133,23 +142,28 @@ axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a 3 mm
 time. From the header orientation with the image box centres aligned, 7.0 mm (median over the ten crops of the 10° FLASH with a
 3 mm margin) and 122° from R, the eight standard tools come within 1 mm in none of their 96 runs, the three with a global
 rotation search (FLIRT, ANTs and greedy) in none with that search turned on, and the seven that take a mask of the moving image
-in none with the test's specimen mask as that mask.
+in none with the test's specimen mask as that mask. Started 1.1 to 1.2 mm and 10° from R, ANTs comes within 1 mm on seven of the
+ten crops and the other tools on none. Started at the shear-free pose closest to R, 0.09 mm from R, ANTs stays within 1 mm on
+all ten (median 0.52 mm, and 0.35 mm with the test's specimen mask as its moving mask), greedy does so with that mask (0.62 mm),
+and every other tool ends 2.2 to 29 mm from R or without a transform. octreg's refinement alone, from the start 1.1 to 1.2 mm
+from R, ends 0.35 to 0.36 mm from R on all ten crops.
 
-| OCT | OCT with the line through R | OCT with the line through octreg | MRI through R | MRI through octreg |
-|---|---|---|---|---|
-| <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct.png" width="150" alt="OCT, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct_line_reference.png" width="150" alt="OCT with the line through R"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct_line_octreg.png" width="150" alt="OCT with the line through octreg"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_reference.png" width="150" alt="MRI through R"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_octreg.png" width="150" alt="MRI through octreg"> |
+| OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
+|---|---|---|---|
+| <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct.png" width="190" alt="OCT, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct_lines.png" width="190" alt="OCT with the lines through R and through octreg"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_reference.png" width="190" alt="MRI through R"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_octreg.png" width="190" alt="MRI through octreg"> |
 
 Plane 300 of the OCT (12 µm in the plane), shown in the OCT's own planes as Costantini et al. show their OCT, for the crop at
 the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8). The red line is the white-matter boundary of
-the authors' manual MRI labels, placed through R and through octreg's affine, and the last two panels show the MRI crop
-resampled through each, all in freeview at its default window. The line through octreg follows the line through R, a little
-lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper left corner of the tissue. The
-white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the protocol, the other planes and
-every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
+the authors' manual MRI labels placed through R, the yellow line the same boundary placed through octreg's affine, and the last
+two panels show the MRI crop resampled through each, all in freeview at its default window. The yellow line follows the red
+line, a little lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper left corner of the
+tissue. The white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the protocol, the other
+planes and every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
 
 ### Ablations
 
-Each variant changes one thing in the method (`bench/ablate.py`). On the ten crops of the 10° FLASH with a 3 mm margin:
+Each variant changes one thing in the method or its input (`bench/ablate.py`). On the ten crops of the 10° FLASH with a
+3 mm margin:
 
 | variant | within 1 mm of R | distance from R, median (mm) |
 |---|---|---|
@@ -160,23 +174,35 @@ Each variant changes one thing in the method (`bench/ablate.py`). On the ten cro
 | signed normalised gradients instead of their tensor | 0 of 10 | 1.28 |
 | the same, with the OCT intensities negated | 0 of 10 | 8.82 |
 | no scale and shear prior | 10 of 10 | 0.47 |
+| the scale and shear prior at a quarter of its weight (λ = 0.5) | 10 of 10 | 0.36 |
+| the scale and shear prior at four times its weight (λ = 8) | 10 of 10 | 0.37 |
+| rigid refinement | 10 of 10 | 0.38 |
 | the trace-free tensor n nᵀ − \|n\|² I / 3 instead of n nᵀ | 10 of 10 | 0.38 |
+| F without the subtraction of the means | 10 of 10 | 0.34 |
 | in the search, OCT gradients over the whole specimen mask instead of only its part more than 0.8 mm inside | 8 of 10 | 0.36 |
+| the MRI divided by its Gaussian blur (σ 5 mm) inside the foreground | 10 of 10 | 0.35 |
+| the OCT specimen mask from the signal threshold alone, without the texture rule | 10 of 10 | 0.35 |
+| the OCT voxel size given 5 % too large | 10 of 10 | 0.42 |
+| the OCT voxel size given 5 % too small | 10 of 10 | 0.48 |
+| the OCT array mirrored along one axis, a mirror image of the block | 0 of 10 | 7.25 |
 
 The outline is never used on these crops, whose MRI is all tissue. On I58:
 
 | no outline term | signed gradients | signed gradients, OCT negated | no refinement |
 |---|---|---|---|
 | <img src="docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> | <img src="docs/figures/ablation/no_refine.png" width="175" alt="no refinement"> |
-| **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | |
-| <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | |
+| **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | **the OCT specimen mask from the signal threshold alone** |
+| <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | <img src="docs/figures/ablation/signal_only.png" width="175" alt="the OCT specimen mask from the signal threshold alone"> |
 
-The sagittal plane of the I58 figure through each variant, with the MRI foreground boundary in red. The last three panels start
-from the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of
+The sagittal plane of the I58 figure through each variant, with the MRI foreground boundary in red. The three turned panels
+start from the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of
 `bench/ablate.py`.
 
 ## Reproducing the results
 
 [bench/README.md](bench/README.md) gives the commands of the I58 benchmark, whose data are not distributed with the repository,
 and [bench/i46/README.md](bench/i46/README.md) those of the test on the data of Costantini et al. (2023), from the download to
-the tables and figures. The stored results are in `bench/results/`.
+the tables and figures. The stored results are in `bench/results/`. octreg has no random element: run once more on the same GPU,
+it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
+[bench/results/repeat.json](bench/results/repeat.json), which also records the Python, PyTorch, CUDA, GPU and OS of these runs).
+Another GPU or PyTorch build can change the order of the floating-point sums and move an affine at round-off level.

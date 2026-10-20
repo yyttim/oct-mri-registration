@@ -2,7 +2,8 @@
 """Inputs of the I46 test (bench/i46/README.md) from the download of fetch.sh, into <project root>/bench_runs/I46/inputs.
 
 Writes oct.nii.gz, ref_T_oct2mri.txt, tissue_oct.npy, the crops (crops/<name>.nii.gz and crops.json, also in
-bench/results/I46) and bench/results/I46/context.json: the reference, the grey/white contrast of each image and the OCT noise.
+bench/results/I46) and bench/results/I46/context.json: the reference R (its 4x4 and that of the label-only fit L once
+reference_check.py has run), the grey/white contrast of each image and the OCT noise.
 
     python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
     python bench/i46/prepare.py --mask [OUT]     (only the specimen mask from the OCT, octmask_24um.nii.gz or OUT)
@@ -18,8 +19,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (CONDITIONS, FLIPS, INPUTS, LABELS, MASK, OCT, OCT_AFFINE, OCT_TIFF, PRIMARY,  # noqa: E402
-                    RESULTS, SEED0, SEEDS, SPACING, T1MAP, TIFF_SHAPE, crop_file, crop_name, mri_file, reference_matrix,
-                    tissue_points, vessel_score)
+                    RESULTS, SEED0, SEEDS, SPACING, T1MAP, TIFF_SHAPE, crop_file, crop_name, label_fit, mri_file,
+                    reference_matrix, tissue_points, vessel_score)
 
 MARGIN_BOX = 54                                 # MRI voxels (8.1 mm) around the block for the grey/white contrast
 MASK_AFFINE = OCT_AFFINE @ np.array([[2, 0, 0, 0.5], [0, 2, 0, 0.5], [0, 0, 2, 0.5], [0, 0, 0, 1]])   # voxel i: OCT 2i, 2i + 1
@@ -166,8 +167,11 @@ def context(R=None, contrast=None):
     b = oa[:n[0], :n[1], :n[2]].reshape(m.shape[0], 2, m.shape[1], 2, m.shape[2], 2).mean((1, 3, 5), dtype=np.float32)
     del oa
     far = ndimage.distance_transform_edt(~m, sampling=2 * SPACING) > 0.3
+    L = label_fit()
     ctx = {"reference": {"det": round(float(np.linalg.det(R[:3, :3])), 4),
-                         "singular_values": np.linalg.svd(R[:3, :3])[1].round(4).tolist(), **vessel_score(R)},
+                         "singular_values": np.linalg.svd(R[:3, :3])[1].round(4).tolist(), **vessel_score(R),
+                         "T_oct2mri": np.round(R, 10).tolist(),
+                         **({} if L is None else {"L_T_oct2mri": np.round(L, 10).tolist()})},
            "tissue_points": int(len(np.load(INPUTS / "tissue_oct.npy"))), "grey_white_cnr": contrast,
            "oct_noise": {"blocks_beyond_0.3mm": int(far.sum()), "nonzero_share": round(float((b[far] > 0).mean()), 4)}}
     RESULTS.mkdir(parents=True, exist_ok=True)

@@ -3,9 +3,9 @@
 
 The crop is the C3 crop of the 10 deg FLASH at the lower median distance from R under octreg (--scores, default
 bench/results/I46/octreg.json). On OCT planes 102, 300 and 498 the panels show the OCT, the OCT with the white-matter boundary
-placed through R and octreg, and the MRI crop placed through each. Plane 300 also has the boundary through each standard tool
-(--baselines, --search). The panels go to -o/enface and figures.json to -o. Needs FreeSurfer 8.2 with its licence (in WSL on
-Windows).
+placed through R and octreg in one panel (R red, octreg yellow), and the MRI crop placed through each. Plane 300 also has
+the boundary through R, through octreg and through each standard tool (--baselines, --search), one panel each. The panels
+go to -o/enface and figures.json to -o. Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
 
     python bench/i46/figures.py [-o docs/figures/i46] [--octreg RUNS] [--baselines DIR] [--search DIR] [--scores FILE]
 """
@@ -79,10 +79,13 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
             "plane_mm": [round(o.shape[k] * float(o.header.get_zooms()[k]), 2) for k in (0, 1)]}
         line_cmd += once(line_cmd, lines) + [ss(f"{prefix}_p{plane}_oct.png")]
         expect[out_dir / f"{prefix}_p{plane}_oct.png"] = size
-        for tag in tags[plane]:
+        for tag in (tags[plane] if plane == TOOL_PLANE else ()):
             line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor=red", ss(f"{prefix}_p{plane}_oct_line_{tag}.png"),
                          "-unload surface"]
             expect[out_dir / f"{prefix}_p{plane}_oct_line_{tag}.png"] = size
+        line_cmd += [f"-f {surf}:reg={reg(tag)}:edgecolor={colour}" for tag, colour in zip(main, ("red", "yellow"))]
+        line_cmd += [ss(f"{prefix}_p{plane}_oct_lines.png")] + ["-unload surface"] * len(main)
+        expect[out_dir / f"{prefix}_p{plane}_oct_lines.png"] = size
         for tag in main:
             mri_cmd += ["-v {}:reg={}:grayscale={!r},{!r}".format(host_path(crop), reg(tag), *gm), *once(mri_cmd, lines),
                         ss(f"{prefix}_p{plane}_mri_{tag}.png"), "-unload volume"]
