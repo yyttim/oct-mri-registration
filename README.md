@@ -22,7 +22,7 @@ with a few bright fragments. On the sagittal and coronal planes the line also ru
 The search and the refinement maximise one similarity, the correlation of the gradient-orientation tensors of the two volumes
 (§2 of [docs/METHOD.md](docs/METHOD.md)),
 
-$$F = \operatorname{corr}\big(P(n_\text{OCT}),\, P(n_\text{MRI})\big), \qquad P(n) = n n^\top,$$
+$$F = \mathrm{corr}\big(P(n_\text{OCT}),\, P(n_\text{MRI})\big), \qquad P(n) = n n^\top,$$
 
 where n is the normalised image gradient and ⟨P(n), P(n′)⟩ = (n·n′)², the squared product of normalised gradient fields (Haber
 and Modersitzki, 2007). P(n) = P(−n), so F needs neither an intensity mapping between OCT and MRI nor their contrast polarity.
@@ -49,7 +49,7 @@ cd oct-mri-registration
 pip install -e .
 ```
 
-octreg requires Python 3.9 or newer and PyTorch. A CUDA GPU is recommended for full-size volumes. `pip install -e ".[test]"`
+octreg requires Python 3.10 or newer and PyTorch. A CUDA GPU is recommended for full-size volumes. `pip install -e ".[test]"`
 adds the test dependencies, and `pytest` runs the tests on synthetic data on the CPU.
 
 ## Usage
