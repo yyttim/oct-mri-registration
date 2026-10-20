@@ -34,6 +34,8 @@ python bench/ablate.py $OCT $MRI -o $RUNS/ablation/turned --only base,no_search 
 
 `ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
 `--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world.
+`baselines/summarise.py` stores the pose and the search candidates of every ablation run in `results/I58/ablation.json`
+and lists the candidates of the search in the I58 run and in the two outline variants in `results/I58/search.md`.
 
 | | | | |
 |---|---|---|---|
@@ -67,7 +69,7 @@ python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
 | `figures.py` | the I58 panels in `docs/figures/` |
 | `baselines/` | standard registration tools on the I58 pair, and the tool settings of the I46 test ([README](baselines/README.md), [BASELINES.md](baselines/BASELINES.md)) |
 | `i46/` | the test on block I46 of Costantini et al. (2023) ([README](i46/README.md)) |
-| `results/I58/` | `result.json` of the I58 run, with the input paths cut to file names, and the baseline tables in `baselines/` |
+| `results/I58/` | `result.json` of the I58 run and `ablation/no_outline.json` of that variant, with the input paths cut to file names, the pose and the search candidates of every ablation run in `ablation.json`, the candidates of the search in the I58 run and in the outline variants in `search.md`, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
 The Python scripts print their options with `--help`.

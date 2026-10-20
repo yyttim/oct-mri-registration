@@ -5,8 +5,9 @@ ablate   the variants of bench/ablate.py except the outline ones (shown on I58 o
          k = 0..9 of the 10 deg FLASH, into <project root>/bench_runs/I46/ablation/<crop>/<variant>/
 starts   the method on flip1_C3_k0 from the OCT turned about the centre of its image box by 90 and 180 deg about each array
          axis and by 10 uniform random rotations (seed 4646), into <project root>/bench_runs/I46/starts/<start>/base/
-collect  scores the affine of every run against the reference -> bench/results/I46/ablation.json and starts.json. It stops
-         and writes nothing if a run was not made by the checkout's octreg code.
+collect  scores the affine of every run against the reference, and the search pose of the start runs, and keeps the affines
+         -> bench/results/I46/ablation.json and starts.json. It stops and writes nothing if a run was not made by the
+         checkout's octreg code.
 
 ablate and starts skip the runs already made by the checkout's octreg code and exit with an error listing the runs that
 failed.
@@ -59,7 +60,15 @@ def ablate_one(crop, out, only, extra=()):
 
 def scored(run):
     T = np.loadtxt(run / "T_oct2mri.txt")
-    return {**error(T), **vessel_score(T)}
+    return {"T_oct2mri": np.round(T, 10).tolist(), **error(T), **vessel_score(T)}
+
+
+def searched(run):
+    """The search pose of a run scored against R, with its rank and scores."""
+    pose = json.loads((run / "result.json").read_text(encoding="utf-8"))["pose"]
+    s4 = error(np.array(pose["T_search"], float))
+    return {"search": {x: s4[x] for x in ("mean_mm", "rotation_deg")},
+            **{x: pose[x] for x in ("search_rank", "search_F", "search_O", "L", "outline_used")}}
 
 
 def turned_start(turn):
@@ -86,7 +95,7 @@ def collect():
         run = STARTS / name / "base"
         turn = np.array(json.loads((run / "variant.json").read_text(encoding="utf-8"))["turn"])
         rows.append({"start": name, "turn_deg": rv, "version": __version__, "code": code,
-                     "start_pose": error(turned_start(turn)), **scored(run)})
+                     "start_pose": error(turned_start(turn)), **scored(run), **searched(run)})
     (RESULTS / "starts.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(len(rows), "start rows")
 

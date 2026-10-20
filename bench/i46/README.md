@@ -29,7 +29,9 @@ octreg copes with the placement of the MRI crop and with the MRI contrast, not h
 The authors' registration files come from their repository at commit `b36e398cc42db4ca89ecc121818255bd96fc67ad`:
 `results/mri2oct/affine.lta`, `results/mri/recon2raw.lta` and the OCT→LSFM fields `results/oct2lsfm/svf.08.nii.gz` to
 `svf.23.nii.gz`. `fetch.sh` downloads everything into `sub-I46/oct`, `sub-I46/mri`, `sub-I46/labels` and
-`sub-I46/costantini_repo/results` of `OCTREG_DANDI000026_DIR`.
+`sub-I46/costantini_repo/results` of `OCTREG_DANDI000026_DIR`. DANDI:000026 has no published version: the test uses the
+draft as downloaded on 2026-10-15, whose files have the SHA-256 sums in `checksums.txt`, and `fetch.sh` ends by checking
+the download against them.
 
 The 20° FLASH, the T1 map and the labels carry a header that is a 120° rotation (a cyclic permutation of the axes) of the same
 voxel grid as the 10° and 30° FLASH. Their arrays are voxel aligned with the 10° FLASH, and every file here is read with the
@@ -176,10 +178,11 @@ plane inside the OCT field of view, so their panels show no line.
 
 ```
 export OCTREG_DANDI000026_DIR=/path/to/dandi-000026          # bench/paths.py gives the other roots
-bash bench/i46/fetch.sh                                       # needs the DANDI client (pip install dandi) and curl
+bash bench/i46/fetch.sh                                       # needs the DANDI client (pip install dandi), curl and sha256sum
 python bench/i46/prepare.py                                   # inputs and crops -> crops.json, context.json
 python bench/i46/prepare.py --mask                            # the specimen mask octmask_24um.nii.gz, as committed
 python bench/i46/reference_check.py                           # the checks of the reference and L -> reference_check.json
+python bench/i46/prepare.py --context                         # context.json again, now with the 4x4 of L
 python bench/i46/run.py                                       # 60 octreg runs, one at a time, scored -> octreg.json
 python bench/i46/baselines.py prepare                         # and with --search, --mask or --near for the other analyses
 bash "${OCTREG_PROJECT_ROOT:-.}/bench_runs/I46/baselines/queue.sh"   # baselines_search, _mask, _near/queue.sh for those
@@ -201,11 +204,11 @@ root>/bench_runs/I46`, which is not in the repository.
 
 | file in `bench/results/I46` | content |
 |---|---|
-| `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, distances from R and L, the vessel check, the search rank and scores, the outside fractions and time |
+| `octreg.json` | one entry per octreg run, as `run.py` describes it: version and code, the affine, distances from R and L and their decomposition, the vessel check, the search rank, scores and candidates, the outside fractions and time |
 | `baselines.json`, `baselines_search.json` | one entry per standard-tool run at the documented setting and with the tool's own search: distances and time, or the tool error |
 | `baselines_mask.json`, `baselines_near.json` | the same for the tools with the specimen mask as moving mask, and for the tools started near R, with the distance of that start |
-| `starts.json`, `ablation.json` | the start test and the ablation of `analyses.py` |
-| `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`) |
+| `starts.json`, `ablation.json` | the start test (with its search poses) and the ablation of `analyses.py`, each entry with its affine |
+| `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`), and the vessel check of R, of L and of R moved by small shifts, rotations and depth scales |
 | `crops.json` | the box, shift and centre offset of every crop |
-| `context.json` | the number of tissue points, the grey/white contrast of each MRI image, and properties of the reference and the OCT |
+| `context.json` | the number of tissue points, the grey/white contrast of each MRI image, the 4x4 of R and of L, and properties of the reference and the OCT |
 | `tables.md` | the tables of `summarise.py` |

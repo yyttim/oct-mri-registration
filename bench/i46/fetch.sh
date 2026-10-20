@@ -1,8 +1,8 @@
 #!/bin/bash
 # The files the I46 test reads, about 11 GB: from DANDI:000026 (sub-I46) the OCT, its vessel segmentation, the 10, 20 and
 # 30 deg FLASH, the T1 map and the manual vessel and layer labels, and from github.com/neuroscales/biccn-broca-I46 at the commit
-# below the registration files of Costantini et al. 2023, into DEST/sub-I46/{oct,mri,labels,costantini_repo/results}.
-# Needs the DANDI client (pip install dandi) and curl.
+# below the registration files of Costantini et al. 2023, into DEST/sub-I46/{oct,mri,labels,costantini_repo/results}, then
+# checks them against checksums.txt. Needs the DANDI client (pip install dandi), curl and sha256sum.
 # Usage: bash bench/i46/fetch.sh [DEST]  (default: $OCTREG_DANDI000026_DIR)
 set -e
 D=${1:-$OCTREG_DANDI000026_DIR}
@@ -28,3 +28,5 @@ for f in "${F[@]}"; do
   mkdir -p "$S/costantini_repo/$(dirname "$f")"
   curl -fsSL --retry 5 -o "$S/costantini_repo/$f" "$G/$f"
 done
+C=$(cd "$(dirname "$0")" && pwd)/checksums.txt
+cd "$S" && sha256sum -c "$C"

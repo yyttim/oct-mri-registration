@@ -6,7 +6,8 @@ frame    the 96 choices of the rebuilt OCT header (depth sign, slab, order and s
          the correlation of the OCT with each FLASH image and the share of OCT vessels within 0.15 mm of an MRI vessel label
 labels   the label-only fits S9 and A12 of labelfit.py from R, compared with R, by thirds of the depth and on split halves
 search   the global search of labelfit.py with no transform of the authors, about an hour on 12 processes
-vessels  the vessel check of common.vessel_score at R and at R shifted by 0.5 and 1 mm in 12 random directions
+vessels  the vessel check of common.vessel_score at R and at L, and at R moved by small shifts, rotations and depth scales
+         over the labels R places inside
 
     python bench/i46/reference_check.py [--jobs N] [--only STAGE ...]
 
@@ -28,7 +29,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import labelfit as lf  # noqa: E402
 from common import (AUTHORS, CHOSEN, FLIPS, LABELS, OCT_TIFF, RESULTS, SLAB, SPACING, TIFF_SHAPE, VESSELS_TIFF,  # noqa: E402
-                    error, lta_matrix, mri_file, oct_header, reference, slab_lattices, tissue, vessel_score)
+                    _vessels, error, lta_matrix, mri_file, oct_header, reference, slab_lattices, tissue, vessel_score)
 
 DS = 8                                      # OCT voxels per block and axis for the correlation
 OCT_BLOCKS, VESSEL_VOXELS = 120_000, 100_000
@@ -37,7 +38,7 @@ LABEL_BOX = 1.0                             # mm around the MRI vessel labels
 SPLITS = 10
 ROTATIONS, PEAKS, CANDIDATES = 20_000, 3, 40
 DISTINCT = 1.5                              # mm
-SHIFTS, DIRECTIONS = (0.5, 1.0), 12
+SHIFTS, TURNS, DEPTH_SCALES = (0.1, 0.2, 0.3, 0.5, 1.0), (2, 4), (1.05, 1.10, 1.17)   # mm, deg, factor
 ORIENTATION = ("depth_sign", "swap", "sign_y", "sign_x")
 STAGES = ("lattice", "frame", "labels", "search", "vessels")
 
@@ -318,21 +319,49 @@ def search(pool, data, Ts, Ta):
     return out
 
 
-def vessel_shifts(R):
-    U = np.random.default_rng(5).normal(size=(DIRECTIONS, 3))
-    U /= np.linalg.norm(U, axis=1)[:, None]
-    out = {"reference": vessel_score(R), "directions": DIRECTIONS}
+def vessel_moves(R, L):
+    """The vessel score of R, of L, and of R moved with the label set held fixed to the labels R places inside: shifted along
+    each OCT axis as R places it, turned about the depth axis z and the in-plane axis x through the tissue centre, and
+    stretched along the depth axis about the tissue centre. Each move gives the labels of that set still on the OCT grid,
+    their score and the mean displacement of the tissue from R."""
+    from scipy import ndimage
+    from scipy.spatial.transform import Rotation
+    x, dist, sp, shp, inner = _vessels()
+    place = lambda T: (np.linalg.inv(T) @ np.c_[x, np.ones(len(x))].T).T[:, :3] / sp - 0.25
+    q = place(R)
+    fixed = np.all((q >= 2) & (q <= np.array(shp) - 3), 1)
+    qi = np.round(q[fixed]).astype(int)
+    fixed[np.flatnonzero(fixed)[~inner[qi[:, 0], qi[:, 1], qi[:, 2]]]] = False
+    c = (R @ np.r_[tissue().mean(0), 1])[:3]
+    U = R[:3, :3] / np.linalg.norm(R[:3, :3], axis=0)          # the OCT axes as R places them
+
+    def score(A=np.eye(3), t=np.zeros(3)):
+        """R followed by the linear map A about the tissue centre and the shift t."""
+        T = np.eye(4)
+        T[:3, :3], T[:3, 3] = A, t + c - A @ c
+        T = T @ R
+        q = place(T)[fixed]
+        on = np.all((q >= 0) & (q <= np.array(shp) - 1), 1)
+        d = ndimage.map_coordinates(dist, q[on].T, order=1).astype(float)
+        return {"vessel_n": int(on.sum()), "vessel_mean_mm": r4(d.mean()), "vessel_median_mm": r4(np.median(d)),
+                "mean_mm": error(T, R)["mean_mm"]}
+
+    shifts, turns, scales = {}, {}, {}
     for mag in SHIFTS:
-        s = []
-        for u in U:
-            D = np.eye(4)
-            D[:3, 3] = mag * u
-            s.append(vessel_score(D @ R))
-        out[f"shift_{mag:g}mm"] = {"vessel_mean_mm": r4(np.mean([x["vessel_mean_mm"] for x in s])),
-                                   "vessel_median_mm": r4(np.mean([x["vessel_median_mm"] for x in s])),
-                                   "per_direction": s}
-    print(f"vessels: {out['reference']}, " + ", ".join(f"{k} {v['vessel_mean_mm']} / {v['vessel_median_mm']}"
-                                                     for k, v in out.items() if k.startswith("shift")), flush=True)
+        s = {f"{ax}{'+' if sign > 0 else '-'}": score(t=sign * mag * U[:, i]) for i, ax in enumerate("xyz") for sign in (1, -1)}
+        s["mean"] = {k: r4(np.mean([v[k] for v in s.values()])) for k in ("vessel_mean_mm", "vessel_median_mm")}
+        shifts[f"{mag:g}"] = s
+    for deg in TURNS:
+        turns[str(deg)] = {ax: score(Rotation.from_rotvec(np.radians(deg) * U[:, i]).as_matrix())
+                           for ax, i in (("z", 2), ("x", 0))}
+    for f in DEPTH_SCALES:
+        scales[f"{f:g}"] = score(np.eye(3) + (f - 1) * np.outer(U[:, 2], U[:, 2]))
+    out = {"reference": vessel_score(R), "A12": vessel_score(L),
+           "moved": {"labels": int(fixed.sum()), "shift_mm": shifts, "rotation_deg": turns, "depth_scale": scales}}
+    print(f"vessels: R {out['reference']}, L {out['A12']}, {int(fixed.sum())} labels held: shifts "
+          + ", ".join(f"{k} mm {v['mean']['vessel_median_mm']}" for k, v in shifts.items()) + ", rotations "
+          + ", ".join(f"{k} deg {v['z']['vessel_median_mm']} / {v['x']['vessel_median_mm']}" for k, v in turns.items())
+          + ", depth scales " + ", ".join(f"{k} {v['vessel_median_mm']}" for k, v in scales.items()), flush=True)
     return out
 
 
@@ -370,7 +399,10 @@ def main():
                 out["search"] = search(pool, data, Ts, Ta)
     if "vessels" in stages:
         t0 = time.time()
-        out["vessels"] = {**vessel_shifts(R), "seconds": round(time.time() - t0)}
+        if "labels" not in out:
+            sys.exit("vessels needs the labels stage, for L")
+        L = np.array(out["labels"]["A12"]["T_oct2mri"], float)
+        out["vessels"] = {**vessel_moves(R, L), "seconds": round(time.time() - t0)}
     RESULTS.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({k: out[k] for k in STAGES if k in out}, indent=1), encoding="utf-8")
     print(f"-> {path}", flush=True)
