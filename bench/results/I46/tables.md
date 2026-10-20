@@ -11,7 +11,7 @@ without a readable transform (a tool error) counts as beyond every other.
 R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit L
 (reference_check.py, an affine fitted to the vessels alone) lies 0.155 mm from R on average (p95 0.31 mm, rotation 0.57°),
 0.09 / 0.17 / 0.28 mm in the upper, middle and deepest third of the OCT depth, so distances below 0.30 mm are not
-interpreted. 3 of the 742 runs in these tables come within 0.30 mm of R, all ants_atR_mask.
+interpreted. 3 of the 832 runs in these tables come within 0.30 mm of R, all ants_atR_mask.
 
 Vessel check (common.vessel_score): the distance of the MRI vessel labels placed in the OCT tissue to the nearest OCT
 vessel, median over the labels, is 0.100 mm (mean 0.130 mm) for R and 0.093 mm (mean 0.129 mm) for L. With the 2952 labels R
@@ -687,7 +687,16 @@ labels to the nearest OCT vessel through the affine (common.vessel_score), media
 | no_refine | no refinement: the first search pose | 7/10 | 0.87 (0.68 to 1.61) | 0.507 (0.333 to 1.258) | 0.214 |
 | first_choice | only the first search pose refined | 10/10 | 0.36 (0.35 to 0.36) | 0.000 (0.000) | 0.155 |
 | no_prior | no scale and shear prior (lam 0) | 10/10 | 0.47 (0.46 to 0.49) | 0.108 (0.100 to 0.140) | 0.148 |
+| prior_0.5 | the scale and shear prior at a quarter of its weight (lam 0.5) | 10/10 | 0.36 (0.35 to 0.36) | 0.002 (-0.005 to 0.007) | 0.150 |
+| prior_8 | the scale and shear prior at four times its weight (lam 8) | 10/10 | 0.37 (0.36 to 0.37) | 0.013 (0.012 to 0.018) | 0.161 |
+| rigid | rigid refinement: the scales and shears held at zero | 10/10 | 0.38 (0.37 to 0.39) | 0.024 (0.023 to 0.026) | 0.162 |
 | signed | the signed normalised gradient n instead of its tensor n n^T | 0/10 | 1.28 (1.26 to 1.29) | 0.926 (0.908 to 0.927) | 0.202 |
 | signed_neg | the signed normalised gradient n instead of its tensor n n^T, with the OCT intensities negated | 0/10 | 8.82 (8.79 to 10.51) | 8.465 (8.436 to 10.163) | 0.279 |
 | tracefree | the trace-free tensor n n^T - \|n\|^2 I / 3 instead of n n^T | 10/10 | 0.38 (0.38) | 0.023 (0.020 to 0.028) | 0.159 |
+| uncentred | F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised) | 10/10 | 0.34 (0.33 to 0.34) | -0.018 (-0.021 to -0.016) | 0.151 |
 | search_whole_mask | in the search, the OCT gradients taken inside the whole specimen mask, not its erosion | 8/10 | 0.36 (0.35 to 11.61) | 0.000 (-0.001 to 11.243) | 0.155 |
+| flatfield | the MRI divided by its Gaussian blur (normalised convolution, 5 mm) inside the foreground | 10/10 | 0.35 (0.34 to 0.36) | -0.003 (-0.009 to 0.001) | 0.153 |
+| signal_only | the OCT specimen mask from the signal threshold alone (components and holes kept, no texture rule) | 10/10 | 0.35 (0.34 to 0.36) | -0.011 (-0.015 to -0.005) | 0.154 |
+| spacing_p5 | the OCT voxel size given 5 % too large | 10/10 | 0.42 (0.40 to 0.42) | 0.060 (0.055 to 0.063) | 0.163 |
+| spacing_m5 | the OCT voxel size given 5 % too small | 10/10 | 0.48 (0.47 to 0.48) | 0.119 (0.113 to 0.126) | 0.173 |
+| mirrored | the OCT array mirrored along its first axis: a mirror image of the block, which no rotation aligns | 0/10 | 7.25 (7.23 to 7.26) | 6.894 (6.884 to 6.898) | 0.236 |

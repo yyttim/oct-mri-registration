@@ -145,8 +145,11 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   refinement alone from the near start comes within 1 mm on every crop, 0.35 to 0.36 mm from R.
 - **Ablation** on the 10° FLASH with a 3 mm margin: without the orientation search no crop comes within 1 mm, with signed
   normalised gradients, with or without the OCT intensities negated, none does, without the refinement 3 of the 10 crops end
-  beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. Without the scale and shear prior
-  every crop comes within 1 mm, 0.47 mm (median) from R.
+  beyond 1 mm, and with the search gradients taken over octreg's whole specimen mask 2 do. With the OCT array mirrored no
+  crop comes within 1 mm. Every other variant keeps all ten crops within 1 mm: without the scale and shear prior 0.47 mm
+  (median) from R, with the prior at a quarter or four times its weight 0.36 and 0.37 mm, with a rigid refinement 0.38 mm,
+  without the subtraction of the means in F 0.34 mm, and with the OCT voxel size given 5 % too large or too small 0.42 and
+  0.48 mm.
 
 ## Pictures
 

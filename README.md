@@ -173,19 +173,28 @@ Each variant changes one thing in the method (`bench/ablate.py`). On the ten cro
 | signed normalised gradients instead of their tensor | 0 of 10 | 1.28 |
 | the same, with the OCT intensities negated | 0 of 10 | 8.82 |
 | no scale and shear prior | 10 of 10 | 0.47 |
+| the scale and shear prior at a quarter of its weight (λ = 0.5) | 10 of 10 | 0.36 |
+| the scale and shear prior at four times its weight (λ = 8) | 10 of 10 | 0.37 |
+| rigid refinement | 10 of 10 | 0.38 |
 | the trace-free tensor n nᵀ − \|n\|² I / 3 instead of n nᵀ | 10 of 10 | 0.38 |
+| F without the subtraction of the means | 10 of 10 | 0.34 |
 | in the search, OCT gradients over the whole specimen mask instead of only its part more than 0.8 mm inside | 8 of 10 | 0.36 |
+| the MRI divided by its Gaussian blur at 5 mm inside the foreground | 10 of 10 | 0.35 |
+| the OCT specimen mask from the signal threshold alone, without the texture rule | 10 of 10 | 0.35 |
+| the OCT voxel size given 5 % too large | 10 of 10 | 0.42 |
+| the OCT voxel size given 5 % too small | 10 of 10 | 0.48 |
+| the OCT array mirrored along one axis, a mirror image of the block | 0 of 10 | 7.25 |
 
 The outline is never used on these crops, whose MRI is all tissue. On I58:
 
 | no outline term | signed gradients | signed gradients, OCT negated | no refinement |
 |---|---|---|---|
 | <img src="docs/figures/ablation/no_outline.png" width="175" alt="no outline term"> | <img src="docs/figures/ablation/signed.png" width="175" alt="signed gradients"> | <img src="docs/figures/ablation/signed_neg.png" width="175" alt="signed gradients, OCT negated"> | <img src="docs/figures/ablation/no_refine.png" width="175" alt="no refinement"> |
-| **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | |
-| <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | |
+| **turned 90°, the start** | **turned 90°, no orientation search** | **turned 90°, octreg** | **the OCT specimen mask from the signal threshold alone** |
+| <img src="docs/figures/ablation/turned_start.png" width="175" alt="turned 90°, the start"> | <img src="docs/figures/ablation/turned_no_search.png" width="175" alt="turned 90°, no orientation search"> | <img src="docs/figures/ablation/turned_octreg.png" width="175" alt="turned 90°, octreg"> | <img src="docs/figures/ablation/signal_only.png" width="175" alt="the OCT specimen mask from the signal threshold alone"> |
 
-The sagittal plane of the I58 figure through each variant, with the MRI foreground boundary in red. The last three panels start
-from the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of
+The sagittal plane of the I58 figure through each variant, with the MRI foreground boundary in red. The three turned panels
+start from the OCT turned by 90° about its sectioning axis. [bench/README.md](bench/README.md) shows every variant of
 `bench/ablate.py`.
 
 ## Reproducing the results
