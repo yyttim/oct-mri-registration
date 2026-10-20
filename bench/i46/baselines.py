@@ -15,13 +15,13 @@ the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>:
 
     python bench/i46/baselines.py prepare [--search | --mask | --near | ...]   the inputs, the run.sh of every run and queue.sh
     bash <project root>/bench_runs/I46/baselines/queue.sh                     one run at a time (baselines_<kind>/queue.sh)
-    python bench/i46/baselines.py octreg --near                               octreg's refinement from the start of every crop
+    python bench/i46/baselines.py octreg --near | --atR                       octreg's refinement from the start of every crop
     python bench/i46/baselines.py collect [--search | --mask | --near | ...] [--runs DIR] [-o FILE]
 
 collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion of every run that has the tool's own
 resampling. The scores go to bench/results/I46/baselines[_<kind>].json. A run without a readable transform is a tool error.
-octreg --near runs bench/ablate.py no_search from the start H_k of each crop (--start) into baselines_near/<crop>/octreg_near,
-which collect --near scores as the row octreg_near.
+octreg --near and --atR run bench/ablate.py no_search from the start H_k of each crop (--start) into
+baselines_<kind>/<crop>/octreg_<kind>, which collect --near and --atR score as the rows octreg_near and octreg_atR.
 """
 from __future__ import annotations
 
@@ -49,7 +49,8 @@ HEADER = {"near": "near", "near_mask": "near", "near_zeroed": "near", "atR": "at
 SHARED = {"search": BL, "mask": BL, "near_mask": BASE["near"], "atR_mask": BASE["atR"]}                  # whose inputs
 NEAR_SEED, NEAR_DEG, NEAR_MM = 4700, 10.0, 1.0
 TURN = {"near": (NEAR_DEG, NEAR_MM), "atR": (0.0, 0.0)}                                                 # degrees, mm
-OCTREG_NEAR = {"octreg_near": "§4 from the start, no search"}
+OCTREG = {"near": "octreg_near", "atR": "octreg_atR"}                  # the kinds octreg runs from, its row
+OCTREG_SETTING = "§4 from the start, no search"
 ZEROED = "the OCT zeroed outside the specimen mask"
 
 
@@ -201,41 +202,41 @@ def prepare(kind=None):
     H.prepare(BASE[kind] if kind else BL, runs(kind), lambda crop: kind_inputs(crop, kind))
 
 
-def octreg_run(crop):
-    return BASE["near"] / crop / "octreg_near"
+def octreg_run(crop, kind):
+    return BASE[kind] / crop / OCTREG[kind]
 
 
 def octreg(kind):
-    """octreg's refinement alone (bench/ablate.py no_search) from the start H_k of every crop of the near kind, with octreg's
-    own masks, one at a time. A run already made by the checkout's octreg code is skipped."""
+    """octreg's refinement alone (bench/ablate.py no_search) from the start H_k of every crop of the near or atR kind, with
+    octreg's own masks, one at a time. A run already made by the checkout's octreg code is skipped."""
     from analyses import ablate_one
-    if kind != "near":
-        sys.exit("octreg runs from the --near starts")
-    failed = [crop for crop in crops(kind) if not ablate_one(crop, octreg_run(crop), "no_search",
+    if kind not in OCTREG:
+        sys.exit("octreg runs from the --near or --atR starts")
+    failed = [crop for crop in crops(kind) if not ablate_one(crop, octreg_run(crop, kind), "no_search",
                                                              ["--start", str(BASE[kind] / crop / "inputs" / "start.json")])]
     if failed:
         sys.exit(f"{len(failed)} runs failed: " + ", ".join(failed))
 
 
-def octreg_row(crop, score):
-    """The row of octreg's refinement from H_k in octreg_run(crop), or None where it has not run."""
+def octreg_row(crop, score, kind):
+    """The row of octreg's refinement from H_k in octreg_run(crop, kind), or None where it has not run."""
     from bench.ablate import code_id, made_by
-    run = octreg_run(crop) / "no_search"
+    run = octreg_run(crop, kind) / "no_search"
     if made_by(run) is None:
         return None
     if made_by(run) != code_id():
         sys.exit(f"{run}: made by octreg code {made_by(run)}, not {code_id()}")
     res = json.loads((run / "result.json").read_text(encoding="utf-8"))
     T = np.loadtxt(run / "T_oct2mri.txt")
-    if np.abs(np.array(res["pose"]["T_search"]) - np.array(start_of(crop)["H"])).max() > 1e-9:
+    if np.abs(np.array(res["pose"]["T_search"]) - np.array(start_of(crop, kind)["H"])).max() > 1e-9:
         sys.exit(f"{run}: not started from H_k of {crop}")
-    return {"crop": crop, "tool": "octreg_near", "setting": OCTREG_NEAR["octreg_near"], **score(crop, T),
+    return {"crop": crop, "tool": OCTREG[kind], "setting": OCTREG_SETTING, **score(crop, T),
             "T_oct2mri": H.as_list(T), "code": code_id(), "seconds": round(res["seconds"]["total"], 1)}
 
 
 def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
     """Score every finished run under base and write the rows to out. A run from a header start also scores its start H_k,
-    and the near kind adds octreg's refinement from that start (octreg_near)."""
+    and the near and atR kinds add octreg's refinement from that start (octreg_near, octreg_atR)."""
     hk = HEADER.get(kind)
 
     def extra(crop):
@@ -257,9 +258,9 @@ def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
         if r["tier"] == "tool error":
             r.update(extra(r["crop"]))
     expected = set(runs(kind))
-    if kind == "near":
-        expected |= {(crop, "octreg_near") for crop in crops(kind)}
-        rows += [r for r in (octreg_row(crop, score) for crop in crops(kind)) if r is not None]
+    if kind in OCTREG:
+        expected |= {(crop, OCTREG[kind]) for crop in crops(kind)}
+        rows += [r for r in (octreg_row(crop, score, kind) for crop in crops(kind)) if r is not None]
     missing = sorted(expected - {(r["crop"], r["tool"]) for r in rows})
     if missing:
         sys.exit(f"{len(missing)} runs never ran in {base}: " + ", ".join(f"{c}/{t}" for c, t in missing))

@@ -7,8 +7,10 @@
   OCT specimen mask from the signal threshold alone, the OCT voxel size 5 % off and the OCT mirrored, the options `--start` and
   `--params` of `bench/ablate.py`, the I58 ablation poses in `bench/results/I58/ablation.json` and the search candidates in
   `search.md`, the tools started near R with the mask or on the zeroed OCT and started at R, and octreg's refinement alone from
-  the near start, in `bench/results/I46/`, the SHA-256 sums of the I46 download in `bench/i46/checksums.txt`, which `fetch.sh`
-  checks, and one I46 panel per plane with the lines through R and octreg.
+  the near start and from the start at R, in `bench/results/I46/`, the SHA-256 sums of the I46 download in
+  `bench/i46/checksums.txt`, which `fetch.sh` checks, and one I46 panel per plane with the lines through R and octreg.
+- The I46 comparisons give the median distance from R over the ten crops of a condition, and the vessel distance where those
+  distances differ by less than 0.3 mm, in place of counts of runs within 0.30 and 1 mm of R.
 
 ## 3.2.0
 
