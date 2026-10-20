@@ -130,12 +130,13 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 - **Starts:** from the 16 turned and random starts on flip1_C3_k0, octreg ends 0.35 to 0.37 mm from R.
 - **The standard tools** at their documented settings end 7.5 to 17.3 mm from R, turned by about as much as their start, the
   header orientation 7.0 mm and 122° from R (median rotation over the 96 runs 120°). With their own global search they end
-  17.0 to 24.0 mm from R, and with the test's specimen mask as their moving mask 7.0 to 16.6 mm, elastix without a transform.
+  17.0 to 23.9 mm from R, and with the test's specimen mask as their moving mask 7.0 to 16.5 mm, elastix without a transform.
 - **Started near R** (1.18 mm and 10° from R), ANTs ends 0.84 mm from R and the other tools 3.0 to 17.8 mm, with the moving mask
   ANTs 0.82 mm and greedy 1.55 mm, and on the OCT zeroed outside the mask ANTs 0.85 mm. octreg's refinement alone ends 0.36 mm
   from R.
 - **Started at R** (0.09 mm from R), ANTs ends 0.52 mm from R and the other tools 3.0 to 20.2 mm, and with the moving mask ANTs
-  0.35 mm and greedy 0.62 mm. octreg's refinement alone ends 0.36 mm from R.
+  0.35 mm and greedy 0.62 mm. octreg's refinement alone ends 0.36 mm from R. The vessel distance is 0.155 mm for octreg,
+  0.193 mm for ANTs, and with the mask 0.170 mm for ANTs and 0.183 mm for greedy.
 - **Ablation:** the [README](../../README.md#ablations) gives every variant.
 
 ## Pictures

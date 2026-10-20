@@ -124,10 +124,11 @@ The MRI was cropped around the block as R places it, ten times per condition (cr
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
 distance from R is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a
-threshold of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). The vessel distance is the median distance
-of the MRI vessel labels placed in the OCT tissue to the nearest OCT vessel of the dataset's segmentation, which does not depend
-on R. Every number is the median over the ten crops of a condition, shifted boxes around the same block of one specimen, a run
-without a transform counted as beyond every other.
+threshold of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). Where distances from R differ by less than
+about 0.3 mm, the vessel distance compares the results: the median distance of the MRI vessel labels placed in the OCT tissue to
+the nearest OCT vessel of the dataset's segmentation. It does not use R, but R was fitted in part to the MRI vessel labels and L
+to them alone. R and L are one affine each, and every other number is the median over the ten crops of a condition, shifted
+boxes around the same block of one specimen, a run without a transform counted as beyond every other.
 
 | | distance from R (mm) | vessel distance (mm) |
 |---|---|---|
@@ -179,8 +180,11 @@ starts with its own masks:
 | FLIRT | 17.83 | 17.93 | 20.19 | 16.72 |
 | SynthMorph | 9.80 | | 11.06 | |
 
-Distance from R in mm. SynthMorph takes no moving mask, NiftyReg 2.1.2 does not use it, and elastix ends without a transform on
-every crop with it.
+Distance from R in mm. octreg uses its own masks, SynthMorph takes no moving mask, NiftyReg 2.1.2 does not use it, and elastix
+ends without a transform on every crop with it.
+
+Started at R, the vessel distance is 0.155 mm for octreg's refinement alone and 0.193 mm for ANTs, and with the moving mask
+0.170 mm for ANTs and 0.183 mm for greedy.
 
 | OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|
@@ -220,7 +224,8 @@ Each variant changes one thing in the method or its input (`bench/ablate.py`). O
 | the OCT voxel size given 5 % too small | 0.48 | 0.173 |
 | the OCT array mirrored along one axis, a mirror image of the block | 7.25 | 0.236 |
 
-The outline is never used on these crops, whose MRI is all tissue. On I58:
+With the search gradients over the whole specimen mask the median stays at 0.36 mm, but two of the ten crops end 9.42 and
+11.61 mm from R. The outline is never used on these crops, whose MRI is all tissue. On I58:
 
 | no outline term | signed gradients | signed gradients, OCT negated | no refinement |
 |---|---|---|---|

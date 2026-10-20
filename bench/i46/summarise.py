@@ -154,7 +154,7 @@ def octreg_section(rows, st):
         "nearest OCT vessel through the affine (common.vessel_score), the search rank the rank of the search pose that won "
         "the refinement, with its number of runs.")
     out += ["| condition | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) "
-            "| rotation from R (°) | vessels (mm) | search rank |", "|---|---|---|---|---|---|---|"]
+            "| rotation from R (°) | vessel distance (mm) | search rank |", "|---|---|---|---|---|---|---|"]
     for im, cond, masked in conditions():
         r = [x for x in rows if x["image"] == im and x["cond"] == cond and x["oct_mask"] == masked]
         d = [x["mean_mm"] for x in r]
@@ -265,7 +265,7 @@ def starts_section(st):
         out += para(f"{group} starts: distance from R {rng([x['mean_mm'] for x in r])} mm, "
                     f"rotation {rng([x['rotation_deg'] for x in r], 1)}°.")
     out += ["| start | the start: distance from R (mm), rotation (°) | the search pose: distance from R (mm), rotation (°) "
-            "| octreg (mm) | p95 / max (mm) | vessels (mm) | search rank |", "|---|---|---|---|---|---|---|"]
+            "| octreg (mm) | p95 / max (mm) | vessel distance (mm) | search rank |", "|---|---|---|---|---|---|---|"]
     for x in st:
         s, q = x["start_pose"], x["search"]
         out.append(f"| {x['start']} | {s['mean_mm']:.1f}, {s['rotation_deg']:.0f} | {q['mean_mm']:.2f}, "
@@ -273,7 +273,7 @@ def starts_section(st):
     return out
 
 
-TOOL_HEAD = ["| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |",
+TOOL_HEAD = ["| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |",
              "|---|---|---|---|---|"]
 
 
@@ -286,13 +286,15 @@ def tool_row(method, setting, r):
 
 def tools_section(rows, bl, bls):
     names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
+    start = [start_pose(n) for n in names]
     out = ["## Standard tools", ""] + para(
         "Each tool at its documented setting (bench/baselines/standard_tools.py), and the three tools that have a global "
         "rotation search with that search turned on, on the C3 crops of the 10° FLASH. The moving image is the released OCT "
         "box-averaged to 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header "
-        "orientation of the OCT with the image box centres aligned.")
+        "orientation of the OCT with the image box centres aligned, turned by "
+        f"{fmt(med([x['rotation_deg'] for x in start]), 0)}° from R (median).")
     octreg = [x for x in rows if not x["oct_mask"] and x["name"] in names]
-    out += TOOL_HEAD + [tool_row("the start", "no registration", [start_pose(n) for n in names]),
+    out += TOOL_HEAD + [tool_row("the start", "no registration", start),
                         tool_row("octreg", "its default parameters", octreg)]
     for tr in (bl, bls):
         for t in dict.fromkeys(x["tool"] for x in tr):
@@ -443,7 +445,7 @@ def ablation_section(abl, rows):
         "distance of the MRI vessel labels to the nearest OCT vessel through the affine (common.vessel_score), median over "
         "the crops.")
     out += ["| variant | change | distance from R, median (range) (mm) | difference, median (range) (mm) "
-            "| vessels (mm) |", "|---|---|---|---|---|"]
+            "| vessel distance (mm) |", "|---|---|---|---|---|"]
     crops = sorted({x["crop"] for x in abl})
     base = [main[c] for c in crops if c in main]
     out.append(f"| octreg | the method | {fmt(med([x['mean_mm'] for x in base]))} "

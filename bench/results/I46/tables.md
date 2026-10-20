@@ -31,7 +31,7 @@ over the runs of the row. The vessel check is the median distance of the MRI ves
 the affine (common.vessel_score), the search rank the rank of the search pose that won the refinement, with its number of
 runs.
 
-| condition | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) | rotation from R (°) | vessels (mm) | search rank |
+| condition | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) | rotation from R (°) | vessel distance (mm) | search rank |
 |---|---|---|---|---|---|---|
 | 10° FLASH, C3 (margin 3 mm, shift up to 2 mm) | 0.36 (0.35 to 0.36) | 0.72 / 1.12 | 0.36 | 3.9 | 0.155 | 0 (10) |
 | 20° FLASH, C3 (margin 3 mm, shift up to 2 mm) | 0.37 (0.36 to 0.37) | 0.69 / 1.00 | 0.44 | 2.9 | 0.148 | 0 (10) |
@@ -77,7 +77,7 @@ turned starts: distance from R 0.35 mm, rotation 4.0°.
 
 random starts: distance from R 0.35 to 0.37 mm, rotation 3.8 to 4.1°.
 
-| start | the start: distance from R (mm), rotation (°) | the search pose: distance from R (mm), rotation (°) | octreg (mm) | p95 / max (mm) | vessels (mm) | search rank |
+| start | the start: distance from R (mm), rotation (°) | the search pose: distance from R (mm), rotation (°) | octreg (mm) | p95 / max (mm) | vessel distance (mm) | search rank |
 |---|---|---|---|---|---|---|
 | i90 | 7.9, 164 | 0.88, 13.6 | 0.35 | 0.69 / 1.08 | 0.154 | 0 |
 | i180 | 6.9, 94 | 0.83, 13.1 | 0.35 | 0.69 / 1.08 | 0.154 | 0 |
@@ -101,9 +101,9 @@ random starts: distance from R 0.35 to 0.37 mm, rotation 3.8 to 4.1°.
 Each tool at its documented setting (bench/baselines/standard_tools.py), and the three tools that have a global rotation
 search with that search turned on, on the C3 crops of the 10° FLASH. The moving image is the released OCT box-averaged to
 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header orientation of the OCT with the
-image box centres aligned.
+image box centres aligned, turned by 122° from R (median).
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 7.02 (6.54 to 7.48) |  | 0 |
 | octreg | its default parameters | 0.36 (0.35 to 0.36) | 0.155 | 0 |
@@ -143,7 +143,7 @@ mri_synthmorph register has no mask option, and NiftyReg 2.1.2 does not use the 
 (bench/baselines/INSTALL.md). elastix counts a sample that maps outside the moving mask as invalid and stops when fewer than
 a quarter of its samples are valid (RequiredRatioOfValidSamples, 0.25 by default).
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | reg_aladin | defaults (image centres) | 8.44 (7.29 to 9.64) | 0.258 | 0 |
 | reg_aladin_mask | defaults (image centres), -fmask | 8.44 (7.29 to 9.64) | 0.258 | 0 |
@@ -178,7 +178,7 @@ qform), so the start is the pose with a rotation and a scale per axis closest to
 tissue: 0.06 to 0.11 mm from it (mean over the tissue, at most 0.30 mm), 1.14 to 1.20 mm and 9.7 to 10.4° from R. The start
 row is that pose without registration.
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 1.18 (1.14 to 1.20) |  | 0 |
 | reg_aladin_near | defaults, -nac | 3.02 (2.21 to 3.40) | 0.242 | 0 |
@@ -203,7 +203,7 @@ the shear-free pose closest to R, with the test's specimen mask as the moving ma
 baselines.py --near-mask: the near start with the test's specimen mask as the moving mask, for the tools that take one, the
 mask written with the OCT header of the start.
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 1.18 (1.14 to 1.20) |  | 0 |
 | reg_aladin_near_mask | defaults, -nac, -fmask | 3.02 (2.21 to 3.40) | 0.242 | 0 |
@@ -219,7 +219,7 @@ AdvancedMattesMutualInformationMetric: Too many samples map outside moving image
 
 baselines.py --near-zeroed: the near start on the moving OCT zeroed outside the specimen mask, every tool.
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 1.18 (1.14 to 1.20) |  | 0 |
 | reg_aladin_near_zeroed | defaults, -nac | 3.55 (2.38 to 4.48) | 0.240 | 0 |
@@ -236,7 +236,7 @@ AdvancedMattesMutualInformationMetric: Too many samples map outside moving image
 
 baselines.py --atR: the start at R, the pose with a rotation and a scale per axis closest to R.
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 0.09 (0.09) |  | 0 |
 | reg_aladin_atR | defaults, -nac | 2.98 (2.17 to 3.36) | 0.242 | 0 |
@@ -254,7 +254,7 @@ many samples map outside moving image buffer: n / m".
 
 baselines.py --atR-mask: the start at R with the specimen mask as the moving mask.
 
-| method | setting | distance from R, median (range) (mm) | vessels (mm) | runs without a transform |
+| method | setting | distance from R, median (range) (mm) | vessel distance (mm) | runs without a transform |
 |---|---|---|---|---|
 | the start | no registration | 0.09 (0.09) |  | 0 |
 | reg_aladin_atR_mask | defaults, -nac, -fmask | 2.98 (2.17 to 3.36) | 0.242 | 0 |
@@ -832,7 +832,7 @@ as in the main runs (analyses.py). The difference is the variant's distance from
 variants of the outline are shown on I58 (bench/README.md). The vessel column gives the median distance of the MRI vessel
 labels to the nearest OCT vessel through the affine (common.vessel_score), median over the crops.
 
-| variant | change | distance from R, median (range) (mm) | difference, median (range) (mm) | vessels (mm) |
+| variant | change | distance from R, median (range) (mm) | difference, median (range) (mm) | vessel distance (mm) |
 |---|---|---|---|---|
 | octreg | the method | 0.36 (0.35 to 0.36) | | 0.155 |
 | no_search | no orientation search: the refinement from the header orientation with the image box centres aligned | 6.53 (6.48 to 6.54) | 6.174 (6.119 to 6.184) | 0.243 |
