@@ -11,6 +11,8 @@
   `bench/i46/checksums.txt`, which `fetch.sh` checks, and one I46 panel per plane with the lines through R and octreg.
 - The I46 comparisons give the median distance from R over the ten crops of a condition, and the vessel distance where those
   distances differ by less than 0.3 mm, in place of counts of runs within 0.30 and 1 mm of R.
+- The red line of the I58 figures is the MRI foreground octreg uses, from its 0.15 mm base grid, in place of the same rule run
+  on the 0.08 mm grid of the crop, which drew loops where noise put dark tissue at the surface below the threshold.
 
 ## 3.2.0
 
