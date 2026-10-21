@@ -16,8 +16,8 @@ hardware.
 
 Each panel is one freeview screenshot of the whole MRI crop at one screen pixel per 0.08 mm voxel, showing the MRI or the 20 µm
 OCT resampled through the tool's transform by octreg's resampler. The planes are the sagittal, coronal and axial planes through
-the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.30, 22.18) mm RAS. The red line is the boundary of the MRI
-foreground that the rule of octreg's [§1](../../docs/METHOD.md#1-masks) gives on the 0.08 mm grid of the crop. On the sagittal
+the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.38, 22.26) mm RAS. The red line is the boundary of the MRI
+foreground octreg uses ([§1](../../docs/METHOD.md#1-masks)) resampled from its 0.15 mm base grid to the crop. On the sagittal
 and coronal planes it also encloses MRI tissue above and below the block. On the axial plane it also encloses MRI tissue along
 the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright fragments. The captions call
 this the right axial band. The OCT is shown at the default grey window freeview gives the moving image (0.00122 to 0.00553), and
@@ -57,7 +57,7 @@ at the start. `bench/figures.py` makes the panels.
 | method | what the panels show |
 |---|---|
 | image box centres aligned (the start) | The block keeps the header orientation, with its edges parallel to the image axes. Tissue lies outside the line along the right side and at the left of the sagittal plane, along the left side and at the upper right of the coronal plane, and along the left side, at the top and at the lower left of the axial plane. |
-| octreg | The block is turned relative to the image axes and the sections are straight. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside the line. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, and below that piece the specimen ends short of the line. On the axial plane the specimen ends short of the line at the right axial band. |
+| octreg | The block is turned relative to the image axes and the sections are straight. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside the line, and on the right, below the rim, small loops of the line reach past the specimen edge. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, below that piece the specimen ends short of the line, and at the top the line dips into the specimen. On the axial plane the specimen ends short of the line at the right axial band. |
 | NiftyReg reg_aladin | As for octreg: the block is turned, the sections are straight, and the specimen surface runs along the line except at the same places. |
 | greedy | The block is sheared: its edges are slanted, the sections run obliquely on the coronal plane and show as nearly vertical stripes on the axial plane. Parts of the area inside the line hold no tissue on all three planes, most at the lower left of the coronal plane, and on the axial plane tissue lies outside the line along the left side. |
 | elastix | The block's edges stay nearly parallel to the image axes. The specimen is smaller than the area inside the line and lies mostly inside the line with gaps, and pieces of tissue cross the line at the upper right of the coronal plane, at the left of the sagittal plane and at the lower left of the axial plane. |

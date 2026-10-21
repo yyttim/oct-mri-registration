@@ -15,10 +15,11 @@ pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm 
 freeview's default orientation, anterior on the right of the sagittal plane and the subject's right on the left of the coronal
 and axial planes. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the
 top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside
-the line. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly
-outside the line, and below that piece the specimen ends short of the line. On the axial plane the specimen ends short of the
-line along the right side, where the OCT shows a dark band with a few bright fragments. On the sagittal and coronal planes the
-line also runs past the top and bottom of the OCT image.
+the line, and on the right, below the rim, small loops of the line reach past the specimen edge. On the coronal plane the
+striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, below that piece
+the specimen ends short of the line, and at the top the line dips into the specimen. On the axial plane the specimen ends short
+of the line along the right side, where the OCT shows a dark band with a few bright fragments. On the sagittal and coronal
+planes the line also runs past the top and bottom of the OCT image.
 
 ## Method
 

@@ -11,9 +11,10 @@
                 and the variant without the outline on the finer search grid in its fine/ folder) on the sagittal plane,
                 with the boundary
 
-The boundary is octreg's MRI foreground on the grid of the crop, made a surface by mri_mc and mris_smooth -n 3 -nw and drawn
-as a 2-pixel red line. Every panel shows the whole plane at one screen pixel per MRI voxel. The MRI takes freeview's default
-grey window and every OCT panel that of --window-from. The windows, the plane centre and the MRI tissue go to figures.json.
+The boundary is the MRI foreground octreg uses (§1, on its 0.15 mm base grid) resampled onto the grid of the crop, made a
+surface by mri_mc and mris_smooth -n 3 -nw and drawn as a 2-pixel red line. Every panel shows the whole plane at one screen
+pixel per MRI voxel. The MRI takes freeview's default grey window and every OCT panel that of --window-from. The windows, the
+plane centre and the MRI tissue go to figures.json.
 freeview's default orientation applies: anterior on the right in sagittal planes, the subject's right on the left in coronal
 and axial planes.
 
@@ -109,11 +110,13 @@ def overlays(abl, run, oct_path, mri):
     return out
 
 
-def mri_tissue(img):
-    """octreg's MRI foreground on the grid of the crop. -> (bool array, {threshold, volume_cm3})"""
-    from octreg import preprocess as pp
-    from octreg.params import Params
-    return pp.foreground(np.asarray(img.dataobj, np.float32), float(np.linalg.norm(img.affine[:3, :3], axis=0).min()), Params())
+def mri_tissue(path, img):
+    """octreg's MRI foreground (register.prepare_mri, on the base grid) resampled onto the grid of the crop img.
+    -> (bool array, {threshold, volume_cm3})"""
+    from octreg import geometry as G, io
+    from octreg.register import prepare_mri
+    (_, fg, A), info = prepare_mri(io.load_volume(path))
+    return G.resample_to(fg.astype(np.float32), A, img.shape[:3], img.affine, np.eye(4)) > 0.5, info
 
 
 def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, stages=STAGES):
@@ -196,7 +199,7 @@ def main():
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
-    tissue, fg = mri_tissue(mi)
+    tissue, fg = mri_tissue(a.mri, mi)
     c = np.floor(np.argwhere(tissue).mean(0) + 0.5)
     middle = tuple(float(x) for x in (mi.affine @ np.r_[c, 1])[:3])
     print(f"MRI tissue: threshold {fg['threshold']:.4f}, {fg['volume_cm3']:.2f} cm3, planes through RAS "
