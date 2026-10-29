@@ -3,729 +3,1204 @@
   "run": "ants_com",
   "tool": "ants",
   "variant": "com",
-  "wall_s": 45.22,
-  "rim_fwd_mm": 1.9224010705947876,
-  "rim_rev_mm": 2.2977993488311768,
-  "fwd_all_median_mm": 1.6530133485794067,
-  "fwd_all_p90_mm": 4.664923191070557,
-  "rev_all_median_mm": 2.122582197189331,
-  "rev_all_p90_mm": 6.0502705574035645,
-  "dice": 0.7044724509126103,
-  "oct_inside_mri": 0.867922310855883,
-  "to_octreg_mean_mm": 3.8560038340944827,
-  "to_octreg_corners_max_mm": 13.081128667842004,
-  "to_octreg_rotation_deg": 9.264541602256504,
-  "frame_ok": true,
-  "frame_spearman": 0.991385511214694,
-  "det": 0.49107631667511514,
+  "T_oct2mri": [
+   [
+    0.8635301913,
+    0.008002447,
+    0.0650879848,
+    -12.9756092684
+   ],
+   [
+    0.0065657351,
+    0.6170746124,
+    -0.0168691125,
+    -10.4986995048
+   ],
+   [
+    -0.0373693399,
+    0.0250883438,
+    0.9181399872,
+    9.8237369123
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.8644,
    0.6176,
    0.9206
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.49107631667511514,
+  "rotation_from_header_deg": 3.655585662662951,
+  "box_centre_shift_mm": 2.850769415061729,
+  "correlation": 0.9980260318585439,
+  "support_dice": 0.9986532044860559,
+  "wall_s": 45.22,
+  "hardware": "CPU, 12 threads"
  },
  "ants_com_fov": {
   "run": "ants_com_fov",
   "tool": "ants",
   "variant": "com_fov",
-  "wall_s": 67.78,
-  "rim_fwd_mm": 1.6168863773345947,
-  "rim_rev_mm": 2.215569257736206,
-  "fwd_all_median_mm": 1.5935910940170288,
-  "fwd_all_p90_mm": 3.91787052154541,
-  "rev_all_median_mm": 2.464280128479004,
-  "rev_all_p90_mm": 6.539531707763672,
-  "dice": 0.697032079967892,
-  "oct_inside_mri": 0.5582702129596725,
-  "to_octreg_mean_mm": 2.9109820204081553,
-  "to_octreg_corners_max_mm": 8.461434475028996,
-  "to_octreg_rotation_deg": 6.620758093938474,
-  "frame_ok": true,
-  "frame_spearman": 0.9910309946033583,
-  "det": 1.386451303331879,
+  "T_oct2mri": [
+   [
+    1.2824211284,
+    0.2104096553,
+    0.069758473,
+    -24.8938957816
+   ],
+   [
+    0.0164230654,
+    0.9849732744,
+    -0.0064330237,
+    -20.5106402518
+   ],
+   [
+    -0.0377783704,
+    0.0389813855,
+    1.0982326631,
+    5.907783772
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.2831,
    1.008,
    1.1005
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.386451303331879,
+  "rotation_from_header_deg": 5.677515384683903,
+  "box_centre_shift_mm": 1.8938824238673355,
+  "correlation": 0.9981996924871648,
+  "support_dice": 0.9987991951836853,
+  "wall_s": 67.78,
+  "hardware": "CPU, 12 threads"
  },
  "ants_identity": {
   "run": "ants_identity",
   "tool": "ants",
   "variant": "identity",
-  "wall_s": 24.53,
-  "rim_fwd_mm": 2.086057662963867,
-  "rim_rev_mm": 2.104621410369873,
-  "fwd_all_median_mm": 2.603940963745117,
-  "fwd_all_p90_mm": 6.164867877960205,
-  "rev_all_median_mm": 2.104621410369873,
-  "rev_all_p90_mm": 4.687703609466553,
-  "dice": 0.020097191410627182,
-  "oct_inside_mri": 0.16466992802730232,
-  "to_octreg_mean_mm": 40.327713304476404,
-  "to_octreg_corners_max_mm": 48.186211424049986,
-  "to_octreg_rotation_deg": 23.1519859535744,
-  "frame_ok": false,
-  "frame_spearman": 0.9834002432375534,
-  "det": 0.9262683722640973,
+  "T_oct2mri": [
+   [
+    0.8748908926,
+    -0.2121099292,
+    0.2016085723,
+    1.3283976762
+   ],
+   [
+    0.0644075403,
+    1.0066495873,
+    0.121008053,
+    5.8332004495
+   ],
+   [
+    -0.2593836958,
+    -0.0858652806,
+    0.9604453833,
+    -8.365742382
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.9148,
    1.0323,
    0.9888
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9262683722640973,
+  "rotation_from_header_deg": 17.774716615684458,
+  "box_centre_shift_mm": 38.65833195227305,
+  "correlation": 0.9974624645903797,
+  "support_dice": 0.9980200227933012,
+  "wall_s": 24.53,
+  "hardware": "CPU, 12 threads"
  },
  "elastix_center": {
   "run": "elastix_center",
   "tool": "elastix",
   "variant": "center",
-  "wall_s": 26.03,
-  "rim_fwd_mm": 0.8559026718139648,
-  "rim_rev_mm": 1.2849626541137695,
-  "fwd_all_median_mm": 0.8718299269676208,
-  "fwd_all_p90_mm": 3.2486517429351807,
-  "rev_all_median_mm": 1.279163122177124,
-  "rev_all_p90_mm": 5.1408281326293945,
-  "dice": 0.8088687477457004,
-  "oct_inside_mri": 0.7957685693482631,
-  "to_octreg_mean_mm": 2.6257353117314177,
-  "to_octreg_corners_max_mm": 8.662530094603035,
-  "to_octreg_rotation_deg": 12.118751945616204,
-  "frame_ok": true,
-  "frame_spearman": 0.9913489396638077,
-  "det": 0.7430235589259877,
+  "T_oct2mri": [
+   [
+    0.9139526207,
+    0.0050718131,
+    -0.0041911177,
+    -12.6299856234
+   ],
+   [
+    0.0560283015,
+    0.8352801753,
+    -0.0034836394,
+    -18.6207324145
+   ],
+   [
+    -0.0188430429,
+    -0.0029638791,
+    0.9737598973,
+    7.8728116784
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.9159,
    0.8353,
    0.9738
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.7430235589259877,
+  "rotation_from_header_deg": 1.7252811088449693,
+  "box_centre_shift_mm": 0.3778574697554457,
+  "correlation": 0.997362115281953,
+  "support_dice": 0.9983696828865206,
+  "wall_s": 26.03,
+  "hardware": "CPU, 12 threads"
  },
  "elastix_cog": {
   "run": "elastix_cog",
   "tool": "elastix",
   "variant": "cog",
-  "wall_s": 31.87,
-  "rim_fwd_mm": 0.8684436082839966,
-  "rim_rev_mm": 1.2368059158325195,
-  "fwd_all_median_mm": 0.8681100010871887,
-  "fwd_all_p90_mm": 3.260817527770996,
-  "rev_all_median_mm": 1.241828441619873,
-  "rev_all_p90_mm": 4.984838962554932,
-  "dice": 0.8151257547559447,
-  "oct_inside_mri": 0.8191192728453589,
-  "to_octreg_mean_mm": 2.7682678811726316,
-  "to_octreg_corners_max_mm": 8.76982896842103,
-  "to_octreg_rotation_deg": 12.297929483792997,
-  "frame_ok": true,
-  "frame_spearman": 0.9915510182064359,
-  "det": 0.7118949923202371,
+  "T_oct2mri": [
+   [
+    0.8967750887,
+    0.0032176031,
+    0.0070806396,
+    -12.6462481331
+   ],
+   [
+    0.0537896524,
+    0.818146094,
+    0.0083899218,
+    -18.0393885683
+   ],
+   [
+    -0.0210893608,
+    -0.0056499786,
+    0.9702981102,
+    7.9479227018
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.8986,
    0.8182,
    0.9704
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.7118949923202371,
+  "rotation_from_header_deg": 1.9478514167774301,
+  "box_centre_shift_mm": 0.3370039449421087,
+  "correlation": 0.9974680433371583,
+  "support_dice": 0.9983480699458559,
+  "wall_s": 31.87,
+  "hardware": "CPU, 12 threads"
  },
  "elastix_cog_fov": {
   "run": "elastix_cog_fov",
   "tool": "elastix",
   "variant": "cog_fov",
-  "wall_s": 29.18,
-  "rim_fwd_mm": 1.5624439716339111,
-  "rim_rev_mm": 1.9982857704162598,
-  "fwd_all_median_mm": 1.4661496877670288,
-  "fwd_all_p90_mm": 3.645826578140259,
-  "rev_all_median_mm": 1.9657001495361328,
-  "rev_all_p90_mm": 6.013925552368164,
-  "dice": 0.7239612209467102,
-  "oct_inside_mri": 0.6172032048643087,
-  "to_octreg_mean_mm": 2.383642070290413,
-  "to_octreg_corners_max_mm": 5.807937787860282,
-  "to_octreg_rotation_deg": 10.581157512555338,
-  "frame_ok": true,
-  "frame_spearman": 0.9914526861544771,
-  "det": 1.0289635494978364,
+  "T_oct2mri": [
+   [
+    1.0274707843,
+    0.0728711631,
+    -0.0104823434,
+    -14.9156677976
+   ],
+   [
+    0.035039961,
+    0.9921623119,
+    0.0038379851,
+    -21.1665102631
+   ],
+   [
+    -0.0111396552,
+    -0.0031884206,
+    1.012001983,
+    7.9018151105
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0281,
    0.9948,
    1.0121
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.0289635494978364,
+  "rotation_from_header_deg": 1.0896925182945991,
+  "box_centre_shift_mm": 0.9063002476462295,
+  "correlation": 0.9977842125956752,
+  "support_dice": 0.9987066844173065,
+  "wall_s": 29.18,
+  "hardware": "CPU, 12 threads"
  },
  "flirt_fullsearch_x10": {
   "run": "flirt_fullsearch_x10",
   "tool": "flirt",
   "variant": "fullsearch_x10",
-  "wall_s": 8768.28,
-  "rim_fwd_mm": 1.4079766273498535,
-  "rim_rev_mm": 2.1158573627471924,
-  "fwd_all_median_mm": 1.5816974639892578,
-  "fwd_all_p90_mm": 4.406136989593506,
-  "rev_all_median_mm": 2.05521297454834,
-  "rev_all_p90_mm": 4.943258285522461,
-  "dice": 0.6026385413134937,
-  "oct_inside_mri": 0.8585166799844247,
-  "to_octreg_mean_mm": 19.77582308631727,
-  "to_octreg_corners_max_mm": 46.50580504204381,
-  "to_octreg_rotation_deg": 168.64168749011637,
-  "frame_ok": true,
-  "frame_spearman": 0.991404672763303,
-  "det": 0.38876056036460516,
+  "T_oct2mri": [
+   [
+    0.7198793337,
+    -0.0959312078,
+    0.1134707214,
+    -7.9171147557
+   ],
+   [
+    -0.1120472568,
+    -0.685804229,
+    0.2131265629,
+    10.6249552477
+   ],
+   [
+    0.0749626772,
+    -0.2327179656,
+    -0.6854978919,
+    40.7256708103
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.7324,
    0.7305,
    0.7268
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.38876056036460516,
+  "rotation_from_header_deg": 162.09507299493137,
+  "box_centre_shift_mm": 3.5417470722362037,
+  "correlation": 0.9923535579416478,
+  "support_dice": 0.9972894427372567,
+  "wall_s": 8768.28,
+  "hardware": "CPU (FLIRT runs single-threaded)"
  },
  "flirt_search_native": {
   "run": "flirt_search_native",
   "tool": "flirt",
   "variant": "search_native",
-  "wall_s": 3760.96,
-  "rim_fwd_mm": 1.93308687210083,
-  "rim_rev_mm": 2.618912935256958,
-  "fwd_all_median_mm": 1.7192133665084839,
-  "fwd_all_p90_mm": 4.986518859863281,
-  "rev_all_median_mm": 2.2682042121887207,
-  "rev_all_p90_mm": 6.123746871948242,
-  "dice": 0.5904793738009302,
-  "oct_inside_mri": 0.8881852073998283,
-  "to_octreg_mean_mm": 18.095644409419084,
-  "to_octreg_corners_max_mm": 48.5106663258641,
-  "to_octreg_rotation_deg": 176.52211810612442,
-  "frame_ok": true,
-  "frame_spearman": 0.9913506911928329,
-  "det": 0.35793707823271287,
+  "T_oct2mri": [
+   [
+    -0.7542400499,
+    -0.0753348984,
+    -0.0711992994,
+    15.8846359944
+   ],
+   [
+    0.0361105932,
+    -0.7678810229,
+    -0.1304265104,
+    17.4028024593
+   ],
+   [
+    -0.0083795799,
+    -0.1048472501,
+    0.5962971837,
+    17.2961938933
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.7552,
    0.7787,
    0.6145
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.35793707823271287,
+  "rotation_from_header_deg": 175.68591291226625,
+  "box_centre_shift_mm": 2.3003751391927802,
+  "correlation": 0.9924379873696751,
+  "support_dice": 0.9972993017271812,
+  "wall_s": 3760.96,
+  "hardware": "CPU (FLIRT runs single-threaded)"
  },
  "flirt_search_x10": {
   "run": "flirt_search_x10",
   "tool": "flirt",
   "variant": "search_x10",
-  "wall_s": 3192.57,
-  "rim_fwd_mm": 1.4626129865646362,
-  "rim_rev_mm": 2.1806817054748535,
-  "fwd_all_median_mm": 1.6291370391845703,
-  "fwd_all_p90_mm": 4.187650203704834,
-  "rev_all_median_mm": 2.0895118713378906,
-  "rev_all_p90_mm": 5.006550312042236,
-  "dice": 0.5968628301901115,
-  "oct_inside_mri": 0.8482427741611248,
-  "to_octreg_mean_mm": 19.58627377679781,
-  "to_octreg_corners_max_mm": 46.97226254350225,
-  "to_octreg_rotation_deg": 170.48188967897772,
-  "frame_ok": true,
-  "frame_spearman": 0.9906470079505167,
-  "det": 0.39018948510043433,
+  "T_oct2mri": [
+   [
+    0.7515142707,
+    -0.0911792203,
+    0.1049391238,
+    -8.5717090257
+   ],
+   [
+    -0.107535315,
+    -0.71986972,
+    0.175963931,
+    12.199974384
+   ],
+   [
+    0.0896219331,
+    -0.2199258343,
+    -0.6414200883,
+    39.5909846201
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.7644,
    0.7582,
    0.6733
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.39018948510043433,
+  "rotation_from_header_deg": 163.92430288591004,
+  "box_centre_shift_mm": 3.4355553345552527,
+  "correlation": 0.9923398736214045,
+  "support_dice": 0.9972839199481547,
+  "wall_s": 3192.57,
+  "hardware": "CPU (FLIRT runs single-threaded)"
  },
  "flirt_search_x10_fov": {
   "run": "flirt_search_x10_fov",
   "tool": "flirt",
   "variant": "search_x10_fov",
-  "wall_s": 4424.76,
-  "rim_fwd_mm": 1.625338077545166,
-  "rim_rev_mm": 2.4314308166503906,
-  "fwd_all_median_mm": 1.6646045446395874,
-  "fwd_all_p90_mm": 4.696319580078125,
-  "rev_all_median_mm": 2.3551769256591797,
-  "rev_all_p90_mm": 5.738489627838135,
-  "dice": 0.6533872358689873,
-  "oct_inside_mri": 0.7781712058320717,
-  "to_octreg_mean_mm": 4.920692928929396,
-  "to_octreg_corners_max_mm": 8.912275951555339,
-  "to_octreg_rotation_deg": 6.018796578845381,
-  "frame_ok": false,
-  "frame_spearman": 0.9903451685811467,
-  "det": 0.5356374699261941,
+  "T_oct2mri": [
+   [
+    0.8369648702,
+    0.1978714065,
+    0.0726033538,
+    -13.5809833918
+   ],
+   [
+    -0.1650358317,
+    0.7807414427,
+    -0.0964649555,
+    -10.6260223709
+   ],
+   [
+    -0.0909617184,
+    0.0486652383,
+    0.765766191,
+    12.9707977675
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.8579,
    0.8069,
    0.7752
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.5356374699261941,
+  "rotation_from_header_deg": 15.008444622041619,
+  "box_centre_shift_mm": 3.837511131617477,
+  "correlation": 0.9927173328413376,
+  "support_dice": 0.9973902769329267,
+  "wall_s": 4424.76,
+  "hardware": "CPU (FLIRT runs single-threaded)"
  },
  "flirt_sqform_x10": {
   "run": "flirt_sqform_x10",
   "tool": "flirt",
   "variant": "sqform_x10",
-  "wall_s": 1408.69,
-  "rim_fwd_mm": 1.9540725946426392,
-  "rim_rev_mm": 6.1046977043151855,
-  "fwd_all_median_mm": 1.9540725946426392,
-  "fwd_all_p90_mm": 2.7415575981140137,
-  "rev_all_median_mm": 6.1046977043151855,
-  "rev_all_p90_mm": 7.763606071472168,
-  "dice": 0.00015597220487848017,
-  "oct_inside_mri": 0.01815610859728507,
-  "to_octreg_mean_mm": 43.25676760962563,
-  "to_octreg_corners_max_mm": 75.00892065694762,
-  "to_octreg_rotation_deg": 68.8680066855141,
-  "frame_ok": false,
-  "frame_spearman": 0.9871159763352411,
-  "det": 1.6221087243574097,
+  "T_oct2mri": [
+   [
+    0.2630040761,
+    1.034014113,
+    0.5016089863,
+    2.6801155897
+   ],
+   [
+    -0.997881578,
+    0.4593180063,
+    -0.4181300059,
+    4.2961823581
+   ],
+   [
+    -0.5604164817,
+    -0.3350876603,
+    0.9715336989,
+    3.0469051487
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.1743,
    1.18,
    1.1706
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.6221087243574097,
+  "rotation_from_header_deg": 77.18894257989251,
+  "box_centre_shift_mm": 40.08813093590036,
+  "correlation": 0.9881595188775579,
+  "support_dice": 0.9976211393818477,
+  "wall_s": 1408.69,
+  "hardware": "CPU (FLIRT runs single-threaded)"
  },
  "greedy_centers": {
   "run": "greedy_centers",
   "tool": "greedy",
   "variant": "centers",
-  "wall_s": 63.48,
-  "rim_fwd_mm": 1.2126342058181763,
-  "rim_rev_mm": 1.9724363088607788,
-  "fwd_all_median_mm": 1.1740310192108154,
-  "fwd_all_p90_mm": 3.7772107124328613,
-  "rev_all_median_mm": 1.956066608428955,
-  "rev_all_p90_mm": 5.629420757293701,
-  "dice": 0.7271238611514794,
-  "oct_inside_mri": 0.6795923518245544,
-  "to_octreg_mean_mm": 3.68002623870371,
-  "to_octreg_corners_max_mm": 9.535055159505847,
-  "to_octreg_rotation_deg": 14.400385558965231,
-  "frame_ok": true,
-  "frame_spearman": 0.991125005957587,
-  "det": 0.9068451653959114,
+  "T_oct2mri": [
+   [
+    1.1473153533,
+    0.2548137762,
+    0.0328501702,
+    -22.6404397763
+   ],
+   [
+    0.0363662846,
+    0.8987539219,
+    0.0028907421,
+    -17.8863850255
+   ],
+   [
+    0.297396363,
+    0.0008446217,
+    0.8958013989,
+    5.4442651127
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.1858,
    0.9342,
    0.8964
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9068451653959114,
+  "rotation_from_header_deg": 9.74026926785042,
+  "box_centre_shift_mm": 2.196716587214732,
+  "correlation": 1.0,
+  "support_dice": 1.0,
+  "wall_s": 63.48,
+  "hardware": "CPU, 8 threads"
  },
  "greedy_centers_fov": {
   "run": "greedy_centers_fov",
   "tool": "greedy",
   "variant": "centers_fov",
-  "wall_s": 73.08,
-  "rim_fwd_mm": 1.4221327304840088,
-  "rim_rev_mm": 1.8043490648269653,
-  "fwd_all_median_mm": 1.3574001789093018,
-  "fwd_all_p90_mm": 3.608020305633545,
-  "rev_all_median_mm": 1.7652008533477783,
-  "rev_all_p90_mm": 5.831737995147705,
-  "dice": 0.732686988266644,
-  "oct_inside_mri": 0.6311890776313701,
-  "to_octreg_mean_mm": 2.356035304272951,
-  "to_octreg_corners_max_mm": 6.928917329207952,
-  "to_octreg_rotation_deg": 10.984986983348273,
-  "frame_ok": true,
-  "frame_spearman": 0.9881716133777665,
-  "det": 0.9992552013221552,
+  "T_oct2mri": [
+   [
+    0.9998081485,
+    0.0013007434,
+    0.0004952797,
+    -13.3363210326
+   ],
+   [
+    -0.0012425661,
+    0.999505297,
+    -0.0020098937,
+    -21.446908815
+   ],
+   [
+    -0.0005453181,
+    0.0016547045,
+    0.9999364056,
+    7.7174007143
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.9998,
    0.9995,
    0.9999
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9992552013221552,
+  "rotation_from_header_deg": 0.13126337987964953,
+  "box_centre_shift_mm": 0.9927424069466501,
+  "correlation": 0.9999999999999911,
+  "support_dice": 1.0,
+  "wall_s": 73.08,
+  "hardware": "CPU, 8 threads"
  },
  "greedy_identity": {
   "run": "greedy_identity",
   "tool": "greedy",
   "variant": "identity",
-  "wall_s": 54.64,
-  "rim_fwd_mm": 2.527194023132324,
-  "rim_rev_mm": 2.7439966201782227,
-  "fwd_all_median_mm": 2.527194023132324,
-  "fwd_all_p90_mm": 5.044482231140137,
-  "rev_all_median_mm": 2.7439966201782227,
-  "rev_all_p90_mm": 4.895294666290283,
-  "dice": 0.02474123096422742,
-  "oct_inside_mri": 0.2764740507680848,
-  "to_octreg_mean_mm": 66.64607638675983,
-  "to_octreg_corners_max_mm": 97.85198128702041,
-  "to_octreg_rotation_deg": 14.572664045517792,
-  "frame_ok": false,
-  "frame_spearman": 0.9734341927884808,
-  "det": 1.8292091056961979,
+  "T_oct2mri": [
+   [
+    1.0809963019,
+    0.4010422891,
+    -0.047346482,
+    5.202485432
+   ],
+   [
+    0.6713862607,
+    1.9295177972,
+    -0.0618436912,
+    7.5088046167
+   ],
+   [
+    -0.1618943702,
+    -0.0956586493,
+    1.0147481801,
+    -9.4970269677
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.2828,
    1.9731,
    1.0177
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.8292091056961979,
+  "rotation_from_header_deg": 5.8188672501883225,
+  "box_centre_shift_mm": 65.53222320129488,
+  "correlation": 1.0,
+  "support_dice": 1.0,
+  "wall_s": 54.64,
+  "hardware": "CPU, 8 threads"
  },
  "greedy_search": {
   "run": "greedy_search",
   "tool": "greedy",
   "variant": "search",
-  "wall_s": 53.46,
-  "rim_fwd_mm": null,
-  "rim_rev_mm": null,
-  "fwd_all_median_mm": null,
-  "fwd_all_p90_mm": null,
-  "rev_all_median_mm": null,
-  "rev_all_p90_mm": null,
-  "dice": 0.0,
-  "oct_inside_mri": 0.0,
-  "to_octreg_mean_mm": 42.4510895412084,
-  "to_octreg_corners_max_mm": 57.39879869890818,
-  "to_octreg_rotation_deg": 32.26923633741404,
-  "frame_ok": false,
-  "frame_spearman": 0.8700971727871851,
-  "det": 0.9999999075032638,
+  "T_oct2mri": [
+   [
+    0.7892330963,
+    0.5860562611,
+    -0.1834351946,
+    -38.6414524252
+   ],
+   [
+    -0.6082914681,
+    0.7870474376,
+    -0.1026539799,
+    30.2122138442
+   ],
+   [
+    0.0842117531,
+    0.1926006605,
+    0.9776573379,
+    -8.4787291117
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0,
    1.0,
    1.0
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9999999075032638,
+  "rotation_from_header_deg": 39.01611138108653,
+  "box_centre_shift_mm": 42.4395217818435,
+  "correlation": 0.9999999999999996,
+  "support_dice": 1.0,
+  "wall_s": 53.46,
+  "hardware": "CPU, 8 threads"
  },
  "mri_coreg_default": {
   "run": "mri_coreg_default",
   "tool": "mri_coreg",
   "variant": "default",
-  "wall_s": 1328.91,
-  "rim_fwd_mm": 1.0124506950378418,
-  "rim_rev_mm": 1.6969548463821411,
-  "fwd_all_median_mm": 0.9731855392456055,
-  "fwd_all_p90_mm": 3.2779152393341064,
-  "rev_all_median_mm": 1.6438417434692383,
-  "rev_all_p90_mm": 5.399961471557617,
-  "dice": 0.7876005702289341,
-  "oct_inside_mri": 0.7782720750169312,
-  "to_octreg_mean_mm": 4.123545703238789,
-  "to_octreg_corners_max_mm": 12.288641559821945,
-  "to_octreg_rotation_deg": 16.57216742981563,
-  "frame_ok": true,
-  "frame_spearman": 0.991283137768001,
-  "det": 0.7363225745997481,
+  "T_oct2mri": [
+   [
+    0.9123882651,
+    0.00542233,
+    0.1161703244,
+    -13.9479551315
+   ],
+   [
+    0.0096427659,
+    0.8035472631,
+    0.146454677,
+    -17.6635360718
+   ],
+   [
+    -0.0685303211,
+    -0.0882962942,
+    0.9797917604,
+    10.8575382233
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0000001192
+   ]
+  ],
   "scale_per_oct_axis": [
    0.915,
    0.8084,
    0.9975
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.7363225745997481,
+  "rotation_from_header_deg": 9.271714341721248,
+  "box_centre_shift_mm": 1.8917352907821041,
+  "correlation": 0.9980506146707133,
+  "support_dice": 0.9986472318082517,
+  "wall_s": 1328.91,
+  "hardware": "CPU, 20 threads"
  },
  "mri_coreg_default_movmask": {
   "run": "mri_coreg_default_movmask",
   "tool": "mri_coreg",
   "variant": "default_movmask",
-  "wall_s": 1065.51,
-  "rim_fwd_mm": 1.0124506950378418,
-  "rim_rev_mm": 1.6969548463821411,
-  "fwd_all_median_mm": 0.9731855392456055,
-  "fwd_all_p90_mm": 3.2779152393341064,
-  "rev_all_median_mm": 1.6438417434692383,
-  "rev_all_p90_mm": 5.399961471557617,
-  "dice": 0.7876005702289341,
-  "oct_inside_mri": 0.7782720750169312,
-  "to_octreg_mean_mm": 4.123545703238789,
-  "to_octreg_corners_max_mm": 12.288641559821945,
-  "to_octreg_rotation_deg": 16.57216742981563,
-  "frame_ok": true,
-  "frame_spearman": 0.991283137768001,
-  "det": 0.7363225745997481,
+  "T_oct2mri": [
+   [
+    0.9123882651,
+    0.00542233,
+    0.1161703244,
+    -13.9479551315
+   ],
+   [
+    0.0096427659,
+    0.8035472631,
+    0.146454677,
+    -17.6635360718
+   ],
+   [
+    -0.0685303211,
+    -0.0882962942,
+    0.9797917604,
+    10.8575382233
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0000001192
+   ]
+  ],
   "scale_per_oct_axis": [
    0.915,
    0.8084,
    0.9975
   ],
-  "apply_s": 149.8555190563202,
-  "evaluate_s": 289.0447733402252
+  "det": 0.7363225745997481,
+  "rotation_from_header_deg": 9.271714341721248,
+  "box_centre_shift_mm": 1.8917352907821041,
+  "correlation": 0.9980506146707133,
+  "support_dice": 0.9986472318082517,
+  "wall_s": 1065.51,
+  "hardware": "CPU, 20 threads"
  },
  "mri_coreg_regheader": {
   "run": "mri_coreg_regheader",
   "tool": "mri_coreg",
   "variant": "regheader",
-  "wall_s": 1165.8,
-  "rim_fwd_mm": 1.7216874361038208,
-  "rim_rev_mm": 2.048635959625244,
-  "fwd_all_median_mm": 1.6987359523773193,
-  "fwd_all_p90_mm": 4.091244697570801,
-  "rev_all_median_mm": 2.075975179672241,
-  "rev_all_p90_mm": 6.477006912231445,
-  "dice": 0.6963301570950297,
-  "oct_inside_mri": 0.5743750556832417,
-  "to_octreg_mean_mm": 2.0459771064483796,
-  "to_octreg_corners_max_mm": 6.42915368556294,
-  "to_octreg_rotation_deg": 10.163176314843284,
-  "frame_ok": true,
-  "frame_spearman": 0.9906314421608519,
-  "det": 1.1411640642017398,
+  "T_oct2mri": [
+   [
+    1.0531492233,
+    0.0261786804,
+    -0.0432409309,
+    -14.5562362671
+   ],
+   [
+    0.014659564,
+    1.0536099672,
+    -0.0654541478,
+    -21.4874229431
+   ],
+   [
+    0.0481228121,
+    0.0802837238,
+    1.0219486952,
+    5.8062934875
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0544,
    1.057,
    1.025
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.1411640642017398,
+  "rotation_from_header_deg": 4.707369692397718,
+  "box_centre_shift_mm": 1.4797285923356251,
+  "correlation": 0.9985024287826518,
+  "support_dice": 0.9989266923000881,
+  "wall_s": 1165.8,
+  "hardware": "CPU, 20 threads"
  },
  "mri_robust_register_default_com": {
   "run": "mri_robust_register_default_com",
   "tool": "mri_robust_register",
   "variant": "default_com",
-  "wall_s": 841.52,
-  "rim_fwd_mm": 1.6111165285110474,
-  "rim_rev_mm": 1.93771231174469,
-  "fwd_all_median_mm": 1.455049991607666,
-  "fwd_all_p90_mm": 3.5390849113464355,
-  "rev_all_median_mm": 1.8736259937286377,
-  "rev_all_p90_mm": 5.556144714355469,
-  "dice": 0.7457802467748407,
-  "oct_inside_mri": 0.6271686014299002,
-  "to_octreg_mean_mm": 2.9575269786906917,
-  "to_octreg_corners_max_mm": 8.250205363155338,
-  "to_octreg_rotation_deg": 11.683012415435806,
-  "frame_ok": true,
-  "frame_spearman": 0.9903955700600845,
-  "det": 1.0569927606795542,
+  "T_oct2mri": [
+   [
+    0.9899706244,
+    -0.0021261533,
+    0.01740315,
+    -13.6632385254
+   ],
+   [
+    0.0017911643,
+    0.9966490865,
+    0.0167609826,
+    -21.4209442139
+   ],
+   [
+    -0.0055109141,
+    -0.0208489913,
+    1.0708397627,
+    5.7782745361
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.99,
    0.9969,
    1.0711
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.0569927606795542,
+  "rotation_from_header_deg": 1.2260036399471093,
+  "box_centre_shift_mm": 0.751455165623493,
+  "correlation": 0.9984774836113063,
+  "support_dice": 0.9988925817581185,
+  "wall_s": 841.52,
+  "hardware": "CPU, 20 threads"
  },
  "mri_robust_register_default_com_maskmov": {
   "run": "mri_robust_register_default_com_maskmov",
   "tool": "mri_robust_register",
   "variant": "default_com_maskmov",
-  "wall_s": 1096.52,
-  "rim_fwd_mm": 1.6111165285110474,
-  "rim_rev_mm": 1.93771231174469,
-  "fwd_all_median_mm": 1.455049991607666,
-  "fwd_all_p90_mm": 3.5390849113464355,
-  "rev_all_median_mm": 1.8736259937286377,
-  "rev_all_p90_mm": 5.556144714355469,
-  "dice": 0.7457802467748407,
-  "oct_inside_mri": 0.6271686014299002,
-  "to_octreg_mean_mm": 2.9575269786906917,
-  "to_octreg_corners_max_mm": 8.250205363155338,
-  "to_octreg_rotation_deg": 11.683012415435806,
-  "frame_ok": true,
-  "frame_spearman": 0.9903955700600845,
-  "det": 1.0569927606795542,
+  "T_oct2mri": [
+   [
+    0.9899706244,
+    -0.0021261533,
+    0.01740315,
+    -13.6632385254
+   ],
+   [
+    0.0017911643,
+    0.9966490865,
+    0.0167609826,
+    -21.4209442139
+   ],
+   [
+    -0.0055109141,
+    -0.0208489913,
+    1.0708397627,
+    5.7782745361
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.99,
    0.9969,
    1.0711
   ],
-  "apply_s": 149.20378708839417,
-  "evaluate_s": 286.75282073020935
+  "det": 1.0569927606795542,
+  "rotation_from_header_deg": 1.2260036399471093,
+  "box_centre_shift_mm": 0.751455165623493,
+  "correlation": 0.9984774836113063,
+  "support_dice": 0.9988925817581185,
+  "wall_s": 1096.52,
+  "hardware": "CPU, 20 threads"
  },
  "mri_robust_register_noinit_rigid_only": {
   "run": "mri_robust_register_noinit_rigid_only",
   "tool": "mri_robust_register",
   "variant": "noinit_rigid_only",
-  "wall_s": 314.31,
-  "rim_fwd_mm": null,
-  "rim_rev_mm": null,
-  "fwd_all_median_mm": null,
-  "fwd_all_p90_mm": null,
-  "rev_all_median_mm": null,
-  "rev_all_p90_mm": null,
-  "dice": 0.0,
-  "oct_inside_mri": 0.0,
-  "to_octreg_mean_mm": 42.392577461002496,
-  "to_octreg_corners_max_mm": 45.62384701679098,
-  "to_octreg_rotation_deg": 10.728129897437388,
-  "frame_ok": false,
-  "frame_spearman": 0.9632660734095696,
-  "det": 0.9999999755253255,
+  "T_oct2mri": [
+   [
+    0.9999346733,
+    0.0046096612,
+    0.0104582747,
+    0.5913677216
+   ],
+   [
+    -0.0046095229,
+    0.9999893904,
+    -3.73291e-05,
+    18.0093860626
+   ],
+   [
+    -0.0104583353,
+    -1.0881e-05,
+    0.9999452829,
+    2.2409858704
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0,
    1.0,
    1.0
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9999999755253255,
+  "rotation_from_header_deg": 0.6548542897148272,
+  "box_centre_shift_mm": 41.7162667279822,
+  "correlation": 0.9979962883553694,
+  "support_dice": 0.9993154553077884,
+  "wall_s": 314.31,
+  "hardware": "CPU, 20 threads"
  },
  "niftyreg_center": {
   "run": "niftyreg_center",
   "tool": "niftyreg",
   "variant": "center",
-  "wall_s": 309.17,
-  "rim_fwd_mm": 1.0558527708053589,
-  "rim_rev_mm": 1.5947988033294678,
-  "fwd_all_median_mm": 1.0895766019821167,
-  "fwd_all_p90_mm": 3.7739453315734863,
-  "rev_all_median_mm": 1.6635944843292236,
-  "rev_all_p90_mm": 5.879053115844727,
-  "dice": 0.7599722792354877,
-  "oct_inside_mri": 0.6819901728192234,
-  "to_octreg_mean_mm": 0.3145716401447666,
-  "to_octreg_corners_max_mm": 0.9666405757835613,
-  "to_octreg_rotation_deg": 1.0037478464317369,
-  "frame_ok": true,
-  "frame_spearman": 0.9907458986504124,
-  "det": 0.9097813538618293,
+  "T_oct2mri": [
+   [
+    0.953671324,
+    0.1316588968,
+    0.0682379967,
+    -17.6393760789
+   ],
+   [
+    -0.115089857,
+    0.9429821325,
+    -0.1327064283,
+    -15.7664761084
+   ],
+   [
+    -0.1045109146,
+    0.1095666649,
+    0.9713232806,
+    8.2330027657
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.9663,
    0.9584,
    0.9827
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.9097813538618293,
+  "rotation_from_header_deg": 11.59842628121568,
+  "box_centre_shift_mm": 1.6658338186982111,
+  "correlation": 0.999999999634684,
+  "support_dice": 0.9999998834960527,
+  "wall_s": 309.17,
+  "hardware": "CPU, 8 threads"
  },
  "niftyreg_center_fov": {
   "run": "niftyreg_center_fov",
   "tool": "niftyreg",
   "variant": "center_fov",
-  "wall_s": 237.81,
-  "rim_fwd_mm": 1.0558527708053589,
-  "rim_rev_mm": 1.5947988033294678,
-  "fwd_all_median_mm": 1.0895766019821167,
-  "fwd_all_p90_mm": 3.7739453315734863,
-  "rev_all_median_mm": 1.6635944843292236,
-  "rev_all_p90_mm": 5.879053115844727,
-  "dice": 0.7599722792354877,
-  "oct_inside_mri": 0.6819901728192234,
-  "to_octreg_mean_mm": 0.3145716401447666,
-  "to_octreg_corners_max_mm": 0.9666405757835613,
-  "to_octreg_rotation_deg": 1.0037478464317369,
-  "frame_ok": true,
-  "frame_spearman": 0.9907458986504124,
-  "det": 0.9097813538618293,
+  "T_oct2mri": [
+   [
+    0.953671324,
+    0.1316588968,
+    0.0682379967,
+    -17.6393760789
+   ],
+   [
+    -0.115089857,
+    0.9429821325,
+    -0.1327064283,
+    -15.7664761084
+   ],
+   [
+    -0.1045109146,
+    0.1095666649,
+    0.9713232806,
+    8.2330027657
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.9663,
    0.9584,
    0.9827
   ],
-  "apply_s": 150.32944703102112,
-  "evaluate_s": 282.8745048046112
+  "det": 0.9097813538618293,
+  "rotation_from_header_deg": 11.59842628121568,
+  "box_centre_shift_mm": 1.6658338186982111,
+  "correlation": 0.999999999634684,
+  "support_dice": 0.9999998834960527,
+  "wall_s": 237.81,
+  "hardware": "CPU, 8 threads"
  },
  "niftyreg_nac": {
   "run": "niftyreg_nac",
   "tool": "niftyreg",
   "variant": "nac",
-  "wall_s": 205.5,
-  "rim_fwd_mm": 1.6165260076522827,
-  "rim_rev_mm": 2.7581989765167236,
-  "fwd_all_median_mm": 1.562729835510254,
-  "fwd_all_p90_mm": 4.683141708374023,
-  "rev_all_median_mm": 2.5961036682128906,
-  "rev_all_p90_mm": 6.049300193786621,
-  "dice": 0.7138520667808429,
-  "oct_inside_mri": 0.6456625741708126,
-  "to_octreg_mean_mm": 10.649612358062148,
-  "to_octreg_corners_max_mm": 19.281950094815652,
-  "to_octreg_rotation_deg": 32.31712054803626,
-  "frame_ok": true,
-  "frame_spearman": 0.9901481114758728,
-  "det": 1.0238612321205405,
+  "T_oct2mri": [
+   [
+    0.9462534264,
+    -0.1660381572,
+    -0.2039793137,
+    -4.8459907509
+   ],
+   [
+    0.3348422268,
+    0.9243602137,
+    0.017149859,
+    -18.5931293304
+   ],
+   [
+    0.3745381388,
+    -0.1222515218,
+    1.0147257809,
+    -1.746050185
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0714,
    0.9471,
    1.0352
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 1.0238612321205405,
+  "rotation_from_header_deg": 22.5959748084979,
+  "box_centre_shift_mm": 8.244689003389736,
+  "correlation": 0.999999999570222,
+  "support_dice": 0.9999998733277655,
+  "wall_s": 205.5,
+  "hardware": "CPU, 8 threads"
  },
  "synthmorph_affine": {
   "run": "synthmorph_affine",
   "tool": "synthmorph",
   "variant": "affine",
-  "wall_s": 38.33,
-  "rim_fwd_mm": 3.8755135536193848,
-  "rim_rev_mm": null,
-  "fwd_all_median_mm": 3.8755135536193848,
-  "fwd_all_p90_mm": 10.36147403717041,
-  "rev_all_median_mm": null,
-  "rev_all_p90_mm": null,
-  "dice": 0.0,
-  "oct_inside_mri": 0.0,
-  "to_octreg_mean_mm": 28.344751180206256,
-  "to_octreg_corners_max_mm": 54.67087326613562,
-  "to_octreg_rotation_deg": 37.792149403403414,
-  "frame_ok": true,
-  "frame_spearman": 0.9913092880802131,
-  "det": 0.49338642096594865,
+  "T_oct2mri": [
+   [
+    0.7247263789,
+    -0.1902043968,
+    0.3743805587,
+    -26.6227357326
+   ],
+   [
+    0.3811741769,
+    0.56569767,
+    0.4454423189,
+    -50.5964939089
+   ],
+   [
+    -0.0565304942,
+    0.1562768072,
+    1.0462114811,
+    7.1305299212
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    0.8208,
    0.6169,
    1.1971
   ],
-  "apply_s": null,
-  "evaluate_s": null
+  "det": 0.49338642096594865,
+  "rotation_from_header_deg": 31.265732058931874,
+  "box_centre_shift_mm": 29.91658170227643,
+  "correlation": 0.9963514503085819,
+  "support_dice": 0.9984756402723005,
+  "wall_s": 38.33,
+  "hardware": "CPU, 20 threads"
  },
  "ants_antsai": {
   "run": "ants_antsai",
   "tool": "ants",
   "variant": "antsai",
-  "wall_s": 19.44,
-  "rim_fwd_mm": 2.884760618209839,
-  "rim_rev_mm": 4.2907280921936035,
-  "fwd_all_median_mm": 3.0601675510406494,
-  "fwd_all_p90_mm": 5.372885704040527,
-  "rev_all_median_mm": 4.2907280921936035,
-  "rev_all_p90_mm": 7.575169086456299,
-  "dice": 0.0004126556084567447,
-  "oct_inside_mri": 0.004323419006489997,
-  "to_octreg_mean_mm": 40.7715461288352,
-  "to_octreg_corners_max_mm": 89.94019065193216,
-  "to_octreg_rotation_deg": 165.2492491577763,
-  "frame_ok": false,
-  "frame_spearman": 0.993671770946274,
-  "det": 1.0667948430845755,
+  "T_oct2mri": [
+   [
+    0.4744823366,
+    -0.6634969691,
+    0.6483187738,
+    10.554734382
+   ],
+   [
+    -0.4852201539,
+    -0.7481242491,
+    -0.4875215529,
+    57.7633123798
+   ],
+   [
+    0.7756959827,
+    -0.0888379674,
+    -0.6385663668,
+    44.9369927412
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0307,
    1.0039,
    1.0324
   ],
-  "apply_s": 114.30400085449219,
-  "evaluate_s": 223.59694910049438
+  "det": 1.0667948430845755,
+  "rotation_from_header_deg": 166.98239048451333,
+  "box_centre_shift_mm": 38.09074680454775,
+  "correlation": 0.9980627778336195,
+  "support_dice": 0.9986904230641311,
+  "wall_s": 17670.31,
+  "hardware": "CPU, 12 threads"
  },
  "reference_centres": {
   "run": "reference_centres",
   "tool": "reference",
   "variant": "centres",
-  "wall_s": null,
-  "rim_fwd_mm": 1.538491129875183,
-  "rim_rev_mm": 1.8485808372497559,
-  "fwd_all_median_mm": 1.4669963121414185,
-  "fwd_all_p90_mm": 3.5669891834259033,
-  "rev_all_median_mm": 1.8196032047271729,
-  "rev_all_p90_mm": 5.521336555480957,
-  "dice": 0.7425657979648164,
-  "oct_inside_mri": 0.638839817678401,
-  "to_octreg_mean_mm": 2.447866876311315,
-  "to_octreg_corners_max_mm": 6.273812478964158,
-  "to_octreg_rotation_deg": 11.112882486623423,
-  "frame_ok": true,
-  "frame_spearman": 0.9922586164039572,
-  "det": 1.0,
+  "T_oct2mri": [
+   [
+    1.0,
+    0.0,
+    0.0,
+    -13.6485218257
+   ],
+   [
+    0.0,
+    1.0,
+    0.0,
+    -20.8548126742
+   ],
+   [
+    0.0,
+    0.0,
+    1.0,
+    7.0768203773
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
   "scale_per_oct_axis": [
    1.0,
    1.0,
    1.0
   ],
-  "apply_s": 121.32068204879761,
-  "evaluate_s": 150.09486079216003
+  "det": 1.0,
+  "rotation_from_header_deg": 0.0,
+  "box_centre_shift_mm": 0.0,
+  "correlation": null,
+  "support_dice": null,
+  "wall_s": null,
+  "hardware": ""
+ },
+ "octreg": {
+  "run": "octreg",
+  "tool": "octreg",
+  "variant": "default",
+  "T_oct2mri": [
+   [
+    0.9456374645,
+    0.1290404648,
+    0.0580986626,
+    -17.3659515381
+   ],
+   [
+    -0.113856338,
+    0.9363223314,
+    -0.1220180541,
+    -15.8142576218
+   ],
+   [
+    -0.0841498449,
+    0.1130457595,
+    0.9601494074,
+    7.8908119202
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "scale_per_oct_axis": [
+   0.9562,
+   0.9519,
+   0.9696
+  ],
+  "det": 0.8824421080598296,
+  "rotation_from_header_deg": 11.070514943801232,
+  "box_centre_shift_mm": 1.5781490007219772,
+  "correlation": null,
+  "support_dice": null,
+  "wall_s": 604.1143729686737,
+  "hardware": "GPU"
  }
 }

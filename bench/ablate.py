@@ -1,342 +1,388 @@
 #!/usr/bin/env python3
-"""Ablations of octreg on the I58 brainstem pair.
+"""Ablations of octreg: the method with one change per variant, run on one pair.
 
-    python bench/ablate.py --out ABL [--main RUN] [--previous OLD/ablations.json ...] [--only A1,A4] [--device cuda] [--force]
+    python bench/ablate.py OCT MRI -o OUT [--oct-mask MASK] [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ]
+                           [--start FILE] [--params F] [--device cuda]
 
-Params holds method constants only, so every variant is the register steps run here with the package's own functions and one
-explicit change: another OCT mask (A0 the histogram valley of the OCT, A0c the texture mask with the 3-D hole filling of the
-first release), two_class(..., flatten=False) for one modality (A1, A2), standardised intensity channels built in this file (A4),
-align(..., polarity=+1 / -1) (A5), Params lam 0 and refine.CLAMP 1 (A6), the OCT world mirrored so that the search and refinement see
-the other handedness (A8), no outline term (A9), the two-sided outline (A10), or a simulated cut face
-with the method and with the two-sided outline (A11, A11b), or no fine-structure refinement (A12, the pose of §4). Every other
-variant ends with §5 on its own best pose. 'base' is the method through this driver; its distance to the CLI run (--main) is
-the driver check. The OCT is streamed once, each OCT mask is computed once and the MRI is prepared once.
+Each variant changes one function or Params value for its run, or the OCT it is given:
 
-The smooth deformation (§6) leaves the pose alone, so no variant runs it: "no §6" would be base with the identical
-pose, and its read-outs are the 'before' residuals in the run's own result.json, which bench/report.py prints.
+{variants}
 
-Removed steps (REMOVED) keep their rows from the ablation run that measured them (--previous, one ablations.json per group):
-the section-stripe flat field (A3) and the rigid -> similarity -> affine ladder (A7) from the first run. Each was measured
-against the base of its run, which still had the step, and the pose change from that base to the present base is reported
-next to them.
+OUT/<variant>/ holds the octreg register outputs, variant.json (the change, the Params and the turn) and code.txt (the
+code_id of the octreg code that made it). A variant already finished by the same octreg code is skipped.
 
-Every variant keeps the pose of §4 (T_before_ngf) as well as the final pose, and the table reports the change of both against
-the base: steps of §1-4 act through the §4 pose, which §5 then refines within a few degrees and millimetres.
+--turn starts every run from the OCT and its mask turned by the rotation vector RX,RY,RZ in degrees about the centre of the
+OCT image box. T_oct2mri.txt and result.json are then rewritten for the original OCT world (T @ turn), the files tied to the
+turned header (oct2mri.lta, oct2mri_itk.txt, mri_in_oct.nii.gz) are removed, and no_search also writes its start to T_start.txt.
 
-Metrics: pose to base, boundary agreement with the base masks for every variant (so it reflects the pose only), and OCT mask
-volume per mask source. Pose changes are measured over the points of the base specimen mask and over the 8 corners of the OCT
-array. The geometry helpers come from bench/evaluate.py, which is self-contained; like it, this driver reads the two input
-files of bench/paths.py and its own runs, and nothing else.
+--start FILE gives no_search its start, a 4x4 OCT world -> MRI world pose, in place of the header orientation: the key H of a
+JSON file (the start.json of bench/i46/baselines.py --near) or a text matrix. It excludes --turn.
 
-OUT/prep/<mask>/  oct_h.npz, oct_mask / oct_valid / mri_mask .nii.gz (evaluate.py --masks), prep.json
-OUT/variants/<name>/  T_oct2mri.txt, result.json (reused unless --force)
-OUT/ablations.json    the table read by bench/report.py
+The spacing variants give octreg the OCT voxel size of the file (or of --oct-spacing-um) scaled by their factor. Their
+T_oct2mri.txt and result.json are rewritten for the OCT world of the file as for --turn, with the 4x4 from that world to
+the one the run used as the key turn, and the scale per OCT axis and the OCT voxel size recomputed in it. The foreground
+entries of result.json stay in the voxel size the run used. An --oct-mask given with a spacing variant must have the
+OCT's array shape, since a mask on its own grid keeps the spacing of its file.
+
+--params F applies the Params overrides of F, a JSON file or JSON text, on top of the variant's change, as octreg register
+--params.
 """
 from __future__ import annotations
 
 import argparse
+import ast
+import contextlib
+import dataclasses
 import hashlib
 import json
-import shutil
 import sys
-import time
+import tokenize
+from io import StringIO
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import torch
-from scipy import ndimage
+from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import evaluate as E                                                    # noqa: E402  (bench/evaluate.py)
-from octreg import geometry as G, io, preprocess as pp, refine as Rf, search as S     # noqa: E402
-from octreg.params import Params                                        # noqa: E402
-from octreg.ngf import refine_ngf                                       # noqa: E402
-from octreg.register import MIRROR, align, fine_mask, peak_rss_gb       # noqa: E402
+import octreg  # noqa: E402
+from octreg import features as Fe, geometry as G, io, preprocess as pp, refine as Rf, register as Reg  # noqa: E402
+from octreg import search as Se                                                                    # noqa: E402
+from octreg.params import Params                                                                   # noqa: E402
 
-VARIANTS = {    # name: (what changes, the explicit change: mask source, solve() keywords, Params overrides)
-    "base": ("the method", {}),
-    "A0": ("OCT intensity foreground (histogram valley) instead of the texture specimen mask", {"mask": "intensity"}),
-    "A0c": ("texture specimen mask with holes filled in 3-D only (method: in every array plane)", {"mask": "texture3d"}),
-    "A1": ("MRI flattening off", {"mri_flatten": False}),
-    "A2": ("OCT flattening off", {"oct_flatten": False}),
-    "A4": ("standardised intensity channels (z, -z) instead of two-class maps", {"features": "intensity"}),
-    "A5+1": ("polarity forced +1", {"polarity": 1}),
-    "A5-1": ("polarity forced -1", {"polarity": -1}),
-    "A6": ("no scale prior: lam 0 and clamp 1.0 (method: 2 and 0.15)", {"params": {"lam": 0.0}, "clamp": 1.0}),
-    "A6p": ("no penalty, clamp kept: lam 0, clamp 0.15", {"params": {"lam": 0.0}}),
-    "A6c": ("no clamp, penalty kept: lam 2, clamp 1.0", {"clamp": 1.0}),
-    "A8": ("the other handedness: OCT world mirrored (z negated) before the search", {"mirror": True}),
-    "A9": ("no outline term: S = 2 S_class / 3 in the search and the refinement", {"outline": False}),
-    "A10": ("two-sided outline: OCT embedding over MRI tissue or outside the crop counted as a mismatch", {"two_sided": True}),
-    "A11": ("simulated cut face: specimen mask removed beyond 70 % of its extent along OCT axis 1 (data kept as embedding)",
-            {"cut_axis": 1}),
-    "A11b": ("the same cut face with the two-sided outline", {"cut_axis": 1, "two_sided": True}),
-    "A12": ("no fine-structure refinement (§5): the pose of §4", {"ngf": False}),
+VARIANTS = {
+    "no_outline": "the outline never used (outline_min_outside 2): every pose proposed by F",
+    "outline_decides": "every pose proposed by S = (F + O) / 2 where the outline is used",
+    "no_search": "no orientation search: the refinement from the header orientation with the image box centres aligned",
+    "no_refine": "no refinement: the first search pose",
+    "first_choice": "only the first search pose refined",
+    "no_prior": "no scale and shear prior (lam 0)",
+    "prior_0.5": "the scale and shear prior at a quarter of its weight (lam 0.5)",
+    "prior_8": "the scale and shear prior at four times its weight (lam 8)",
+    "rigid": "rigid refinement: the scales and shears held at zero",
+    "signed": "the signed normalised gradient n instead of its tensor n n^T",
+    "signed_neg": "the signed normalised gradient n instead of its tensor n n^T, with the OCT intensities negated",
+    "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
+    "uncentred": "F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised)",
+    "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
+    "flatfield": "the MRI divided by its Gaussian blur (normalised convolution, σ 5 mm) inside the foreground",
+    "signal_only": "the OCT specimen mask from the signal threshold alone (small components dropped, holes filled as in §1)",
+    "spacing_p5": "the OCT voxel size given 5 % too large",
+    "spacing_m5": "the OCT voxel size given 5 % too small",
+    "mirrored": "the OCT array mirrored along its first axis: a mirror image of the block, which no rotation aligns",
 }
-REMOVED = [    # groups of removed steps, each measured in one earlier ablation run
-    {"step": {"A3": "section-stripe flat field", "A7": "rigid -> similarity -> affine ladder"},
-     "note": "Copied from the first ablation run, whose base still had the section-stripe flat field and the ladder (and the "
-             "earlier score, two-class maps under an overlap gate), so pose changes in these rows are against that base. Removing "
-             "either step moved the pose by less than the 0.5 mm deletion threshold and both were deleted."},
-]
+__doc__ = __doc__.replace("{variants}", "\n".join(f"  {k:<18} {v}" for k, v in VARIANTS.items()))
+REFINE, TENSOR, PREPARE_OCT, PREPARE_MRI = Rf.refine, Fe.orientation_tensor, Reg.prepare_oct, Reg.prepare_mri
+COMPOSE, PLANES = Rf.compose, io.iter_planes
+SPACING = {"spacing_p5": 1.05, "spacing_m5": 0.95}
+FLAT_MM = 5.0
 
 
-PREP_FIELDS = ("base_mm", "fine_mm", "valley_ratio", "min_component", "texture_bandpass_mm", "texture_window_mm", "texture_grid_mm",
-               "texture_smooth_mm", "texture_close_mm")            # the Params the preprocessing (§1) reads
-LEGACY_PREP = {"7d01b8a167a83631": "dd680d967e5a2e3a"}           # Params hash of octreg 1.0 -> the prep hash of its §1 fields
+def header_start(mri_affine, mri_shape, oct_affine, oct_shape):
+    """Pose with the header orientation and the two image box centres aligned, 4x4 OCT world to MRI world."""
+    T = np.eye(4)
+    T[:3, 3] = G.box(mri_affine, mri_shape)[0] - G.box(oct_affine, oct_shape)[0]
+    return T
 
 
-def prep_hash(P):
-    """16 hex characters for the Params fields the preprocessing reads: a prep stays valid when only later stages gain fields."""
-    d = P.to_dict()
-    return hashlib.sha256(json.dumps({k: d[k] for k in PREP_FIELDS}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
+def fixed_start(T):
+    """Stand-in for search.search that proposes only the pose T."""
+    return lambda *args, **kwargs: [dict(T=np.asarray(T, float), F=float("nan"), O=None)]
 
 
-def mask_source(name):
-    return VARIANTS[name][1].get("mask", "texture")
+def read_start(path):
+    """A 4x4 OCT world -> MRI world pose: the key H of a JSON file, or a text matrix."""
+    path = Path(path)
+    T = np.array(json.loads(path.read_text(encoding="utf-8"))["H"] if path.suffix == ".json" else np.loadtxt(path), float)
+    if T.shape != (4, 4):
+        raise ValueError(f"{path}: not a 4x4 pose")
+    return T
 
 
-def prepare(out, sources):
-    """Write prep/mri and every prep/<source> not on disk yet (the OCT fine grid is streamed at most once)."""
-    P, root = Params(), out / "prep"
-    h, mdir = P.base_mm, root / "mri"
-    for d in [mdir] + [root / s for s in sources]:
-        old = json.loads((d / "prep.json").read_text()) if (d / "prep.json").exists() else None
-        if old is not None and old.get("prep_hash", LEGACY_PREP.get(old.get("params_hash"))) != prep_hash(P):
-            raise ValueError(f"{d} was prepared with other §1 Params: delete {root} to prepare again")
-    if not (mdir / "mri_h.npz").exists():
-        t0 = time.time()
-        arr, A = G.resample_iso(io.load_volume(E.MRI), h)
-        mask, info = pp.foreground(arr, h, P)
-        mdir.mkdir(parents=True, exist_ok=True)
-        np.savez(mdir / "mri_h.npz", arr=arr, mask=mask, affine=A)
-        io.save_nifti(mask.astype(np.uint8), A, mdir / "mri_mask.nii.gz")
-        io.write_json({"foreground": info, "shape": arr.shape, "seconds": time.time() - t0, "peak_rss_gb": peak_rss_gb(),
-                       "params_hash": P.hash(), "prep_hash": prep_hash(P)}, mdir / "prep.json")
-    todo = [s for s in sources if not (root / s / "oct_h.npz").exists()]
-    if not todo:
-        return
-    t0 = time.time()
-    fine, A_f = G.resample_iso(io.load_volume(E.OCT), P.fine_mm)
-    arr_h, A_h = G.pool_iso(fine, A_f, h)
-    valid_h = G.pool_iso(fine > 0, A_f, h)[0] > 0.5
-    grid = {"fine_shape": fine.shape, "seconds": time.time() - t0, "peak_rss_gb": peak_rss_gb()}
-    print(f"OCT fine grid {fine.shape} in {grid['seconds']:.0f} s", flush=True)
-    for s in todo:
-        t1 = time.time()
-        if s == "texture":                                                     # the method
-            m, info = fine_mask(fine, A_f, P)
-        elif s == "texture3d":                                                 # A0c: the 3-D hole filling of the first release
-            fill_planes, pp._fill_planes = pp._fill_planes, ndimage.binary_fill_holes
-            try:
-                m, info = fine_mask(fine, A_f, P)
-            finally:
-                pp._fill_planes = fill_planes
-        else:                                                                  # A0: histogram valley of the OCT on the base grid
-            m_h, info = pp.foreground(arr_h, h, P)
-            m = G.resample_to(m_h, A_h, fine.shape, A_f, np.eye(4), order=0)
-            np.logical_and(m, fine > 0, out=m)
-            info["source"] = "intensity"
-        mask_h = G.pool_iso(m, A_f, h)[0] > 0.5
-        del m
-        d = root / s
-        d.mkdir(parents=True, exist_ok=True)
-        np.savez(d / "oct_h.npz", arr=arr_h, mask=mask_h, valid=valid_h, affine=A_h)
-        io.save_nifti(mask_h.astype(np.uint8), A_h, d / "oct_mask.nii.gz")
-        io.save_nifti(valid_h.astype(np.uint8), A_h, d / "oct_valid.nii.gz")
-        shutil.copy(mdir / "mri_mask.nii.gz", d / "mri_mask.nii.gz")
-        io.write_json({"source": s, "grid": grid, "mask": info, "mask_seconds": time.time() - t1, "peak_rss_gb": peak_rss_gb(),
-                       "params_hash": P.hash(), "prep_hash": prep_hash(P)}, d / "prep.json")
-        print(f"OCT mask '{s}' in {time.time() - t1:.0f} s", flush=True)
+def no_refine(starts, mri, oct_, params, device):
+    return [{"T": np.asarray(starts[0], float), "L": float("nan"), "F": [], "search_rank": 0}]
 
 
-def standardised(arr, mask, h, P):
-    """A4 map: z = (x - mean) / std over the foreground values clipped at p99.5, x = pp.flattened(arr) blurred within the mask
-    voxel, i.e. pp.two_class without its Otsu threshold and sigmoid. -> float32 [D, H, W]."""
-    x = pp.masked_blur(pp.flattened(arr, mask, h, P), mask)
-    vals = np.minimum(x[mask], np.percentile(x[mask], 99.5))
-    return ((x - float(vals.mean())) / float(vals.std())).astype(np.float32)
+def first_choice(starts, mri, oct_, params, device):
+    return REFINE(starts[:1], mri, oct_, params, device)
 
 
-def solve(o, m, P, device, mri_flatten=True, oct_flatten=True, features="two_class", polarity=0, mirror=False, outline=True,
-          two_sided=False, cut_axis=None, ngf=True, clamp=None):
-    """Register steps 3-5 on prepared base-grid arrays; with the default keywords these are register.register's own calls.
-    clamp: the bound on log-scales and shears of §4-5 in place of refine.CLAMP (0.15).
-    mirror: search and refine against the OCT world mirrored by MIRROR, poses returned in the OCT header world (det < 0).
-    outline False: S = 2 S_class / 3. The search's combined score is patched to leave S_outline out (on the pooled search grid
-    the mask edge is fractional, so a zero outline weight alone would not remove it); in the refinement the outline weight is
-    the specimen mask itself, on which the mask is constant, so S_outline is 0.
-    two_sided: the two-sided outline, weight q in the search and the refinement (embedding over MRI tissue counts).
-    cut_axis: the specimen mask is removed beyond 70 % of its extent along that OCT axis, the OCT data there kept as embedding,
-    as for a block cut out of a larger specimen whose MRI tissue continues beyond the cut.
-    ngf False: the best pose of §4 without the fine-structure refinement (§5); otherwise §5 refines the best pose, as in register,
-    on the raw base-grid arrays with the (cut) specimen mask.
-    -> (refined poses lowest L first, info)."""
-    h = P.base_mm
-    if cut_axis is not None:
-        idx = np.argwhere(o["mask"])[:, cut_axis]
-        cut = int(idx.min() + 0.7 * (idx.max() - idx.min()))
-        o = {**o, "mask": o["mask"] & (np.arange(o["mask"].shape[cut_axis]) < cut).reshape([-1 if d == cut_axis else 1 for d in range(3)])}
-    if features == "intensity":
-        z_o, z_m = standardised(o["arr"], o["mask"], h, P), standardised(m["arr"], m["mask"], h, P)
-        u, w, v = np.stack([z_o, -z_o]), o["mask"].astype(np.float32), np.stack([z_m, -z_m]) * m["mask"]
-    else:
-        u, w = pp.oct_channels(pp.two_class(o["arr"], o["mask"], h, P, flatten=oct_flatten), o["mask"])
-        v = pp.mri_channels(pp.two_class(m["arr"], m["mask"], h, P, flatten=mri_flatten), m["mask"])
-    F, q = MIRROR if mirror else np.eye(4), o["valid"] if outline else o["mask"]
-    combined, outline_map, score = S.combined, S.Searcher._outline, Rf.BaseGrid.score
-    if not outline:
-        S.combined = lambda S_class, S_outline, pol: combined(S_class, torch.zeros_like(S_outline), pol)
-    if two_sided:
-        S.Searcher._outline = lambda self, w_, q_: self._ncc(w_[None], q_, slice(2, 3))[0]
-
-        def score_two_sided(self, T, polarity):
-            s_ = G.sample_world(self.v, self.A_M, G.apply_affine(T, self.pts))
-            S_class = Rf.masked_ncc(s_[:2, self.spec], self.u[:, self.spec], self.w[self.spec])
-            S_outline = Rf.masked_ncc(s_[2:], self.w[None], self.q)
-            return (2 * polarity * S_class + S_outline) / 3, S_class, S_outline
-        Rf.BaseGrid.score = score_two_sided
-    clamp0 = Rf.CLAMP
-    if clamp is not None:
-        Rf.CLAMP = clamp
-    try:
-        try:
-            poses, info = align((u, w, q, F @ o["affine"]), (v, m["mask"], m["affine"]), P, device, polarity)
-        finally:
-            S.combined, S.Searcher._outline, Rf.BaseGrid.score = combined, outline_map, score
-        if ngf:
-            T, info["ngf"] = refine_ngf((m["arr"], m["mask"], m["affine"]), (o["arr"], o["mask"], F @ o["affine"]), poses[0]["T"], P, device)
-            poses[0] = {**poses[0], "T_before_ngf": poses[0]["T"] @ F, "T": T, "NGF_start": info["ngf"]["F_start"], "NGF": info["ngf"]["F"]}
-    finally:
-        Rf.CLAMP = clamp0
-    return [{**p, "T": p["T"] @ F} for p in poses], info
+def tracefree(n):
+    """In place of features.orientation_tensor: the trace-free tensor n n^T - |n|^2 I / 3 in the same six channels."""
+    P = TENSOR(n)
+    return torch.cat([P[:3] - P[:3].sum(0) / 3, P[3:]])
 
 
-def run_variant(name, out, device, force):
-    change, spec = VARIANTS[name]
-    d, src = out / "variants" / name, mask_source(name)
-    P = Params.from_dict(spec.get("params", {}))
-    kw = {k: v for k, v in spec.items() if k not in ("mask", "params")}
-    old = json.loads((d / "result.json").read_text()) if (d / "result.json").exists() else {}
-    if not force and "error" not in old and old.get("params_hash") == P.hash() and old.get("spec") == spec:
-        return old
-    d.mkdir(parents=True, exist_ok=True)
-    with np.load(out / "prep" / src / "oct_h.npz") as z, np.load(out / "prep" / "mri" / "mri_h.npz") as y:
-        o, m = {k: z[k] for k in z.files}, {k: y[k] for k in y.files}
-    cuda = str(device).startswith("cuda")
-    if cuda:
-        torch.cuda.reset_peak_memory_stats()
-    t0 = time.time()
-    head = {"name": name, "change": change, "prep": src, "spec": spec, "params_hash": P.hash()}
-    try:
-        poses, info = solve(o, m, P, device, **kw)
-    except ValueError as e:                     # a variant may break the method: recorded, not hidden
-        if name == "base":
-            raise
-        io.write_json({**head, "error": f"{type(e).__name__}: {e}", "seconds": time.time() - t0}, d / "result.json")
-        print(f"{name}: failed: {e}", flush=True)
-        return json.loads((d / "result.json").read_text())
-    keys = ("S", "S_class", "S_outline", "L", "polarity", "log_scales", "shears", "search_rank")
-    best = poses[0]
-    r = {**head, "T": best["T"], "T_before_ngf": best.get("T_before_ngf", best["T"]),
-         "best": {**{k: best[k] for k in keys}, **{k: best[k] for k in ("NGF_start", "NGF") if k in best}},
-         "poses": [{k: p[k] for k in keys} for p in poses], **info,
-         "seconds": time.time() - t0, "gpu_peak_gb": torch.cuda.max_memory_allocated() / 2 ** 30 if cuda else None,
-         "peak_rss_gb": peak_rss_gb()}
-    io.write_transform_txt(best["T"], d / "T_oct2mri.txt")
-    io.write_json(r, d / "result.json")
-    if cuda:
-        torch.cuda.empty_cache()
-    print(f"{name}: S {best['S']:.4f} polarity {best['polarity']} in {r['seconds']:.0f} s", flush=True)
-    return json.loads((d / "result.json").read_text())
+def negated_oct(fine, affine, params, mask=None):
+    """register.prepare_oct with the base grid OCT intensities negated and the masks of the method."""
+    (arr, m, A), measured, info = PREPARE_OCT(fine, affine, params, mask)
+    return (-arr, m, A), measured, info
+
+
+def flatfield_mri(vol, params=Params(), mask=None):
+    """register.prepare_mri, the MRI divided by its Gaussian blur (normalised convolution, FLAT_MM) inside the foreground."""
+    from scipy import ndimage
+    (arr, fg, A), info = PREPARE_MRI(vol, params, mask)
+    s, m = FLAT_MM / params.base_mm, fg.astype(np.float32)
+    blur = ndimage.gaussian_filter(arr * m, s) / np.maximum(ndimage.gaussian_filter(m, s), 1e-3)
+    return (np.where(fg, arr / np.maximum(blur, 1e-6), arr).astype(np.float32), fg, A), info
+
+
+def signal_only_mask(fine, voxel_mm, params=Params()):
+    """preprocess.specimen_mask from the signal threshold alone: the components and holes of §1, no texture rule."""
+    chunks = lambda: (np.asarray(fine[z:z + pp._CHUNK], np.float32) for z in range(0, fine.shape[0], pp._CHUNK))
+    ts = float(np.exp(pp.threshold(*pp._hist(lambda: (np.log(x[x > 0]) for x in chunks())))))
+    out = pp._fill_planes(pp._components(np.asarray(fine) > ts, params.min_component))
+    out &= np.asarray(fine) > 0
+    return out, {"signal_threshold": ts, "texture_threshold": None, "volume_cm3": float(out.sum()) * voxel_mm ** 3 / 1e3}
+
+
+def patched(method, *pairs):
+    """A copy of a function of octreg.search with source replacements (old, new), each of which must occur once."""
+    import inspect
+    import textwrap
+    src = textwrap.dedent(inspect.getsource(method))
+    for old, new in pairs:
+        if src.count(old) != 1:
+            raise RuntimeError(f"{old!r} does not occur once in search.{method.__qualname__}")
+        src = src.replace(old, new)
+    ns = {}
+    exec(compile(src, f"<ablate: {method.__qualname__}>", "exec"), vars(Se), ns)
+    return ns[method.__name__]
+
+
+def whole_mask_searcher():
+    """search.Searcher.__init__ and score with the template gradients and their eps taken inside the whole specimen mask."""
+    wb = "(w > 0.5).float()"
+    return (patched(Se.Searcher.__init__, ("gradient_field(o, inner, A_O, sigma_mm, device), inner)",
+                                           f"gradient_field(o, {wb}, A_O, sigma_mm, device), {wb})")),
+            patched(Se.Searcher.score, ("G.nc_gradient(v * wt, wt, self.sig)", f"G.nc_gradient(v * {wb}, {wb}, self.sig)")))
+
+
+def rigid_compose(r, t, ls, sh, c):
+    """refine.compose with the scales and shears held at zero."""
+    return COMPOSE(r, t, 0 * ls, 0 * sh, c)
+
+
+def uncentred(a, b):
+    """features.correlation without the subtraction of the channel means."""
+    return (a * b).sum() / torch.sqrt((a * a).sum() * (b * b).sum() + 1e-24)
+
+
+def uncentred_searcher():
+    """search.Searcher.score with the centring terms of F dropped."""
+    return patched(Se.Searcher.score, (" - (ST.reshape(-1, 1, 1, 1) * SI).sum(0) / N", ""),
+                   (" - (SI * SI).sum(0) / N", ""), ("(STT - (ST * ST).sum() / N)", "STT"))
+
+
+def mirrored_planes(paths):
+    """io.iter_planes with the planes of the files in paths mirrored along the first array axis."""
+    paths = {Path(p).resolve() for p in paths}
+
+    def it(vol):
+        flip = Path(vol.path).resolve() in paths
+        for k, plane in PLANES(vol):
+            yield k, (plane[::-1] if flip else plane)
+    return it
+
+
+def spacing_change(oct_path, spacing_um, factor):
+    """The OCT voxel size (um, Z,Y,X) scaled by factor, and the 4x4 from the OCT world to the world of that voxel size."""
+    v = io.load_volume(oct_path, spacing_um)
+    um = tuple(round(float(x), 6) for x in (v.spacing_mm * 1000.0 * factor)[::-1])
+    return um, io.load_volume(oct_path, um).affine @ np.linalg.inv(v.affine)
+
+
+def turned(oct_paths, rotvec_deg, spacing_um=None):
+    """Turn about the OCT image box centre and an io.load_volume that reads oct_paths with the turned header.
+    -> (4x4 OCT world to turned OCT world, loader)"""
+    load = io.load_volume
+    vo = load(oct_paths[0], spacing_um)
+    c = G.box(vo.affine, vo.shape)[0]
+    turn = np.eye(4)
+    turn[:3, :3] = Rotation.from_rotvec(np.radians(rotvec_deg)).as_matrix()
+    turn[:3, 3] = c - turn[:3, :3] @ c
+
+    def load_turned(path, spacing_um=None):
+        v = load(path, spacing_um)
+        return dataclasses.replace(v, affine=turn @ v.affine) if str(path) in oct_paths else v
+    return turn, load_turned
+
+
+@contextlib.contextmanager
+def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=None):
+    """Context with the change of variant `name` in force, yielding the Params of the run.
+    oct_path, mri_path and oct_spacing_um give no_search its start, unless the pose `start` is given. oct_path and
+    oct_mask are the files mirrored. The spacing variants change nothing here (main gives them their voxel size)."""
+    P = Params()
+    with contextlib.ExitStack() as st:
+        patch = lambda obj, attr, new: st.enter_context(mock.patch.object(obj, attr, new))
+        if name in SPACING or name == "base":
+            pass
+        elif name == "no_outline":
+            P = dataclasses.replace(P, outline_min_outside=2.0)        # a share above 1: never met
+        elif name == "outline_decides":
+            patch(Reg, "search", patched(Se.search, ("(P.topk // 2, P.topk) if outline", "(P.topk, P.topk) if outline")))
+        elif name == "no_search":
+            if start is None:
+                vo, vm = io.load_volume(oct_path, oct_spacing_um), io.load_volume(mri_path)
+                start = header_start(vm.affine, vm.shape, vo.affine, vo.shape)
+            patch(Reg, "search", fixed_start(start))
+        elif name == "no_refine":
+            patch(Reg, "refine", no_refine)
+        elif name == "first_choice":
+            patch(Reg, "refine", first_choice)
+        elif name == "no_prior":
+            P = dataclasses.replace(P, lam=0.0)
+        elif name in ("prior_0.5", "prior_8"):
+            P = dataclasses.replace(P, lam=float(name.split("_")[1]))
+        elif name == "rigid":
+            patch(Rf, "compose", rigid_compose)
+        elif name == "uncentred":
+            patch(Fe, "correlation", uncentred)
+            patch(Se.Searcher, "score", uncentred_searcher())
+        elif name == "mirrored":
+            patch(io, "iter_planes", mirrored_planes([oct_path] + ([oct_mask] if oct_mask else [])))
+        elif name in ("signed", "signed_neg"):
+            patch(Fe, "orientation_tensor", lambda n: n)
+            if name == "signed_neg":
+                patch(Reg, "prepare_oct", negated_oct)
+        elif name == "tracefree":
+            patch(Fe, "orientation_tensor", tracefree)
+        elif name == "search_whole_mask":
+            init, score = whole_mask_searcher()
+            patch(Se.Searcher, "__init__", init)
+            patch(Se.Searcher, "score", score)
+        elif name == "flatfield":
+            patch(Reg, "prepare_mri", flatfield_mri)
+        elif name == "signal_only":
+            patch(pp, "specimen_mask", signal_only_mask)
+        else:
+            raise ValueError(f"unknown variant {name}")
+        yield P
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--main", type=Path, default=None, help="CLI run dir (T_oct2mri.txt) for the driver check")
-    ap.add_argument("--previous", type=Path, nargs="*", action="extend", default=[],
-                    help="ablations.json of the runs that measured the removed steps (repeatable)")
-    ap.add_argument("--only", default=None, help=f"comma-separated subset of {','.join(VARIANTS)} (base is always run)")
+    ap.add_argument("oct")
+    ap.add_argument("mri")
+    ap.add_argument("-o", "--out", type=Path, required=True)
+    ap.add_argument("--oct-mask")
+    ap.add_argument("--oct-spacing-um", type=lambda s: tuple(float(x) for x in s.split(",")))
+    ap.add_argument("--only", help="comma-separated variants (default all, 'base' runs the method itself)")
+    ap.add_argument("--turn", type=lambda s: [float(x) for x in s.split(",")], help="rotation vector of the start, degrees")
+    ap.add_argument("--start", type=Path, help="no_search: its start pose, OCT world -> MRI world, the key H of a JSON file "
+                                                "or a text matrix")
+    ap.add_argument("--params", metavar="F", help="Params overrides applied after the variant's change: a JSON file or text")
     ap.add_argument("--device", default="cuda")
-    ap.add_argument("--force", action="store_true", help="recompute variants that already have a result (delete OUT/prep to redo "
-                    "the preprocessing)")
     a = ap.parse_args()
-    names = ["base"] + [n for n in (a.only.split(",") if a.only else VARIANTS) if n != "base"]
-    if set(names) - set(VARIANTS):
-        ap.error(f"unknown variants {sorted(set(names) - set(VARIANTS))}")
-    for path, need in ((a.main, "T_oct2mri.txt"), *((p, "") for p in a.previous)):
-        if path and not (path / need if need else path).exists():
-            ap.error(f"{path} has no {need or 'file'}")
-    t0 = time.time()
-    sources = sorted({mask_source(n) for n in names})
-    prepare(a.out, sources)
-    A_hdr, shape = E.oct_header(E.OCT)
-    b = a.out / "prep" / "texture"
-    om, A_om = E.load_mask(b / "oct_mask.nii.gz")                       # the base specimen mask: the points pose changes are read on
-    pts, cor = E.grid_points(om, A_om), E.corners(shape, A_hdr)
-    bnd = E.Boundary(om, A_om, E.load_mask(b / "oct_valid.nii.gz")[0], *E.load_mask(b / "mri_mask.nii.gz"), A_hdr)
-    masks = {s: {"volume_cm3": E.volume_cm3(*E.load_mask(a.out / "prep" / s / "oct_mask.nii.gz"))} for s in sources}
-    rows = {n: run_variant(n, a.out, a.device, a.force) for n in names}
-    T_base, T_base4 = np.array(rows["base"]["T"]), np.array(rows["base"]["T_before_ngf"])
-    table = {}
-    for n, r in rows.items():
-        common = {"change": r["change"], "prep": r["prep"], "spec": r["spec"], "mask": masks[r["prep"]], "seconds": r["seconds"]}
-        if "error" in r:
-            table[n] = {**common, "error": r["error"]}
+    names = a.only.split(",") if a.only else list(VARIANTS)
+    unknown = [n for n in names if n not in VARIANTS and n != "base"]
+    if unknown:
+        ap.error(f"unknown variants {unknown}")
+    if a.start and a.turn:
+        ap.error("--start and --turn exclude each other")
+    if a.turn and set(names) & set(SPACING):
+        ap.error("--turn excludes the spacing variants")
+    if a.oct_mask and set(names) & set(SPACING) and (io.load_volume(a.oct_mask, a.oct_spacing_um).shape
+                                                     != io.load_volume(a.oct, a.oct_spacing_um).shape):
+        ap.error("an --oct-mask with the spacing variants must have the OCT's array shape")
+    start = read_start(a.start) if a.start else None
+    over = json.loads(Path(a.params).read_text(encoding="utf-8") if Path(a.params).is_file() else a.params) if a.params else {}
+    turn, load = turned([a.oct] + ([a.oct_mask] if a.oct_mask else []), a.turn, a.oct_spacing_um) if a.turn else (None, None)
+    code = code_id()
+    for name in names:
+        out = a.out / name
+        if made_by(out) == code:
+            print(f"{name}: done", flush=True)
             continue
-        T, T4, best = np.array(r["T"]), np.array(r["T_before_ngf"]), r["best"]
-        to_base, to_base4 = E.pose(T, T_base, pts, cor), E.pose(T4, T_base4, pts, cor)
-        A_lin = A_hdr[:3, :3] / np.linalg.norm(A_hdr[:3, :3], axis=0)
-        table[n] = {**common, "S": best["S"], "S_class": best["S_class"], "S_outline": best["S_outline"], "L": best["L"],
-                    "NGF_start": best.get("NGF_start"), "NGF": best.get("NGF"), "polarity": best["polarity"],
-                    "scales": np.linalg.norm(T[:3, :3] @ A_lin, axis=0).tolist(), "shears": best["shears"],
-                    "search": {k: r["search"].get(k) for k in ("top1", "top2", "n_orientations")},
-                    "refine": r["refine"], "pose_to_base": to_base, "pose_to_base_s4": to_base4,
-                    "T_before_ngf": r["T_before_ngf"],
-                    "boundary": bnd(T), "search_seconds": r["search"]["seconds"],
-                    "refine_seconds": r["refine"]["seconds"], "gpu_peak_gb": r["gpu_peak_gb"], "T_oct2mri": r["T"]}
-    prep = {s: json.loads((a.out / "prep" / s / "prep.json").read_text()) for s in sources + ["mri"]}
-    grid = next((p["grid"] for p in prep.values() if "grid" in p), {})
-    work = [grid.get("seconds", 0)] + [p.get("mask_seconds", p.get("seconds", 0)) for p in prep.values()] + [r["seconds"] for r in rows.values()]
-    res = {"pair": "I58 brainstem", "oct": E.OCT, "mri": E.MRI, "params_hash": Params().hash(), "prep": prep,
-           "variants": table, "seconds": sum(work),          # the computation in the table, also when variants come from the cache
-           "peak_rss_gb": max([p.get("peak_rss_gb") or 0 for p in prep.values()] + [r.get("peak_rss_gb") or 0 for r in rows.values()]),
-           "driver_seconds": time.time() - t0}
-    res["removed_steps"] = []
-    for path in a.previous:
-        prev = json.loads(path.read_text())
-        found = 0
-        for group in REMOVED:
-            rows = {n: {**prev["variants"][n], "pose_to_present_base": E.pose(np.array(prev["variants"][n]["T_oct2mri"]), T_base, pts,
-                                                                              cor)}
-                    for n in group["step"] if n in prev["variants"] and "error" not in prev["variants"][n]}
-            if rows:
-                found += len(rows)
-                T_prev = np.array(prev["variants"]["base"]["T_oct2mri"])
-                res["removed_steps"].append({**group, "source": path, "rows": rows,
-                                             "present_base_vs_previous_base": E.pose(T_base, T_prev, pts, cor)})
-        if not found:                      # silently empty removed-step rows is how BENCHMARK.md lost its A3 and A7 rows
-            want = ", ".join(n for g in REMOVED for n in g["step"])
-            print(f"warning: --previous {path} holds none of the removed steps ({want}); its variants are "
-                  f"{', '.join(prev.get('variants', {}))}. The removed-step rows of the report will be missing: point "
-                  "--previous at the ablation run that measured them, bench_runs/I58/ablate/ablations.json.",
-                  flush=True)
-    if a.main:
-        T_main = E.load_T(a.main / "T_oct2mri.txt")
-        res["driver_check"] = {"main_run": a.main, "base_vs_main": E.pose(T_base, T_main, pts, cor)}
-    store = a.out / "ablations.json"
-    if a.only and store.is_file():                     # --only adds rows, it does not throw the rest of the table away
-        old = json.loads(store.read_text())
-        if old.get("params_hash") == res["params_hash"]:
-            res["variants"] = {**old.get("variants", {}), **res["variants"]}
-            res["removed_steps"] = res["removed_steps"] or old.get("removed_steps", [])
-            res["prep"] = {**old.get("prep", {}), **res["prep"]}
+        if made_by(out):
+            print(f"{name}: made by octreg code {made_by(out)}, run again with {code}", flush=True)
+            (out / "code.txt").unlink()
+        spacing, to_run = a.oct_spacing_um, turn                  # the voxel size given, the OCT world -> the world run
+        if name in SPACING:
+            spacing, to_run = spacing_change(a.oct, a.oct_spacing_um, SPACING[name])
+        with contextlib.ExitStack() as st:
+            if load is not None:
+                st.enter_context(mock.patch.object(io, "load_volume", load))
+            P = Params.from_dict({**st.enter_context(variant(name, a.oct, a.mri, a.oct_spacing_um, start,
+                                                             a.oct_mask)).to_dict(), **over})
+            res = Reg.register(a.oct, a.mri, out, spacing, a.oct_mask, None, P, a.device)
+        if to_run is not None:
+            saved = json.loads((out / "result.json").read_text(encoding="utf-8"))
+            vo = io.load_volume(a.oct, a.oct_spacing_um)
+            T = np.asarray(saved["T_oct2mri"], float) @ to_run
+            T0 = np.asarray(saved["pose"]["T_search"], float) @ to_run
+            saved["pose"]["T_search"] = T0
+            saved["pose"]["scale_per_oct_axis"] = np.linalg.norm(T[:3, :3] @ (vo.affine[:3, :3] / vo.spacing_mm),
+                                                                 axis=0).tolist()
+            saved["inputs"]["oct"]["affine"], saved["inputs"]["oct"]["spacing_mm"] = vo.affine, vo.spacing_mm
+            saved["inputs"]["oct_spacing_um"] = a.oct_spacing_um
+            io.write_json({**saved, "T_oct2mri": T, "turn": to_run}, out / "result.json")
+            io.write_transform_txt(T, out / "T_oct2mri.txt")
+            for f in ("oct2mri.lta", "oct2mri_itk.txt", "mri_in_oct.nii.gz"):
+                (out / f).unlink(missing_ok=True)
+            if name == "no_search":
+                io.write_transform_txt(T0, out / "T_start.txt")
+        (out / "variant.json").write_text(json.dumps({"variant": name, "change": VARIANTS.get(name, "the method"),
+                                                      "turn_deg": a.turn, "spacing_um": spacing,
+                                                      "turn": None if to_run is None else to_run.tolist(),
+                                                      "start_file": None if a.start is None else str(a.start.resolve()),
+                                                      "start": None if start is None else start.tolist(),
+                                                      "params": P.to_dict()}, indent=1), encoding="utf-8")
+        (out / "code.txt").write_text(code + "\n", encoding="utf-8")
+        print(f"{name}: search rank {res['pose']['search_rank']}, L {res['pose']['L']:.4f} -> {out}", flush=True)
+
+
+def _tokens(src):
+    """The tokens of src, an f-string as one STRING token as Python 3.11 and older give it."""
+    off = [0]
+    for line in StringIO(src):                         # line starts as tokenize counts them
+        off.append(off[-1] + len(line))
+    depth, fs, fe = 0, getattr(tokenize, "FSTRING_START", None), getattr(tokenize, "FSTRING_END", None)
+    for t in tokenize.generate_tokens(StringIO(src).readline):
+        if fs is not None and t.type == fs:
+            depth += 1
+            if depth == 1:
+                start, line = t.start, t.line
+        elif depth:
+            if t.type == fe:
+                depth -= 1
+                if not depth:
+                    text = src[off[start[0] - 1] + start[1]:off[t.end[0] - 1] + t.end[1]]
+                    yield tokenize.TokenInfo(tokenize.STRING, text, start, t.end, line)
         else:
-            print(f"warning: {store} was written with params {old.get('params_hash')}, not {res['params_hash']}; "
-                  "its rows are not comparable and are replaced.", flush=True)
-    io.write_json(res, store)
-    print(f"wrote {store} ({time.time() - t0:.0f} s)", flush=True)
+            yield t
+
+
+def code_id():
+    """Identity of the imported octreg code: the sha256 of its tokens without comments and docstrings, 12 hex digits."""
+    h = hashlib.sha256()
+    for f in sorted(Path(octreg.__file__).parent.glob("*.py")):
+        src = f.read_text(encoding="utf-8")
+        docs = {(n.body[0].value.lineno, n.body[0].value.col_offset) for n in ast.walk(ast.parse(src))
+                if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.body
+                and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)
+                and isinstance(n.body[0].value.value, str)}
+        toks, skip = [], False
+        for t in _tokens(src):
+            if t.type == tokenize.STRING and (t.start[0], len(t.line[:t.start[1]].encode())) in docs:   # ast counts bytes
+                skip = True
+            elif not (t.type in (tokenize.COMMENT, tokenize.NL) or skip and t.type == tokenize.NEWLINE):
+                toks.append(t.string)
+                skip = False
+        h.update(f.name.encode() + b"\0" + "\x1f".join(toks).encode() + b"\0")
+    return h.hexdigest()[:12]
+
+
+def made_by(out):
+    """code_id in out/code.txt if out holds a finished run with a complete result.json, else None."""
+    try:
+        res = json.loads((Path(out) / "result.json").read_text(encoding="utf-8"))
+        return (Path(out) / "code.txt").read_text(encoding="utf-8").strip() if "seconds" in res else None
+    except (OSError, ValueError):
+        return None
 
 
 if __name__ == "__main__":

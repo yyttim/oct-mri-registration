@@ -2,86 +2,80 @@
 from __future__ import annotations
 
 import dataclasses
-import hashlib
-import json
+import math
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class Params:
-    """Method constants (no switches); a variant via dataclasses.replace or from_dict (a partial dict)."""
+    """Method constants. Variants via dataclasses.replace or from_dict."""
     # grids
-    search_mm: float = 0.6                    # isotropic grid of the orientation search, an integer multiple of base_mm
-    base_mm: float = 0.15                     # isotropic grid of the two-class maps and the affine refinement
-    fine_mm: float = 0.04                     # OCT grid of the specimen mask
-    # foreground and specimen mask (§1)
+    search_mm: float = 0.6                    # orientation search
+    base_mm: float = 0.15                     # refinement
+    fine_mm: float = 0.04                     # OCT specimen mask
+    # masks (§1)
     valley_ratio: float = 0.5                 # MRI histogram valley / smaller neighbouring peak must be below this
-    min_component: float = 0.01               # keep MRI foreground components >= this fraction of the foreground volume
-    texture_bandpass_mm: float = 0.08         # Gaussian sigma of the band-pass before the directional variation
-    texture_window_mm: float = 0.36           # window of the directional local coefficient of variation
-    texture_grid_mm: float = 0.16             # block grid of the texture field
-    texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture field before its two-class (Otsu) threshold
-    texture_close_mm: float = 0.48            # closing radius of the specimen mask
-    # two-class maps (§2)
-    flatten_sigma_mm: float = 10.0            # Gaussian sigma of the local foreground mean used for flattening
-    sigmoid_std: float = 0.25                 # p = sigmoid((I - t) / (sigmoid_std * std of foreground values))
+    min_component: float = 0.01               # components below this fraction of the mask are dropped
+    texture_bandpass_mm: float = 0.08         # Gaussian sigma of the smoothing before the texture
+    texture_window_mm: float = 0.36           # window of the local coefficient of variation
+    texture_grid_mm: float = 0.16             # cell size of the texture grid
+    texture_smooth_mm: float = 1.2            # Gaussian sigma of the log texture before the threshold
+    # similarity (§2)
+    erode_mm: float = 0.8                     # depth of the OCT points of F inside the specimen mask
+    outline_min_outside: float = 0.01         # measured share outside the tissue both images need for the outline
     # orientation search (§3)
-    n_rot: int = 8000                         # uniform proper rotations, R[0] = identity
-    seed: int = 0                             # rotation set seed
-    topk: int = 24                            # poses kept after non-maximum suppression, each one refined
-    nms_mm: float = 3.0                       # same pose if centres closer than nms_mm ...
-    nms_deg: float = 10.0                     # ... and rotations closer than nms_deg
+    search_sigma_mm: float = 1.2              # Gaussian sigma of the search gradients
+    n_rot: int = 8000                         # Super-Fibonacci rotations
+    topk: int = 24                            # poses kept after non-maximum suppression
+    nms_mm: float = 3.0                       # same pose if centres closer than nms_mm and rotations closer than nms_deg
+    nms_deg: float = 20.0
     # affine refinement (§4)
-    iters: int = 200                          # Adam iterations per pose
-    lam: float = 2.0                          # L = 1 - S + lam (sum log_scale^2 + sum shear^2), the prior of §4 and §5
-    lr_rot: float = 0.02                      # rad
-    lr_t: float = 0.3                         # mm
-    lr_ls: float = 0.01                       # log-scale
-    lr_sh: float = 0.01                       # shear
-    # fine-structure refinement (§5)
-    ngf_sigmas_mm: tuple = (0.6, 0.4, 0.3)    # Gaussian sigma of the gradients, one pass each, coarse to fine
-    ngf_erode_mm: float = 0.8                 # both masks eroded by this, so the outlines are left out
-    ngf_iters: int = 150                      # Adam iterations per pass (the prior of §4, lam and clamp, is shared)
-    # smooth deformation (§6)
-    df_sigma_mm: float = 0.24                 # Gaussian sigma of the gradients of the structure feature
-    df_block_mm: float = 4.5                  # edge of the matched blocks
-    df_step_mm: float = 1.5                   # grid step of the block centres
-    df_reach_mm: float = 1.35                 # the reach of the local evidence: search range (+- per axis) of the interior block matches, and the largest distance of a surface edge from the MRI foreground surface
-    df_z_min: float = 4.0                     # a match is confident this many SDs above the mean of its score map
-    df_erode_mm: float = 0.6                  # both masks eroded by this; a block needs 0.7 of it in the core, so it can hang 30 % outside
-    df_edge_mad: float = 5.0                  # a prominent fall: this many MADs above the median of the fall along the profile
-    df_huber_mm: float = 0.3                  # Huber threshold of both residual types
-    df_grid_mm: float = 5.0                   # spacing of the control lattice
-    df_max_strain: float = 0.15               # largest first difference of the lattice / spacing must stay below this
+    sigmas_mm: tuple = (0.6, 0.4, 0.3)        # one pass per sigma, coarse to fine
+    iters: int = 150                          # Adam iterations per pass
+    lam: float = 2.0                          # L = 1 - F + lam (sum log_scale^2 + sum shear^2)
+    lr_mm: float = 0.06                       # Adam step in mm of OCT box corner motion
 
     def __post_init__(self):
-        ok = 0 < self.fine_mm <= self.base_mm < self.search_mm
-        if not (ok and abs(self.search_mm / self.base_mm - round(self.search_mm / self.base_mm)) < 1e-6):
-            raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm, search_mm an integer multiple of base_mm")
-        if not (self.ngf_sigmas_mm and all(isinstance(x, float) and 0 < x < float("inf") for x in self.ngf_sigmas_mm)):
-            raise ValueError("Params: ngf_sigmas_mm must be a non-empty tuple of positive finite floats")
-        if not (self.ngf_erode_mm > 0 and self.ngf_iters >= 1):
-            raise ValueError("Params: need ngf_erode_mm > 0 and ngf_iters >= 1")
-        if not min(self.df_sigma_mm, self.df_block_mm, self.df_step_mm, self.df_reach_mm, self.df_z_min, self.df_erode_mm,
-                   self.df_huber_mm, self.df_max_strain, self.df_edge_mad, self.df_grid_mm) > 0:
-            raise ValueError("Params: all df_ lengths, df_z_min and df_max_strain must be positive")
+        real = lambda x: isinstance(x, float) and math.isfinite(x)
+        for f in dataclasses.fields(self):                    # JSON gives ints for floats and lists for tuples
+            given = v = getattr(self, f.name)
+            if isinstance(f.default, float) and type(v) is int:
+                v = float(v)
+            elif isinstance(f.default, tuple) and isinstance(v, (list, tuple)):
+                v = tuple(float(x) if type(x) is int else x for x in v)
+            object.__setattr__(self, f.name, v)
+            if isinstance(f.default, float):
+                ok, want = real(v), "a finite number"
+            elif isinstance(f.default, tuple):
+                ok, want = isinstance(v, tuple) and len(v) > 0 and all(map(real, v)), "a non-empty list of finite numbers"
+            else:
+                ok, want = isinstance(v, int) and not isinstance(v, bool), "an integer"
+            if not ok:
+                raise ValueError(f"Params: {f.name} must be {want}, got {given!r}")
+        if not 0 < self.fine_mm <= self.base_mm < self.search_mm:
+            raise ValueError("Params: need 0 < fine_mm <= base_mm < search_mm")
+        if min(self.sigmas_mm) <= 0:
+            raise ValueError(f"Params: sigmas_mm must be positive, got {self.sigmas_mm!r}")
+        for names, ok, want in (
+                # outline_min_outside above 1 turns the outline off
+                (("texture_bandpass_mm", "texture_window_mm", "texture_grid_mm", "texture_smooth_mm", "erode_mm",
+                  "search_sigma_mm", "lr_mm", "valley_ratio", "outline_min_outside"), lambda x: x > 0, "positive"),
+                (("lam", "nms_mm", "nms_deg"), lambda x: x >= 0, "at least 0"),
+                (("iters", "n_rot", "topk"), lambda x: x >= 1, "at least 1"),
+                (("min_component",), lambda x: 0 <= x < 1, "in [0, 1)")):
+            for name in names:
+                if not ok(getattr(self, name)):
+                    raise ValueError(f"Params: {name} must be {want}, got {getattr(self, name)!r}")
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict) -> "Params":
-        """Params from a partial dict (e.g. JSON); ints are accepted for floats; unknown keys or wrong types raise ValueError."""
-        base, kw = cls(), {}
-        for k, v in d.items():
-            dv = getattr(base, k, None)
-            kw[k] = v = float(v) if isinstance(dv, float) and type(v) is int else v
-            if isinstance(dv, tuple) and isinstance(v, (list, tuple)):
-                kw[k] = v = tuple(float(x) if type(x) is int else x for x in v)
-            if k not in base.__dataclass_fields__ or type(v) is not type(dv):
-                raise ValueError(f"Params {k}={v!r}: unknown key or not a {type(dv).__name__}")
-        return cls(**kw)
-
-    def hash(self) -> str:
-        """16 hex characters of the sha256 of the sorted-key JSON of all fields (process and platform independent)."""
-        return hashlib.sha256(json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
+        """Params from a partial dict. Unknown keys raise ValueError."""
+        if not isinstance(d, dict):
+            raise ValueError(f"Params: overrides must be a JSON object, not {type(d).__name__}")
+        unknown = set(d) - set(cls.__dataclass_fields__)
+        if unknown:
+            raise ValueError(f"Params: unknown keys {sorted(unknown)}")
+        return cls(**d)

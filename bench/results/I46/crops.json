@@ -1,0 +1,1702 @@
+[
+ {
+  "name": "flip1_C3_k0",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 0,
+  "seed": 4600,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.947,
+   -1.567,
+   1.655
+  ],
+  "crop_voxels": [
+   [
+    680,
+    399,
+    329
+   ],
+   [
+    817,
+    532,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.33,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k0",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 0,
+  "seed": 4600,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.947,
+   -1.567,
+   1.655
+  ],
+  "crop_voxels": [
+   [
+    680,
+    399,
+    329
+   ],
+   [
+    817,
+    532,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.33,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k0",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 0,
+  "seed": 4600,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.947,
+   -1.567,
+   1.655
+  ],
+  "crop_voxels": [
+   [
+    680,
+    399,
+    329
+   ],
+   [
+    817,
+    532,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.33,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k1",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 1,
+  "seed": 4601,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.717,
+   -0.746,
+   -1.012
+  ],
+  "crop_voxels": [
+   [
+    682,
+    405,
+    311
+   ],
+   [
+    819,
+    537,
+    412
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.044,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k1",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 1,
+  "seed": 4601,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.717,
+   -0.746,
+   -1.012
+  ],
+  "crop_voxels": [
+   [
+    682,
+    405,
+    311
+   ],
+   [
+    819,
+    537,
+    412
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.044,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k1",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 1,
+  "seed": 4601,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.717,
+   -0.746,
+   -1.012
+  ],
+  "crop_voxels": [
+   [
+    682,
+    405,
+    311
+   ],
+   [
+    819,
+    537,
+    412
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.044,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k2",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 2,
+  "seed": 4602,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.044,
+   1.451,
+   1.634
+  ],
+  "crop_voxels": [
+   [
+    687,
+    419,
+    329
+   ],
+   [
+    824,
+    552,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.961,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k2",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 2,
+  "seed": 4602,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.044,
+   1.451,
+   1.634
+  ],
+  "crop_voxels": [
+   [
+    687,
+    419,
+    329
+   ],
+   [
+    824,
+    552,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.961,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k2",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 2,
+  "seed": 4602,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.044,
+   1.451,
+   1.634
+  ],
+  "crop_voxels": [
+   [
+    687,
+    419,
+    329
+   ],
+   [
+    824,
+    552,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.95,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.961,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k3",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 3,
+  "seed": 4603,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.727,
+   -0.339,
+   1.333
+  ],
+  "crop_voxels": [
+   [
+    682,
+    408,
+    327
+   ],
+   [
+    819,
+    540,
+    428
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.138,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k3",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 3,
+  "seed": 4603,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.727,
+   -0.339,
+   1.333
+  ],
+  "crop_voxels": [
+   [
+    682,
+    408,
+    327
+   ],
+   [
+    819,
+    540,
+    428
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.138,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k3",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 3,
+  "seed": 4603,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -0.727,
+   -0.339,
+   1.333
+  ],
+  "crop_voxels": [
+   [
+    682,
+    408,
+    327
+   ],
+   [
+    819,
+    540,
+    428
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.138,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k4",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 4,
+  "seed": 4604,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.636,
+   -0.835,
+   -0.58
+  ],
+  "crop_voxels": [
+   [
+    691,
+    404,
+    314
+   ],
+   [
+    828,
+    536,
+    415
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.275,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k4",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 4,
+  "seed": 4604,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.636,
+   -0.835,
+   -0.58
+  ],
+  "crop_voxels": [
+   [
+    691,
+    404,
+    314
+   ],
+   [
+    828,
+    536,
+    415
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.275,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k4",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 4,
+  "seed": 4604,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.636,
+   -0.835,
+   -0.58
+  ],
+  "crop_voxels": [
+   [
+    691,
+    404,
+    314
+   ],
+   [
+    828,
+    536,
+    415
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.275,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k5",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 5,
+  "seed": 4605,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.529,
+   0.36,
+   -1.483
+  ],
+  "crop_voxels": [
+   [
+    690,
+    412,
+    308
+   ],
+   [
+    827,
+    544,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k5",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 5,
+  "seed": 4605,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.529,
+   0.36,
+   -1.483
+  ],
+  "crop_voxels": [
+   [
+    690,
+    412,
+    308
+   ],
+   [
+    827,
+    544,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k5",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 5,
+  "seed": 4605,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.529,
+   0.36,
+   -1.483
+  ],
+  "crop_voxels": [
+   [
+    690,
+    412,
+    308
+   ],
+   [
+    827,
+    544,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k6",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 6,
+  "seed": 4606,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.764,
+   1.269,
+   -0.372
+  ],
+  "crop_voxels": [
+   [
+    692,
+    418,
+    315
+   ],
+   [
+    829,
+    550,
+    417
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.189,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k6",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 6,
+  "seed": 4606,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.764,
+   1.269,
+   -0.372
+  ],
+  "crop_voxels": [
+   [
+    692,
+    418,
+    315
+   ],
+   [
+    829,
+    550,
+    417
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.189,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k6",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 6,
+  "seed": 4606,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.764,
+   1.269,
+   -0.372
+  ],
+  "crop_voxels": [
+   [
+    692,
+    418,
+    315
+   ],
+   [
+    829,
+    550,
+    417
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 1.189,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k7",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 7,
+  "seed": 4607,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -1.067,
+   1.052,
+   -0.455
+  ],
+  "crop_voxels": [
+   [
+    680,
+    417,
+    315
+   ],
+   [
+    816,
+    549,
+    416
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 0.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k7",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 7,
+  "seed": 4607,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -1.067,
+   1.052,
+   -0.455
+  ],
+  "crop_voxels": [
+   [
+    680,
+    417,
+    315
+   ],
+   [
+    816,
+    549,
+    416
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 0.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k7",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 7,
+  "seed": 4607,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   -1.067,
+   1.052,
+   -0.455
+  ],
+  "crop_voxels": [
+   [
+    680,
+    417,
+    315
+   ],
+   [
+    816,
+    549,
+    416
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 0.732,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k8",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 8,
+  "seed": 4608,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.837,
+   -0.629,
+   -1.456
+  ],
+  "crop_voxels": [
+   [
+    692,
+    406,
+    308
+   ],
+   [
+    829,
+    538,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.421,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip2_C3_k8",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 8,
+  "seed": 4608,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.837,
+   -0.629,
+   -1.456
+  ],
+  "crop_voxels": [
+   [
+    692,
+    406,
+    308
+   ],
+   [
+    829,
+    538,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.421,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip3_C3_k8",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 8,
+  "seed": 4608,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   0.837,
+   -0.629,
+   -1.456
+  ],
+  "crop_voxels": [
+   [
+    692,
+    406,
+    308
+   ],
+   [
+    829,
+    538,
+    409
+   ]
+  ],
+  "crop_extent_mm": [
+   20.55,
+   19.8,
+   15.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.421,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C3_k9",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C3",
+  "k": 9,
+  "seed": 4609,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   1.931,
+   1.799,
+   -1.703
+  ],
+  "crop_voxels": [
+   [
+    700,
+    422,
+    306
+   ],
+   [
+    836,
+    554,
+    408
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.83,
+  "tissue_inside_crop": 0.9997
+ },
+ {
+  "name": "flip2_C3_k9",
+  "image": "flip2",
+  "flip_deg": 20,
+  "cond": "C3",
+  "k": 9,
+  "seed": 4609,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   1.931,
+   1.799,
+   -1.703
+  ],
+  "crop_voxels": [
+   [
+    700,
+    422,
+    306
+   ],
+   [
+    836,
+    554,
+    408
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.83,
+  "tissue_inside_crop": 0.9997
+ },
+ {
+  "name": "flip3_C3_k9",
+  "image": "flip3",
+  "flip_deg": 30,
+  "cond": "C3",
+  "k": 9,
+  "seed": 4609,
+  "margin_mm": 3.0,
+  "shift_bound_mm": 2.0,
+  "shift_mm": [
+   1.931,
+   1.799,
+   -1.703
+  ],
+  "crop_voxels": [
+   [
+    700,
+    422,
+    306
+   ],
+   [
+    836,
+    554,
+    408
+   ]
+  ],
+  "crop_extent_mm": [
+   20.4,
+   19.8,
+   15.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.83,
+  "tissue_inside_crop": 0.9997
+ },
+ {
+  "name": "flip1_C6_k0",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 0,
+  "seed": 4600,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   -2.368,
+   -3.918,
+   4.136
+  ],
+  "crop_voxels": [
+   [
+    651,
+    364,
+    325
+   ],
+   [
+    828,
+    536,
+    467
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 6.92,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k1",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 1,
+  "seed": 4601,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   -1.792,
+   -1.865,
+   -2.531
+  ],
+  "crop_voxels": [
+   [
+    655,
+    377,
+    281
+   ],
+   [
+    832,
+    550,
+    422
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.95,
+   21.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 4.009,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k2",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 2,
+  "seed": 4602,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   0.109,
+   3.627,
+   4.084
+  ],
+  "crop_voxels": [
+   [
+    667,
+    414,
+    325
+   ],
+   [
+    844,
+    586,
+    466
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 4.982,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k3",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 3,
+  "seed": 4603,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   -1.816,
+   -0.849,
+   3.332
+  ],
+  "crop_voxels": [
+   [
+    655,
+    384,
+    320
+   ],
+   [
+    831,
+    556,
+    461
+   ]
+  ],
+  "crop_extent_mm": [
+   26.4,
+   25.8,
+   21.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 4.312,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k4",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 4,
+  "seed": 4604,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   1.589,
+   -2.087,
+   -1.45
+  ],
+  "crop_voxels": [
+   [
+    677,
+    376,
+    288
+   ],
+   [
+    854,
+    548,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.918,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k5",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 5,
+  "seed": 4605,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   1.323,
+   0.901,
+   -3.708
+  ],
+  "crop_voxels": [
+   [
+    676,
+    396,
+    273
+   ],
+   [
+    852,
+    568,
+    414
+   ]
+  ],
+  "crop_extent_mm": [
+   26.4,
+   25.8,
+   21.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.909,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k6",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 6,
+  "seed": 4606,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   1.91,
+   3.171,
+   -0.93
+  ],
+  "crop_voxels": [
+   [
+    679,
+    411,
+    292
+   ],
+   [
+    856,
+    583,
+    433
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 3.101,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k7",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 7,
+  "seed": 4607,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   -2.667,
+   2.63,
+   -1.137
+  ],
+  "crop_voxels": [
+   [
+    649,
+    407,
+    290
+   ],
+   [
+    826,
+    579,
+    432
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 2.841,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k8",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 8,
+  "seed": 4608,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   2.092,
+   -1.572,
+   -3.64
+  ],
+  "crop_voxels": [
+   [
+    681,
+    379,
+    273
+   ],
+   [
+    858,
+    551,
+    415
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 5.075,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C6_k9",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C6",
+  "k": 9,
+  "seed": 4609,
+  "margin_mm": 6.0,
+  "shift_bound_mm": 5.0,
+  "shift_mm": [
+   4.827,
+   4.497,
+   -4.258
+  ],
+  "crop_voxels": [
+   [
+    699,
+    420,
+    269
+   ],
+   [
+    876,
+    592,
+    411
+   ]
+  ],
+  "crop_extent_mm": [
+   26.55,
+   25.8,
+   21.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 7.43,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k0",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 0,
+  "seed": 4600,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   -4.735,
+   -7.837,
+   8.273
+  ],
+  "crop_voxels": [
+   [
+    595,
+    298,
+    313
+   ],
+   [
+    852,
+    550,
+    534
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 13.05,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k1",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 1,
+  "seed": 4601,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   -3.584,
+   -3.729,
+   -5.061
+  ],
+  "crop_voxels": [
+   [
+    603,
+    325,
+    224
+   ],
+   [
+    860,
+    577,
+    445
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 7.565,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k2",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 2,
+  "seed": 4602,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   0.218,
+   7.255,
+   8.169
+  ],
+  "crop_voxels": [
+   [
+    628,
+    398,
+    312
+   ],
+   [
+    885,
+    650,
+    534
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 10.408,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k3",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 3,
+  "seed": 4603,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   -3.633,
+   -1.697,
+   6.665
+  ],
+  "crop_voxels": [
+   [
+    603,
+    338,
+    302
+   ],
+   [
+    859,
+    591,
+    524
+   ]
+  ],
+  "crop_extent_mm": [
+   38.4,
+   37.95,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 8.141,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k4",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 4,
+  "seed": 4604,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   3.179,
+   -4.173,
+   -2.901
+  ],
+  "crop_voxels": [
+   [
+    648,
+    322,
+    238
+   ],
+   [
+    905,
+    574,
+    460
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 6.934,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k5",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 5,
+  "seed": 4605,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   2.646,
+   1.802,
+   -7.416
+  ],
+  "crop_voxels": [
+   [
+    644,
+    362,
+    208
+   ],
+   [
+    901,
+    614,
+    430
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 7.813,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k6",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 6,
+  "seed": 4606,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   3.819,
+   6.343,
+   -1.86
+  ],
+  "crop_voxels": [
+   [
+    652,
+    392,
+    245
+   ],
+   [
+    909,
+    644,
+    467
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 6.87,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k7",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 7,
+  "seed": 4607,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   -5.335,
+   5.259,
+   -2.275
+  ],
+  "crop_voxels": [
+   [
+    591,
+    385,
+    243
+   ],
+   [
+    848,
+    637,
+    464
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 6.785,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k8",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 8,
+  "seed": 4608,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   4.184,
+   -3.144,
+   -7.281
+  ],
+  "crop_voxels": [
+   [
+    655,
+    329,
+    209
+   ],
+   [
+    911,
+    581,
+    431
+   ]
+  ],
+  "crop_extent_mm": [
+   38.4,
+   37.8,
+   33.3
+  ],
+  "crop_centre_to_tissue_centre_mm": 9.397,
+  "tissue_inside_crop": 1.0
+ },
+ {
+  "name": "flip1_C12_k9",
+  "image": "flip1",
+  "flip_deg": 10,
+  "cond": "C12",
+  "k": 9,
+  "seed": 4609,
+  "margin_mm": 12.0,
+  "shift_bound_mm": 10.0,
+  "shift_mm": [
+   9.654,
+   8.994,
+   -8.515
+  ],
+  "crop_voxels": [
+   [
+    691,
+    410,
+    201
+   ],
+   [
+    948,
+    662,
+    422
+   ]
+  ],
+  "crop_extent_mm": [
+   38.55,
+   37.8,
+   33.15
+  ],
+  "crop_centre_to_tissue_centre_mm": 15.235,
+  "tissue_inside_crop": 1.0
+ }
+]

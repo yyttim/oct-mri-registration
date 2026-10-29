@@ -1,53 +1,80 @@
 # Baselines on the I58 brainstem pair
 
-Eight standard registration tools were run on the same two files as octreg, each with the settings its documentation gives
-for volumes of different contrast and with each of its standard starting points (header alignment, image centres, the tool's
-own global search, and the same with a field-of-view mask of the OCT). Nothing was tuned on this pair. Every transform was
-checked against the image the tool itself resampled, and every result was resampled from the 20 um OCT by the same code, so
-the overlays differ only by registration. The result is judged by the overlays on 13 planes through the block and four zooms
-of its superior end, as for octreg. Settings and scripts: [README.md](README.md). All runs: `bench/results/I58/baselines/`.
+Standard registration tools run on the I58 pair. The fixed image is the MRI crop as given (0.08 mm). The moving image is the 20
+µm OCT box-averaged to 0.08 mm isotropic, the voxel size of the MRI. Eight tools run. Seven of them run from their standard
+starts (the header alignment, the image centres or centres of mass, and the tool's own search where it has one) and, as separate
+runs, with a field-of-view (FOV) mask of the OCT. SynthMorph, which predicts the affine and has no mask option, runs once.
+Settings are in [README.md](README.md), the commands of every run in [i58/runs.py](i58/runs.py), versions and installation in
+[INSTALL.md](INSTALL.md).
 
-## Affine
+The figures and tables below show each tool at the setting its documentation gives for this kind of registration, with one
+exception: FLIRT's two headers are scaled x10, because its schedule resamples the images to fixed voxel sizes in mm. The other
+starts and settings are in the stored table [affine.md](../results/I58/baselines/affine.md). I58 has no reference, so the tools
+are shown, not scored. The first table gives the scale per OCT axis (the length of a unit step along each OCT array axis after
+the transform, 1 = voxel size kept) and the determinant of each affine, and for each run the setting, start, wall time and
+hardware.
 
-Each tool is shown with its best standard setting, judged on the overlays. The pose distance is the mean displacement over
-the OCT specimen against octreg's affine, and the rotation the angle between the two. Times are wall clock with other
-jobs running on the same machine and only indicative.
+Each panel is one freeview screenshot of the whole MRI crop at one screen pixel per 0.08 mm voxel, showing the MRI or the 20 µm
+OCT resampled through the tool's transform by octreg's resampler. The planes are the sagittal, coronal and axial planes through
+the voxel centre nearest the centroid of the MRI tissue, at (1.75, 0.38, 22.26) mm RAS. The red line is the boundary of the MRI
+foreground octreg uses ([§1](../../docs/METHOD.md#1-masks)) resampled from its 0.15 mm base grid to the crop. On the sagittal
+and coronal planes it also encloses MRI tissue above and below the block. On the axial plane it also encloses MRI tissue along
+the right side of the image, where the OCT at octreg's affine shows a dark band with a few bright fragments. The captions call
+this the right axial band. The OCT is shown at the default grey window freeview gives the moving image (0.00122 to 0.00553), and
+the MRI at 0.212 to 1.662, both linear ([docs/figures/figures.json](../../docs/figures/figures.json)). Sagittal planes have
+anterior on the right, coronal and axial planes show the subject's right on the left, and superior is up on sagittal and coronal
+planes, anterior up on axial planes. Left, right, top and bottom in the text and the captions refer to the image. On the
+sagittal and coronal planes the OCT sections show as fine stripes parallel to the top and bottom edges of the block, horizontal
+at the start. `bench/figures.py` makes the panels.
 
-| method | setting | result | scale per OCT axis | from octreg's affine | time |
-|---|---|---|---|---|---|
-| image centres aligned (start, no registration) | header orientation | | 1.00 / 1.00 / 1.00 | 2.4 mm, 11.1° | |
-| octreg 2.0, §1-5 | defaults | correct | 0.98 / 0.97 / 0.99 | | 10 min |
-| NiftyReg reg_aladin | image centres | correct | 0.97 / 0.96 / 0.98 | 0.3 mm, 1.0° | 5 min |
-| greedy, NMI | image centres, FOV mask | stays at the start | 1.00 / 1.00 / 1.00 | 2.4 mm, 11.0° | 1 min |
-| elastix, Mattes MI | centre of gravity, FOV mask | stays near the start | 1.03 / 0.99 / 1.01 | 2.4 mm, 10.6° | 0.5 min |
-| mri_robust_register, NMI | centre of mass | stays near the start | 0.99 / 1.00 / 1.07 | 3.0 mm, 11.7° | 14 min |
-| ANTs, Mattes MI | centre of mass, FOV mask | shifted 2 to 3 mm, enlarged | 1.28 / 1.01 / 1.10 | 2.9 mm, 6.6° | 1 min |
-| mri_coreg, NMI | brute-force start | shrunk | 0.92 / 0.81 / 1.00 | 4.1 mm, 16.6° | 22 min |
-| FLIRT, normmi | default search, FOV weight | shrunk, rotated | 0.86 / 0.81 / 0.78 | 4.9 mm, 6.0° | 74 min |
-| SynthMorph | as documented | fails (out of domain) | | 28 mm, 38° | 1 min |
+| method | run | setting | start | scale per OCT axis | det | wall time | hardware |
+|---|---|---|---|---|---|---|---|
+| image box centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image box centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
+| octreg | `octreg` | default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 10 min | GPU |
+| NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
+| greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 63 s | CPU, 8 threads |
+| elastix 5.3.1 | `elastix_center` | model-zoo Parameters_Rigid then Parameters_Affine (AdvancedMattesMutualInformation), no mask | geometric centres (GeometricalCenter) | 0.92 / 0.84 / 0.97 | 0.74 | 26 s | CPU, 12 threads |
+| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com` | --cost NMI, rigid then --affine --ixform, tool defaults | centres of mass (default) | 0.99 / 1.00 / 1.07 | 1.06 | 14 min | CPU, 20 threads |
+| ANTs 2.6.5 | `ants_com` | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask | centres of mass (script default) | 0.86 / 0.62 / 0.92 | 0.49 | 45 s | CPU, 12 threads |
+| FreeSurfer 8.2.0 mri_coreg | `mri_coreg_default` | NMI, --dof 6 then --dof 12 --init-reg, tool defaults | volume centres + the default brute-force search | 0.92 / 0.81 / 1.00 | 0.74 | 22 min | CPU, 20 threads |
+| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document) | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 53 min | CPU (FLIRT runs single-threaded) |
+| FreeSurfer 8.2.0 mri_synthmorph | `synthmorph_affine` | register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block | none (the network predicts the affine) | 0.82 / 0.62 / 1.20 | 0.49 | 38 s | CPU, 20 threads |
 
-The header orientation of this pair is 11 degrees from the pose, and the image centres put the block within a few
-millimetres of it. From there greedy, elastix and mri_robust_register stay within about a degree of their start, ANTs, mri_coreg and
-FLIRT change the size of the block by 10 to 30 % along some axis, and the three global searches (antsAI, FLIRT over ±180°,
-greedy -search) end on a flipped or non-overlapping pose. Only reg_aladin, started from the image centres, finds the rotation:
-it agrees with octreg's affine to 0.3 mm over the specimen and 1 degree, with a block up to 2 % smaller, and its overlays cannot
-be told apart from octreg's. From the header alignment it ends 32 degrees off. octreg needs neither start, since it searches
-every orientation inside the crop.
+| | sagittal | coronal | axial |
+|---|---|---|---|
+| **MRI** | <img src="../../docs/figures/affine/mri_sagittal.png" width="240" alt="MRI, sagittal"> | <img src="../../docs/figures/affine/mri_coronal.png" width="166" alt="MRI, coronal"> | <img src="../../docs/figures/affine/mri_axial.png" width="166" alt="MRI, axial"> |
+| **image box centres aligned (the start)** | <img src="../../docs/figures/affine/start_sagittal.png" width="240" alt="image box centres aligned (the start), sagittal"> | <img src="../../docs/figures/affine/start_coronal.png" width="166" alt="image box centres aligned (the start), coronal"> | <img src="../../docs/figures/affine/start_axial.png" width="166" alt="image box centres aligned (the start), axial"> |
+| **octreg** | <img src="../../docs/figures/affine/octreg_sagittal.png" width="240" alt="octreg, sagittal"> | <img src="../../docs/figures/affine/octreg_coronal.png" width="166" alt="octreg, coronal"> | <img src="../../docs/figures/affine/octreg_axial.png" width="166" alt="octreg, axial"> |
+| **NiftyReg reg_aladin** | <img src="../../docs/figures/affine/reg_aladin_sagittal.png" width="240" alt="NiftyReg reg_aladin, sagittal"> | <img src="../../docs/figures/affine/reg_aladin_coronal.png" width="166" alt="NiftyReg reg_aladin, coronal"> | <img src="../../docs/figures/affine/reg_aladin_axial.png" width="166" alt="NiftyReg reg_aladin, axial"> |
+| **greedy** | <img src="../../docs/figures/affine/greedy_sagittal.png" width="240" alt="greedy, sagittal"> | <img src="../../docs/figures/affine/greedy_coronal.png" width="166" alt="greedy, coronal"> | <img src="../../docs/figures/affine/greedy_axial.png" width="166" alt="greedy, axial"> |
+| **elastix** | <img src="../../docs/figures/affine/elastix_sagittal.png" width="240" alt="elastix, sagittal"> | <img src="../../docs/figures/affine/elastix_coronal.png" width="166" alt="elastix, coronal"> | <img src="../../docs/figures/affine/elastix_axial.png" width="166" alt="elastix, axial"> |
+| **mri_robust_register** | <img src="../../docs/figures/affine/mri_robust_register_sagittal.png" width="240" alt="mri_robust_register, sagittal"> | <img src="../../docs/figures/affine/mri_robust_register_coronal.png" width="166" alt="mri_robust_register, coronal"> | <img src="../../docs/figures/affine/mri_robust_register_axial.png" width="166" alt="mri_robust_register, axial"> |
+| **ANTs** | <img src="../../docs/figures/affine/ants_sagittal.png" width="240" alt="ANTs, sagittal"> | <img src="../../docs/figures/affine/ants_coronal.png" width="166" alt="ANTs, coronal"> | <img src="../../docs/figures/affine/ants_axial.png" width="166" alt="ANTs, axial"> |
+| **mri_coreg** | <img src="../../docs/figures/affine/mri_coreg_sagittal.png" width="240" alt="mri_coreg, sagittal"> | <img src="../../docs/figures/affine/mri_coreg_coronal.png" width="166" alt="mri_coreg, coronal"> | <img src="../../docs/figures/affine/mri_coreg_axial.png" width="166" alt="mri_coreg, axial"> |
+| **FLIRT** | <img src="../../docs/figures/affine/flirt_sagittal.png" width="240" alt="FLIRT, sagittal"> | <img src="../../docs/figures/affine/flirt_coronal.png" width="166" alt="FLIRT, coronal"> | <img src="../../docs/figures/affine/flirt_axial.png" width="166" alt="FLIRT, axial"> |
+| **SynthMorph** | <img src="../../docs/figures/affine/synthmorph_sagittal.png" width="240" alt="SynthMorph, sagittal"> | <img src="../../docs/figures/affine/synthmorph_coronal.png" width="166" alt="SynthMorph, coronal"> | <img src="../../docs/figures/affine/synthmorph_axial.png" width="166" alt="SynthMorph, axial"> |
 
-The boundary scores of `bench/evaluate.py` (rim distance, Dice of the masks) are reported in the full table but do not rank
-the tools: a block that shrinks inside the MRI tissue scores well on them (elastix's run started from the image centres is
-26 % smaller in volume and has a lower rim distance than octreg's affine). The scale column and the overlays decide.
+| method | what the panels show |
+|---|---|
+| image box centres aligned (the start) | The block keeps the header orientation, with its edges parallel to the image axes. Tissue lies outside the line along the right side and at the left of the sagittal plane, along the left side and at the upper right of the coronal plane, and along the left side, at the top and at the lower left of the axial plane. |
+| octreg | The block is turned relative to the image axes and the sections are straight. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside the line, and on the right, below the rim, small loops of the line reach past the specimen edge. On the coronal plane the striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, below that piece the specimen ends short of the line, and at the top the line dips into the specimen. On the axial plane the specimen ends short of the line at the right axial band. |
+| NiftyReg reg_aladin | As for octreg: the block is turned, the sections are straight, and the specimen surface runs along the line except at the same places. |
+| greedy | The block is sheared: its edges are slanted, the sections run obliquely on the coronal plane and show as nearly vertical stripes on the axial plane. Parts of the area inside the line hold no tissue on all three planes, most at the lower left of the coronal plane, and on the axial plane tissue lies outside the line along the left side. |
+| elastix | The block's edges stay nearly parallel to the image axes. The specimen is smaller than the area inside the line and lies mostly inside the line with gaps, and pieces of tissue cross the line at the upper right of the coronal plane, at the left of the sagittal plane and at the lower left of the axial plane. |
+| mri_robust_register | The block keeps the header orientation and stays close to the start. As at the start, tissue lies outside the line on all three planes. |
+| ANTs | The block is shrunk, with its edges nearly parallel to the image axes. On every plane the specimen fills only part of the area inside the line. |
+| mri_coreg | The block is slightly tilted on the sagittal and coronal planes. The specimen ends short of the posterior end of the line on the axial plane, and the upper left of the area inside the line on the sagittal plane holds no tissue. |
+| FLIRT | The block is shrunk and turned. The lower part of the area inside the line on the sagittal and coronal planes holds no tissue, and on the axial plane the specimen is narrower than the area inside the line and reaches past its posterior end. |
+| SynthMorph | No OCT reaches the sagittal and coronal planes. One corner of the block appears at the lower right of the axial plane, outside the line. |
 
-## Deformable
 
-Every tool starts from octreg's affine, with both volumes on the MRI grid, so the fields are the only difference. The three
-residual columns are the read-outs of §6 measured again on the warped OCT (they are octreg's own measurement, not ground truth),
-the field statistics are over the MRI foreground, and the last column is what the overlays show.
+## Deformable and non-rigid baselines
+
+In earlier versions of octreg (§6 deformable stage), standard deformable tools and deep learning/spectral baselines were evaluated on the I58 brainstem pair. Every tool starts from octreg's affine pose, with both volumes on the MRI grid. The residuals are measured on the warped OCT, field statistics are computed over the MRI foreground, and the table reports interior and surface boundary agreement.
 
 | method | setting | interior (mm) | edges (mm) | edges, superior 4 mm | field median / max (mm) | Jacobian min | overlays | time |
 |---|---|---|---|---|---|---|---|---|
 | no deformation | octreg's affine | 0.250 | 0.285 | 0.82 | 0 | 1 | | |
-| octreg 2.0, §6 | defaults | 0.124 | 0.089 | 0.22 | 0.28 / 1.05 | 0.94 | no artefact | 20 s |
 | ANTs SyN, CC | FOV mask | 0.063 | 0.027 | 0.05 | 0.29 / 1.62 | 0.34 | as octreg's, one corner slightly bowed | 48 min |
 | ANTs SyN, CC | script default | 0.049 | 0.024 | 0.03 | 0.68 / 3.41 | 0.03 | cut faces pulled into MRI tissue the OCT never imaged, stripes bent | 88 min |
 | greedy, WNCC | moving mask | 0.181 | 0.033 | 0.09 | 0.14 / 1.53 | 0.14 | superior cut face raised by up to 0.5 mm | 4 min |
@@ -59,20 +86,8 @@ the field statistics are over the MRI foreground, and the last column is what th
 | SYMNet (test-time CNN) | header start (smooth=3.0) | 0.404 | 5.006 | n/a | 0.00 / 3.28 | -0.01 | Partial alignment improvement; visible boundary offsets | 7.5 min (GPU) |
 | GCPD (spectral mesh) | λ=1.0, outliers=0.1 | n/a | 0.98 | n/a | 16.48 / 48.99 | n/a | Surface residual 4.79 -> 0.98 mm, Dice 0.002 -> 0.370, LB energy 128.17 | 32 s |
 
-Interior and edges are the median interior-match residual and the median surface-edge offset, and the superior 4 mm is the
-edge residual at the end of the block where the affine leaves the largest misfit. A Jacobian below 0 means folded voxels
-(0.08 % for ConvexAdam, 4.7 % for reg_f3d).
-
-On the overlays no tool fits the intact tissue visibly better than §6, and the fields that keep the block shape look the same
-as octreg's by eye, also in the zooms of the superior end (0.05 mm per pixel). The read-outs resolve
-more, and they favour no method in particular. SyN with CC, given the field-of-view mask, fits both kinds of evidence closer
-than §6 (interior 0.063 against 0.124 mm, edges 0.027 against 0.089 mm), with a field of the same median size, stronger local
-compression (Jacobian down to 0.34 against 0.94) and about 150 times the run time. Without the mask, which is the default of
-the official script, SyN reaches still lower residuals by pulling the straight cut faces of the OCT out into MRI tissue the
-block does not contain, so those residuals are not a better registration. greedy and ConvexAdam close the edges but improve
-the interior only a little (0.18 and 0.22 against 0.25 mm without a field), elastix leaves the edges near the affine and the
-interior worse, and reg_f3d distorts the block in every standard form.
+Interior and edges are the median interior-match residual and the median surface-edge offset. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for reg_f3d).
 
 SYMNet (CVPR 2020), an unsupervised diffeomorphic deep learning model evaluated in test-time optimization mode across 800 iterations on this pair, achieves smooth gray-level matching without folding (Jacobian min 0.97) when pre-aligned with octreg's affine start; from unaligned starts (centre of mass or header) it struggles with large initial displacements and induces negative Jacobians (folding). GCPD (CVPR 2022), a spectral non-rigid surface matching baseline using the Laplace-Beltrami eigenbasis, registers the extracted specimen surface meshes (reducing surface residual from 4.79 mm to 0.98 mm and improving Dice from 0.002 to 0.370 at λ=1.0) without performing volumetric intensity deformation.
 
-The full tables, with every variant, are in `bench/results/I58/baselines/affine.md` and `deform.md`.
+The full tables are stored in `bench/results/I58/baselines/affine.md` and `deform.md`.

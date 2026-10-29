@@ -2,151 +2,140 @@
 
 ## Unreleased
 
-- `bench/baselines/`: a comparison with eight standard registration tools on the I58 pair (affine stage) and five
-  deformable tools started from octreg's affine, each with its documented settings, with the scripts that run the evaluation
-  and the tables in `bench/results/I58/baselines/`. octreg's method and results are unchanged.
+- New in bench, with octreg unchanged: `bench/repeat.py` and `bench/results/repeat.json`, the ablation variants with the scale
+  and shear prior at other weights, a rigid refinement, F without the subtraction of the means, the MRI divided by its blur, the
+  OCT specimen mask from the signal threshold alone, the OCT voxel size 5 % off and the OCT mirrored, the options `--start` and
+  `--params` of `bench/ablate.py`, the I58 ablation poses in `bench/results/I58/ablation.json` and the search candidates in
+  `search.md`, the tools started near R with the mask or on the zeroed OCT and started at R, and octreg's refinement alone from
+  the near start and from the start at R, in `bench/results/I46/`, the SHA-256 sums of the I46 download in
+  `bench/i46/checksums.txt`, which `fetch.sh` checks, and one I46 panel per plane with the lines through R and octreg.
+- The I46 comparisons give the median distance from R over the ten crops of a condition, and the vessel distance where those
+  distances differ by less than 0.3 mm, in place of counts of runs within 0.30 and 1 mm of R.
+- The red line of the I58 figures is the MRI foreground octreg uses, from its 0.15 mm base grid, in place of the same rule run
+  on the 0.08 mm grid of the crop, which drew loops where noise put dark tissue at the surface below the threshold.
+
+## 3.2.0
+
+octreg returns the affine of §1 to §4, and the smooth deformation is gone.
+
+- Outputs and commands: `oct2mri_warp.nii.gz`, `oct_in_mri_affine.nii.gz` and `qc_deform.png` are gone, and `oct_in_mri.nii.gz`
+  is the OCT through the affine. `--no-deform` of `octreg register`, `--affine-only` of `octreg apply`, the `affine_only`
+  argument of `apply` and the `deform` argument of `register` are gone. `result.json` has no `deform` entry and no
+  `seconds.deform`, and its foreground entries have no `source`: `inputs.oct_mask` and `inputs.mri_mask` show whether a mask
+  file was given. `oct2mri_itk.txt` refers to the world octreg read, as `oct2mri.lta` does, also for a TIFF or NPY OCT.
+- §2: in O the variance of M counts as at least 2 % of the variance of M over the crop, which no longer depends on the size of
+  the OCT block.
+- §3: ε of the search gradients is the median of the OCT gradients in world coordinates also on a sheared OCT header.
+- Parameters: `df_grid_mm`, `df_max_strain`, `df_sigmas_mm` and `df_evals` are gone, and `outline_min_outside` must be
+  positive.
+- bench: the deformable baselines on I58, the ablation variant `df_free` and the vessel check through the field are gone, and
+  `bench/baselines/prepare_inputs.py` has no `--run`. `bench/baselines/i58/runs.py` is new: it writes the tool script of every
+  I58 baseline run and converts each transform into its run directory. `bench/baselines/evaluate_runs.py` takes the two I58
+  files as `--oct` and `--mri`, makes the start of the I58 baselines from their headers, as the I46 test does, and the overlay
+  of a baseline run is `oct_in_mri.nii.gz`. `bench/i46/prepare.py --mask` makes the specimen mask of the I46 test, and
+  `bench/i46/summarize.py` is now `summarise.py`.
+
+## 3.1.0
+
+A specimen mask for OCT in bright, dark or clipped medium, a simpler MRI foreground, the full orientation tensor and a search in
+which the outline only proposes poses ([docs/METHOD.md](docs/METHOD.md)).
+
+- §1: the OCT specimen is the voxels with signal and isotropic texture, both decided by one threshold rule, the lower of Otsu's
+  threshold and the low-side foot of the tallest histogram peak, each on its own histogram. There is no closing, and components
+  holding at least 1 % of the mask are kept. The MRI foreground lies above the first histogram valley, walking down from the
+  brightest peak, that holds less than half of its smaller peak and whose darker class lies mostly outside the convex hull of
+  the voxels above it, and it is every positive voxel without such a valley. Its histogram peaks are found with an empty bin
+  added at each end, and the MRI foreground has no closing. `--oct-spacing-um` applies to an `--oct-mask` of the OCT's array
+  shape, and a mask of another shape keeps the spacing of its own file or, as a plain TIFF or NPY, is refused.
+- §2: F uses the full orientation tensor n nᵀ (squared normalised gradient fields). The OCT points lie farther than 0.8 mm
+  inside the specimen mask in Euclidean distance.
+- §3: every rotation keeps its best translation by F and, where both images show medium around the tissue, by (F + O) / 2.
+  The best 12 poses by (F + O) / 2 and the rest by F go to §4. The OCT gradients of the search are taken inside the eroded
+  mask of its points, so a margin of medium inside the specimen mask adds no edge. The rotations are 8,000 Super-Fibonacci
+  points.
+- §4: one Adam step size for all parameters, in mm of motion of the OCT box corners (`lr_mm`), each pass keeps its last iterate,
+  and among the poses whose final L lies within 10⁻⁵ of the lowest, the one proposed first wins.
+- §5: the deformation is fitted to the F of §2 over the same points, without the tissue surface, and repeated runs give the same
+  field.
+- Parameters: `lr_mm` and `df_evals` are new. `medium_fraction`, `texture_close_mm`, `lr_rot`, `lr_t`, `lr_ls`, `lr_sh`,
+  `df_band_mm` and `df_iters` are gone. `Params` refuses a value of the wrong type, a value that is not finite and a value out
+  of its range, also when built in Python, and `search_mm` need not be a multiple of `base_mm`.
+- Inputs: a mask file in another frame than its image (header or array) is refused before any output is written, and an
+  OCT without positive voxels is refused with a message.
+- Resampling: the interpolation positions of the isotropic grids are rounded to 10⁻⁹ voxel. A position on a pooled voxel
+  centre took a residue weight from its neighbour, which left tiny values next to exact zeros and moved the §1 threshold on an
+  OCT whose medium is clipped to zero.
+- Outputs and commands: `T_mri2oct.txt`, the command `octreg qc` with its function `octreg.register.qc`, and `Params.hash()` are
+  gone, and `octreg apply --inverse` inverts `T_oct2mri.txt`. In `result.json` every candidate holds its search rank, F and O at
+  the search and its final L, and the pose has `search_F` and `search_O` in place of S and no `shift_from_search_mm`,
+  `log_scales` or `shears`. `foreground.oct` has `signal_threshold` and `texture_threshold` in place of `threshold` and the
+  source `octreg` in place of `texture`, and the run time of §5 is in `seconds.deform` only. The flags, the parameter hash, the
+  search block, the display polarity, the strain read-out, the memory peaks, the component counts and the valley details of the
+  MRI foreground are gone.
+- bench: the I46 test gives every method the released OCT, and octreg runs with its own masks. Further runs give octreg the
+  test's specimen mask. The deformable baselines run from `bench/baselines/deform_tools.py`. `bench/baselines/composites.py` and
+  `zooms.py`, the `--shots` option of `evaluate_runs.py` and `evaluate_deform.py` and the `--stages` option of
+  `bench/i46/figures.py` are gone. The ablation variants `tracefree`, `outline_decides` and `search_whole_mask` replace
+  `full_tensor`, `outline_refine` and `df_interior`. A run of `bench/ablate.py` or `bench/i46/run.py` records the identity of
+  its octreg code in `code.txt` and is reused only by the same code.
+
+## 3.0.0
+
+One score in the search, the refinement and the deformation: the correlation of the trace-free orientation tensors of the
+normalised gradients of the two volumes, which needs no intensity mapping and no contrast polarity. §1 to §5 instead of §1 to
+§6, and the score is in the module `octreg.features`.
+
+- §2: the score F replaces the two-class maps. S = (F + O) / 2 with the one-sided outline O where both images show an outside,
+  else S = F.
+- §3: the search correlates the six tensor channels by FFT. The rotations are the identity and a Super-Fibonacci set.
+- §4: every search pose is refined on F alone at σ 0.6, 0.4 and 0.3 mm, and the lowest final L wins. The clamp on scales and
+  shears is removed, and the prior λ = 2 stays.
+- §5: the smooth deformation is fitted to F, with the tissue surface in the score, under a strain bound of 0.08 on a 5 mm
+  lattice, by L-BFGS. It runs on every pair (`--no-deform`, or `deform=False` of `register` in Python, skips it).
+- `result.json` holds the search rank, S and final L of every refined pose, and `deform` is null with `--no-deform`. The mask
+  paths in `inputs` are absolute.
+- The two-class maps, the polarity, the block matching and surface-edge fit of the old §6, the modules `octreg.ngf` and
+  `octreg.blockmatch`, and their parameters are gone.
+
+## 2.1.0
+
+Params hash 9148790ad6c39454.
+
+- §1: an MRI histogram valley is the tissue edge only when its darker peak lies below `medium_fraction` (0.5) of the brightest
+  peak. A valley between two tissue peaks is passed over and flagged `mri_tissue_valley_passed`.
+- §2: the outline is used only when both images have a measured outside, at least `outline_min_outside` (1 %) of the measured
+  voxels each. Otherwise S_outline is 0 and the run is flagged `outline_not_used`.
+- §3: candidates within 3 mm and 20° (`nms_deg`) count as one pose.
+- §5: the score is the weighted correlation of the trace-free orientation tensors of the two normalised gradients, with a finite
+  gradient where the OCT and the MRI points do not overlap.
+
+Added
+
+- `bench/i46/`: a test on block I46 of Costantini et al. (2023) against the authors' registration, with eight standard tools,
+  a start test and ablations of the steps of the method. The results are in `bench/results/I46/` and the figures in
+  `docs/figures/i46/`.
+- `bench/baselines/`: a comparison with standard registration tools on the I58 pair, eight tools for the affine and five
+  deformable tools started from octreg's affine, each at the setting its documentation gives. The tables are in
+  `bench/results/I58/baselines/`.
+- `bench/figures.py`: freeview figures of the I58 result, the baseline comparison and the ablation in `docs/figures/`.
+- `bench/ablate.py`: two variants (the outline alone, no orientation search), start tests from turned starts (`--starts`) and
+  from random starts (`--random-starts`), and runs on other pairs (`--oct`, `--mri`, `--oct-mask`).
+  `bench/ablate_deform.py --save-fields` saves the fields of chosen §6 rows.
+- Every bench script imports the octreg package of its own checkout, also when another copy is installed.
+
+Removed
+
+- `bench/dandi.py` and the stored results in `bench/results/I58/ngf_lam/`.
 
 ## 2.0.0
 
-The method of 1.1, with its machinery reduced to what the evidence on the I58 pair supports. §1-5 compute the same affine as
-1.1 (within 0.003 mm at the block corners, and 0.001 mm from release 1.0), §6 is simpler and fits the superior end of the
-block better, and 36 fields remain in Params (hash
-`da914d8ccc555207`).
-
-- §2 blurs the flattened volume as G(xM)/G(M) instead of a plain Gaussian (`preprocess.masked_blur`), so background and
-  masked-out gaps do not bleed into the tissue maps. On I58 the §4 pose moves 2.2 mm at the block corners (S 0.2855 to
-  0.2781, the first pose by search score wins instead of the third) and §5 ends on the same affine.
-- §6 uses every boundary point with one edge in both volumes. The support rule of 1.1, which counted a boundary point only
-  within 5 mm of an interior match, is gone with `df_support_mm`: it existed for torn tissue, and without it the field fits the
-  boundary better on I58 (0.104 to 0.089 mm, 74 to 80 % within 0.3 mm, and the first 4 mm at the superior end 0.39 to 0.22 mm).
-- §6 chooses its membrane weight by the strain limit alone: the smallest weight between 0.3 and 30 whose fit keeps the strain
-  below 0.15, found by bisection. The list of candidate weights and the comparison of their held-out scores are gone
-  (`df_lams`): on I58 the held-out score fell monotonically down to that weight in every variant, so the field is the same.
-  The held-out score now only gates the field (below 0.9 times the score without deformation), and that gain, the least evidence (100 matches,
-  300 boundary points) and the range of the weight are module constants (`df_gain`, `df_min_interior`, `df_min_boundary`
-  removed). result.json: `deform.cv` holds `none` and `field`, the candidates table is gone.
-- One reach for the local evidence of §6: `df_reach_mm` (1.35 mm) bounds the interior search range and the edge window, and a
-  boundary profile runs 0.75 mm beyond it (`df_range_mm` and `df_profile_mm` removed). The interior feature is described as
-  what it is, the normalised gradient of §5 at a finer scale.
-- §5 uses the prior of §4 (`lam`). `ngf_lam` and `ngf_lam_shape` are gone: the measurement that motivated them stays in
-  docs/METHOD.md, made with `bench/ngf_lam.py`, which runs §5 alone and now varies `lam`.
-- The clamp of §4-5 (0.15 on log-scales and shears) is a module constant and a guard, with its flag. The prior is the penalty.
-- §3-5 run once, in the file frames as given. The loop over both handednesses for files without an orientation header is gone,
-  with `pose.handedness`, `pose.NGF_other_handedness` and the flag `mirrored_oct_frame`: the frames fix the handedness, and an
-  array frame must have the handedness of the specimen as it must have its spacing.
-- bench: `ablate.py` sets the clamp of A6 and A6c by patching `refine.CLAMP`, `ablate_deform.py` scores the support rule of 1.1
-  as a row, and `ngf_lam.py` varies `lam`.
-- The figures of the I58 pair are no longer in the repository, since the data are unpublished. The bench scripts draw them
-  locally.
-- The DANDI:000026 results are withdrawn until a re-run. `bench/dandi.py` built six of the eight MRI crops through label
-  headers that do not match the MRI, and only sub-I46 and sub-I55 were placed correctly. Their table,
-  `bench/results/dandi/summary.json`, is removed, and `bench/dandi.py --steps summary` now writes `summary.json` into its
-  output root.
-- The documents no longer report counts or measurements from visual readings of the QC images, only the numbers the code
-  computes.
-- The I58 pair is named by its subject alone, and the bench files follow: the runner is `bench/run_i58.py`, the stored results
-  are in `bench/results/I58/`, the figures are `fig_*_I58.png` and the default run directory is `bench_runs/I58`.
-- The bench paths default to the repository, runs under `bench_runs/` and data under `data/`, both ignored by git.
-  `OCTREG_PROJECT_ROOT` and `OCTREG_DATA_ROOT` override the two, and `OCTREG_I58_DIR` the folder that holds the two I58 input
-  files (default `<data root>/I58`). Stored result JSON keeps file names and run paths relative to the repository.
-
-## 1.1.0
-
-A new final stage, §6 smooth deformation (`octreg/deform.py`, docs/METHOD.md §6). §1-5 compute the same affine as 1.0, to
-0.003 mm at the block corners on the I58 pair, and the transform files it writes are unchanged. Their code is untouched apart
-from docstrings.
-
-- After §5 a small smooth displacement field is fitted on the MRI base grid to two kinds of label-free evidence: block matches
-  of a contrast-free structure feature of the interior (`octreg.blockmatch`, now part of the method) and the offset between the
-  surface edges of the two volumes along the MRI boundary normals. The edge is the steepest fall of the intensity going
-  outwards, found by one rule in the MRI and in the OCT, so that what the rule does to an edge cancels. A boundary point is
-  used only when an interior match lies within 5 mm, which keeps the field out of regions without correspondence. The field
-    lives on one 5 mm control lattice. Its membrane weight is chosen by held-out error over spatial folds, among the weights of
-  a list that keep the strain below
-  0.15 and the smallest weight that does, found by bisection. Without a held-out gain of 10 %, with too little evidence, or
-    with no weight that keeps the strain limit, no field is applied (flag `deformation_not_supported`). Tried on I58 and
-  dropped: the ridge of the bright OCT rim as the boundary
-  evidence (the rim is a layer below the surface, so the ridge reads a bias that depends on the face), a search over lattice
-  spacings, and further rounds of measuring and refitting (docs/METHOD.md, I58 brainstem pair).
-- `octreg/blockmatch.py` now holds the interior evidence of §6 and nothing else: the prior-free robust affine of 1.0.1, tried
-  in place of §5 and dropped, is gone from the package, and with it the ablation variant A13.
-- New outputs: `oct2mri_warp.nii.gz` (the field, a NIfTI vector image on the MRI base grid, pull-back convention stated in
-  `octreg/deform.py`) and `qc_deform.png`, both only when a field is applied, and `oct_in_mri_affine.nii.gz`, which is what
-  `oct_in_mri.nii.gz` was before. `oct_in_mri.nii.gz` now goes through the affine and the field. `result.json` gains the block
-  `deform` and the time `seconds.deform`. `T_oct2mri.txt`, `T_mri2oct.txt`, `oct2mri.lta`, `oct2mri_itk.txt`, `mri_in_oct.nii.gz`,
-  `qc.png`, `qc_montage.png` and `pose` are as in 1.0.
-- `octreg apply` uses the field of the run for OCT-frame volumes, `--affine-only` leaves it out, and `--inverse` stays affine
-  (the field is not inverted). `geometry.resample_to` takes an optional pull-back field, and `io.save_field` / `io.load_field`
-  write and read it.
-- `bench/dandi.py` is one protocol instead of several. It crops the MRI to the subject's own Broca-area label box plus
-  5 mm, with every side grown to at least the longest side of the OCT array, then calls `octreg register`, the released entry
-  point, and evaluates the result against the cortical-layer label the method never reads. The location prior of the
-  superseded pipeline, the whole-hemisphere coarse search, the per-subject voxel spacings and the hand-written verdicts are
-  gone. Eight of the nine subjects with both modalities are used, and the crop step refuses sub-I56, whose label files have an
-  affine that disagrees with their array.
-- Every JSON octreg writes (`result.json` and the benchmark's tables) now has LF line ends on every OS, as the transform
-  files have had since 1.0.1.
-- The shell runner of the I58 pair is gone. It only ran on one server, and `bench/run_i58.py` does the same on any machine.
-- The benchmark no longer needs the tree of the superseded pipeline. The ablation variant A0b fed that pipeline's OCT specimen
-  mask to the method and is gone. So is the reference column `vs R5 corners max (mm)`, which held the distance to that
-  pipeline's pose, and `V1_ROOT` in `bench/paths.py` went with them. `bench/evaluate.py` and `bench/ablate.py` now read the two
-  input files and octreg's own runs and nothing else, so anyone who clones the repository can run them. Pose changes in the
-  ablation table are measured over the points of the base specimen mask.
-- docs/METHOD.md §1 now says that the texture specimen mask needs an embedding to separate, and what to do without one.
-- The separable Gaussian and its derivative, which §5 and §6 each carried a byte-identical copy of, now live once in
-  `octreg/geometry.py` as `gauss_1d` and `filter_sep`. Identical bytes in, identical bytes out, so no number moves.
-- The scale prior of §4 was ablated as one thing and is two. New variants A6p and A6c take the penalty and the clamp apart:
-  with λ 0 and the clamp kept the §4 pose moves 16.9 mm and every scale sits on the bound, and with the clamp removed and λ 2
-  kept the pose does not move at all. All of the prior is the penalty. The clamp stays as a bound that has never bound on
-  the I58 pair, and `clamp_saturated` is how a run says it did.
-- `bench/ablate.py --only` used to overwrite the whole table with the rows it ran. It now merges into what is there, and
-  refuses to merge rows written under other Params.
-- `bench/dandi.py` gains `--tag`, which evaluates a variant run of a subject such as the `_allmeasured` diagnostic against the
-  subject's own crop and the mask that run was given. `--steps summary` refuses to write the released table unless every
-  subject has a run, so a partial run cannot overwrite it.
-- `bench/report.py --store` copies the run's result.json, eval.json and ablations.json into bench/results/I58, and
-  the figures step now writes every figure bench/BENCHMARK.md shows, not two of the four. The report is one command again.
-- Two stored results of the I58 pair that no document or script named, `first_run` and `no_flattening`, are gone.
-  Both were written under Params that no longer exist.
-- Corrections to the documents, from reading them against the stored runs. Two steps, not one, sit inside the deletion
-  threshold: MRI flattening, and the one-sided outline, which is what holds the block at a cut face.
-- §4 now says that the winning pose is the third of the 24 by search score, so refining more than one is load bearing, and
-  what that costs.
-- The README figure shows the result as directly as it can be shown: per plane the MRI, the registered OCT, and those two
-  panels cut into 8 mm squares and interleaved. The checkerboard is nothing but the two of them, on their own grey scales,
-  neither inverted nor matched to each other nor masked, so every square can be checked against the panel it came from.
-  Nothing is drawn on the data and nothing in the figure is derived from either mask. The script lost a third of its lines
-  and one of its inputs with the machinery that used to do all that.
-- The QC figures read better and nothing about the transforms changed. The MRI column of `qc.png`, `qc_montage.png` and
-  `qc_deform.png` is now mapped by rank onto the grey scale of the OCT in the tissue both show, instead of being stretched
-  between its own percentiles, where it used to clip to white over large parts of the specimen. The checkerboard is drawn
-  wherever the specimen mask or the MRI foreground reaches and left out only where both call background, which takes the empty
-  field out of the panel without hiding anything that could disagree: that support grows as the pose gets worse, and tissue in
-  the tiles of one volume against nothing in the tiles of the other stays visible. `bench/fig_registration.py` follows, and
-  `bench/dandi.py` cuts the label outlines of `qc_labels.png` to the measured OCT and names the labels in a legend. Two
-  alternatives were tried on the I58 pair and dropped: local evening of the two volumes before the checkerboard, and drawing
-  the checkerboard only where both maps reach, which is blind to a misplaced block by construction, since the visible
-  disagreement inside that support is identically zero at 0, 2 and 5 mm of imposed error.
-- The README figure gains the MRI tissue boundary on its registered-OCT panel. The file keeps one outline colour beside its
-  greys instead of being flattened to grey.
-- New Params `df_*` (METHOD.md, Parameters), so the default Params hash changes from `7d01b8a167a83631` to
-  `892a1f3b4fd6f7ed` although §1-5 are untouched. `bench/ablate.py` therefore checks a prep against the §1 fields only
-  (`prep_hash`) and accepts the preps of 1.0. It runs §6 for base and stores its read-outs, and `bench/report.py` prints them.
-
-## 1.0.1
-
-No change to the method or its results: same Params and hash, same `result.json` keys, same poses.
-
-- Windows portability. The transform files (`T_oct2mri.txt`, `T_mri2oct.txt`, `oct2mri.lta`, `oct2mri_itk.txt`) are written with
-  LF line ends on every OS. `peak_rss_gb` in `result.json` is filled on Windows too (the peak working set,
-  `octreg.register.peak_rss_gb`). The benchmark reads its machine roots from `bench/paths.py`, and a Python runner of the I58 pair,
-  now `bench/run_i58.py`, works on any OS next to the POSIX shell runner of this release.
-- `octreg/blockmatch.py`, at this release a diagnostic the method does not call. It measures a label-free residual displacement
-  field between the MRI and the registered OCT from local fine structure. A robust affine fitted to this field alone was tested
-  in place of §5 on the I58 pair and not adopted. `bench/ablate.py` documents it as variant A13. Both the robust affine and
-  A13 were removed in 1.1.0, where what is left of the module became the interior evidence of §6.
-
-## 1.0.0
-
-First public release: texture specimen mask, two-class score with the outline term, orientation search in the MRI crop,
-prior-bounded affine refinement, fine-structure refinement by NGF descent, handedness of array frames.
+- Label-free registration of a serial-sectioning OCT block to an ex-vivo MRI crop in six steps: §1 specimen mask, §2 two-class
+  maps and outline, §3 orientation search, §4 affine refinement, §5 fine-structure refinement and §6 smooth deformation
+  ([docs/METHOD.md](docs/METHOD.md)).
+- The command line `octreg register`, `octreg qc` and `octreg apply`, the same functions in `octreg.register`, and the method
+  constants in `octreg.params.Params`, which `--params` overrides.
+- Outputs: the affine as 4×4 text files, a FreeSurfer LTA and an ITK transform, the deformation field of §6 as a NIfTI vector
+  image, the OCT resampled onto the MRI grid and the MRI into the OCT frame, QC images and `result.json`.
+- `bench/`: the scripts of the I58 benchmark (registration, ablations, label-free evaluation, figures and report) and its
+  stored results in `bench/results/I58/`.
+- Tests on synthetic data that run on the CPU (`pytest`).

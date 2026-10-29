@@ -14,8 +14,7 @@ dist/
 *.npz
 *.tif
 *.tiff
-# run outputs and the data root of the bench scripts
+# run outputs, the baseline comparison and the data root of the bench scripts
 /bench_runs/
+/baselines/
 /data/
-# figures of unpublished data, drawn locally by the bench scripts
-bench/figures/*.png
