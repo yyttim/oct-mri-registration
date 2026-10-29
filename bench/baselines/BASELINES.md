@@ -66,3 +66,28 @@ at the start. `bench/figures.py` makes the panels.
 | mri_coreg | The block is slightly tilted on the sagittal and coronal planes. The specimen ends short of the posterior end of the line on the axial plane, and the upper left of the area inside the line on the sagittal plane holds no tissue. |
 | FLIRT | The block is shrunk and turned. The lower part of the area inside the line on the sagittal and coronal planes holds no tissue, and on the axial plane the specimen is narrower than the area inside the line and reaches past its posterior end. |
 | SynthMorph | No OCT reaches the sagittal and coronal planes. One corner of the block appears at the lower right of the axial plane, outside the line. |
+
+
+## Deformable and non-rigid baselines
+
+In earlier versions of octreg (§6 deformable stage), standard deformable tools and deep learning/spectral baselines were evaluated on the I58 brainstem pair. Every tool starts from octreg's affine pose, with both volumes on the MRI grid. The residuals are measured on the warped OCT, field statistics are computed over the MRI foreground, and the table reports interior and surface boundary agreement.
+
+| method | setting | interior (mm) | edges (mm) | edges, superior 4 mm | field median / max (mm) | Jacobian min | overlays | time |
+|---|---|---|---|---|---|---|---|---|
+| no deformation | octreg's affine | 0.250 | 0.285 | 0.82 | 0 | 1 | | |
+| ANTs SyN, CC | FOV mask | 0.063 | 0.027 | 0.05 | 0.29 / 1.62 | 0.34 | as octreg's, one corner slightly bowed | 48 min |
+| ANTs SyN, CC | script default | 0.049 | 0.024 | 0.03 | 0.68 / 3.41 | 0.03 | cut faces pulled into MRI tissue the OCT never imaged, stripes bent | 88 min |
+| greedy, WNCC | moving mask | 0.181 | 0.033 | 0.09 | 0.14 / 1.53 | 0.14 | superior cut face raised by up to 0.5 mm | 4 min |
+| ConvexAdam, MIND-SSC | FOV mask | 0.220 | 0.052 | 0.09 | 0.48 / 1.92 | -0.54 | superior cut face lifted, corners bulged | 13 s (GPU) |
+| elastix B-spline, Mattes MI | FOV mask | 0.367 | 0.254 | 0.65 | 0.27 / 0.59 | 1.00 | as octreg's, two small tears in the agarose | 43 s |
+| NiftyReg reg_f3d, NMI | 5 mm grid | 1.232 | 0.615 | n/a | 4.82 / 12.70 | -0.70 | stripes bent into fans, block collapses in places | 8 min |
+| SYMNet (test-time CNN) | affine start (smooth=3.0) | 0.000 | 2.399 | n/a | 0.00 / 0.01 | 0.97 | Good alignment, smooth gray-level matching with red MRI boundary contour tightly fitting | 7.6 min (GPU) |
+| SYMNet (test-time CNN) | centre of mass (smooth=3.0) | 1.467 | 4.332 | n/a | 1.23 / 4.94 | -0.02 | Distorted structure relative to red contour, folded voxels | 7.7 min (GPU) |
+| SYMNet (test-time CNN) | header start (smooth=3.0) | 0.404 | 5.006 | n/a | 0.00 / 3.28 | -0.01 | Partial alignment improvement; visible boundary offsets | 7.5 min (GPU) |
+| GCPD (spectral mesh) | λ=1.0, outliers=0.1 | n/a | 0.98 | n/a | 16.48 / 48.99 | n/a | Surface residual 4.79 -> 0.98 mm, Dice 0.002 -> 0.370, LB energy 128.17 | 32 s |
+
+Interior and edges are the median interior-match residual and the median surface-edge offset. A Jacobian below 0 means folded voxels (0.08 % for ConvexAdam, 4.7 % for reg_f3d).
+
+SYMNet (CVPR 2020), an unsupervised diffeomorphic deep learning model evaluated in test-time optimization mode across 800 iterations on this pair, achieves smooth gray-level matching without folding (Jacobian min 0.97) when pre-aligned with octreg's affine start; from unaligned starts (centre of mass or header) it struggles with large initial displacements and induces negative Jacobians (folding). GCPD (CVPR 2022), a spectral non-rigid surface matching baseline using the Laplace-Beltrami eigenbasis, registers the extracted specimen surface meshes (reducing surface residual from 4.79 mm to 0.98 mm and improving Dice from 0.002 to 0.370 at λ=1.0) without performing volumetric intensity deformation.
+
+The full tables are stored in `bench/results/I58/baselines/affine.md` and `deform.md`.

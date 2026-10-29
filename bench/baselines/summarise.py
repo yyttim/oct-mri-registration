@@ -147,9 +147,34 @@ def search_md(res, abl):
     return "\n".join(out) + "\n"
 
 
+
+
+def f_num(v, nd=2, unit=""):
+    return "n/a" if v is None else f"{v:.{nd}f}{unit}"
+
+
+def deform_table(rows, notes):
+    order = sorted(rows.values(), key=lambda r: (r.get("tool") != "none", r.get("tool") != "octreg", r.get("tool", ""), r.get("variant", "")))
+    head = ("| tool | variant | wall s | interior (mm) | boundary (mm) | within 0.3 mm | F | two-class, core | "
+            "field median / p95 / max (mm) | Jacobian min | folded voxels | SD log J | note |")
+    out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in order:
+        fld = "0" if not r.get("field_max_mm") else f"{f_num(r.get('field_median_mm'))} / {f_num(r.get('field_p95_mm'))} / {f_num(r.get('field_max_mm'))}"
+        within_str = f"{100 * r['within']:.0f} %" if r.get("within") is not None else "n/a"
+        jac_str = f"{f_num(r.get('jac_min'), 2)}" if r.get("field_max_mm") else "1"
+        fold_str = f"{f_num(100 * r['jac_folding_fraction'], 2, ' %')}" if r.get("jac_folding_fraction") is not None else ("0 %" if not r.get("field_max_mm") else "n/a")
+        sd_str = f"{f_num(r.get('sd_log_jac'), 3)}" if r.get("sd_log_jac") is not None else ("0" if not r.get("field_max_mm") else "n/a")
+        n = notes.get(r["run"], {})
+        note_str = n.get("note", n) if isinstance(n, dict) else n
+        out.append(f"| {r['tool']} | {r['variant']} | {f_num(r.get('wall_s'), 0)} | {f_num(r.get('interior_mm'), 3)} | {f_num(r.get('boundary_mm'), 3)} | "
+                   f"{within_str} | {f_num(r.get('F'), 4)} | {f_num(r.get('two_class_core'), 4)} | {fld} | "
+                   f"{jac_str} | {fold_str} | {sd_str} | {note_str} |")
+    return "\n".join(out) + "\n"
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--affine", type=Path, default=ROOT / "baselines" / "summary_affine.json")
+    ap.add_argument("--deform", type=Path, default=I58 / "baselines" / "summary_deform.json")
     ap.add_argument("--notes", type=Path, default=I58 / "baselines" / "notes.json")
     ap.add_argument("--out", type=Path, default=I58 / "baselines")
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "ablation",
@@ -158,7 +183,12 @@ def main():
     a.out.mkdir(parents=True, exist_ok=True)
     notes = json.loads(a.notes.read_text(encoding="utf-8"))
     rows = json.loads(a.affine.read_text(encoding="utf-8"))
-    (a.out / "affine.md").write_text(table(rows, notes["affine"]), encoding="utf-8", newline="\n")
+    (a.out / "affine.md").write_text(table(rows, notes.get("affine", notes)), encoding="utf-8", newline="\n")
+    if a.deform.is_file():
+        deform_rows = json.loads(a.deform.read_text(encoding="utf-8"))
+        deform_notes = notes.get("deform", notes)
+        (a.out / "deform.md").write_text(deform_table(deform_rows, deform_notes), encoding="utf-8", newline="\n")
+        print(f"deform: {len(deform_rows)} rows -> {a.out / 'deform.md'}")
     if a.affine.resolve() != (a.out / "summary_affine.json").resolve():
         shutil.copy(a.affine, a.out / "summary_affine.json")
     print(f"affine: {len(rows)} rows -> {a.out / 'affine.md'}")
