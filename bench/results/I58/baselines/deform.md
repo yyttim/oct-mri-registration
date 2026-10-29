@@ -10,6 +10,9 @@
 | elastix | default | 54 | 0.950 | 0.465 | 33 % | 0.0946 | 0.0652 | 1.28 / 2.23 / 2.59 | 1.00 | 0.00 % | 0.052 | model-zoo B-spline (Mattes MI), 16 mm grid |
 | elastix | default_fov | 43 | 0.367 | 0.254 | 55 % | 0.1031 | 0.0739 | 0.27 / 0.49 / 0.59 | 1.00 | 0.00 % | 0.011 | model-zoo B-spline, 16 mm grid, with the field-of-view mask |
 | elastix | grid5mm | 40 | 0.941 | 0.706 | 24 % | 0.0951 | 0.0860 | 2.11 / 4.15 / 6.37 | 0.75 | 0.00 % | 0.260 | model-zoo B-spline with a 5 mm grid (physical-unit variant) |
+| gcpd | lam1.0 | 32 | n/a | 0.977 | n/a | n/a | n/a | 16.48 / n/a / 48.99 | n/a | n/a | n/a | GCPD (Laplace-Beltrami basis, λ=1.0, out=0.1), spectral functional-map init, Dice improved 0.002->0.370, resid 0.98 mm |
+| gcpd | lam10.0 | 33 | n/a | 0.780 | n/a | n/a | n/a | 10.60 / n/a / 20.61 | n/a | n/a | n/a | GCPD (Laplace-Beltrami basis, λ=10.0, out=0.1), low overlap (Dice 0.157), resid 0.78 mm |
+| gcpd | lam100.0 | 31 | n/a | 0.798 | n/a | n/a | n/a | 11.23 / n/a / 22.94 | n/a | n/a | n/a | GCPD (Laplace-Beltrami basis, λ=100.0, out=0.1), low overlap (Dice 0.143), resid 0.80 mm |
 | greedy | nmi | 118 | 0.217 | 0.324 | 46 % | 0.1058 | 0.0776 | 0.15 / 1.48 / 5.47 | -0.26 | 2.82 % | 2.727 | greedy deformable with NMI |
 | greedy | wncc | 245 | 0.187 | 0.039 | 86 % | 0.1068 | 0.0220 | 0.13 / 0.64 / 1.89 | 0.12 | 0.00 % | 0.163 | greedy deformable, WNCC 2x2x2, quick-start smoothing in voxels |
 | greedy | wncc_fov | 221 | 0.181 | 0.033 | 89 % | 0.1076 | 0.0038 | 0.14 / 0.66 / 1.53 | 0.14 | 0.00 % | 0.171 | greedy deformable, WNCC, with the field-of-view mask |
@@ -17,3 +20,6 @@
 | niftyreg | default | 535 | 0.158 | 1.018 | 3 % | 0.0760 | -0.0717 | 3.07 / 7.17 / 13.00 | -71.00 | 47.12 % | 6.345 | reg_f3d defaults (NMI, control grid -5 voxels = 0.4 mm): the image collapses |
 | niftyreg | sx5mm | 500 | 1.232 | 0.615 | 25 % | 0.0925 | 0.0903 | 4.82 / 9.41 / 12.70 | -0.70 | 4.72 % | 3.147 | reg_f3d with a 5 mm control grid |
 | niftyreg | vel_fov | 3793 | 0.376 | 0.962 | 6 % | 0.0674 | -0.1532 | 2.52 / 5.03 / 8.85 | -2245.33 | 0.89 % | 2.595 | reg_f3d -vel (symmetric F3D2) with the field-of-view mask, the one form in which the mask is honoured |
+| symnet | affine | 454 | 0.000 | 2.399 | n/a | n/a | n/a | 0.00 / n/a / 0.01 | 0.97 | 0.00 % | n/a | SYMNet test-time CNN (smooth=3.0), affine pre-alignment start, smooth gray-level matching with red MRI boundary |
+| symnet | com | 462 | 1.467 | 4.332 | n/a | n/a | n/a | 1.23 / n/a / 4.93 | -0.02 | 0.02 % | n/a | SYMNet test-time CNN (smooth=3.0), centre-of-mass start, noticeable mismatch/distortion relative to red contour |
+| symnet | header | 451 | 0.404 | 5.006 | n/a | n/a | n/a | 0.00 / n/a / 3.28 | -0.01 | 0.01 % | n/a | SYMNet test-time CNN (smooth=3.0), header start, partial alignment improvement with visible boundary offsets |

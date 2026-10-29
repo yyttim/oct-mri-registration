@@ -12,6 +12,8 @@ ones. Each tool was installed from its official release, without changes.
 | FreeSurfer | 8.2.0 | official release, with `mri_robust_register`, `mri_coreg`, `mri_synthmorph`, `mri_vol2vol`, `lta_convert` |
 | greedy | 1.4.0 | `pip install picsl_greedy` (1.4.0.3) |
 | ConvexAdam | 0.2.0 | `pip install convexAdam`, run on the GPU through PyTorch |
+| SYMNet | CVPR 2020 | PyTorch implementation (`pip install torch SimpleITK nibabel scikit-learn pandas scipy matplotlib`), run on the GPU |
+| GCPD | CVPR 2022 | Python port of official MATLAB release (`pip install libigl trimesh scikit-image SimpleITK nibabel scipy pandas matplotlib`, optional `pyshot`) |
 
 Two behaviours of these versions matter for the results. NiftyReg 2.1.2 ignores the floating mask of `reg_aladin` and of
 `reg_f3d` without `-vel`, so those mask variants equal the unmasked runs (`reg_f3d -vel` honours it).

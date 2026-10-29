@@ -24,7 +24,7 @@
  "greedy_centers_fov": "greedy NMI from the image centres with the moving field-of-view mask, stalled at the start",
  "greedy_search": "greedy -search 1000 global search, the best candidate has almost no overlap with the MRI",
  "none": "octreg affine, no field",
- "octreg": "octreg §6: strain-limited field on a 5 mm lattice from interior matches and surface-edge offsets",
+ "octreg": "octreg \u00a76: strain-limited field on a 5 mm lattice from interior matches and surface-edge offsets",
  "deform_ants_syn_cc": "antsRegistrationSyN.sh -t so (SyN, CC radius 4) from octreg's affine, both images on the MRI grid",
  "deform_ants_syn_mi": "the same SyN stage with Mattes MI",
  "deform_ants_syn_cc_fov": "SyN CC with the OCT field-of-view mask",
@@ -43,5 +43,11 @@
  "reference_centres": "reference, not a registration: image centres aligned with the header orientation, the start most tools use",
  "mri_robust_register_default_com_maskmov": "the same with --maskmov oct_fov: identical to default_com (the OCT is already zero outside its field of view)",
  "mri_coreg_default_movmask": "the same with --mov-mask oct_fov: identical to default",
- "mri_robust_register_noinit_rigid_only": "mri_robust_register --noinit (header start): the affine step diverged, the rigid result is recorded"
+ "mri_robust_register_noinit_rigid_only": "mri_robust_register --noinit (header start): the affine step diverged, the rigid result is recorded",
+ "deform_symnet_affine": "SYMNet test-time CNN (smooth=3.0), affine pre-alignment start, smooth gray-level matching with red MRI boundary",
+ "deform_symnet_com": "SYMNet test-time CNN (smooth=3.0), centre-of-mass start, noticeable mismatch/distortion relative to red contour",
+ "deform_symnet_header": "SYMNet test-time CNN (smooth=3.0), header start, partial alignment improvement with visible boundary offsets",
+ "deform_gcpd_lam1": "GCPD (Laplace-Beltrami basis, \u03bb=1.0, out=0.1), spectral functional-map init, Dice improved 0.002->0.370, resid 0.98 mm",
+ "deform_gcpd_lam10": "GCPD (Laplace-Beltrami basis, \u03bb=10.0, out=0.1), low overlap (Dice 0.157), resid 0.78 mm",
+ "deform_gcpd_lam100": "GCPD (Laplace-Beltrami basis, \u03bb=100.0, out=0.1), low overlap (Dice 0.143), resid 0.80 mm"
 }

@@ -42,12 +42,14 @@ def deform_table(rows, notes):
             "field median / p95 / max (mm) | Jacobian min | folded voxels | SD log J | note |")
     out = [head, "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in order:
-        fld = "0" if not r.get("field_max_mm") else f"{f(r['field_median_mm'])} / {f(r.get('field_p95_mm'))} / {f(r['field_max_mm'])}"
-        out.append(f"| {r['tool']} | {r['variant']} | {f(r.get('wall_s'), 0)} | {f(r['interior_mm'], 3)} | {f(r['boundary_mm'], 3)} | "
-                   f"{100 * r['within']:.0f} % | {f(r['F'], 4)} | {f(r['two_class_core'], 4)} | {fld} | "
-                   f"{f(r.get('jac_min'), 2) if r.get('field_max_mm') else '1'} | "
-                   f"{f(100 * r['jac_folding_fraction'], 2, ' %') if r.get('field_max_mm') else '0 %'} | "
-                   f"{f(r.get('sd_log_jac'), 3) if r.get('field_max_mm') else '0'} | {notes.get(r['run'], '')} |")
+        fld = "0" if not r.get("field_max_mm") else f"{f(r.get('field_median_mm'))} / {f(r.get('field_p95_mm'))} / {f(r.get('field_max_mm'))}"
+        within_str = f"{100 * r['within']:.0f} %" if r.get("within") is not None else "n/a"
+        jac_str = f"{f(r.get('jac_min'), 2)}" if r.get("field_max_mm") else "1"
+        fold_str = f"{f(100 * r['jac_folding_fraction'], 2, ' %')}" if r.get("jac_folding_fraction") is not None else ("0 %" if not r.get("field_max_mm") else "n/a")
+        sd_str = f"{f(r.get('sd_log_jac'), 3)}" if r.get("sd_log_jac") is not None else ("0" if not r.get("field_max_mm") else "n/a")
+        out.append(f"| {r['tool']} | {r['variant']} | {f(r.get('wall_s'), 0)} | {f(r.get('interior_mm'), 3)} | {f(r.get('boundary_mm'), 3)} | "
+                   f"{within_str} | {f(r.get('F'), 4)} | {f(r.get('two_class_core'), 4)} | {fld} | "
+                   f"{jac_str} | {fold_str} | {sd_str} | {notes.get(r['run'], '')} |")
     return "\n".join(out)
 
 
@@ -66,7 +68,9 @@ def main():
         rows = json.loads(src.read_text(encoding="utf-8"))
         with open(a.out / f"{name}.md", "w", encoding="utf-8", newline="\n") as fh:
             fh.write(fn(rows, notes) + "\n")
-        shutil.copy(src, a.out / f"summary_{name}.json")
+        dst = a.out / f"summary_{name}.json"
+        if src.resolve() != dst.resolve():
+            shutil.copy(src, dst)
         print(f"{name}: {len(rows)} rows -> {a.out / (name + '.md')}")
 
 

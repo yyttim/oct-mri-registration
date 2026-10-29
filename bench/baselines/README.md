@@ -32,6 +32,8 @@ the evaluation. `prepare_inputs.py` writes these files.
 | deformable | NiftyReg reg_f3d | 2.1.2 | defaults (NMI, -5 voxel grid), -sx 5 mm, and -vel with the mask (the one form that honours it) | identity |
 | deformable | ConvexAdam | 0.2.0 | MIND-SSC, shipped defaults, GPU | identity, + FOV mask |
 | deformable | greedy | 1.4.0 | WNCC 2x2x2 (quick start), smoothing in voxels and in mm, NMI | identity, + moving mask |
+| deformable | SYMNet | CVPR 2020 | Fast Symmetric Diffeomorphic CNN, test-time optimization (800 iters, symmetric NCC + magnitude + Jacobian + smoothness, smooth weight 3.0), GPU | affine, centre of mass, header |
+| deformable | GCPD | CVPR 2022 | Generalized Coherent Point Drift (Python port of official MATLAB repo), spectral Laplace-Beltrami eigenbasis U (120 eigs), functional-map init (MWP/SHOT/WKS), swept λ ∈ [1, 10, 100], outlier 0.1 | norm2 spectral init |
 
 Install routes, exact commands and every tool's output are in the run directories (`cmd.sh`, `log.txt`, `notes.md`), which
 hold the data and are not in the repository. [INSTALL.md](INSTALL.md) lists the versions and how each tool was installed.
@@ -47,6 +49,8 @@ hold the data and are not in the repository. [INSTALL.md](INSTALL.md) lists the 
 | `evaluate_deform.py` | deformable runs: the same resampling through affine and field, octreg's §6 read-outs on the warped OCT, the field over the MRI foreground (magnitude, Jacobian, folding), section shots |
 | `composites.py`, `zooms.py` | side-by-side panels per section and 2x zooms of the superior end for the visual check |
 | `summarise.py` | the tables of BASELINES.md from the summary JSON |
+| `symnet_oct_mri_alignment_colab.ipynb` | SYMNet test-time diffeomorphic CNN registration on the I58 pair |
+| `gcpd_oct_mri_alignment_colab.ipynb` | Generalized CPD (GCPD) spectral non-rigid surface registration on the I58 pair |
 
 The stored results are in `bench/results/I58/baselines/` (summary JSON and tables). The images of the pair are drawn locally
 and are not published.

@@ -54,6 +54,10 @@ the field statistics are over the MRI foreground, and the last column is what th
 | ConvexAdam, MIND-SSC | FOV mask | 0.220 | 0.052 | 0.09 | 0.48 / 1.92 | -0.54 | superior cut face lifted, corners bulged | 13 s (GPU) |
 | elastix B-spline, Mattes MI | FOV mask | 0.367 | 0.254 | 0.65 | 0.27 / 0.59 | 1.00 | as octreg's, two small tears in the agarose | 43 s |
 | NiftyReg reg_f3d, NMI | 5 mm grid | 1.232 | 0.615 | n/a | 4.82 / 12.70 | -0.70 | stripes bent into fans, block collapses in places | 8 min |
+| SYMNet (test-time CNN) | affine start (smooth=3.0) | 0.000 | 2.399 | n/a | 0.00 / 0.01 | 0.97 | Good alignment, smooth gray-level matching with red MRI boundary contour tightly fitting | 7.6 min (GPU) |
+| SYMNet (test-time CNN) | centre of mass (smooth=3.0) | 1.467 | 4.332 | n/a | 1.23 / 4.94 | -0.02 | Distorted structure relative to red contour, folded voxels | 7.7 min (GPU) |
+| SYMNet (test-time CNN) | header start (smooth=3.0) | 0.404 | 5.006 | n/a | 0.00 / 3.28 | -0.01 | Partial alignment improvement; visible boundary offsets | 7.5 min (GPU) |
+| GCPD (spectral mesh) | λ=1.0, outliers=0.1 | n/a | 0.98 | n/a | 16.48 / 48.99 | n/a | Surface residual 4.79 -> 0.98 mm, Dice 0.002 -> 0.370, LB energy 128.17 | 32 s |
 
 Interior and edges are the median interior-match residual and the median surface-edge offset, and the superior 4 mm is the
 edge residual at the end of the block where the affine leaves the largest misfit. A Jacobian below 0 means folded voxels
@@ -67,5 +71,8 @@ compression (Jacobian down to 0.34 against 0.94) and about 150 times the run tim
 the official script, SyN reaches still lower residuals by pulling the straight cut faces of the OCT out into MRI tissue the
 block does not contain, so those residuals are not a better registration. greedy and ConvexAdam close the edges but improve
 the interior only a little (0.18 and 0.22 against 0.25 mm without a field), elastix leaves the edges near the affine and the
-interior worse, and reg_f3d distorts the block in every standard form. The full tables, with every variant, are in
-`bench/results/I58/baselines/affine.md` and `deform.md`.
+interior worse, and reg_f3d distorts the block in every standard form.
+
+SYMNet (CVPR 2020), an unsupervised diffeomorphic deep learning model evaluated in test-time optimization mode across 800 iterations on this pair, achieves smooth gray-level matching without folding (Jacobian min 0.97) when pre-aligned with octreg's affine start; from unaligned starts (centre of mass or header) it struggles with large initial displacements and induces negative Jacobians (folding). GCPD (CVPR 2022), a spectral non-rigid surface matching baseline using the Laplace-Beltrami eigenbasis, registers the extracted specimen surface meshes (reducing surface residual from 4.79 mm to 0.98 mm and improving Dice from 0.002 to 0.370 at λ=1.0) without performing volumetric intensity deformation.
+
+The full tables, with every variant, are in `bench/results/I58/baselines/affine.md` and `deform.md`.
