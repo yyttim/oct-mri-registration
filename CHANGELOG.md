@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- New: `tilestack`, the internal registration of the slabs of a serial-sectioning OCT block ([docs/TILESTACK.md](docs/TILESTACK.md)).
 - New in bench, with octreg unchanged: `bench/repeat.py` and `bench/results/repeat.json`, the ablation variants with the scale
   and shear prior at other weights, a rigid refinement, F without the subtraction of the means, the MRI divided by its blur, the
   OCT specimen mask from the signal threshold alone, the OCT voxel size 5 % off and the OCT mirrored, the options `--start` and
