@@ -246,3 +246,16 @@ the tables and figures. The stored results are in `bench/results/`. octreg has n
 it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
 [bench/results/repeat.json](bench/results/repeat.json), which also records the Python, PyTorch, CUDA, GPU and OS of these runs).
 Another GPU or PyTorch build can change the order of the floating-point sums and move an affine at round-off level.
+
+## tilestack
+
+A block imaged as separate slabs is first registered internally. tilestack registers the slabs of a serial-sectioning OCT
+block to each other from the tissue that neighbouring slabs image twice: every slab moves by a translation, a smooth
+deformation and a translation of each mosaic tile, in-plane and in depth, with the depth axis converted from optical path,
+all solved at once. It writes the slabs' raw mu_s at the registered positions as one volume, with no other change of the
+values ([docs/TILESTACK.md](docs/TILESTACK.md)). `pip install -e ".[tilestack]"` adds h5py, which reads the slabs, and a
+CUDA GPU is required.
+
+```
+python -m tilestack BLOCK_JSON OUT_DIR [--full] [--layout LATTICE_JSON] [--zero LOG10]
+```
