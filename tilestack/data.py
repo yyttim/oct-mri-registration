@@ -27,7 +27,7 @@ VOX, NEIGHBOURS = float(BLOCK["voxel_mm"]), int(BLOCK["neighbours"])
 MARGIN, DEEP, DEEP_A = (int(round(float(BLOCK[k]) / VOX)) for k in ("margin_mm", "deep_mm", "deep_a_mm"))
 MATCH_MM = (0.08, 0.16, 0.24, 0.32, 0.40)     # depths under the newer slab's cut that the dense matcher reads
 PAD = int(round(0.64 / VOX))                   # margin of the output grid around the raw field
-LEVEL_MM = 0.04                                # working grid in-plane: the level map, the optical covariate, the 40 um volume
+LEVEL_MM = 0.04                                # working grid in-plane: the 40 um volume
 SURFACE_TOL = round(0.06 / VOX, 6)             # planes a column may lie off its 3 x 3 neighbourhood's median cut
 DOWN = int(round(LEVEL_MM / VOX))              # raw voxels per working voxel, in-plane
 assert abs(DOWN * VOX - LEVEL_MM) < 1e-9, f"the working grid ({LEVEL_MM} mm) must hold a whole number of voxels"
@@ -125,27 +125,3 @@ def geometry40(s):
     V = valid[:my * DOWN, :mx * DOWN].reshape(my, DOWN, mx, DOWN).all((1, 3))
     return S, V
 
-
-def working_pixel(v, n):
-    """Index of the working pixel that holds raw coordinate v (raw pixel centres at integers), clipped to 0 .. n - 1."""
-    return np.clip(np.floor((np.asarray(v, float) + 0.5) / DOWN).astype(int), 0, n - 1)
-
-
-def optical_at(C, z, y, x):
-    """C at raw points (planes and raw pixels): the working pixel that holds the point, linear along depth."""
-    nz = C.shape[0]
-    zf = np.clip(np.asarray(z, float), 0, nz - 1); i = np.minimum(np.floor(zf).astype(int), nz - 2); a = zf - i
-    yi, xi = working_pixel(y, C.shape[1]), working_pixel(x, C.shape[2])
-    return C[i, yi, xi] * (1 - a) + C[i + 1, yi, xi] * a
-
-
-def attach_optical(m, cov):
-    """Add the covariate cov(slab) at both ends of every correspondence (cA, cB) of the sets m."""
-    for s in sorted({int(c[k]) for c in m for k in ("s", "t")}):
-        C = cov(s)
-        for c in m:
-            if int(c["s"]) == s:
-                c["cA"] = optical_at(C, c["zA"], c["yA"], c["xA"])
-            if int(c["t"]) == s:
-                c["cB"] = optical_at(C, c["zB"], c["yB"], c["xB"])
-    return m

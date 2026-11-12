@@ -1,10 +1,8 @@
 """The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR):
 1. the tile layout of the mosaics (from the coverage masks, or given), 2. the overlap correspondences of every pair of
-slabs that overlap in depth (first and second neighbours, cached), 3. a first placement without the optical-path term,
-4. its registered volume on the working grid, whose level map gives the optical covariate of the depth axis, 5. the
-placement with the optical-path term, 6. the transforms in physical units with the first pass, the level map and the
-cut surfaces their depth recipe reads, and the registered volume on the working grid (and at the raw voxel with full),
-each with its source map.
+slabs that overlap in depth (first and second neighbours, cached), 3. the placement of all slabs and tiles, 4. the
+transforms in physical units and the registered volume on the working grid (and at the raw voxel with full), each with
+its source map.
 """
 import glob
 import hashlib
@@ -16,7 +14,7 @@ import time
 import numpy as np
 import torch
 
-from . import compose, data, export, match, optical, solve, tiles
+from . import compose, data, export, match, solve, tiles
 
 
 def settings():
@@ -58,35 +56,20 @@ def correspondences():
     return m, skipped
 
 
-def run(out, full=False, layout=None, zero=None):
+def run(out, full=False, layout=None):
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
     data.check_work(settings())
     lay = tiles.layout(json.load(open(layout)) if layout else None)
     m, skipped = correspondences()
-    # pass 1: the placement without the optical-path term; the level map of its registered volume gives the covariate
-    data.attach_optical(m, lambda s: np.zeros((data.NP, 1, 1), np.float32))
-    sol1 = solve.solve(m, lay, data.SLABS, optical=False)
-    pickle.dump(sol1, open(f"{out}/solution_pass1.pkl", "wb"))
-    export.save_transforms(sol1, lay, f"{out}/transforms_pass1.json", export.DOC_PASS1)
-    vol, vz0, src = compose.compose(sol1, lay, lambda s: None)
-    lev = optical.level_map(vol, vz0, src, zero)
-    export.save_level(lev, f"{out}/level_pass1_40um.nii.gz")
-    zero = lev["zero"]
-    del vol, src, lev
-    cov = optical.covariate(sol1, lay, optical.load_level(f"{out}/level_pass1_40um.nii.gz", zero))     # as the recipe reads it
-    export.save_surfaces(data.SLABS, f"{out}/cut_surface_40um.nii.gz")
-    # pass 2: the placement with the optical-path term
-    data.attach_optical(m, cov)
     sol = solve.solve(m, lay, data.SLABS)
-    sol["zero"] = zero
     pickle.dump(sol, open(f"{out}/solution.pkl", "wb"))
     export.save_transforms(sol, lay, f"{out}/transforms.json")
-    vol, vz0, src = compose.compose(sol, lay, cov)
+    vol, vz0, src = compose.compose(sol, lay)
     export.save_volume(vol, vz0, data.LEVEL_MM * 1000, f"{out}/registered_40um.nii.gz", src)
     del vol, src
     if full:
-        vol, vz0, src = compose.compose(sol, lay, cov, full=True, out_path=f"{out}/registered_20um_tmp.npy")
+        vol, vz0, src = compose.compose(sol, lay, full=True, out_path=f"{out}/registered_20um_tmp.npy")
         export.save_volume(vol, vz0, data.VOX * 1000, f"{out}/registered_20um.nii", src)
         del vol
         os.remove(f"{out}/registered_20um_tmp.npy")
@@ -99,7 +82,7 @@ def run(out, full=False, layout=None, zero=None):
             res[f"neighbours_{k}"] = dict(matches=int(r.shape[1]), inplane_um_median=float(np.median(xy)), inplane_um_p95=float(np.percentile(xy, 95)),
                                           depth_um_median=float(np.median(r[2])), depth_um_p95=float(np.percentile(r[2], 95)))
     code = hashlib.sha256(b"".join(open(p, "rb").read() for p in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))))).hexdigest()
-    json.dump(dict(seconds=round(time.time() - t0), pairs=len(m), skipped=skipped, residuals=res, beta=sol["beta"], zero_log10=zero,
-                   solver_iterations=[sol1["iterations"], sol["iterations"]], settings=sol["settings"], block=data.BLOCK, code=code[:12]),
+    json.dump(dict(seconds=round(time.time() - t0), pairs=len(m), skipped=skipped, residuals=res, solver_iterations=sol["iterations"],
+                   settings=sol["settings"], block=data.BLOCK, code=code[:12]),
               open(f"{out}/run.json", "w"), indent=1)
     print("done", out, round(time.time() - t0), "s")
