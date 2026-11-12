@@ -5,8 +5,7 @@ its window, raw planes down to data.DEEP_A: the slab that imaged it nearest its 
 of the slab above. The voxel holds that slab's raw mu_s resampled at the registered position, trilinear in mu_s. Each
 slab is resampled tile by tile: an output pixel takes the tile whose moved cell contains it (the one deepest inside its
 cell where two moved cells overlap), and none where moved cells leave a gap, where the volume takes another slab. Along
-depth the raw plane of a common-frame voxel follows the slab's depth offset and the optical-path term of the solve
-(deeper under bright tissue). Nothing else changes a value: no brightness correction, no blending at the seams, no
+depth the raw plane of a common-frame voxel follows the slab's depth offset. Nothing else changes a value: no brightness correction, no blending at the seams, no
 filling of empty voxels, which stay 0. A source map records the slab of every voxel, +1000 where its raw plane lies
 below the reliable planes (data.DEEP), -1 for no data. The output grid is the raw field with a margin of data.PAD
 pixels on every side.
@@ -39,8 +38,8 @@ def _b3(u):
 
 
 def inverse_map(sol, lay, s, ny, nx, scale):
-    """Raw (y, x) in raw pixels, the tile and the common-frame depth offset (planes, without the optical term) for every
-    output pixel of slab s; tile -1 where no tile of the slab lands. Per tile the forward map is the translation plus
+    """Raw (y, x) in raw pixels, the tile and the common-frame depth offset (planes) for every output pixel of slab s;
+    tile -1 where no tile of the slab lands. Per tile the forward map is the translation plus
     the smooth field, inverted by fixed-point iteration (the field sampled on a 16 px lattice); the depth offset is
     the slab's at the raw position found."""
     k = sol["slabs"].index(s)
@@ -114,31 +113,11 @@ def inverse_map(sol, lay, s, ny, nx, scale):
     return py, px, cell, zo
 
 
-def raw_plane(Z, zo, beta, C, pix):
-    """The raw plane z of common plane Z in a slab placed with depth offset zo: the fixed point of z - beta C(z) = Z - zo.
-    C, the slab's optical covariate (planes, working pixels), is read as data.optical_at reads it in the solve: at the
-    working pixel pix (flat index) of every output pixel, linear along depth."""
-    base = Z - zo
-    z = base
-    if C is not None and beta:
-        nz, plane = C.shape[0], C.shape[1] * C.shape[2]
-        Cf = C.reshape(-1)
-        for _ in range(3):
-            zf = z.clamp(0, nz - 1)
-            i = zf.floor().clamp(max=nz - 2)
-            a = zf - i
-            k = i.long() * plane + pix
-            z = base + beta * (Cf[k] * (1 - a) + Cf[k + plane] * a)
-    return z
-
-
-def compose(sol, lay, covariate, full=False, out_path=None):
+def compose(sol, lay, full=False, out_path=None):
     """Returns (volume mu_s float32 (Z, Y, X), 0 where no data, z0 = common plane of index 0, source map int16), on the
-    working grid, or at the raw voxel with full (written to the .npy out_path when given). covariate(slab): the
-    optical covariate the solution was made with (None without the optical term)."""
+    working grid, or at the raw voxel with full (written to the .npy out_path when given)."""
     slabs = sol["slabs"]
     scale = 1 if full else data.DOWN
-    beta = float(sol["beta"])
     reach = 0.0
     for s in slabs:                                  # how far the placement moves the raw field: it must stay in PAD
         yy, xx = (v.ravel().astype(float) for v in np.mgrid[0:data.NY:16, 0:data.NX:16])
@@ -164,23 +143,17 @@ def compose(sol, lay, covariate, full=False, out_path=None):
         del Mv
         St = torch.from_numpy(np.ascontiguousarray(surf)).float().to(dev)
         Vt = torch.from_numpy(valid.astype(np.float32)).to(dev)
-        Ct = torch.from_numpy(covariate(s)).to(dev) if beta else None                      # working grid, (planes, y, x)
         y, x, cell, zo = inverse_map(sol, lay, s, ny, nx, scale)
         ly = (y + 0.5) / scale - 0.5; lx = (x + 0.5) / scale - 0.5                  # raw pixels at this grid
         gy = ly / (my - 1) * 2 - 1; gx = lx / (mx - 1) * 2 - 1
         g2 = torch.stack([gx, gy], -1)[None]
-        pix = None
-        if Ct is not None:                                           # the working pixel of every output pixel
-            wp = lambda v, n: torch.floor((v + 0.5) / data.DOWN).long().clamp(0, n - 1)  # noqa: E731
-            pix = wp(y, Ct.shape[1]) * Ct.shape[2] + wp(x, Ct.shape[2])
         surf_s = Fnn.grid_sample(St[None, None], g2, align_corners=True, padding_mode="border")[0, 0]
         val_s = (Fnn.grid_sample(Vt[None, None], g2, align_corners=True, padding_mode="zeros")[0, 0] > 0.99) & (cell >= 0)
-        e = int(np.ceil(abs(beta) * float(Ct.max()))) if Ct is not None else 0      # the most the optical term moves a plane
-        Zlo = int(np.floor(float((zo + surf_s)[val_s].min()))) - e if val_s.any() else z0
-        Zhi = int(np.ceil(float(zo[val_s].max()))) + data.DEEP_A + 2 + e if val_s.any() else z0
+        Zlo = int(np.floor(float((zo + surf_s)[val_s].min()))) if val_s.any() else z0
+        Zhi = int(np.ceil(float(zo[val_s].max()))) + data.DEEP_A + 2 if val_s.any() else z0
         for Zc in range(max(Zlo, z0), min(Zhi, z0 + NZ), 16):
             Zs = torch.arange(Zc, min(Zc + 16, Zhi, z0 + NZ), device=dev).float()
-            rz = raw_plane(Zs[:, None, None], zo[None], beta, Ct, pix)
+            rz = Zs[:, None, None] - zo[None]                                # the raw plane of every common plane
             gz = rz / (nzr - 1) * 2 - 1
             g3 = torch.stack([gx[None].expand_as(rz), gy[None].expand_as(rz), gz], -1)[None]
             val = Fnn.grid_sample(Mt[None, None], g3, align_corners=True, padding_mode="border")[0, 0]
@@ -188,7 +161,7 @@ def compose(sol, lay, covariate, full=False, out_path=None):
             i0, i1 = int(Zs[0]) - z0, int(Zs[-1]) - z0 + 1
             vol[i0:i1][ok] = val.cpu().numpy()[ok]
             src[i0:i1][ok] = (s + BELOW * (rz > data.DEEP)).to(torch.int16).cpu().numpy()[ok]
-        del Mt, Ct
+        del Mt
         torch.cuda.empty_cache()
     if out_path:
         vol.flush()
