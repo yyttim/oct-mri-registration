@@ -1,0 +1,50 @@
+{
+  "deform_symnet_affine": {
+    "tool": "SYMNet (test-time trained)",
+    "paper": "Mok & Chung (CVPR 2020)",
+    "setting": "affine (smooth=3.0)",
+    "start": "affine (pre-aligned)",
+    "smooth_w": 3.0,
+    "interior_mm": 0.0,
+    "surface_edge_offsets_mm": 2.399,
+    "surface_edge_offsets_superior_4mm": null,
+    "field_median_mm": 0.0,
+    "field_max_mm": 0.011,
+    "jac_min": 0.9684,
+    "jac_min_nonrigid": 0.9684,
+    "overlays": "Good alignment, smooth gray-level matching with red MRI boundary contour tightly fitting",
+    "wall_s": 453.5
+  },
+  "deform_symnet_com": {
+    "tool": "SYMNet (test-time trained)",
+    "paper": "Mok & Chung (CVPR 2020)",
+    "setting": "com (smooth=3.0)",
+    "start": "centre of mass",
+    "smooth_w": 3.0,
+    "interior_mm": 1.467,
+    "surface_edge_offsets_mm": 4.332,
+    "surface_edge_offsets_superior_4mm": null,
+    "field_median_mm": 1.234,
+    "field_max_mm": 4.935,
+    "jac_min": -0.0201,
+    "jac_min_nonrigid": -0.0201,
+    "overlays": "Noticeable mismatch/misalignment; the warped gray-level structure is distorted relative to the red contour",
+    "wall_s": 461.7
+  },
+  "deform_symnet_header": {
+    "tool": "SYMNet (test-time trained)",
+    "paper": "Mok & Chung (CVPR 2020)",
+    "setting": "header (smooth=3.0)",
+    "start": "header (identity)",
+    "smooth_w": 3.0,
+    "interior_mm": 0.404,
+    "surface_edge_offsets_mm": 5.006,
+    "surface_edge_offsets_superior_4mm": null,
+    "field_median_mm": 0.0,
+    "field_max_mm": 3.278,
+    "jac_min": -0.0111,
+    "jac_min_nonrigid": -0.0111,
+    "overlays": "Partial alignment improvement; some structures beginning to overlap but still displays visible boundary offsets",
+    "wall_s": 451.2
+  }
+}

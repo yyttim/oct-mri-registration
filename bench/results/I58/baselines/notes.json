@@ -48,12 +48,12 @@
   "flirt_search_x10": {
    "tool": "FSL FLIRT 6.0.7.23",
    "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document)",
-   "start": "FLIRT default rotation search (±90°, coarse 60°, fine 18°)"
+   "start": "FLIRT default rotation search (\u00b190\u00b0, coarse 60\u00b0, fine 18\u00b0)"
   },
   "flirt_fullsearch_x10": {
    "tool": "FSL FLIRT 6.0.7.23",
    "setting": "as flirt_search_x10",
-   "start": "rotation search over ±180°"
+   "start": "rotation search over \u00b1180\u00b0"
   },
   "flirt_sqform_x10": {
    "tool": "FSL FLIRT 6.0.7.23",
@@ -139,6 +139,44 @@
    "tool": "FreeSurfer 8.2.0 mri_synthmorph",
    "setting": "register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block",
    "start": "none (the network predicts the affine)"
+  }
+ },
+ "deform": {
+  "deform_symnet_affine": {
+   "tool": "SYMNet (Mok & Chung 2020)",
+   "setting": "affine start (smooth=3.0), test-time CNN (800 iters)",
+   "start": "octreg affine pre-alignment",
+   "note": "SYMNet test-time CNN (smooth=3.0), affine pre-alignment start, smooth gray-level matching with red MRI boundary"
+  },
+  "deform_symnet_com": {
+   "tool": "SYMNet (Mok & Chung 2020)",
+   "setting": "centre of mass (smooth=3.0), test-time CNN (800 iters)",
+   "start": "centres of mass",
+   "note": "SYMNet test-time CNN (smooth=3.0), centre-of-mass start, noticeable mismatch/distortion relative to red contour"
+  },
+  "deform_symnet_header": {
+   "tool": "SYMNet (Mok & Chung 2020)",
+   "setting": "header (smooth=3.0), test-time CNN (800 iters)",
+   "start": "header alignment",
+   "note": "SYMNet test-time CNN (smooth=3.0), header start, partial alignment improvement with visible boundary offsets"
+  },
+  "deform_gcpd_lam1": {
+   "tool": "GCPD (Fan et al. 2022)",
+   "setting": "Laplace-Beltrami basis (120 eigs), \u03bb=1.0, outliers=0.1",
+   "start": "norm2 spectral functional-map",
+   "note": "GCPD (Laplace-Beltrami basis, \u03bb=1.0, out=0.1), spectral functional-map init, Dice improved 0.002->0.370, resid 0.98 mm"
+  },
+  "deform_gcpd_lam10": {
+   "tool": "GCPD (Fan et al. 2022)",
+   "setting": "Laplace-Beltrami basis (120 eigs), \u03bb=10.0, outliers=0.1",
+   "start": "norm2 spectral functional-map",
+   "note": "GCPD (Laplace-Beltrami basis, \u03bb=10.0, out=0.1), low overlap (Dice 0.157), resid 0.78 mm"
+  },
+  "deform_gcpd_lam100": {
+   "tool": "GCPD (Fan et al. 2022)",
+   "setting": "Laplace-Beltrami basis (120 eigs), \u03bb=100.0, outliers=0.1",
+   "start": "norm2 spectral functional-map",
+   "note": "GCPD (Laplace-Beltrami basis, \u03bb=100.0, out=0.1), low overlap (Dice 0.143), resid 0.80 mm"
   }
  }
 }

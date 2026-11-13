@@ -11,6 +11,8 @@ release, unchanged.
 | FSL | 6.0.7.23 | official installer `fslinstaller.py` (FSL licence, non-commercial) |
 | FreeSurfer | 8.2.0 | official release, with `mri_robust_register`, `mri_coreg`, `mri_synthmorph`, `mri_vol2vol`, `lta_convert` |
 | greedy | 1.4.0 | `pip install picsl_greedy` (1.4.0.3) |
+| SYMNet | CVPR 2020 | PyTorch implementation (`pip install torch SimpleITK nibabel scikit-learn pandas scipy matplotlib`), run on the GPU |
+| GCPD | CVPR 2022 | Python port of official MATLAB release (`pip install libigl trimesh scikit-image SimpleITK nibabel scipy pandas matplotlib`, optional `pyshot`) |
 
 Two behaviours of these versions affect the runs. NiftyReg 2.1.2 ignores the floating mask of `reg_aladin`, so that mask variant
 equals the unmasked run. In this FreeSurfer build `mri_coreg --ras2ras` writes a voxel matrix under a RAS label, so `mri_coreg`

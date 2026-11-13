@@ -1,0 +1,7 @@
+lam1.0|out0.1      succeeded (improved over init)  | Dice 0.002->0.370  resid 0.98mm  31.9s
+lam10.0|out0.1     low overlap  | Dice 0.002->0.157  resid 0.78mm  32.7s
+lam100.0|out0.1    low overlap  | Dice 0.002->0.143  resid 0.80mm  31.4s
+Tool	lambda	outliers	Status	Dice init	Dice (warped OCT vs MRI)	Surf resid init (mm)	Surface residual (mm)	Mean deform (mm)	Max deform (mm)	LB energy tr(CKC)	Inliers (init)	sigma2	GCPD iters	Time (s)
+0	GCPD (ported)	1.0	0.1	succeeded (improved over init)	0.002	0.370	4.786	0.977	16.477	48.987	128.174	439	0.003	30	31.946
+1	GCPD (ported)	10.0	0.1	low overlap	0.002	0.157	4.786	0.780	10.603	20.606	29.633	0	0.003	30	32.704
+2	GCPD (ported)	100.0	0.1	low overlap	0.002	0.143	4.786	0.798	11.232	22.936	18.311	0	0.003	30	31.426

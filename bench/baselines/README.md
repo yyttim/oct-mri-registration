@@ -31,6 +31,8 @@ its schedule resamples the images to fixed voxel sizes in mm. The other affine r
 | FreeSurfer mri_coreg | 8.2.0 | --dof 6 then --dof 12 --init-reg, brute-force start | centre, --regheader, + --mov-mask | `mri_coreg_default` |
 | greedy | 1.4.0 | NMI, dof 6 then 12, -n 100x50x10 | header, image centres, -search 1000, + FOV mask (as the moving mask) | `greedy_centers` |
 | FreeSurfer mri_synthmorph | 8.2.0 | mri_synthmorph -m affine as documented (a 1 mm brain model) | none (the network predicts the affine) | `synthmorph_affine` |
+| SYMNet | CVPR 2020 | Fast Symmetric Diffeomorphic CNN, test-time optimization (800 iters, symmetric loss, smooth weight 3.0), GPU | affine, centre of mass, header | `deform_symnet_affine` |
+| GCPD | CVPR 2022 | Generalized Coherent Point Drift (Python port of official MATLAB repo), spectral Laplace-Beltrami basis (120 eigs), swept λ ∈ [1, 10, 100], outlier 0.1 | norm2 spectral functional-map | `deform_gcpd_lam1` |
 
 [INSTALL.md](INSTALL.md) gives the version and installation route of each tool and the two environment files that the run
 scripts source. [i58/runs.py](i58/runs.py) holds the commands of every affine run. The run directories under
@@ -48,6 +50,8 @@ scripts source. [i58/runs.py](i58/runs.py) holds the commands of every affine ru
 | `summarise.py` | the table `affine.md`, the main rows and, where there are other runs, a supplement with every run, from the summary JSON and the tool, setting and start of each run in `notes.json`. From the ablation runs (`--ablation`, by default `<project root>/bench_runs/I58/ablation`) it writes `results/I58/ablation.json`, the pose and the search candidates of every run, `results/I58/ablation/no_outline.json` and `results/I58/search.md`, the candidates of the search in the I58 run, in the two outline variants and in the `fine` runs |
 | `standard_tools.py` | the tools and settings of the I46 test: their inputs and moving masks, run scripts and queue, the conversion of each transform and its check against the tool's own resampling (used by `bench/i46/baselines.py`) |
 | `elastix_defaults/` | the elastix model-zoo rigid and affine parameter files that `i58/runs.py` and `standard_tools.py` use |
+| `symnet_oct_mri_alignment_colab.ipynb` | SYMNet test-time diffeomorphic CNN registration on the I58 pair |
+| `gcpd_oct_mri_alignment_colab.ipynb` | Generalized CPD (GCPD) spectral non-rigid surface registration on the I58 pair |
 
 The stored results (summary JSON, `notes.json` and `affine.md`) are in `bench/results/I58/baselines/`, and the figures of
 BASELINES.md in `docs/figures/` (`bench/figures.py`).
