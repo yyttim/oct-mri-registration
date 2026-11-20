@@ -2,7 +2,7 @@
 1. the tile layout of the mosaics (from the coverage masks, or given), 2. the overlap correspondences of every pair of
 slabs that overlap in depth (first and second neighbours, cached), 3. the placement of all slabs and tiles, 4. the
 transforms in physical units and the registered volume on the working grid (and at the raw voxel with full), each with
-its source map.
+its source map, 5. with an MRI, the affine of the volume to it (mri.py).
 """
 import glob
 import hashlib
@@ -56,7 +56,10 @@ def correspondences():
     return m, skipped
 
 
-def run(out, full=False, layout=None):
+def run(out, full=False, layout=None, mri=None):
+    if mri:
+        from .mri import octreg_params, register_mri
+        octreg_params(mri)                                     # a wrong MRI file stops the run here, not at the end
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
     data.check_work(settings())
@@ -71,7 +74,7 @@ def run(out, full=False, layout=None):
     if full:
         vol, vz0, src = compose.compose(sol, lay, full=True, out_path=f"{out}/registered_20um_tmp.npy")
         export.save_volume(vol, vz0, data.VOX * 1000, f"{out}/registered_20um.nii", src)
-        del vol
+        del vol, src
         os.remove(f"{out}/registered_20um_tmp.npy")
     res = {}
     for k in range(1, data.NEIGHBOURS + 1):
@@ -85,4 +88,6 @@ def run(out, full=False, layout=None):
     json.dump(dict(seconds=round(time.time() - t0), pairs=len(m), skipped=skipped, residuals=res, solver_iterations=sol["iterations"],
                    settings=sol["settings"], block=data.BLOCK, code=code[:12]),
               open(f"{out}/run.json", "w"), indent=1)
+    if mri:
+        register_mri(f"{out}/registered_40um.nii.gz", mri, f"{out}/mri")
     print("done", out, round(time.time() - t0), "s")

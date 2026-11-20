@@ -253,8 +253,9 @@ A block imaged as separate slabs is first registered internally. tilestack regis
 block to each other from the tissue that neighbouring slabs image twice: every slab moves by a translation, a smooth
 deformation and a translation of each mosaic tile, in-plane and in depth, all solved at once. It writes the slabs' raw
 mu_s at the registered positions as one volume, with no other change of the values ([docs/TILESTACK.md](docs/TILESTACK.md)).
-`pip install -e ".[tilestack]"` adds h5py, which reads the slabs, and a CUDA GPU is required.
+With `--mri`, octreg then registers that volume to the block's MRI as one affine. `pip install -e ".[tilestack]"` adds
+h5py, which reads the slabs, and a CUDA GPU is required.
 
 ```
-python -m tilestack BLOCK_JSON OUT_DIR [--full] [--layout LATTICE_JSON]
+python -m tilestack BLOCK_JSON OUT_DIR [--full] [--layout LATTICE_JSON] [--mri MRI]
 ```

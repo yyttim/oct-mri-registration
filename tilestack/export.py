@@ -19,7 +19,7 @@ raw field (0 to {data.NX * data.VOX:g} and 0 to {data.NY * data.VOX:g} mm). A sl
 control values row by row (control (i, j) at index i * n_cols + j).
 Tile k = i * cols + j: solve x = X0 + j PX + i SX + W / 2, y = Y0 + i PY + j SY + H / 2 (layout, mm) for (i, j), round
 both and clip them to the lattice. If the slab has no tile there, use the present tile with the nearest (i, j).
-Tiles not listed have e = 0."""
+Tiles not listed have e = 0. The NIfTI volumes place the common-frame point (X, Y, Z) at world (X, Y, -Z) mm."""
 
 
 def save_transforms(sol, lay, path):
@@ -42,15 +42,18 @@ def save_transforms(sol, lay, path):
 
 
 def _affine(z0, level_um):
+    """Voxel -> world mm: (X, Y, -Z) of the common frame, the third axis up out of the block face. With a plane of the
+    maps, shown as MATLAB shows it (x down, y across), being the block face seen from above, this is the specimen's
+    handedness."""
     s = level_um / 1000.0
-    aff = np.diag([s, s, data.VOX, 1.0])
-    aff[2, 3] = z0 * data.VOX
+    aff = np.diag([s, s, -data.VOX, 1.0])
+    aff[2, 3] = -z0 * data.VOX
     aff[0, 3] = aff[1, 3] = ((s / data.VOX - 1) / 2 - data.PAD) * data.VOX
     return aff
 
 
 def save_volume(vol, z0, level_um, path, src=None):
-    """vol (Z, Y, X) -> NIfTI (X, Y, Z), voxel level_um in-plane and the raw voxel in depth, origin at the common frame.
+    """vol (Z, Y, X) -> NIfTI (X, Y, Z), voxel level_um in-plane and the raw voxel in depth, in the world of _affine.
     The grid has a margin of data.PAD raw pixels: voxel 0 of a working-grid volume is centred at raw pixel
     (DOWN - 1) / 2 - PAD. src: the source map, written next to it."""
     aff = _affine(z0, level_um)
