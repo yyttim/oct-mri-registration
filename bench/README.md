@@ -6,9 +6,8 @@ block I46 of Costantini et al. (2023) against the authors' registration.
 
 ## Data layout
 
-The scripts find their files through `bench/paths.py`. By default the runs go to `bench_runs/`, the baseline runs to
-`baselines/` and the data are read from `data/` of the repository, all three in `.gitignore`. Four environment variables move
-them.
+The scripts find their files through `bench/paths.py`. By default the runs, the baseline runs and the data lie in folders of the
+repository that `.gitignore` leaves out, and four environment variables move them.
 
 | variable | meaning | default |
 |---|---|---|
@@ -16,9 +15,6 @@ them.
 | `OCTREG_DATA_ROOT` | the data root | `<repository>/data` |
 | `OCTREG_I58_DIR` | the folder of the two I58 files | `<data root>/I58` |
 | `OCTREG_DANDI000026_DIR` | the download of DANDI:000026 sub-I46 and the authors' registration files for `i46/` | `<data root>/dandi-000026` |
-
-The I58 files are `I58_Brainstem_mus_Slice_full_20um_corr.nii.gz` (the OCT) and `I58_brainstem_MRI_cropped_to_OCT.nii.gz` (the
-MRI crop). They are not part of the repository.
 
 ## I58
 
@@ -34,12 +30,8 @@ python bench/ablate.py $OCT $MRI -o $RUNS/ablation/fine --only base,no_outline -
 python bench/repeat.py $OCT $MRI --run $RUNS/octreg -o $RUNS/repeat
 ```
 
-`ablate.py` runs the method with one change per variant (its `--help` lists them), each through `octreg.register.register`. With
-`--turn 0,0,90` it starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world. The runs under
-`fine` search on a 0.4 mm grid with σ 0.8 mm in place of 0.6 and 1.2 mm, with and without the outline. `baselines/summarise.py`
-stores the pose and the search candidates of every ablation run in `results/I58/ablation.json` and lists the candidates of the
-search in the I58 run, in the two outline variants and in the `fine` runs in `results/I58/search.md`. `repeat.py` runs octreg
-once more at its defaults and compares the affine with the stored run byte for byte (`results/repeat.json`).
+With `--turn 0,0,90`, `ablate.py` starts from the OCT turned by 90° about its sectioning axis, the z axis of the I58 OCT world.
+`baselines/summarise.py` writes `ablation.json` and `search.md` in `results/I58` from these runs.
 
 | | | | |
 |---|---|---|---|
@@ -78,7 +70,7 @@ python bench/figures.py --octreg-run $RUNS/octreg --ablation $RUNS/ablation
 | `figures.py` | the I58 panels in `docs/figures/` |
 | `baselines/` | standard registration tools on the I58 pair, and the tool settings of the I46 test ([README](baselines/README.md), [BASELINES.md](baselines/BASELINES.md)) |
 | `i46/` | the test on block I46 of Costantini et al. (2023) ([README](i46/README.md)) |
-| `results/I58/` | `result.json` of the I58 run and `ablation/no_outline.json` of the variant without the outline term, both with the input paths cut to file names, `ablation.json` with the pose and the search candidates of every ablation run, `search.md` with the candidates of the search in the I58 run, the two outline variants and the `fine` runs, and the baseline tables in `baselines/` |
+| `results/I58/` | `result.json` of the I58 run with the input paths cut to file names, `ablation.json` with the pose and the search candidates of every ablation run, `search.md` with the candidates of the search in the I58 run, the two outline variants and the `fine` runs, and the baseline tables in `baselines/` |
 | `results/I46/` | the scores of the I46 test and their tables (`tables.md`) |
 
 The Python scripts print their options with `--help`.

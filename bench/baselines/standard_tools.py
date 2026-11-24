@@ -15,6 +15,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE), str(HERE.parents[1])]
+import convert_affines as C  # noqa: E402
 from bench.paths import WSL, host_path  # noqa: E402
 
 TOOLS = ["reg_aladin", "greedy", "elastix", "ants", "mri_robust_register", "mri_coreg", "flirt", "synthmorph"]
@@ -61,7 +62,6 @@ def made_from(record, sources):
 def prepare_inputs(d, oct_path, mri_path):
     """Write d/oct.nii.gz, the OCT box-averaged to the MRI voxel size, d/mri.nii.gz and their x10 copies. Returns d."""
     from octreg import geometry as G, io
-    from convert_affines import scale_header
     d, src = Path(d), {"oct": str(Path(oct_path).resolve()), "mri": str(Path(mri_path).resolve())}
     if made_from(d / "inputs.json", src):
         return d
@@ -71,24 +71,22 @@ def prepare_inputs(d, oct_path, mri_path):
     io.save_nifti(arr, A, d / "oct.nii.gz")
     shutil.copy(mri_path, d / "mri.nii.gz")
     for f in ("oct", "mri"):
-        nib.save(scale_header(nib.load(str(d / f"{f}.nii.gz")), 10.0), str(d / f"{f}_x10.nii.gz"))
+        nib.save(C.scale_header(nib.load(str(d / f"{f}.nii.gz")), 10.0), str(d / f"{f}_x10.nii.gz"))
     (d / "inputs.json").write_text(json.dumps(src, indent=1), encoding="utf-8")
     return d
 
 
 def prepare_mask(d, mask):
     """Write d/oct_mask.nii.gz, the mask file on the grid of d/oct.nii.gz, and its x10 copy. Returns d."""
-    from octreg import geometry as G, io
-    from convert_affines import scale_header
+    from octreg import io
+    from octreg.register import _mask_on
     d, src = Path(d), {"mask": str(Path(mask).resolve())}
     if made_from(d / "mask.json", src):
         return d
-    o, v = nib.load(str(d / "oct.nii.gz")), io.load_volume(mask)
-    # the same resampling as octreg's --oct-mask
-    frac, A = G.resample_iso(v, max(float(np.linalg.norm(o.affine[:3, 0])), float(v.spacing_mm.min())), binary=True)
-    m = G.resample_to(frac, A, o.shape, o.affine, np.eye(4)) > 0.5
+    o = nib.load(str(d / "oct.nii.gz"))
+    m = _mask_on(io.load_volume(mask), o.shape, o.affine, float(np.linalg.norm(o.affine[:3, 0])))
     io.save_nifti(m.astype(np.uint8), o.affine, d / "oct_mask.nii.gz")
-    nib.save(scale_header(nib.load(str(d / "oct_mask.nii.gz")), 10.0), str(d / "oct_mask_x10.nii.gz"))
+    nib.save(C.scale_header(nib.load(str(d / "oct_mask.nii.gz")), 10.0), str(d / "oct_mask_x10.nii.gz"))
     (d / "mask.json").write_text(json.dumps(src, indent=1), encoding="utf-8")
     return d
 
@@ -194,7 +192,6 @@ def prepare(base, runs, inputs):
 
 def convert(tool, run, inp):
     """The tool's transform as a 4x4 OCT world -> MRI world (NIfTI RAS mm)."""
-    import convert_affines as C
     tool = EXTENDS.get(tool, tool)
     if tool == "elastix":                 # on Windows the files name each other by WSL paths
         for n in (0, 1):
@@ -206,8 +203,8 @@ def convert(tool, run, inp):
     if tool == "flirt":
         s10, d10 = nib.load(str(inp / "oct_x10.nii.gz")), nib.load(str(inp / "mri_x10.nii.gz"))
         return C.unscale_world_transform(C.flirt_mat_to_mov2fix_world(run / "affine.mat", s10, d10), 10.0)
-    return {"reg_aladin": lambda: C.niftyreg_txt_to_mov2fix_ras(run / "aff.txt"),
-            "greedy": lambda: C.greedy_mat_to_mov2fix_ras(run / "affine.mat"),
+    return {"reg_aladin": lambda: C.fix2mov_txt_to_mov2fix_ras(run / "aff.txt"),
+            "greedy": lambda: C.fix2mov_txt_to_mov2fix_ras(run / "affine.mat"),
             "ants": lambda: C.ants_mat_to_mov2fix_ras(run / "ants_0GenericAffine.mat"),
             "mri_robust_register": lambda: C.lta_to_mov2fix_ras(run / "affine.lta"),
             "mri_coreg": lambda: C.lta_to_mov2fix_ras(run / "affine_ras.lta"),
@@ -258,8 +255,8 @@ def as_list(T):
     return [[float(f"{v:.10f}") for v in row] for row in np.asarray(T, float)]
 
 
-def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
-    """Convert, write and score every finished run base/<crop>/<tool>, with the check where checked(crop). -> list of rows.
+def collect(base, score, tools=TOOLS, inputs=None, start=None):
+    """Convert, check, write and score every finished run base/<crop>/<tool>. -> list of rows.
     start(crop) is the start S that the moving header carries: the check runs on T, and T S is written and scored."""
     rows, setting = [], {**SETTING, **SEARCH, **MASK, **NEAR, **NEAR_MASK, **AT_R, **AT_R_MASK}
     for crop in sorted(p for p in Path(base).iterdir() if p.is_dir()):
@@ -271,15 +268,15 @@ def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
             try:
                 T = convert(tool, run, inp)
             except (OSError, ValueError, IndexError) as e:
-                rows.append({"crop": crop.name, "tool": tool, "setting": setting[tool], "tier": "tool error",
+                rows.append({"crop": crop.name, "tool": tool, "setting": setting[tool],
                              "error": tool_error(e, run), "log_error": log_error(run)})
                 print(crop.name, tool, "tool error", flush=True)
                 continue
-            chk = check(tool, run, inp, T) if checked(crop.name) else {}
+            chk = check(tool, run, inp, T)
             if start is not None:
                 T = T @ start(crop.name)
             np.savetxt(run / "T_oct2mri.txt", T, fmt="%.10f")
             rows.append({"crop": crop.name, "tool": tool, "setting": setting[tool], **score(crop.name, T), **chk,
                          "T_oct2mri": as_list(T), "seconds": round(float((run / "time.txt").read_text().split()[-1]), 1)})
-            print(crop.name, tool, rows[-1]["tier"], flush=True)
+            print(crop.name, tool, rows[-1]["mean_mm"], flush=True)
     return rows

@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Params:
-    """Method constants. Variants via dataclasses.replace or from_dict."""
     # grids
     search_mm: float = 0.6                    # orientation search
     base_mm: float = 0.15                     # refinement

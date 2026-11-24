@@ -38,7 +38,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
                              f"must be in the world of its image ({hint})")
     if mo is not None and oct_spacing_um is not None and mo.shape != vo.shape:
         try:
-            mo = io.load_volume(oct_mask)                       # a mask on its own grid keeps the spacing of its file
+            mo = io.load_volume(oct_mask)
         except ValueError:
             raise ValueError(f"{oct_mask}: an OCT mask of another array shape than the OCT needs a spacing of its own (an "
                              "OME-TIFF with PhysicalSize X / Y / Z, or a NIfTI without sform or qform), since --oct-spacing-um "

@@ -12,9 +12,8 @@ The OCT is a scattering or intensity map of a block embedded in agarose, plain o
 in either image, agarose in the OCT. The OCT has section stripes along one array axis, tile seams in the section plane and exact
 zeros where data are missing. The MRI is an ex-vivo scan cropped around the block. The crop must hold the whole block, and it
 may hold tissue that is not in the block, for example beyond a face where the block was cut out of a larger specimen. The crop
-is the one manual input. It fixes the position to within its box and nothing else: on the I46 test the block centre lay up to
-15 mm from the centre of crops with a 12 mm margin around the block, shifted at random by up to 10 mm along each axis
-(bench/results/I46/crops.json). Both voxel sizes are taken as correct, so the true scales are close to 1.
+is the one manual input. It fixes the position to within its box and nothing else. Both voxel sizes are taken as correct, so the
+true scales are close to 1.
 
 Transforms map millimetres in the world frame of the OCT file to that of the MRI file. The world frame is the header frame of a
 NIfTI, its sform, else its qform, or else the array frame, diag(pixdim) for a NIfTI without either and diag(spacing) for TIFF
@@ -138,8 +137,7 @@ The parameters are fields of `octreg.params.Params` (override with `--params`).
 
 Both thresholds of the OCT specimen mask take the tallest histogram mode to be the specimen's, so the specimen should be the
 larger part of the measured volume, as in a block imaged with a margin of medium around it. A mask file replaces the specimen
-mask otherwise (`--oct-mask`), and the OCT file itself serves when it is exactly zero outside the tissue, since a mask file is
-read as its positive voxels. A TIFF or NPY read in its array frame can be the mirror image of the specimen, which no proper
+mask otherwise (`--oct-mask`). A TIFF or NPY read in its array frame can be the mirror image of the specimen, which no proper
 rotation aligns: the array frame then needs one axis flipped (a NIfTI header with one negative spacing). `oct2mri.lta` and
 `oct2mri_itk.txt` refer to the world octreg read, so they apply to NIfTI files whose sform and qform, where set, hold that
 world. For a TIFF, an NPY, a NIfTI without sform or qform or an OCT given `--oct-spacing-um`, they apply to a NIfTI copy of the

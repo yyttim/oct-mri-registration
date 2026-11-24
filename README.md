@@ -13,13 +13,7 @@ The OCT of the I58 brainstem block registered by octreg onto its MRI crop (top),
 foreground of §1 in red (middle), and the MRI (bottom), on three planes in freeview. Each panel is the whole MRI crop at one
 pixel per 0.08 mm voxel: 39.6 × 39.1 mm on the sagittal plane, 27.4 × 39.1 mm on the coronal and 27.4 × 39.6 mm on the axial, in
 freeview's default orientation, anterior on the right of the sagittal plane and the subject's right on the left of the coronal
-and axial planes. The specimen surface runs along the line except at these places. On the sagittal plane the bright rim at the
-top, the rounded tissue edge at the upper left and a bright band just below the step in the line at the lower left lie outside
-the line, and on the right, below the rim, small loops of the line reach past the specimen edge. On the coronal plane the
-striped upper right corner of the specimen and a separate piece of tissue below it lie partly outside the line, below that piece
-the specimen ends short of the line, and at the top the line dips into the specimen. On the axial plane the specimen ends short
-of the line along the right side, where the OCT shows a dark band with a few bright fragments. On the sagittal and coronal
-planes the line also runs past the top and bottom of the OCT image.
+and axial planes. On the sagittal and coronal planes the line also encloses MRI tissue above and below the block.
 
 ## Method
 
@@ -77,7 +71,7 @@ available in Python: `from octreg.register import register, apply`.
 | `T_oct2mri.txt` | 4×4 affine in mm from the world frame of the OCT file to that of the MRI file |
 | `oct2mri.lta`, `oct2mri_itk.txt` | the same affine for FreeSurfer and ITK, for NIfTI files whose sform and qform hold the world octreg read ([Scope](docs/METHOD.md#scope)) |
 | `oct_in_mri.nii.gz` | the OCT on the MRI grid, through the affine |
-| `mri_in_oct.nii.gz` | the MRI on the OCT base grid (0.15 mm), through the affine |
+| `mri_in_oct.nii.gz` | the MRI on the OCT base grid (`base_mm`, 0.15 mm by default), through the affine |
 | `qc.png`, `qc_montage.png` | visual QC of the affine |
 | `result.json` | inputs, parameters, the transform, the scores of every step and the time per step |
 
@@ -91,8 +85,7 @@ the tissue, the MRI foreground boundary should follow the edge of the OCT specim
 The pair is an OCT of 1457 × 2013 × 1595 voxels at 20 µm and an MRI crop of 343 × 489 × 495 voxels at 0.08 mm. The block has no
 reference registration, so its result is shown and not scored. Eight standard registration tools ran on the same pair, with the
 OCT box-averaged to the 0.08 mm voxels of the MRI as the moving image, each at the setting its documentation gives, except that
-FLIRT ran with both headers scaled x10, because its schedule resamples the images to fixed voxel sizes in mm
-([bench/baselines](bench/baselines/README.md)).
+FLIRT ran with both headers scaled x10 ([bench/baselines](bench/baselines/README.md)).
 
 | MRI | image box centres aligned (the start) | octreg | NiftyReg reg_aladin |
 |---|---|---|---|
@@ -104,32 +97,28 @@ FLIRT ran with both headers scaled x10, because its schedule resamples the image
 
 The axial plane of the I58 figure at the top, the MRI and the OCT through each affine, with the MRI foreground boundary in red.
 Through the SynthMorph affine only a corner of the OCT image, at the lower right, reaches this plane.
-[BASELINES.md](bench/baselines/BASELINES.md) shows every tool on all three planes, with the scale and determinant of each
-affine.
+[BASELINES.md](bench/baselines/BASELINES.md) shows every tool on all three planes, and
+[affine.md](bench/results/I58/baselines/affine.md) the scale and determinant of each affine.
 
 ### Test on the data of Costantini et al. (2023)
 
 Costantini et al. imaged a block of Broca's area from one fixed human hemisphere with serial-sectioning OCT, scanned the
-hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform
-([Science Advances 9:eadg3844, 2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
+hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform ([Science Advances 9:eadg3844,
+2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
-R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
-on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
-and run on these data during its development, so this is not a held-out test. Results on I46 led to changes of the MRI
-foreground rule and the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression
-and the erosion of the search gradients (§3), the rounding of the resampling positions and the removal of a deformable stage
-([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set in 2.1 with runs on I46,
-that of `nms_deg` also with runs on public blocks of [DANDI:000874](https://dandiarchive.org/dandiset/000874/draft).
+R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone, L, lies 0.16 mm from
+it on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on
+I58, but parts of the method were designed and the values of `outline_min_outside` and `nms_deg` set with runs on these data, so
+this is not a held-out test.
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
 Every method got the OCT as released, in which most of the agarose around the block is zero, and octreg made its own masks. The
-distance from R is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`, made by a
-threshold of the smoothed OCT and morphology, `python bench/i46/prepare.py --mask`). Where distances from R differ by less than
-about 0.3 mm, the vessel distance compares the results: the median distance of the MRI vessel labels placed in the OCT tissue to
-the nearest OCT vessel of the dataset's segmentation. It does not use R, but R was fitted in part to the MRI vessel labels and L
-to them alone. R and L are one affine each, and every other number is the median over the ten crops of a condition, shifted
-boxes around the same block of one specimen, a run without a transform counted as beyond every other.
+distance from R is the mean displacement from R over the test's specimen mask (`bench/i46/octmask_24um.nii.gz`). Where distances
+from R differ by less than about 0.3 mm, the vessel distance compares the results: the median distance of the MRI vessel labels
+placed in the OCT tissue to the nearest OCT vessel of the dataset's segmentation. It does not use R, but R was fitted in part to
+the MRI vessel labels and L to them alone. R and L are one affine each, and every other number is the median over the ten crops
+of a condition, shifted boxes around the same block of one specimen, a run without a transform counted as beyond every other.
 
 | | distance from R (mm) | vessel distance (mm) |
 |---|---|---|
@@ -145,9 +134,9 @@ boxes around the same block of one specimen, a run without a transform counted a
 From the OCT turned by 90° and 180° about each array axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a
 3 mm margin, octreg ends 0.35 to 0.37 mm from R.
 
-The standard tools ran on the ten crops of the 10° FLASH with a 3 mm margin, each at the setting its documentation gives, from
-the header orientation with the image box centres aligned (7.0 mm and 122° from R), and FLIRT, ANTs and greedy also with their
-own global rotation search:
+The standard tools ran on the ten crops of the 10° FLASH with a 3 mm margin, each at the setting its documentation gives (FLIRT
+with both headers scaled x10, as on I58), from the header orientation with the image box centres aligned (7.0 mm and 122° from
+R), and FLIRT, ANTs and greedy also with their own global rotation search:
 
 | method | distance from R (mm) |
 |---|---|
@@ -191,13 +180,12 @@ Started at R, the vessel distance is 0.155 mm for octreg's refinement alone and 
 |---|---|---|---|
 | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct.png" width="190" alt="OCT, plane 300"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_oct_lines.png" width="190" alt="OCT with the lines through R and through octreg"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_reference.png" width="190" alt="MRI through R"> | <img src="docs/figures/i46/enface/flip1_C3_k8_p300_mri_octreg.png" width="190" alt="MRI through octreg"> |
 
-Plane 300 of the OCT (12 µm in the plane), shown in the OCT's own planes as Costantini et al. show their OCT, for the crop at
-the lower median of the ten distances under octreg (10° FLASH, 3 mm margin, k = 8). The red line is the white-matter boundary of
-the authors' manual MRI labels placed through R, the yellow line the same boundary placed through octreg's affine, and the last
-two panels show the MRI crop resampled through each, all in freeview at its default window. The yellow line follows the red
-line, a little lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper left corner of the
-tissue. The white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the protocol, the other
-planes and every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
+Plane 300 of the OCT (12 µm in the plane) for the crop at the lower median of the ten distances under octreg (10° FLASH, 3 mm
+margin, k = 8). The red line is the white-matter boundary of the authors' manual MRI labels placed through R, the yellow line
+the same boundary placed through octreg's affine, and the last two panels show the MRI crop resampled through each. The yellow
+line follows the red line, a little lower where it crosses the left half of the tissue, and cuts off a smaller part of the upper
+left corner of the tissue. The white matter is dark in both MRI panels. [bench/i46/README.md](bench/i46/README.md) gives the
+protocol, the other planes and every standard tool, and [bench/results/I46/tables.md](bench/results/I46/tables.md) every number.
 
 ### Ablations
 
@@ -245,17 +233,12 @@ and [bench/i46/README.md](bench/i46/README.md) those of the test on the data of 
 the tables and figures. The stored results are in `bench/results/`. octreg has no random element: run once more on the same GPU,
 it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
 [bench/results/repeat.json](bench/results/repeat.json), which also records the Python, PyTorch, CUDA, GPU and OS of these runs).
-Another GPU or PyTorch build can change the order of the floating-point sums and move an affine at round-off level.
 
 ## tilestack
 
-A block imaged as separate slabs is first registered internally. tilestack registers the slabs of a serial-sectioning OCT
-block to each other from the tissue that neighbouring slabs image twice: every slab moves by a translation, a smooth
-deformation and a translation of each mosaic tile, in-plane and in depth, all solved at once. It writes the slabs' raw
-mu_s at the registered positions as one volume, with no other change of the values ([docs/TILESTACK.md](docs/TILESTACK.md)).
-With `--mri`, octreg then registers that volume to the block's MRI as one affine. `pip install -e ".[tilestack]"` adds
-h5py, which reads the slabs, and a CUDA GPU is required.
-
-```
-python -m tilestack BLOCK_JSON OUT_DIR [--full] [--layout LATTICE_JSON] [--mri MRI]
-```
+tilestack registers the slabs of a serial-sectioning OCT block to each other from the tissue that neighbouring slabs image
+twice: every slab moves by a translation, a smooth deformation and a translation of each mosaic tile, in-plane and in depth, all
+solved at once. It writes the slabs' raw mu_s at the registered positions as one volume, with no other change of the values.
+With `--mri`, octreg then registers that volume to the block's MRI as one affine. [docs/TILESTACK.md](docs/TILESTACK.md) gives
+the method, the command and the block file. `pip install -e ".[tilestack]"` adds h5py, which reads the slabs, and a CUDA GPU is
+required.

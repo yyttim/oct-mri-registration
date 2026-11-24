@@ -1,27 +1,20 @@
-"""Correspondences between neighbouring slabs inside their depth overlap (batched GPU phase correlation).
+"""Correspondences between neighbouring slabs inside their depth overlap, by phase correlation on the GPU
+(docs/TILESTACK.md, Correspondences).
 
-Slab s (A, older) and slab t (B, newer) image the same tissue: B's raw plane q shows what A shows near plane q + r(x, y).
-A block of B (3 planes of log mu_s at a fixed depth below B's cut) is compared with candidate 3-plane stacks of A within
-+-SEARCH planes of q + r by phase correlation (tiles can sit a few planes off the pair's plane). The in-plane peak is
-refined on an upsampled DFT (Guizar-Sicairos et al. 2008), the plane on stacks of A interpolated at quarter planes
-around the best whole plane, with a Gaussian through the highest of the seven and its two neighbours. A match says that
-B's block centre (zB, yB, xB) and A's point (zA, yA, xA) are the same tissue.
-
-Two passes per pair: a sparse coarse pass (large blocks, wide plane search) finds the depth offset plane r(x, y) and
-the in-plane translation; the dense pass (small blocks) is pre-shifted by them. A pair is dropped (NoOverlap) when fewer
-than MIN_BLOCKS coarse blocks agree on a plane offset within AGREE, or the plane lies outside the older slab's window.
+Slab s (A, older) and slab t (B, newer) image the same tissue: B's raw plane q shows what A shows near plane q + r(x, y),
+the pair's depth offset plane. A match says that the centre (zB, yB, xB) of a block of B and the point (zA, yA, xA) of A
+are the same tissue.
 """
 import os
 
 import numpy as np
 import torch
 
-from . import data
+from . import data, dev
 
-dev = "cuda"
 BLOCK = int(round(1.28 / data.VOX))                   # dense pass: block side and lattice (half the block)
 COARSE = int(round(2.56 / data.VOX))                  # coarse pass: block side, lattice three quarters of it
-DEPTHS = tuple(int(round(d / data.VOX)) for d in data.MATCH_MM)     # B's depths under its cut
+DEPTHS = tuple(int(round(d / data.VOX)) for d in (0.08, 0.16, 0.24, 0.32, 0.40))      # B's depths under its cut
 SEARCH = int(round(0.10 / data.VOX))                  # planes either side of the predicted plane
 PEAK = 0.12                                           # smallest correlation peak kept
 MIN_BLOCKS = 8                                        # coarse blocks that must agree on the pair's plane offset
@@ -29,7 +22,7 @@ AGREE = 0.04 / data.VOX                               # planes within which they
 
 
 class NoOverlap(Exception):
-    """The two slabs share no tissue the matcher can use."""
+    """The coarse pass fixes no depth-offset plane for the two slabs."""
 
 
 def _parabola(a, b, c):
@@ -68,9 +61,7 @@ def _upsampled(Rs, iy, ix, b, up, half):
 def correlate(LA, LB, zB, yB, xB, cand, yA, xA, b, chunk=512):
     """Phase correlation of B stacks (first planes zB, corners yB, xB) with A stacks (first planes cand (N, P), -1 =
     invalid, corners yA, xA). Returns, per item, the fractional best candidate index, the in-plane peak (dy, dx)
-    relative to the A corner offset, the peak height and whether the best candidate is interior.
-    The in-plane peak is refined on an upsampled DFT (no pull towards whole pixels), the candidate index by a Gaussian
-    through the neighbouring candidates' peak heights at that position."""
+    relative to the A corner offset, the peak height and whether the best candidate is interior."""
     win = torch.hann_window(b, device=dev)
     win = win[:, None] * win[None, :]
     out = []
@@ -103,7 +94,7 @@ def correlate(LA, LB, zB, yB, xB, cand, yA, xA, b, chunk=512):
         lo = torch.clamp(best - 1, min=0); hi = torch.clamp(best + 1, max=P - 1)
         inner = (best > 0) & (best < P - 1) & ok[ar, lo] & ok[ar, hi]
         # sub-plane: neighbouring planes are nearly uncorrelated, so the correlation over whole planes is a narrow
-        # triangle that no three-point fit follows; over A stacks interpolated linearly it peaks at the true fraction
+        # triangle that no three-point fit follows. Over A stacks interpolated linearly it peaks at the true fraction
         offs = torch.arange(-3, 4, device=dev).float() / 4
         z0f = c[ar, best].float()[:, None] + offs[None]
         zf = torch.clamp(z0f.floor().long(), 0, LA.shape[0] - 4)
@@ -144,13 +135,13 @@ def _robust_plane(x, y, v):
     for _ in range(4):
         c = np.linalg.lstsq(A[k], v[k], rcond=None)[0]
         r = np.abs(v - A @ c)
-        k = r < 3 * np.median(r[k]) + 0.006 / data.VOX           # 6 um
+        k = r < 3 * np.median(r[k]) + 0.006 / data.VOX
     return c
 
 
-def good(m, peak=PEAK):
+def good(m):
     """Matches to keep: a clear correlation peak, not at the edge of the plane search."""
-    return (m["peak"] > peak) & (m["interior"] > 0)
+    return (m["peak"] > PEAK) & (m["interior"] > 0)
 
 
 def keep(c, g):
@@ -158,17 +149,15 @@ def keep(c, g):
     return {q: (v[g] if np.ndim(v) and len(v) == len(g) else v) for q, v in c.items()}
 
 
-def match_pair(s, t, LA=None, LB=None, out=None):
-    """Dense correspondences between slab s (A) and slab t > s (B). LA, LB: log mu_s on the GPU (loaded if None).
-    Raises NoOverlap when the two slabs share no tissue."""
-    if out and os.path.exists(out):
+def match_pair(s, t, LA, LB, out):
+    """Dense correspondences between slab s (A) and slab t > s (B), cached in the file out. LA, LB: log mu_s on the
+    GPU, needed only without the cache. Raises NoOverlap when the coarse pass fixes no depth-offset plane for the pair."""
+    if os.path.exists(out):
         return dict(np.load(out))
-    LA = torch.from_numpy(data.load_log(s)).to(dev) if LA is None else LA
-    LB = torch.from_numpy(data.load_log(t)).to(dev) if LB is None else LB
     nz = LA.shape[0]
     sA, vA = data.geometry(s); sB, vB = data.geometry(t)
     # coarse pass: B at its first two match depths (shallow, so that the deep overlap after an over-cut is still
-    # reached), every deeper plane of A
+    # reached), A from 0.16 mm above them down
     bc = COARSE
     y1, x1 = _block_grid(vA, vB, bc, bc * 3 // 4)
     ys, xs = np.r_[y1, y1], np.r_[x1, x1]
@@ -215,6 +204,5 @@ def match_pair(s, t, LA=None, LB=None, out=None):
     a = np.concatenate(rows) if rows else np.zeros((0, 9))
     res = dict(zB=a[:, 0], yB=a[:, 1], xB=a[:, 2], zA=a[:, 3], yA=a[:, 4], xA=a[:, 5], peak=a[:, 6], d=a[:, 7],
                interior=a[:, 8], s=np.array(s), t=np.array(t), rplane=rplane, pre=np.array(pre), block=np.array(b))
-    if out:
-        np.savez_compressed(out, **res)
+    np.savez_compressed(out, **res)
     return res

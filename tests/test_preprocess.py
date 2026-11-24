@@ -29,8 +29,10 @@ def test_foreground_valley():
     m, info = pp.foreground(bimodal, 0.15, P)
     assert 150 < info["threshold"] < 400 and _dice(m, ball) > 0.98
     assert info["volume_cm3"] == pytest.approx(m.sum() * 0.15 ** 3 / 1e3)
-    m, info = pp.foreground(rng.normal(500, 40, (48,) * 3).astype(np.float32), 0.15, P)
-    assert info["threshold"] == 0 and m.all()
+    img = rng.normal(500, 40, (48,) * 3).astype(np.float32)
+    img[:, :12, :12] = 0
+    m, info = pp.foreground(img, 0.15, P)
+    assert info["threshold"] == 0 and np.array_equal(m, img > 0)
 
 
 def test_foreground_on_an_integer_image_and_with_a_hot_voxel():

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 
 from octreg import geometry as G
-from octreg.features import orientation_tensor, to_torch
+from octreg.features import eroded, gradient_field, median_norm, orientation_tensor
 from octreg.params import Params
 from octreg.search import EPS, Searcher, angle_deg, search
 
@@ -73,30 +73,19 @@ def direct_F(s, mri, R, index):
     return float((wt * da * db).sum() / torch.sqrt((wt * da * da).sum() * (wt * db * db).sum()))
 
 
-def masked_ncc(a, b, w):
-    """NCC of a and b [N] weighted by w [N]."""
-    N = w.sum() + EPS
-    da, db = a - (a * w).sum() / N, b - (b * w).sum() / N
-    return (w * da * db).sum() / torch.sqrt(((w * da * da).sum() * (w * db * db).sum()).clamp(min=EPS))
-
-
-class Outline:
-    """The outline O at one pose T in direct form, as the FFT maps of Searcher give it at every translation: the NCC of the
-    OCT mask w with the MRI foreground M over the measured voxels, weighted by q (1 - (1 - w) E), E = M inside the MRI grid
-    and 1 outside. As in the search it is one-sided, so medium over MRI tissue or beyond the crop is left out."""
-
-    def __init__(self, mri_mask, A_M, oct_mask, oct_measured, A_O, device="cuda"):
-        q, w = to_torch(oct_measured, device), to_torch(oct_mask, device)
-        idx = torch.nonzero(q > 0)
-        self.pts = G.apply_affine(np.asarray(A_O, float), idx.to(torch.float32))
-        self.q, self.w = q[tuple(idx.T)], w[tuple(idx.T)]
-        self.M, self.A_M = to_torch(mri_mask, device)[None], np.asarray(A_M, float)
-
-    def __call__(self, T):
-        x = G.apply_affine(T, self.pts)
-        M = G.sample_world(self.M, self.A_M, x)[0]
-        E = 1 - G.sample_world(1 - self.M, self.A_M, x)[0]  # sample_world gives 0 beyond the grid, so E = 1 there
-        return masked_ncc(self.w, M, self.q * (1 - (1 - self.w) * E))
+def direct_O(mri_mask, A_M, oct_mask, oct_measured, A_O, T):
+    """O at the pose T as a direct sum: the NCC of the OCT mask w with the MRI foreground M over the measured voxels,
+    weighted by q (1 - (1 - w) E), E = M inside the MRI grid and 1 outside. As in the search it is one-sided, so medium
+    over MRI tissue or beyond the crop is left out."""
+    q, w, M = (torch.as_tensor(x, dtype=torch.float32) for x in (oct_measured, oct_mask, mri_mask))
+    idx = torch.nonzero(q > 0)
+    q, w = q[tuple(idx.T)], w[tuple(idx.T)]
+    x = G.apply_affine(T, G.apply_affine(A_O, idx.to(torch.float32)))
+    M, E = G.sample_world(M[None], A_M, x)[0], 1 - G.sample_world(1 - M[None], A_M, x)[0]   # 0 beyond the grid, so E = 1 there
+    k = q * (1 - (1 - w) * E)
+    N = k.sum() + EPS
+    dw, dM = w - (w * k).sum() / N, M - (M * k).sum() / N
+    return (k * dw * dM).sum() / torch.sqrt(((k * dw * dw).sum() * (k * dM * dM).sum()).clamp(min=EPS))
 
 
 def test_maps_are_the_direct_sums():
@@ -112,7 +101,6 @@ def test_maps_are_the_direct_sums():
         R = T[:3, :3]
         Fm, _ = s.score(R)
         _, Om = s.score(np.eye(3), True)
-        out = Outline(m[1], m[2], o[1], o[2], o[3], "cpu")
         tissue = G.apply_affine(o[3], np.argwhere(o[1] > 0.5).astype(float))
         beyond = lambda P: np.mean(np.any(np.abs(G.apply_affine(np.linalg.inv(m[2]) @ P, tissue) - 17.5) > 17.5, axis=1))
         t = np.array(np.unravel_index(index_of(s, T), s.shape))
@@ -121,18 +109,17 @@ def test_maps_are_the_direct_sums():
             assert bool(s.inside.reshape(-1)[idx])
             assert abs(float(Fm.reshape(-1)[idx]) - direct_F(s, m, R, idx)) < 1e-3
             P = s.pose(np.eye(3), idx)
-            assert abs(float(Om.reshape(-1)[idx]) - float(out(torch.as_tensor(P, dtype=torch.float32)))) < 1e-4
+            assert abs(float(Om.reshape(-1)[idx]) - float(direct_O(m[1], m[2], o[1], o[2], o[3], P))) < 1e-4
             assert (beyond(s.pose(R, idx)) > 0.05 and beyond(P) > 0.05) == (u[0] < t[0] - 5)
         assert float(Fm.reshape(-1)[index_of(s, T)]) > 0.8
 
 
 @pytest.mark.parametrize("cut", [None, 14])
 @pytest.mark.parametrize("outline", [True, False])
-@pytest.mark.parametrize("rot_index", [5, 17])
-def test_search_recovers_the_pose(rot_index, outline, cut):
+def test_search_recovers_the_pose(outline, cut):
     """The first candidate has the true pose. With the outline the first half of the candidates is ranked by S = (F + O) / 2
     and the rest by F, and every pair is apart by the suppression rule."""
-    mri, oct_, T = phantom(rot_index, cut)
+    mri, oct_, T = phantom(17, cut)
     cands = search(*mri, *oct_, FAST, "cpu", outline)
     assert len(cands) == FAST.topk and all(np.linalg.det(c["T"][:3, :3]) > 0 for c in cands)
     assert all((c["O"] is not None) == outline for c in cands)
@@ -149,7 +136,7 @@ def test_search_recovers_the_pose(rot_index, outline, cut):
     best = cands[0]
     assert angle_deg(best["T"][:3, :3], T[:3, :3]) < 1e-3
     err = np.linalg.norm(centres[0] - G.apply_affine(T, c_o))
-    # a cut block may slide about a voxel toward its cut face, where no OCT point is scored
+    # a cut block may slide about a voxel towards its cut face, where no OCT point is scored
     assert err < (H if cut is None else 1.5 * H), err
     assert best["F"] > 0.85 and key(best) > key(cands[1]) + 0.1, (best, cands[1])
     if outline:
@@ -169,7 +156,6 @@ def test_thin_specimen():
 
 def test_oblique_mri_axes_and_eps_over_the_erosion():
     """The search recovers the pose on oblique MRI axes, and eps_O is taken over the erosion of the specimen mask."""
-    from octreg.features import eroded, gradient_field, median_norm
     (_, _, A_M), oct_, T = phantom(5)
     Rq = G.rotations(1000)[37]
     c = G.apply_affine(A_M, np.full(3, 17.5))

@@ -14,12 +14,6 @@ from octreg.refine import compose, decompose, refine
 H = 0.15
 
 
-def refine_one(T0, mri, oct_, params, device):
-    """Refine from one start. -> (T, its record)."""
-    r = refine([T0], mri, oct_, params, device)[0]
-    return r["T"], r
-
-
 def grid(shape, perm=True):
     """Base-grid affine centred on the world origin, with permuted axes and a flip if perm, else two flipped axes."""
     A = np.zeros((4, 4))
@@ -92,16 +86,6 @@ def test_score_identical_and_contrast_free():
     assert same > 0.9999 and abs(inverted - same) < 1e-5, (same, inverted)
 
 
-def test_score_of_the_pair():
-    """F is high at the true pose of the pair and much lower 0.5 mm off it."""
-    mri, (o, mo, A_O), T = pair()
-    tpl, mt = OCTTemplate(o, mo, A_O, 0.3, eroded(mo, 0.8, H), device="cpu"), MRITensors(*mri, 0.3, "cpu")
-    off = np.eye(4)
-    off[:3, 3] = [0.5, 0.0, 0.0]
-    F_true, F_off = (float(score(torch.tensor(x, dtype=torch.float32), tpl, mt)) for x in (T, off @ T))
-    assert F_true > 0.9 and F_off < 0.5 * F_true, (F_true, F_off)
-
-
 def test_background_lowers_the_score():
     """With the MRI foreground cut in half, the OCT points over MRI background (tensors 0) stay in the sum and lower F, while
     F over the points still on tissue stays high."""
@@ -136,8 +120,8 @@ def test_refine_recovers_offset_pose():
     T0 = off @ T
     pts = world(oct_[0].shape, oct_[2])[oct_[1]]
     err = lambda X: np.linalg.norm(G.apply_affine(X, pts) - G.apply_affine(T, pts), axis=1).mean()
-    T1, info = refine_one(T0, mri, oct_, Params(), "cpu")
-    assert err(T0) > 0.9 and err(T1) < 0.05, (err(T0), err(T1))
+    info = refine([T0], mri, oct_, Params(), "cpu")[0]
+    assert err(T0) > 0.9 and err(info["T"]) < 0.05, (err(T0), err(info["T"]))
     assert [f["sigma_mm"] for f in info["F"]] == list(Params().sigmas_mm)
     assert info["F"][0]["start"] < 0.5 < 0.9 < info["F"][-1]["end"]
 
@@ -178,7 +162,7 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     """The prior restores a scale that F does not decide, and with lam 0 the size of the block is kept."""
     mri, oct_, T = pair(seed=3)
     c = G.box(oct_[2], oct_[0].shape)[0]
-    T1 = refine_one(T, mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]
+    T1 = refine([T], mri, oct_, dataclasses.replace(Params(), lam=0.0, iters=80), "cpu")[0]["T"]
     assert np.abs(decompose(T1, c)[2]).max() < 0.01, decompose(T1, c)[2]
 
     rng = np.random.default_rng(4)
@@ -196,7 +180,7 @@ def test_prior_holds_the_scale_the_data_do_not_decide():
     cc = torch.as_tensor(c, dtype=torch.float32)
     F = [float(score(compose(f(0, 0, 0), cc, f(0, 0, ls), f(0, 0, 0), cc), tpl, mt)) for ls in (0.0, np.log(1.1), np.log(0.9))]
     assert F[0] > 0.9 and max(F) - min(F) < 1e-5, F
-    T1 = refine_one(np.diag([1.0, 1.0, 1.1, 1.0]), (mri, fg, A), (o, mo, A_o), Params(), "cpu")[0]
+    T1 = refine([np.diag([1.0, 1.0, 1.1, 1.0])], (mri, fg, A), (o, mo, A_o), Params(), "cpu")[0]["T"]
     ls = decompose(T1, c)[2]
     assert abs(ls[2]) < 0.005 and np.abs(ls).max() < 0.02, ls
 

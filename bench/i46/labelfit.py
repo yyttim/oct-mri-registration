@@ -90,9 +90,9 @@ def cell_affine(spacing, n=CELL):
 
 class Problem:
     """E(T): mean Geman-McClure rho of the MRI labels to the T-mapped OCT points plus that of the OCT points to the labels.
-    O: OCT points (mm). foot, box: footprint and MRI label box (bool), with their index -> world affines. cell: mm."""
+    O: OCT points (mm). foot, box: footprint and MRI label box (bool), with their index -> world affines."""
 
-    def __init__(self, O, foot, foot_aff, box, box_aff, cell):
+    def __init__(self, O, foot, foot_aff, box, box_aff):
         self.O = np.asarray(O, float)
         self.M = apply(box_aff, np.argwhere(box).astype(float))
         self.Mtree = cKDTree(self.M)
@@ -103,16 +103,9 @@ class Problem:
         self.shape = np.array(box.shape)
         self.fin = ndimage.distance_transform_edt(foot, sampling=np.linalg.norm(foot_aff[:3, :3], axis=0)).astype(np.float32)
         self.ifoot = np.linalg.inv(foot_aff)
-        # components of the MRI labels and of the OCT points, for the split halves
-        self.mlab = ndimage.label(box, structure=np.ones((3, 3, 3)))[0][box]
-        c = np.round((self.O - self.O.min(0)) / np.asarray(cell)).astype(int)
-        g = np.zeros(c.max(0) + 1, bool)
-        g[tuple(c.T)] = True
-        self.olab = ndimage.label(g, structure=np.ones((3, 3, 3)))[0][tuple(c.T)]
 
-    def sets(self, T, idxM=None, idxO=None):
-        M = self.M if idxM is None else self.M[idxM]
-        O = self.O if idxO is None else self.O[idxO]
+    def sets(self, T):
+        M, O = self.M, self.O
         TO = apply(T, O)
         qe = apply(self.ibox, TO)
         near = np.all((qe >= -self.near) & (qe <= self.shape - 1 + self.near), 1)
@@ -121,28 +114,25 @@ class Problem:
         inB = np.all((qe >= 0) & (qe <= self.shape - 1), 1)
         return Min, TO[near], O[near], O[inB], TO[inB], qe[inB]
 
-    def energy(self, T, c, idxM=None, idxO=None, detail=False):
-        Min, TOA, OA, OB, TOB, qe = self.sets(T, idxM, idxO)
+    def energy(self, T, c):
+        Min, TOA, OA, OB, TOB, qe = self.sets(T)
         if len(Min) < 20 or len(OB) < 100 or len(TOA) < 100:
-            return (9.0, {}) if detail else 9.0
+            return 9.0, {}
         dA = cKDTree(TOA).query(Min)[0]
         dB = ndimage.map_coordinates(self.edt, qe.T, order=1)
         E = float((dA ** 2 / (dA ** 2 + c ** 2)).mean() + (dB ** 2 / (dB ** 2 + c ** 2)).mean())
-        if not detail:
-            return E
         return E, {"n_mri": len(Min), "n_oct": len(OB), "mri_to_oct_mean_mm": float(dA.mean()),
                    "mri_to_oct_median_mm": float(np.median(dA)), "mri_within_0.15mm": float((dA <= 0.15).mean()),
                    "oct_to_mri_mean_mm": float(dB.mean()), "oct_within_0.15mm": float((dB <= 0.15).mean())}
 
-    def pairs(self, T, c, idxM=None, idxO=None):
-        Min, TOA, OA, OB, TOB, qe = self.sets(T, idxM, idxO)
+    def pairs(self, T, c):
+        Min, TOA, OA, OB, TOB, qe = self.sets(T)
         if len(Min) < 20 or len(OB) < 100 or len(TOA) < 100:
             return None
         dA, j = cKDTree(TOA).query(Min)
-        tree = self.Mtree if idxM is None else cKDTree(self.M[idxM])
-        dB, k = tree.query(TOB)
+        dB, k = self.Mtree.query(TOB)
         w = lambda d: c ** 2 / (d ** 2 + c ** 2) ** 2        # noqa: E731
-        return np.r_[OA[j], OB], np.r_[Min, tree.data[k]], np.r_[w(dA) / len(Min), w(dB) / len(OB)]
+        return np.r_[OA[j], OB], np.r_[Min, self.Mtree.data[k]], np.r_[w(dA) / len(Min), w(dB) / len(OB)]
 
 
 def solve_affine(src, dst, w):
@@ -165,8 +155,6 @@ def s9_params(T, H):
     L = T[:3, :3] @ H
     U, _, Vt = np.linalg.svd(L)
     R = U @ Vt
-    if np.linalg.det(R) < 0:
-        raise ValueError("handedness of T and H differ")
     return np.r_[Rotation.from_matrix(R).as_rotvec(), np.log(np.clip(np.diag(R.T @ L), 1e-3, None)), T[:3, 3]]
 
 
@@ -178,7 +166,7 @@ def solve_s9(src, dst, w, x0, H):
     return least_squares(res, np.clip(x0, lo + 1e-9, hi - 1e-9), method="trf", bounds=(lo, hi), max_nfev=200).x
 
 
-def fit(P, T0, model, cs=C_LOCAL, iters=25, tol=1e-4, idxM=None, idxO=None):
+def fit(P, T0, model, cs=C_LOCAL, iters=25, tol=1e-4):
     """ICP fit of model "S9" (keeping the handedness of T0) or "A12" from T0 over the c stages cs.
     -> T and its energy and residuals at the last c, "plausible" when all singular values of T lie between 0.7 and 1.5."""
     T = T0.copy()
@@ -188,7 +176,7 @@ def fit(P, T0, model, cs=C_LOCAL, iters=25, tol=1e-4, idxM=None, idxO=None):
         T = s9_matrix(x, H)
     for c in cs:
         for _ in range(iters):
-            pr = P.pairs(T, c, idxM, idxO)
+            pr = P.pairs(T, c)
             if pr is None:
                 return T, {"E": 9.0, "plausible": False}
             if model == "A12":
@@ -200,18 +188,9 @@ def fit(P, T0, model, cs=C_LOCAL, iters=25, tol=1e-4, idxM=None, idxO=None):
             T = Tn
             if change < tol:
                 break
-    E, d = P.energy(T, cs[-1], idxM, idxO, detail=True)
+    E, d = P.energy(T, cs[-1])
     sv = np.linalg.svd(T[:3, :3], compute_uv=False)
     return T, {"E": E, **d, "plausible": bool(sv.min() >= 0.7 and sv.max() <= 1.5)}
-
-
-def super_fibonacci(n):
-    """n quasi-uniform rotations (super-Fibonacci spirals, Alexa 2022), as 3 x 3 matrices."""
-    phi, psi = np.sqrt(2.0), 1.533751168755204288118041
-    s = np.arange(n) + 0.5
-    r, R = np.sqrt(s / n), np.sqrt(1.0 - s / n)
-    a, b = 2 * np.pi * s / phi, 2 * np.pi * s / psi
-    return Rotation.from_quat(np.stack([r * np.sin(a), r * np.cos(a), R * np.sin(b), R * np.cos(b)], 1)).as_matrix()
 
 
 def template_cells(foot, spacing, n=COARSE):

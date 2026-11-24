@@ -1,20 +1,14 @@
-#!/usr/bin/env python3
 """Run directories of the baseline comparison.
-
-    python bench/baselines/rundir.py init RUN --T T.txt [--template RESULT.json]
-    python bench/baselines/rundir.py check RUN --warped WARPED.nii.gz [--oct OCT.nii.gz] [--mri MRI.nii.gz]
 
 init         writes T_oct2mri.txt (moving world -> fixed world, NIfTI RAS mm) and a result.json with the inputs block of a
              template octreg run (default <project root>/bench_runs/I58/octreg/result.json), so that `octreg apply --run RUN`
              works on RUN. A mirrored transform is refused.
-check        compares the OCT resampled by octreg through RUN/T_oct2mri.txt with the tool's own image WARPED on the MRI grid.
+check        compares the OCT resampled by octreg through RUN/T_oct2mri.txt with the tool's own image `warped` on the MRI grid.
              It passes when the Pearson correlation over the voxels where either is non-zero and the Dice of the two non-zero
              supports both exceed 0.95. Writes RUN/check.json.
-Defaults: the inputs under <project root>/baselines/inputs, the project root of bench/paths.py.
 """
 from __future__ import annotations
 
-import argparse
 import json
 import sys
 from pathlib import Path
@@ -25,9 +19,7 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(REPO), str(REPO / "bench")]
 from octreg import geometry as G  # noqa: E402
-from paths import BENCH_RUNS, PROJECT_ROOT as ROOT  # noqa: E402
-
-INPUTS = ROOT / "baselines" / "inputs"
+from paths import BENCH_RUNS  # noqa: E402
 
 
 def init(run: Path, T, template: Path | None = None):
@@ -48,7 +40,7 @@ def init(run: Path, T, template: Path | None = None):
 
 
 def check(run: Path, warped: Path, oct_path: Path, mri_path: Path):
-    """octreg's resampling through RUN/T_oct2mri.txt against the tool's image `warped`. True when both exceed 0.95."""
+    """octreg's resampling through RUN/T_oct2mri.txt against the tool's image `warped`, ok when both exceed 0.95."""
     T = np.loadtxt(Path(run) / "T_oct2mri.txt")
     o, m = nib.load(str(oct_path)), nib.load(str(mri_path))
     ours = G.resample_to(np.asarray(o.dataobj, np.float32), o.affine, m.shape, m.affine, np.linalg.inv(T))
@@ -64,27 +56,3 @@ def check(run: Path, warped: Path, oct_path: Path, mri_path: Path):
            "ok": bool(r > 0.95 and dice > 0.95)}
     (Path(run) / "check.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"{Path(run).name}: correlation {r:.4f}, support Dice {dice:.4f} -> {'ok' if out['ok'] else 'MISMATCH'}")
-    return out["ok"]
-
-
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    i = sub.add_parser("init")
-    i.add_argument("run", type=Path)
-    i.add_argument("--T", required=True, type=Path)
-    i.add_argument("--template", type=Path, default=None)
-    c = sub.add_parser("check")
-    c.add_argument("run", type=Path)
-    c.add_argument("--warped", required=True, type=Path)
-    c.add_argument("--oct", type=Path, default=INPUTS / "oct_0.08mm.nii.gz")
-    c.add_argument("--mri", type=Path, default=INPUTS / "mri_0.08mm.nii.gz")
-    a = ap.parse_args()
-    if a.cmd == "init":
-        init(a.run, np.loadtxt(a.T, dtype=float), a.template)
-    else:
-        sys.exit(0 if check(a.run, a.warped, a.oct, a.mri) else 1)
-
-
-if __name__ == "__main__":
-    main()

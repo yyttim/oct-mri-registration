@@ -1,6 +1,4 @@
-"""The structure similarity F (docs/METHOD.md §2): the correlation of the gradient-orientation tensors of OCT and MRI.
-The tensor n n^T of the normalised gradient n = g / sqrt(|g|^2 + eps^2) ignores the sign of g, so F needs no intensity
-mapping."""
+"""The structure similarity F (docs/METHOD.md §2): the correlation of the gradient-orientation tensors of OCT and MRI."""
 from __future__ import annotations
 
 import math

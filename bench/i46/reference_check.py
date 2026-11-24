@@ -4,7 +4,7 @@
 lattice  the steps between the 16 lattice centres of the authors' OCT -> LSFM fields, against 33 planes of 12 um
 frame    the 96 choices of the rebuilt OCT header (depth sign, slab, order and signs of the plane axes), each scored by
          the correlation of the OCT with each FLASH image and the share of OCT vessels within 0.15 mm of an MRI vessel label
-labels   the label-only fits S9 and A12 of labelfit.py from R, compared with R, by thirds of the depth and on split halves
+labels   the label-only fits S9 and A12 of labelfit.py from R, compared with R, also by thirds of the depth
 search   the global search of labelfit.py with no transform of the authors, about an hour on 12 processes
 vessels  the vessel check of common.vessel_score at R and at L, and at R moved by small shifts, rotations and depth scales
          over the labels R places inside
@@ -35,7 +35,6 @@ DS = 8                                      # OCT voxels per block and axis for 
 OCT_BLOCKS, VESSEL_VOXELS = 120_000, 100_000
 NEAR_VESSEL = 0.15                          # mm
 LABEL_BOX = 1.0                             # mm around the MRI vessel labels
-SPLITS = 10
 ROTATIONS, PEAKS, CANDIDATES = 20_000, 3, 40
 DISTINCT = 1.5                              # mm
 SHIFTS, TURNS, DEPTH_SCALES = (0.1, 0.2, 0.3, 0.5, 1.0), (2, 4), (1.05, 1.10, 1.17)   # mm, deg, factor
@@ -44,7 +43,7 @@ STAGES = ("lattice", "frame", "labels", "search", "vessels")
 
 
 def r4(x):
-    return None if x is None else round(float(x), 4)
+    return round(float(x), 4)
 
 
 def mean_distance(T1, T2, pts):
@@ -179,18 +178,11 @@ G = {}
 
 def _init(data):
     G["data"] = data
-    G["P"] = lf.Problem(data["pts"], data["foot"], lf.cell_affine(SPACING), data["box"], data["box_aff"], lf.CELL * SPACING)
+    G["P"] = lf.Problem(data["pts"], data["foot"], lf.cell_affine(SPACING), data["box"], data["box_aff"])
 
 
-def _fit(job):
-    """job: key, start, model, c stages, side of a split half (None, "mri" or "oct") and the components of the half."""
-    key, T0, model, cs, side, half = job
-    P = G["P"]
-    kw = {}
-    if side is not None:
-        kw = {"idxM" if side == "mri" else "idxO": np.flatnonzero(half[P.mlab if side == "mri" else P.olab])}
-    T, info = lf.fit(P, T0, model, cs=cs, **kw)
-    return key, T, info
+def _fit(T0, model, cs):
+    return lf.fit(G["P"], T0, model, cs=cs)
 
 
 def _refine(job):
@@ -228,53 +220,35 @@ def energy_info(info):
 
 
 def reference_fits(pool, R):
-    (_, Ts, ds), = pool.map(_fit, [("S9", R, "S9", lf.C_LOCAL, None, None)])
-    (_, Ta, da), = pool.map(_fit, [("A12", Ts, "A12", lf.C_A12, None, None)])
+    Ts, ds = pool.apply(_fit, (R, "S9", lf.C_LOCAL))
+    Ta, da = pool.apply(_fit, (Ts, "A12", lf.C_A12))
     print(f"labels: S9 {compare(Ts, R)}, A12 {compare(Ta, R)}", flush=True)
     return Ts, ds, Ta, da
 
 
-def label_fit(pool, R, Ts, ds, Ta, da, n_mri, n_oct):
+def label_fit(pool, R, Ts, ds, Ta, da):
     pts = tissue()
-    jobs = []
-    for (model, T0, cs), (side, n) in itertools.product((("S9", Ts, lf.C_LOCAL), ("A12", Ta, lf.C_A12)),
-                                                        (("mri", n_mri), ("oct", n_oct))):
-        for k in range(SPLITS):
-            half = np.random.default_rng(100 + k).random(n) < 0.5
-            jobs += [((model, side, k, h), T0, model, cs, side, half if h == 0 else ~half) for h in (0, 1)]
-    fits = {key: T for key, T, _ in pool.imap_unordered(_fit, jobs)}
-    split = {}
-    for model, side in itertools.product(("S9", "A12"), ("mri", "oct")):
-        ab = np.array([mean_distance(fits[(model, side, k, 0)], fits[(model, side, k, 1)], pts) for k in range(SPLITS)])
-        split.setdefault(model, {})[side] = {"rms_mm": r4(np.sqrt((ab ** 2).mean())), "median_mm": r4(np.median(ab)),
-                                             "max_mm": r4(ab.max()), "splits_mm": [r4(x) for x in ab]}
-    print(f"labels: split halves {json.dumps({m: {s: v['rms_mm'] for s, v in x.items()} for m, x in split.items()})}",
-          flush=True)
     out = {"reference": {"spacing_um": spacing_um(R)}}
     for name, T, info in (("S9", Ts, ds), ("A12", Ta, da)):
         out[name] = {**compare(T, R), "by_depth_third": by_thirds(T, R, pts), "spacing_um": spacing_um(T),
-                     "objective": energy_info(info), "split_half_spread": split[name],
+                     "objective": energy_info(info),
                      "T_oct2mri": np.asarray(T, float).round(9).tolist()}
     out["reference"]["objective"] = energy_info(pool.apply(_energy, (R,)))
     return out
 
 
 def _energy(T):
-    E, d = G["P"].energy(T, lf.C_LOCAL[-1], detail=True)
+    E, d = G["P"].energy(T, lf.C_LOCAL[-1])
     return {"E": E, **d}
 
 
-def _count():
-    """The number of components of the MRI labels and of the OCT points, plus one for label 0."""
-    return int(G["P"].mlab.max()) + 1, int(G["P"].olab.max()) + 1
-
-
 def search(pool, data, Ts, Ta):
+    from octreg.geometry import rotations          # here, so that the worker processes do not import torch
     t0 = time.time()
     pts = tissue()
     sub = pts[::400]
     W = data["box_aff"] @ np.diag(list(1 / np.linalg.norm(data["box_aff"][:3, :3], axis=0)) + [1.0])
-    rots = lf.super_fibonacci(ROTATIONS)
+    rots = rotations(ROTATIONS)
     jobs = [(j, R @ np.diag([1.0, 1.0, hand])) for j, (hand, R) in enumerate(itertools.product((1.0, -1.0), rots))]
     cand = []
     for n, (j, peaks) in enumerate(pool.imap_unordered(_search, jobs, chunksize=20)):
@@ -300,8 +274,8 @@ def search(pool, data, Ts, Ta):
     best = ok[0]
     nxt = next((r for r in ok[1:] if mean_distance(r["T"], best["T"], pts) > DISTINCT), None)
     mirrored = next((r for r in ok if r["handedness"] != best["handedness"]), None)
-    (_, Tb, db), = pool.map(_fit, [("S9", best["T"], "S9", lf.C_LOCAL, None, None)])
-    (_, Tab, dab), = pool.map(_fit, [("A12", Tb, "A12", lf.C_A12, None, None)])
+    Tb, db = pool.apply(_fit, (best["T"], "S9", lf.C_LOCAL))
+    Tab, dab = pool.apply(_fit, (Tb, "A12", lf.C_A12))
     R = reference()
     out = {"rotations": ROTATIONS, "handedness": [1, -1], "grid_mm": lf.GRID, "peaks": len(cand), "candidates": len(kept),
            "best": {"ncc": best["ncc"], "ncc_rank": best["ncc_rank"], "handedness": best["handedness"],
@@ -392,7 +366,7 @@ def main():
         with Pool(args.jobs, initializer=_init, initargs=(data,)) as pool:
             Ts, ds, Ta, da = reference_fits(pool, R)
             if "labels" in stages:
-                out["labels"] = {**label_fit(pool, R, Ts, ds, Ta, da, *pool.apply(_count)), "oct_points": len(pts),
+                out["labels"] = {**label_fit(pool, R, Ts, ds, Ta, da), "oct_points": len(pts),
                                  "mri_labels": int(box.sum()), "label_box_voxels": [lo.tolist(), hi.tolist()],
                                  "seconds": round(time.time() - t0)}
             if "search" in stages:

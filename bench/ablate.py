@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Ablations of octreg: the method with one change per variant, run on one pair.
 
-    python bench/ablate.py OCT MRI -o OUT [--oct-mask MASK] [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ]
-                           [--start FILE] [--params F] [--device cuda]
+    python bench/ablate.py OCT MRI -o OUT [--oct-spacing-um Z,Y,X] [--only A,B] [--turn RX,RY,RZ] [--start FILE]
+                           [--params F] [--device cuda]
 
 Each variant changes one function or Params value for its run, or the OCT it is given:
 
@@ -11,8 +11,8 @@ Each variant changes one function or Params value for its run, or the OCT it is 
 OUT/<variant>/ holds the octreg register outputs, variant.json (the change, the Params and the turn) and code.txt (the
 code_id of the octreg code that made it). A variant already finished by the same octreg code is skipped.
 
---turn starts every run from the OCT and its mask turned by the rotation vector RX,RY,RZ in degrees about the centre of the
-OCT image box. T_oct2mri.txt and result.json are then rewritten for the original OCT world (T @ turn), the files tied to the
+--turn starts every run from the OCT turned by the rotation vector RX,RY,RZ in degrees about the centre of the OCT image
+box. T_oct2mri.txt and result.json are then rewritten for the original OCT world (T @ turn), the files tied to the
 turned header (oct2mri.lta, oct2mri_itk.txt, mri_in_oct.nii.gz) are removed, and no_search also writes its start to T_start.txt.
 
 --start FILE gives no_search its start, a 4x4 OCT world -> MRI world pose, in place of the header orientation: the key H of a
@@ -21,11 +21,7 @@ JSON file (the start.json of bench/i46/baselines.py --near) or a text matrix. It
 The spacing variants give octreg the OCT voxel size of the file (or of --oct-spacing-um) scaled by their factor. Their
 T_oct2mri.txt and result.json are rewritten for the OCT world of the file as for --turn, with the 4x4 from that world to
 the one the run used as the key turn, and the scale per OCT axis and the OCT voxel size recomputed in it. The foreground
-entries of result.json stay in the voxel size the run used. An --oct-mask given with a spacing variant must have the
-OCT's array shape, since a mask on its own grid keeps the spacing of its file.
-
---params F applies the Params overrides of F, a JSON file or JSON text, on top of the variant's change, as octreg register
---params.
+entries of result.json stay in the voxel size the run used.
 """
 from __future__ import annotations
 
@@ -176,12 +172,12 @@ def uncentred_searcher():
                    (" - (SI * SI).sum(0) / N", ""), ("(STT - (ST * ST).sum() / N)", "STT"))
 
 
-def mirrored_planes(paths):
-    """io.iter_planes with the planes of the files in paths mirrored along the first array axis."""
-    paths = {Path(p).resolve() for p in paths}
+def mirrored_planes(path):
+    """io.iter_planes with the planes of the file path mirrored along the first array axis."""
+    path = Path(path).resolve()
 
     def it(vol):
-        flip = Path(vol.path).resolve() in paths
+        flip = Path(vol.path).resolve() == path
         for k, plane in PLANES(vol):
             yield k, (plane[::-1] if flip else plane)
     return it
@@ -194,11 +190,11 @@ def spacing_change(oct_path, spacing_um, factor):
     return um, io.load_volume(oct_path, um).affine @ np.linalg.inv(v.affine)
 
 
-def turned(oct_paths, rotvec_deg, spacing_um=None):
-    """Turn about the OCT image box centre and an io.load_volume that reads oct_paths with the turned header.
+def turned(oct_path, rotvec_deg, spacing_um=None):
+    """Turn about the OCT image box centre and an io.load_volume that reads oct_path with the turned header.
     -> (4x4 OCT world to turned OCT world, loader)"""
     load = io.load_volume
-    vo = load(oct_paths[0], spacing_um)
+    vo = load(oct_path, spacing_um)
     c = G.box(vo.affine, vo.shape)[0]
     turn = np.eye(4)
     turn[:3, :3] = Rotation.from_rotvec(np.radians(rotvec_deg)).as_matrix()
@@ -206,21 +202,19 @@ def turned(oct_paths, rotvec_deg, spacing_um=None):
 
     def load_turned(path, spacing_um=None):
         v = load(path, spacing_um)
-        return dataclasses.replace(v, affine=turn @ v.affine) if str(path) in oct_paths else v
+        return dataclasses.replace(v, affine=turn @ v.affine) if str(path) == oct_path else v
     return turn, load_turned
 
 
 @contextlib.contextmanager
-def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=None):
+def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None):
     """Context with the change of variant `name` in force, yielding the Params of the run.
-    oct_path, mri_path and oct_spacing_um give no_search its start, unless the pose `start` is given. oct_path and
-    oct_mask are the files mirrored. The spacing variants change nothing here (main gives them their voxel size)."""
+    oct_path, mri_path and oct_spacing_um give no_search its start, unless the pose `start` is given. oct_path is the
+    file mirrored. The spacing variants change nothing here (main gives them their voxel size)."""
     P = Params()
     with contextlib.ExitStack() as st:
         patch = lambda obj, attr, new: st.enter_context(mock.patch.object(obj, attr, new))
-        if name in SPACING or name == "base":
-            pass
-        elif name == "no_outline":
+        if name == "no_outline":
             P = dataclasses.replace(P, outline_min_outside=2.0)        # a share above 1: never met
         elif name == "outline_decides":
             patch(Reg, "search", patched(Se.search, ("(P.topk // 2, P.topk) if outline", "(P.topk, P.topk) if outline")))
@@ -243,7 +237,7 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=
             patch(Fe, "correlation", uncentred)
             patch(Se.Searcher, "score", uncentred_searcher())
         elif name == "mirrored":
-            patch(io, "iter_planes", mirrored_planes([oct_path] + ([oct_mask] if oct_mask else [])))
+            patch(io, "iter_planes", mirrored_planes(oct_path))
         elif name in ("signed", "signed_neg"):
             patch(Fe, "orientation_tensor", lambda n: n)
             if name == "signed_neg":
@@ -258,8 +252,6 @@ def variant(name, oct_path, mri_path, oct_spacing_um=None, start=None, oct_mask=
             patch(Reg, "prepare_mri", flatfield_mri)
         elif name == "signal_only":
             patch(pp, "specimen_mask", signal_only_mask)
-        else:
-            raise ValueError(f"unknown variant {name}")
         yield P
 
 
@@ -268,12 +260,10 @@ def main():
     ap.add_argument("oct")
     ap.add_argument("mri")
     ap.add_argument("-o", "--out", type=Path, required=True)
-    ap.add_argument("--oct-mask")
     ap.add_argument("--oct-spacing-um", type=lambda s: tuple(float(x) for x in s.split(",")))
     ap.add_argument("--only", help="comma-separated variants (default all, 'base' runs the method itself)")
-    ap.add_argument("--turn", type=lambda s: [float(x) for x in s.split(",")], help="rotation vector of the start, degrees")
-    ap.add_argument("--start", type=Path, help="no_search: its start pose, OCT world -> MRI world, the key H of a JSON file "
-                                                "or a text matrix")
+    ap.add_argument("--turn", type=lambda s: [float(x) for x in s.split(",")])
+    ap.add_argument("--start", type=Path)
     ap.add_argument("--params", metavar="F", help="Params overrides applied after the variant's change: a JSON file or text")
     ap.add_argument("--device", default="cuda")
     a = ap.parse_args()
@@ -285,12 +275,9 @@ def main():
         ap.error("--start and --turn exclude each other")
     if a.turn and set(names) & set(SPACING):
         ap.error("--turn excludes the spacing variants")
-    if a.oct_mask and set(names) & set(SPACING) and (io.load_volume(a.oct_mask, a.oct_spacing_um).shape
-                                                     != io.load_volume(a.oct, a.oct_spacing_um).shape):
-        ap.error("an --oct-mask with the spacing variants must have the OCT's array shape")
     start = read_start(a.start) if a.start else None
     over = json.loads(Path(a.params).read_text(encoding="utf-8") if Path(a.params).is_file() else a.params) if a.params else {}
-    turn, load = turned([a.oct] + ([a.oct_mask] if a.oct_mask else []), a.turn, a.oct_spacing_um) if a.turn else (None, None)
+    turn, load = turned(a.oct, a.turn, a.oct_spacing_um) if a.turn else (None, None)
     code = code_id()
     for name in names:
         out = a.out / name
@@ -306,9 +293,8 @@ def main():
         with contextlib.ExitStack() as st:
             if load is not None:
                 st.enter_context(mock.patch.object(io, "load_volume", load))
-            P = Params.from_dict({**st.enter_context(variant(name, a.oct, a.mri, a.oct_spacing_um, start,
-                                                             a.oct_mask)).to_dict(), **over})
-            res = Reg.register(a.oct, a.mri, out, spacing, a.oct_mask, None, P, a.device)
+            P = Params.from_dict({**st.enter_context(variant(name, a.oct, a.mri, a.oct_spacing_um, start)).to_dict(), **over})
+            res = Reg.register(a.oct, a.mri, out, spacing, params=P, device=a.device)
         if to_run is not None:
             saved = json.loads((out / "result.json").read_text(encoding="utf-8"))
             vo = io.load_volume(a.oct, a.oct_spacing_um)

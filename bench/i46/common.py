@@ -14,6 +14,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(REPO))
+from bench.baselines.convert_affines import lta_to_mov2fix_ras as lta_matrix  # noqa: E402
 from bench.paths import BENCH_RUNS, DANDI000026_DIR  # noqa: E402
 
 SUB = DANDI000026_DIR / "sub-I46"
@@ -33,8 +34,6 @@ LABELS = {"vessels": LABEL_DIR / "sub-I46_ses-MRI_space-EPIC_label-vessels_dseg.
 CONDITIONS = {"C3": (3.0, 2.0), "C6": (6.0, 5.0), "C12": (12.0, 10.0)}                       # margin, shift bound (mm)
 SEEDS = 10
 SEED0 = 4600                                # crop k: default_rng(4600 + k)
-TIERS = (0.30, 1.0)                         # mm, mean distance from R
-TIER_NAMES = ("<= 0.30 mm", "<= 1 mm", "beyond")
 
 SLAB = 33                                   # OCT planes per 500 um slab
 SPACING = np.array([0.012, 0.012, 500 / SLAB / 1000])   # mm
@@ -62,10 +61,7 @@ def crop_file(name):
     return INPUTS / "crops" / f"{name}.nii.gz"
 
 
-def lta_matrix(path):
-    lines = Path(path).read_text().splitlines()
-    i = next(n for n, line in enumerate(lines) if line.strip().startswith("1 4 4"))
-    return np.array([[float(x) for x in lines[i + 1 + r].split()] for r in range(4)])
+PRIMARY_C3 = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]     # the C3 crops of the 10 deg FLASH
 
 
 @lru_cache(None)
@@ -187,10 +183,6 @@ def by_thirds(T, R):
     return [round(float(e[(plane >= a) & (plane < b)].mean()), 4) for a, b in zip(edges[:-1], edges[1:])]
 
 
-def tier(mean):
-    return TIER_NAMES[0 if mean <= TIERS[0] else 1 if mean <= TIERS[1] else 2]
-
-
 def error(T, R=None):
     """Distances (mm) and rotation (deg) of T from R over the tissue points, and from L once it exists. T R^-1 about the
     tissue centroid is split into its polar rotation, its stretch and the shift of the centroid, and the displacement into
@@ -202,16 +194,15 @@ def error(T, R=None):
     e = np.linalg.norm(d, axis=0)
     Q, P = polar((T @ np.linalg.inv(R))[:3, :3])
     ang, ax = axis_angle(Q)
-    mean = float(e.mean())
     c = np.r_[tissue().mean(0), 1]
     Y = (R @ X)[:3] - (R @ c)[:3, None]
     u = R[:3, 2] / np.linalg.norm(R[:3, 2])
     along = u @ d
-    out = {"mean_mm": round(mean, 4), "median_mm": round(float(np.median(e)), 4),
+    out = {"mean_mm": round(float(e.mean()), 4), "median_mm": round(float(np.median(e)), 4),
            "p95_mm": round(float(np.percentile(e, 95)), 4), "max_mm": round(float(e.max()), 4), "rotation_deg": round(ang, 3),
            "rotation_axis": ax.round(3).tolist(), "centroid_mm": round(float(np.linalg.norm((T @ c - R @ c)[:3])), 4),
            "scales": np.linalg.norm(T[:3, :3], axis=0).round(4).tolist(),
-           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(), "tier": tier(mean),
+           "singular_values": np.linalg.svd(T[:3, :3] @ np.linalg.inv(R[:3, :3]))[1].round(4).tolist(),
            "rotation_only_mm": round(float(np.linalg.norm(Q @ Y - Y, axis=0).mean()), 4),
            "strain_only_mm": round(float(np.linalg.norm(P @ Y - Y, axis=0).mean()), 4),
            "rotation_axis_cos_depth": round(float(abs(ax @ u)), 3),
@@ -220,7 +211,7 @@ def error(T, R=None):
            "by_depth_third_mm": by_thirds(T, R)}
     L = label_fit()
     if L is not None:
-        out["mean_L_mm"] = round(float(np.linalg.norm((T @ X - L @ X)[:3], axis=0).mean()), 4)
+        out["mean_L_mm"] = round(distance(T, L), 4)
         out["rotation_L_deg"] = round(rotation(T, L)[0], 3)
         out["by_depth_third_L_mm"] = by_thirds(T, L)
     return out

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Inputs of the I46 test (bench/i46/README.md) from the download of fetch.sh, into <project root>/bench_runs/I46/inputs.
 
-Writes oct.nii.gz, ref_T_oct2mri.txt, tissue_oct.npy, the crops (crops/<name>.nii.gz and crops.json, also in
-bench/results/I46) and bench/results/I46/context.json: the reference R (its 4x4 and that of the label-only fit L once
-reference_check.py has run), the grey/white contrast of each image and the OCT noise.
+Writes oct.nii.gz, ref_T_oct2mri.txt, tissue_oct.npy, the crops (crops/<name>.nii.gz), bench/results/I46/crops.json and
+bench/results/I46/context.json: the reference R, the grey/white contrast of each image and the OCT noise.
 
-    python bench/i46/prepare.py [--context]      (--context: only the context, from the inputs already made)
-    python bench/i46/prepare.py --mask [OUT]     (only the specimen mask from the OCT, octmask_24um.nii.gz or OUT)
+    python bench/i46/prepare.py [--mask]
 """
 from __future__ import annotations
 
@@ -19,8 +17,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (CONDITIONS, FLIPS, INPUTS, LABELS, MASK, OCT, OCT_AFFINE, OCT_TIFF, PRIMARY,  # noqa: E402
-                    RESULTS, SEED0, SEEDS, SPACING, T1MAP, TIFF_SHAPE, crop_file, crop_name, label_fit, mri_file,
-                    reference_matrix, tissue_points, vessel_score)
+                    RESULTS, SEED0, SEEDS, SPACING, T1MAP, TIFF_SHAPE, crop_file, crop_name, mri_file,
+                    reference_matrix, tissue_points)
+from octreg import io  # noqa: E402
 
 MARGIN_BOX = 54                                 # MRI voxels (8.1 mm) around the block for the grey/white contrast
 MASK_AFFINE = OCT_AFFINE @ np.array([[2, 0, 0, 0.5], [0, 2, 0, 0.5], [0, 0, 2, 0.5], [0, 0, 0, 1]])   # voxel i: OCT 2i, 2i + 1
@@ -43,9 +42,7 @@ def read_mask(shape):
 
 
 def specimen_mask():
-    """The specimen mask from the OCT alone, on the grid of MASK_AFFINE: the mean over 2 x 2 x 2 OCT voxels, a 3 x 3 x 3 box
-    filter, a threshold at 40, a closing across 15 planes, an opening, a closing, the holes filled slice by slice and in the
-    volume, and the largest component."""
+    """The specimen mask from the OCT alone, on the grid of MASK_AFFINE."""
     from scipy import ndimage
     p, y, x = (s // 2 for s in TIFF_SHAPE)
     o = read_oct().transpose(2, 1, 0)[:2 * p, :2 * y, :2 * x].astype(np.float32)      # (plane, y, x)
@@ -59,19 +56,11 @@ def specimen_mask():
     return (lab == np.argmax(np.bincount(lab.ravel())[1:]) + 1).transpose(2, 1, 0).astype(np.uint8)
 
 
-def save(arr, affine, path):
-    img = nib.Nifti1Image(arr, affine)
-    img.header.set_xyzt_units("mm")
-    img.set_sform(affine, 1)
-    img.set_qform(affine, 1)
-    nib.save(img, str(path))
-
-
 def oct_input():
     """Check the mask and write oct.nii.gz, the TIFF voxels as (x, y, plane), unless it exists."""
     read_mask(TIFF_SHAPE[::-1])
     if not OCT.is_file():
-        save(read_oct(), OCT_AFFINE, OCT)
+        io.save_nifti(read_oct(), OCT_AFFINE, OCT)
         print(f"OCT {TIFF_SHAPE[::-1]} -> {OCT}", flush=True)
 
 
@@ -144,34 +133,23 @@ def main():
         print(f"{im}: crops written, grey/white contrast {contrast[im]}", flush=True)
         del arr, img
     contrast["T1map"] = cnr(np.asarray(nib.load(str(T1MAP)).dataobj[box]), white, grey)
-    for f in (INPUTS / "crops.json", RESULTS / "crops.json"):
-        f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(json.dumps(rows, indent=1), encoding="utf-8")
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    (RESULTS / "crops.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     print(f"{len(rows)} crops", flush=True)
     context(R, contrast)
 
 
-def context(R=None, contrast=None):
+def context(R, contrast):
     from scipy import ndimage
-    R = np.loadtxt(INPUTS / "ref_T_oct2mri.txt") if R is None else R
-    if contrast is None:
-        f1 = nib.load(str(mri_file("flip1")))
-        box = contrast_box(R, f1)
-        white, grey = layer_masks(box)
-        contrast = {"box_voxels": [[int(b.start) for b in box], [int(b.stop) for b in box]],
-                    **{im: cnr(np.asarray(nib.load(str(mri_file(im))).dataobj[box]), white, grey) for im in FLIPS},
-                    "T1map": cnr(np.asarray(nib.load(str(T1MAP)).dataobj[box]), white, grey)}
     oa = read_oct()
     m = read_mask(oa.shape)
     n = [2 * x for x in m.shape]
     b = oa[:n[0], :n[1], :n[2]].reshape(m.shape[0], 2, m.shape[1], 2, m.shape[2], 2).mean((1, 3, 5), dtype=np.float32)
     del oa
     far = ndimage.distance_transform_edt(~m, sampling=2 * SPACING) > 0.3
-    L = label_fit()
     ctx = {"reference": {"det": round(float(np.linalg.det(R[:3, :3])), 4),
-                         "singular_values": np.linalg.svd(R[:3, :3])[1].round(4).tolist(), **vessel_score(R),
-                         "T_oct2mri": np.round(R, 10).tolist(),
-                         **({} if L is None else {"L_T_oct2mri": np.round(L, 10).tolist()})},
+                         "singular_values": np.linalg.svd(R[:3, :3])[1].round(4).tolist(),
+                         "T_oct2mri": np.round(R, 10).tolist()},
            "tissue_points": int(len(np.load(INPUTS / "tissue_oct.npy"))), "grey_white_cnr": contrast,
            "oct_noise": {"blocks_beyond_0.3mm": int(far.sum()), "nonzero_share": round(float((b[far] > 0).mean()), 4)}}
     RESULTS.mkdir(parents=True, exist_ok=True)
@@ -182,15 +160,11 @@ def context(R=None, contrast=None):
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    one = ap.add_mutually_exclusive_group()
-    one.add_argument("--context", action="store_true", help="only the context, from the inputs already made")
-    one.add_argument("--mask", nargs="?", const=MASK, type=Path, metavar="OUT",
-                     help="only the specimen mask from the OCT, into bench/i46/octmask_24um.nii.gz or OUT")
+    ap.add_argument("--mask", action="store_true",
+                    help="only the specimen mask from the OCT, into bench/i46/octmask_24um.nii.gz")
     a = ap.parse_args()
     if a.mask:
-        save(specimen_mask(), MASK_AFFINE, a.mask)
-        print(f"specimen mask -> {a.mask}", flush=True)
-    elif a.context:
-        context()
+        io.save_nifti(specimen_mask(), MASK_AFFINE, MASK)
+        print(f"specimen mask -> {MASK}", flush=True)
     else:
         main()

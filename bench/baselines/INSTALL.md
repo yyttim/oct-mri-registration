@@ -12,9 +12,9 @@ release, unchanged.
 | FreeSurfer | 8.2.0 | official release, with `mri_robust_register`, `mri_coreg`, `mri_synthmorph`, `mri_vol2vol`, `lta_convert` |
 | greedy | 1.4.0 | `pip install picsl_greedy` (1.4.0.3) |
 
-Two behaviours of these versions affect the runs. NiftyReg 2.1.2 ignores the floating mask of `reg_aladin`, so that mask variant
-equals the unmasked run. In this FreeSurfer build `mri_coreg --ras2ras` writes a voxel matrix under a RAS label, so `mri_coreg`
-runs with its default VOX2VOX output, which `lta_convert` then converts.
+NiftyReg 2.1.2 ignores the floating mask of `reg_aladin`, so that mask variant equals the unmasked run. In this FreeSurfer build
+`mri_coreg --ras2ras` writes a voxel matrix under a RAS label, so `mri_coreg` runs with its default VOX2VOX output, which
+`lta_convert` then converts.
 
 The scripts that run ANTs, elastix, NiftyReg, FSL and FreeSurfer, written by `bench/baselines/i58/runs.py` for the I58
 comparison and by `bench/baselines/standard_tools.py` for `bench/i46`, source two small files in the WSL home that put the

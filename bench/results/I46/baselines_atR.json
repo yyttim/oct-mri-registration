@@ -24,7 +24,6 @@
    1.1942,
    1.0892
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.8729,
   "strain_only_mm": 1.9697,
   "rotation_axis_cos_depth": 0.906,
@@ -93,7 +92,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -176,7 +174,6 @@
    0.9453,
    0.9116
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2607,
   "strain_only_mm": 0.2759,
   "rotation_axis_cos_depth": 0.814,
@@ -245,7 +242,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -307,7 +303,6 @@
   "crop": "flip1_C3_k0",
   "tool": "elastix_atR",
   "setting": "model zoo, no initialisation",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -364,7 +359,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -413,7 +407,6 @@
    1.0661,
    1.0177
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0992,
   "strain_only_mm": 0.407,
   "rotation_axis_cos_depth": 0.343,
@@ -482,7 +475,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -565,7 +557,6 @@
    1.0126,
    0.6177
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.0928,
   "strain_only_mm": 2.6707,
   "rotation_axis_cos_depth": 0.027,
@@ -634,7 +625,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -717,7 +707,6 @@
    0.6553,
    0.3998
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0778,
   "strain_only_mm": 1.7053,
   "rotation_axis_cos_depth": 0.715,
@@ -786,7 +775,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -869,7 +857,6 @@
    1.0098,
    0.9734
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.2789,
   "strain_only_mm": 0.1069,
   "rotation_axis_cos_depth": 0.553,
@@ -938,7 +925,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1021,7 +1007,6 @@
    0.7731,
    0.4784
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3432,
   "strain_only_mm": 1.2895,
   "rotation_axis_cos_depth": 0.438,
@@ -1090,7 +1075,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1173,7 +1157,6 @@
    1.2094,
    1.0292
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.7472,
   "strain_only_mm": 1.9651,
   "rotation_axis_cos_depth": 0.881,
@@ -1242,7 +1225,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1325,7 +1307,6 @@
    0.2876,
    0.19
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.1007,
   "strain_only_mm": 3.0106,
   "rotation_axis_cos_depth": 0.009,
@@ -1394,7 +1375,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1477,7 +1457,6 @@
    1.1678,
    0.9023
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3837,
   "strain_only_mm": 1.7866,
   "rotation_axis_cos_depth": 0.686,
@@ -1546,7 +1525,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1629,7 +1607,6 @@
    1.0221,
    0.9862
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1693,
   "strain_only_mm": 0.1962,
   "rotation_axis_cos_depth": 0.822,
@@ -1698,7 +1675,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1781,7 +1757,6 @@
    1.2451,
    0.7612
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.9657,
   "strain_only_mm": 3.3509,
   "rotation_axis_cos_depth": 0.199,
@@ -1850,7 +1825,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1933,7 +1907,6 @@
    1.0758,
    0.6023
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7795,
   "strain_only_mm": 1.3937,
   "rotation_axis_cos_depth": 0.531,
@@ -2002,7 +1975,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2085,7 +2057,6 @@
    1.5276,
    1.4721
   ],
-  "tier": "beyond",
   "rotation_only_mm": 4.8791,
   "strain_only_mm": 2.5694,
   "rotation_axis_cos_depth": 0.619,
@@ -2154,7 +2125,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2237,7 +2207,6 @@
    0.775,
    0.4478
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3693,
   "strain_only_mm": 1.3102,
   "rotation_axis_cos_depth": 0.797,
@@ -2306,7 +2275,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2389,7 +2357,6 @@
    1.2699,
    1.0989
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2218,
   "strain_only_mm": 2.2228,
   "rotation_axis_cos_depth": 0.864,
@@ -2458,7 +2425,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2541,7 +2507,6 @@
    0.1059,
    0.0602
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2107,
   "strain_only_mm": 4.4574,
   "rotation_axis_cos_depth": 0.48,
@@ -2610,7 +2575,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2693,7 +2657,6 @@
    1.3339,
    0.8151
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5362,
   "strain_only_mm": 2.5806,
   "rotation_axis_cos_depth": 0.934,
@@ -2762,7 +2725,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2845,7 +2807,6 @@
    1.0165,
    0.9821
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0968,
   "strain_only_mm": 0.1821,
   "rotation_axis_cos_depth": 0.661,
@@ -2914,7 +2875,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2997,7 +2957,6 @@
    1.1338,
    0.6017
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.0752,
   "strain_only_mm": 2.8713,
   "rotation_axis_cos_depth": 0.015,
@@ -3066,7 +3025,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3149,7 +3107,6 @@
    0.6428,
    0.5347
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.219,
   "strain_only_mm": 1.8348,
   "rotation_axis_cos_depth": 0.349,
@@ -3218,7 +3175,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3301,7 +3257,6 @@
    1.002,
    0.9657
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.1605,
   "strain_only_mm": 0.0982,
   "rotation_axis_cos_depth": 0.552,
@@ -3370,7 +3325,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3453,7 +3407,6 @@
    0.7589,
    0.4193
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.283,
   "strain_only_mm": 1.3896,
   "rotation_axis_cos_depth": 0.866,
@@ -3522,7 +3475,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3605,7 +3557,6 @@
    1.2328,
    1.0407
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.5124,
   "strain_only_mm": 1.9691,
   "rotation_axis_cos_depth": 0.879,
@@ -3674,7 +3625,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3757,7 +3707,6 @@
    0.0307,
    0.0293
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3192,
   "strain_only_mm": 4.3605,
   "rotation_axis_cos_depth": 0.975,
@@ -3826,7 +3775,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3909,7 +3857,6 @@
    1.2016,
    0.9543
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.372,
   "strain_only_mm": 1.5794,
   "rotation_axis_cos_depth": 0.852,
@@ -3978,7 +3925,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4061,7 +4007,6 @@
    1.0258,
    0.9804
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1002,
   "strain_only_mm": 0.2876,
   "rotation_axis_cos_depth": 0.526,
@@ -4130,7 +4075,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4213,7 +4157,6 @@
    1.2238,
    0.6138
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.2543,
   "strain_only_mm": 3.6377,
   "rotation_axis_cos_depth": 0.287,
@@ -4282,7 +4225,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4365,7 +4307,6 @@
    0.9441,
    0.5698
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2729,
   "strain_only_mm": 1.4349,
   "rotation_axis_cos_depth": 0.444,
@@ -4434,7 +4375,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4517,7 +4457,6 @@
    1.0025,
    0.9691
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.0882,
   "strain_only_mm": 0.0924,
   "rotation_axis_cos_depth": 0.157,
@@ -4586,7 +4525,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4669,7 +4607,6 @@
    0.759,
    0.4785
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3186,
   "strain_only_mm": 1.3108,
   "rotation_axis_cos_depth": 0.361,
@@ -4738,7 +4675,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4821,7 +4757,6 @@
    1.2438,
    1.1699
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.626,
   "strain_only_mm": 1.8714,
   "rotation_axis_cos_depth": 0.812,
@@ -4890,7 +4825,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4973,7 +4907,6 @@
    0.1535,
    0.0488
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2269,
   "strain_only_mm": 4.2266,
   "rotation_axis_cos_depth": 0.343,
@@ -5042,7 +4975,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5125,7 +5057,6 @@
    1.1791,
    0.8896
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2735,
   "strain_only_mm": 1.8381,
   "rotation_axis_cos_depth": 0.643,
@@ -5194,7 +5125,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5277,7 +5207,6 @@
    1.0097,
    0.9684
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1129,
   "strain_only_mm": 0.1294,
   "rotation_axis_cos_depth": 0.699,
@@ -5346,7 +5275,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5429,7 +5357,6 @@
    1.2178,
    0.821
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.5259,
   "strain_only_mm": 3.0176,
   "rotation_axis_cos_depth": 0.008,
@@ -5498,7 +5425,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5581,7 +5507,6 @@
    0.8763,
    0.6167
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5787,
   "strain_only_mm": 1.0816,
   "rotation_axis_cos_depth": 0.345,
@@ -5650,7 +5575,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5733,7 +5657,6 @@
    1.2032,
    1.1595
   ],
-  "tier": "beyond",
   "rotation_only_mm": 4.5935,
   "strain_only_mm": 0.9844,
   "rotation_axis_cos_depth": 0.786,
@@ -5802,7 +5725,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5885,7 +5807,6 @@
    0.81,
    0.4604
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6312,
   "strain_only_mm": 1.225,
   "rotation_axis_cos_depth": 0.563,
@@ -5954,7 +5875,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6037,7 +5957,6 @@
    1.2477,
    1.0453
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.4231,
   "strain_only_mm": 2.0552,
   "rotation_axis_cos_depth": 0.912,
@@ -6106,7 +6025,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6189,7 +6107,6 @@
    0.1354,
    0.1132
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.7223,
   "strain_only_mm": 4.0459,
   "rotation_axis_cos_depth": 0.964,
@@ -6258,7 +6175,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6341,7 +6257,6 @@
    1.1516,
    0.9848
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4493,
   "strain_only_mm": 3.0487,
   "rotation_axis_cos_depth": 0.499,
@@ -6410,7 +6325,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6493,7 +6407,6 @@
    1.0253,
    0.9815
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1296,
   "strain_only_mm": 0.1841,
   "rotation_axis_cos_depth": 0.869,
@@ -6562,7 +6475,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6645,7 +6557,6 @@
    1.1511,
    0.8736
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0109,
   "strain_only_mm": 1.958,
   "rotation_axis_cos_depth": 0.465,
@@ -6714,7 +6625,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6797,7 +6707,6 @@
    0.9509,
    0.6775
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8549,
   "strain_only_mm": 0.9399,
   "rotation_axis_cos_depth": 0.155,
@@ -6866,7 +6775,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6949,7 +6857,6 @@
    1.0323,
    0.9937
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.1001,
   "strain_only_mm": 0.1698,
   "rotation_axis_cos_depth": 0.496,
@@ -7018,7 +6925,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7101,7 +7007,6 @@
    0.7982,
    0.4761
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5993,
   "strain_only_mm": 1.2188,
   "rotation_axis_cos_depth": 0.71,
@@ -7170,7 +7075,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7253,7 +7157,6 @@
    1.2422,
    1.0903
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.4903,
   "strain_only_mm": 2.1496,
   "rotation_axis_cos_depth": 0.956,
@@ -7322,7 +7225,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7405,7 +7307,6 @@
    0.0898,
    0.058
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0341,
   "strain_only_mm": 4.4318,
   "rotation_axis_cos_depth": 0.726,
@@ -7474,7 +7375,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7557,7 +7457,6 @@
    1.2129,
    0.927
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3056,
   "strain_only_mm": 3.2916,
   "rotation_axis_cos_depth": 0.851,
@@ -7626,7 +7525,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7709,7 +7607,6 @@
    1.0464,
    0.9939
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1081,
   "strain_only_mm": 0.3135,
   "rotation_axis_cos_depth": 0.473,
@@ -7778,7 +7675,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7861,7 +7757,6 @@
    1.3432,
    0.7267
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.3091,
   "strain_only_mm": 3.3292,
   "rotation_axis_cos_depth": 0.08,
@@ -7930,7 +7825,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8013,7 +7907,6 @@
    0.9276,
    0.5901
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5179,
   "strain_only_mm": 0.9394,
   "rotation_axis_cos_depth": 0.44,
@@ -8082,7 +7975,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8165,7 +8057,6 @@
    1.0021,
    0.9654
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6032,
   "strain_only_mm": 0.1,
   "rotation_axis_cos_depth": 0.257,
@@ -8234,7 +8125,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8317,7 +8207,6 @@
    0.7818,
    0.4706
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7032,
   "strain_only_mm": 1.2352,
   "rotation_axis_cos_depth": 0.601,
@@ -8386,7 +8275,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8469,7 +8357,6 @@
    1.2595,
    1.1233
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.6437,
   "strain_only_mm": 2.3156,
   "rotation_axis_cos_depth": 0.967,
@@ -8538,7 +8425,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8621,7 +8507,6 @@
    0.0536,
    0.035
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2705,
   "strain_only_mm": 4.5962,
   "rotation_axis_cos_depth": 0.632,
@@ -8690,7 +8575,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8773,7 +8657,6 @@
    1.1869,
    1.0617
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2487,
   "strain_only_mm": 2.008,
   "rotation_axis_cos_depth": 0.754,
@@ -8842,7 +8725,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8925,7 +8807,6 @@
    1.0162,
    0.9847
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0915,
   "strain_only_mm": 0.1471,
   "rotation_axis_cos_depth": 0.589,
@@ -8994,7 +8875,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9077,7 +8957,6 @@
    1.0454,
    0.7001
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.9016,
   "strain_only_mm": 2.8719,
   "rotation_axis_cos_depth": 0.068,
@@ -9146,7 +9025,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9229,7 +9107,6 @@
    1.0821,
    0.5414
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5591,
   "strain_only_mm": 1.5214,
   "rotation_axis_cos_depth": 0.415,
@@ -9298,7 +9175,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9381,7 +9257,6 @@
    1.1093,
    1.0693
   ],
-  "tier": "beyond",
   "rotation_only_mm": 3.2057,
   "strain_only_mm": 0.5282,
   "rotation_axis_cos_depth": 0.143,
@@ -9450,7 +9325,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9533,7 +9407,6 @@
    0.7512,
    0.4556
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3737,
   "strain_only_mm": 1.3405,
   "rotation_axis_cos_depth": 0.589,
@@ -9602,7 +9475,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9685,7 +9557,6 @@
    1.246,
    1.1793
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5734,
   "strain_only_mm": 1.78,
   "rotation_axis_cos_depth": 0.972,
@@ -9754,7 +9625,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9837,7 +9707,6 @@
    0.0477,
    0.0125
   ],
-  "tier": "beyond",
   "rotation_only_mm": 4.3996,
   "strain_only_mm": 4.6675,
   "rotation_axis_cos_depth": 0.783,
@@ -9906,7 +9775,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9989,7 +9857,6 @@
    1.1386,
    0.8923
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3745,
   "strain_only_mm": 2.1831,
   "rotation_axis_cos_depth": 0.669,
@@ -10058,7 +9925,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10141,7 +10007,6 @@
    1.0453,
    0.9935
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1144,
   "strain_only_mm": 0.3228,
   "rotation_axis_cos_depth": 0.321,
@@ -10210,7 +10075,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10293,7 +10157,6 @@
    1.5321,
    1.0599
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7646,
   "strain_only_mm": 5.8058,
   "rotation_axis_cos_depth": 0.735,
@@ -10362,7 +10225,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10445,7 +10307,6 @@
    0.8925,
    0.6857
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8797,
   "strain_only_mm": 1.023,
   "rotation_axis_cos_depth": 0.232,
@@ -10514,7 +10375,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10597,7 +10457,6 @@
    0.898,
    0.8651
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.2918,
   "strain_only_mm": 0.5227,
   "rotation_axis_cos_depth": 0.276,
@@ -10666,7 +10525,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10749,7 +10607,6 @@
    0.8044,
    0.4835
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6229,
   "strain_only_mm": 1.1923,
   "rotation_axis_cos_depth": 0.725,
@@ -10818,7 +10675,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -10901,7 +10757,6 @@
    1.2435,
    1.0464
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3132,
   "strain_only_mm": 2.0278,
   "rotation_axis_cos_depth": 0.914,
@@ -10970,7 +10825,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11053,7 +10907,6 @@
    0.1845,
    0.0869
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.8071,
   "strain_only_mm": 3.7084,
   "rotation_axis_cos_depth": 0.297,
@@ -11122,7 +10975,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11205,7 +11057,6 @@
    1.1273,
    0.9332
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3184,
   "strain_only_mm": 3.0981,
   "rotation_axis_cos_depth": 0.397,
@@ -11274,7 +11125,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11357,7 +11207,6 @@
    1.0017,
    0.9753
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0876,
   "strain_only_mm": 0.1418,
   "rotation_axis_cos_depth": 0.748,
@@ -11426,7 +11275,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11509,7 +11357,6 @@
    1.2182,
    0.8847
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.1996,
   "strain_only_mm": 2.4282,
   "rotation_axis_cos_depth": 0.397,
@@ -11578,7 +11425,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11661,7 +11507,6 @@
    0.9352,
    0.734
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2942,
   "strain_only_mm": 0.5693,
   "rotation_axis_cos_depth": 0.576,
@@ -11730,7 +11575,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11813,7 +11657,6 @@
    0.9067,
    0.8738
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.6462,
   "strain_only_mm": 0.4763,
   "rotation_axis_cos_depth": 0.459,
@@ -11882,7 +11725,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -11965,7 +11807,6 @@
    0.7765,
    0.4904
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6348,
   "strain_only_mm": 1.2312,
   "rotation_axis_cos_depth": 0.704,
@@ -12034,7 +11875,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12117,7 +11957,6 @@
    0.993,
    0.9682
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2903,
   "strain_only_mm": 0.1826,
   "rotation_axis_cos_depth": 0.811,
@@ -12186,7 +12025,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12263,7 +12101,6 @@
    0.9948,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2916,
   "strain_only_mm": 0.1823,
   "rotation_axis_cos_depth": 0.839,
@@ -12332,7 +12169,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12409,7 +12245,6 @@
    0.9942,
    0.9682
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2891,
   "strain_only_mm": 0.183,
   "rotation_axis_cos_depth": 0.821,
@@ -12478,7 +12313,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12555,7 +12389,6 @@
    0.9942,
    0.9682
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2891,
   "strain_only_mm": 0.183,
   "rotation_axis_cos_depth": 0.821,
@@ -12624,7 +12457,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12701,7 +12533,6 @@
    0.9941,
    0.9684
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2902,
   "strain_only_mm": 0.1824,
   "rotation_axis_cos_depth": 0.827,
@@ -12770,7 +12601,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12847,7 +12677,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2938,
   "strain_only_mm": 0.1824,
   "rotation_axis_cos_depth": 0.842,
@@ -12916,7 +12745,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -12993,7 +12821,6 @@
    0.9948,
    0.9678
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2913,
   "strain_only_mm": 0.182,
   "rotation_axis_cos_depth": 0.84,
@@ -13062,7 +12889,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -13139,7 +12965,6 @@
    0.9951,
    0.9675
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2941,
   "strain_only_mm": 0.1824,
   "rotation_axis_cos_depth": 0.842,
@@ -13208,7 +13033,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -13285,7 +13109,6 @@
    0.9947,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2909,
   "strain_only_mm": 0.1816,
   "rotation_axis_cos_depth": 0.842,
@@ -13354,7 +13177,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -13431,7 +13253,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2937,
   "strain_only_mm": 0.1822,
   "rotation_axis_cos_depth": 0.842,
@@ -13500,7 +13321,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,

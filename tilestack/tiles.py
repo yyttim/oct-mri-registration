@@ -1,11 +1,8 @@
-"""Mosaic tile layout of the slabs.
+"""Mosaic tile layout of the slabs (docs/TILESTACK.md, Usage).
 
 Each slab is stitched from W x H pixel tiles whose top-left corners lie on a slightly rotated lattice,
     x = X0 + j * PX + i * SX,   y = Y0 + i * PY + j * SY      (row i along y, column j along x, pixels),
-the same in every slab. The tile cells used by the model are bounded in the middle of the tile overlaps, i.e. a pixel
-belongs to the tile whose centre is nearest in lattice coordinates. The lattice comes from the acquisition metadata
-when given (layout(spec)), else it is read from the staircase outline of the coverage masks: the left edge steps by
-SX once per tile row, the top edge by SY once per tile column.
+the same in every slab. A pixel belongs to the tile whose centre is nearest in lattice coordinates.
 """
 import json
 import os
@@ -16,8 +13,8 @@ from . import data
 
 
 def _runs(v):
-    """Values, lengths and starts of the long runs of constant value in a 1-D integer array. Short runs at the ends
-    come from the neighbouring tile columns or rows of the rotated lattice and are dropped."""
+    """Values, lengths and starts of the runs of constant value in a 1-D integer array longer than a tenth of the
+    longest. The short ones, at the ends, come from the neighbouring tile columns or rows of the rotated lattice."""
     cut = np.r_[0, np.nonzero(np.diff(v))[0] + 1, len(v)]
     val, n, start = v[cut[:-1]], np.diff(cut), cut[:-1]
     keep = n > 0.1 * n.max()
@@ -61,8 +58,8 @@ class Layout:
         return self._cellmap[s]
 
     def cell(self, x, y, s):
-        """Tile id of points of slab s: the lattice cell (rounded lattice coordinates, i.e. nearest centre in the
-        lattice), or the nearest tile present in slab s where that cell has no tile."""
+        """Tile id of points of slab s: the lattice cell, or the nearest tile present in slab s where that cell has no
+        tile."""
         i, j = self.lattice(x, y)
         i = np.clip(np.rint(i), 0, self.rows - 1).astype(int)
         j = np.clip(np.rint(j), 0, self.cols - 1).astype(int)
@@ -74,7 +71,7 @@ class Layout:
 
 
 def present_tiles(lay, masks):
-    """The tiles present in each slab: at least 90 % of the tile's own cell covered by the slab's mask."""
+    """The tiles present in each slab: more than 90 % of the tile's own cell covered by the slab's mask."""
     for s, m in masks.items():
         ok = []
         for i in range(lay.rows):
@@ -91,18 +88,22 @@ def present_tiles(lay, masks):
 
 
 def fit_layout(masks):
-    """Lattice from the coverage masks {slab: bool (y, x)}: run analysis of the union's left and top edges."""
+    """Lattice from the coverage masks {slab: bool (y, x)}: the left edge of their union steps by SX once per tile row
+    and its top edge by SY once per tile column."""
     U = np.zeros_like(next(iter(masks.values())), bool)
     for m in masks.values():
         U |= m
     ys = np.nonzero(U.any(1))[0]; xs = np.nonzero(U.any(0))[0]
     lv, ln, ls = _runs(U[ys].argmax(1))
     tv, tn, ts = _runs(U[:, xs].argmax(0))
+    flat = ValueError("the coverage outline shows no staircase of three or more tile rows and columns stepping by more than a "
+                      "pixel per tile: give the tile lattice from the acquisition metadata with --layout")
     if len(lv) < 3 or len(tv) < 3:
-        raise ValueError("the coverage outline shows no tile staircase (lattice not rotated by about 0.4 degrees or more): "
-                         "give the tile lattice from the acquisition metadata with --layout")
+        raise flat
     SX, X0 = np.polyfit(np.arange(len(lv)), lv.astype(float), 1)
     SY, Y0 = np.polyfit(np.arange(len(tv)), tv.astype(float), 1)
+    if min(abs(SX), abs(SY)) < 1 + 1e-6:               # where tile corners round to one pixel, runs merge and every step is one
+        raise flat
     PY = np.polyfit(np.arange(1, len(lv)), ys[ls[1:]].astype(float), 1)[0]     # run starts advance by one pitch
     PX = np.polyfit(np.arange(1, len(tv)), xs[ts[1:]].astype(float), 1)[0]
     H = float(ln[0] if SX > 0 else ln[-1])            # the long run is the tile that owns the overlap band
@@ -111,9 +112,8 @@ def fit_layout(masks):
 
 
 def layout(spec=None):
-    """Cached layout of the slabs. spec: the lattice from the acquisition metadata (X0, Y0, PX, PY, SX, SY, W, H in
-    pixels, rows, cols); the tiles present in each slab are then read from the coverage masks. Without it the lattice
-    is read from the masks (fit_layout)."""
+    """Cached layout of the slabs: the lattice given as spec (Layout's arguments) or read from the coverage masks
+    (fit_layout), and the tiles present in each slab from the masks."""
     path = f"{data.WORK}/layout.json"
     if spec or not os.path.exists(path):
         masks = {s: data.geometry(s)[1] for s in data.SLABS}

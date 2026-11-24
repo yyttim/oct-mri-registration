@@ -4,18 +4,10 @@ These scripts run octreg and eight standard registration tools on the OCT block 
 cellular resolution atlas of Broca's area" (Science Advances 9:eadg3844, [doi
 10.1126/sciadv.adg3844](https://doi.org/10.1126/sciadv.adg3844)), the work octreg extends. The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) ("Human brain cell census for BA 44/45", CC BY 4.0), and the
-authors' own OCT→MRI affine, from their code repository, is the reference R. octreg was developed on the I58 block and run on
-these data during its development, so this is not a held-out test: the changes made after results on I46 are listed in the
-[README](../../README.md#test-on-the-data-of-costantini-et-al-2023). The results are in
-[bench/results/I46/tables.md](../results/I46/tables.md).
-
-## Why this case, and its limits
-
-Costantini et al. scanned one fixed human hemisphere with 7 T MRI at 0.15 mm, cut out a block holding Broca's area, imaged it
-with serial-sectioning OCT and registered the MRI to the OCT with an affine transform, the task octreg performs. Their data and
-registration code for sample I46 ([github.com/neuroscales/biccn-broca-I46](https://github.com/neuroscales/biccn-broca-I46)) give
-an expert OCT→MRI affine on adult human cortex to measure against. It is one block of one specimen, so the test measures how
-octreg copes with the placement of the MRI crop and with the MRI contrast, not how it generalises to other specimens.
+authors' own OCT→MRI affine, from their code repository, is the reference R. With one block of one specimen, the test measures
+how octreg copes with the placement of the MRI crop and with the MRI contrast, not how it generalises to other specimens. The
+[README](../../README.md#test-on-the-data-of-costantini-et-al-2023) gives the main results, and
+[bench/results/I46/tables.md](../results/I46/tables.md) every number.
 
 ## Data
 
@@ -27,12 +19,13 @@ octreg copes with the placement of the MRI crop and with the MRI contrast, not h
 | T1 map | `derivatives/EPIC/sub-I46/ses-MRI/anat/sub-I46_T1map.nii.gz` | the T1 map of the three FLASH images (flip angles 10°, 20° and 30° in its JSON sidecar), used only to compare contrasts |
 | labels | `derivatives/Labels/sub-I46/ses-MRI/anat/sub-I46_ses-MRI_space-EPIC_label-{vessels,infrasupra}_dseg.nii.gz` | manual MRI labels: vessels (255), white matter (1), infragranular (2) and supragranular (3) cortex |
 
-The authors' registration files come from their repository at commit `b36e398cc42db4ca89ecc121818255bd96fc67ad`:
-`results/mri2oct/affine.lta`, `results/mri/recon2raw.lta` and the OCT→LSFM fields `results/oct2lsfm/svf.08.nii.gz` to
-`svf.23.nii.gz`. `fetch.sh` downloads everything into `sub-I46/oct`, `sub-I46/mri`, `sub-I46/labels` and
-`sub-I46/costantini_repo/results` of `OCTREG_DANDI000026_DIR`. DANDI:000026 has no published version: the test uses the
-draft as downloaded on 2026-10-15, whose files have the SHA-256 sums in `checksums.txt`, and `fetch.sh` ends by checking
-the download against them.
+The authors' registration files come from their repository
+[github.com/neuroscales/biccn-broca-I46](https://github.com/neuroscales/biccn-broca-I46) at commit
+`b36e398cc42db4ca89ecc121818255bd96fc67ad`: `results/mri2oct/affine.lta`, `results/mri/recon2raw.lta` and the OCT→LSFM fields
+`results/oct2lsfm/svf.08.nii.gz` to `svf.23.nii.gz`. `fetch.sh` downloads everything into `sub-I46/oct`, `sub-I46/mri`,
+`sub-I46/labels` and `sub-I46/costantini_repo/results` of `OCTREG_DANDI000026_DIR`. DANDI:000026 has no published version: the
+test uses the draft as downloaded on 2026-10-15, whose files have the SHA-256 sums in `checksums.txt`, and `fetch.sh` ends by
+checking the download against them.
 
 The 20° FLASH, the T1 map and the labels carry a header that is a 120° rotation (a cyclic permutation of the axes) of the same
 voxel grid as the 10° and 30° FLASH. Their arrays are voxel aligned with the 10° FLASH, and every file here is read with the
@@ -52,8 +45,7 @@ signs of the in-plane axes) is the one under which the OCT intensity correlates 
 against at most 0.19 for any other orientation. The placement of the slabs (slab 08 on OCT planes 0 to 32) is the one under
 which the most OCT vessels lie within 0.15 mm of an MRI vessel label, 15.8 % against at most 5.9 % for any other choice.
 
-R is an expert registration, not ground truth. An affine fitted to the OCT vessels and the MRI vessel labels alone
-(`labelfit.py`), called L here, lies 0.155 mm (mean) from R, p95 0.31 mm, so distances below about 0.3 mm are not interpreted.
+L is an affine fitted to the OCT vessels and the MRI vessel labels alone (`labelfit.py`).
 
 ## Inputs and protocol
 
@@ -82,11 +74,11 @@ R is an expert registration, not ground truth. An affine fitted to the OCT vesse
   with its defaults (image-centre start), greedy (NMI, rigid then affine, `-ia-image-centers`), elastix (the model-zoo rigid and
   affine files, Mattes mutual information, geometric-centre start), ANTs `antsRegistrationSyN.sh -t a` (Mattes MI, its own
   centre-of-mass start), FreeSurfer mri_robust_register (`--cost NMI`, rigid then `--affine`, its default start) and mri_coreg
-  (`--dof 6` then 12, its brute-force start), FSL FLIRT (normmi, dof 6 then 12, its default search, both headers scaled x10,
-  because its schedule resamples the images to fixed voxel sizes in mm) and SynthMorph (`-m affine`, which works in its own 1 mm
-  space). antsRegistrationSyN.sh runs without a fixed random seed, so its metric sampling can differ between runs, while antsAI
-  and greedy run with one. The moving image is the OCT box-averaged to 0.15 mm, the fixed image the crop. Every tool runs on the
-  C3 crops k = 0 to 9 of the 10° FLASH and on the C3 k = 0 crops of the 20° and 30° FLASH. The commands are in
+  (`--dof 6` then 12, its brute-force start), FSL FLIRT (normmi, dof 6 then 12, its default search, both headers scaled x10 as
+  on [I58](../baselines/README.md#tools-and-settings)) and SynthMorph (`-m affine`, which works in its own 1 mm space).
+  antsRegistrationSyN.sh runs without a fixed random seed, so its metric sampling can differ between runs, while antsAI and
+  greedy run with one. The moving image is the OCT box-averaged to 0.15 mm, the fixed image the crop. Every tool runs on the C3
+  crops k = 0 to 9 of the 10° FLASH and on the C3 k = 0 crops of the 20° and 30° FLASH. The commands are in
   [bench/baselines/standard_tools.py](../baselines/standard_tools.py). A run that ends without a readable transform counts as a
   tool error.
 - **Start test and ablation** (`analyses.py`). octreg, with its own masks, starts from the OCT turned by 90° and 180° about each
@@ -114,30 +106,9 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
 - **Distance from R:** |T x − R x| over the OCT tissue points, reported as mean, median, p95 and maximum, with the rotation
   angle and axis of T R⁻¹. The points are the specimen mask on a grid of every eighth OCT voxel (96 × 96 × 121 µm), 843,465
   points (context.json). The mean distance from L is given beside it.
-- **Medians:** over the ten crops of a condition, shifted boxes around the same block, a run without a transform counted as
-  beyond every other. Distances from R below about 0.3 mm, the precision of the reference, are not interpreted.
 - **Vessels:** the MRI vessel labels that T places in the OCT tissue, at least 0.15 mm from its edge and within the segmented
   planes 0 to 560, and their distance to the nearest OCT vessel of the dataset's segmentation, median over the labels. The
   vessels are independent of what octreg fits, while R was fitted partly to them.
-
-## Results
-
-[tables.md](../results/I46/tables.md) gives every number. In brief:
-
-- **octreg** with its own masks ends 0.32 to 0.37 mm from R (the medians of the conditions), turned by 2.9° to 4.0° from R
-  about an axis that differs between the contrasts, and 0.37 mm with the test's specimen mask as `--oct-mask`. Its vessel
-  distance is 0.134 to 0.158 mm, that of R 0.100 mm.
-- **Starts:** from the 16 turned and random starts on flip1_C3_k0, octreg ends 0.35 to 0.37 mm from R.
-- **The standard tools** at their documented settings end 7.5 to 17.3 mm from R, turned by about as much as their start, the
-  header orientation 7.0 mm and 122° from R (median rotation over the 96 runs 120°). With their own global search they end
-  17.0 to 23.9 mm from R, and with the test's specimen mask as their moving mask 7.0 to 16.5 mm, elastix without a transform.
-- **Started near R** (1.18 mm and 10° from R), ANTs ends 0.84 mm from R and the other tools 3.0 to 17.8 mm, with the moving mask
-  ANTs 0.82 mm and greedy 1.55 mm, and on the OCT zeroed outside the mask ANTs 0.85 mm. octreg's refinement alone ends 0.36 mm
-  from R.
-- **Started at R** (0.09 mm from R), ANTs ends 0.52 mm from R and the other tools 3.0 to 20.2 mm, and with the moving mask ANTs
-  0.35 mm and greedy 0.62 mm. octreg's refinement alone ends 0.36 mm from R. The vessel distance is 0.155 mm for octreg,
-  0.193 mm for ANTs, and with the mask 0.170 mm for ANTs and 0.183 mm for greedy.
-- **Ablation:** the [README](../../README.md#ablations) gives every variant.
 
 ## Pictures
 
@@ -150,10 +121,9 @@ Outside the OCT tissue the line continues through the MRI, and where the white m
 that edge. The grey levels are linear, at freeview's default window of the OCT and of the crop
 ([figures.json](../../docs/figures/i46/figures.json)).
 
-From left: the OCT, the OCT with the line placed through R in red and through octreg in yellow, and the MRI crop placed
-through R and through octreg. On every plane the yellow line follows the red line, a little lower where it crosses the left
-half of the tissue on planes 102 and 300 and the middle of the tissue on plane 498. Across the upper left corner of the
-tissue on planes 102 and 300 it cuts off a smaller part. The white matter is dark in the MRI panels.
+The line through R is red, the line through octreg yellow. On every plane the yellow line follows the red line, a little lower
+where it crosses the left half of the tissue on planes 102 and 300 and the middle of the tissue on plane 498. Across the upper
+left corner of the tissue on planes 102 and 300 it cuts off a smaller part. The white matter is dark in the MRI panels.
 
 | OCT plane | OCT | OCT with the lines through R and through octreg | MRI through R | MRI through octreg |
 |---|---|---|---|---|
@@ -186,7 +156,6 @@ bash bench/i46/fetch.sh                                       # needs the DANDI 
 python bench/i46/prepare.py                                   # inputs and crops -> crops.json, context.json
 python bench/i46/prepare.py --mask                            # the specimen mask octmask_24um.nii.gz, as committed
 python bench/i46/reference_check.py                           # the checks of the reference and L -> reference_check.json
-python bench/i46/prepare.py --context                         # context.json again, now with the 4x4 of L
 python bench/i46/run.py                                       # 60 octreg runs, one at a time, scored -> octreg.json
 python bench/i46/baselines.py prepare                         # and with --search, --mask, --near, --near-mask, --near-zeroed,
                                                               #   --atR or --atR-mask for the other analyses
@@ -204,9 +173,7 @@ python bench/repeat.py $RUNS/inputs/oct.nii.gz $RUNS/inputs/crops/flip1_C3_k0.ni
 
 `python bench/i46/run.py collect --runs DIR -o FILE` scores a folder that holds the 60 runs, made by the checked-out octreg
 code, without running anything. The standard tools and FreeSurfer run as described in
-[bench/baselines/INSTALL.md](../baselines/INSTALL.md). On Windows the commands run in Git Bash, and the scripts start the Linux
-tools in WSL. Elsewhere they run in the same shell. The run directories hold image data and stay under `<project
-root>/bench_runs/I46`, which is not in the repository.
+[bench/baselines/INSTALL.md](../baselines/INSTALL.md). On Windows the commands run in Git Bash.
 
 ## Stored results
 
@@ -219,5 +186,5 @@ root>/bench_runs/I46`, which is not in the repository.
 | `starts.json`, `ablation.json` | the start test (with the distance of its search pose from R) and the ablation of `analyses.py`, each entry with its affine |
 | `reference_check.json` | the checks of `reference_check.py`, with the label-only fit L under the key A12 (the 12-parameter affine of `labelfit.py`), and the vessel check of R, of L and of R moved by small shifts, rotations and depth scales |
 | `crops.json` | the box, shift and centre offset of every crop |
-| `context.json` | the number of tissue points, the grey/white contrast of each MRI image, the 4x4 of R and of L, and properties of the reference and the OCT |
+| `context.json` | the number of tissue points, the grey/white contrast of each MRI image, the 4×4 of R, and properties of the reference and the OCT |
 | `tables.md` | the tables of `summarise.py` |

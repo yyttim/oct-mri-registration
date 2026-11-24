@@ -1,6 +1,4 @@
-"""Affine refinement (docs/METHOD.md §4): every search candidate refined on F under a scale and shear prior, coarse to fine.
-Model x_mri = R(r) Sh(sh) diag(exp(ls)) (x_oct - c) + t, with c the OCT grid box centre (mm).
-"""
+"""Affine refinement (docs/METHOD.md §4): every search candidate refined on F under a scale and shear prior, coarse to fine."""
 from __future__ import annotations
 
 import numpy as np

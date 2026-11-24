@@ -1,18 +1,7 @@
 # Baselines on the I58 brainstem pair
 
-Standard registration tools run on the I58 pair. The fixed image is the MRI crop as given (0.08 mm). The moving image is the 20
-µm OCT box-averaged to 0.08 mm isotropic, the voxel size of the MRI. Eight tools run. Seven of them run from their standard
-starts (the header alignment, the image centres or centres of mass, and the tool's own search where it has one) and, as separate
-runs, with a field-of-view (FOV) mask of the OCT. SynthMorph, which predicts the affine and has no mask option, runs once.
-Settings are in [README.md](README.md), the commands of every run in [i58/runs.py](i58/runs.py), versions and installation in
-[INSTALL.md](INSTALL.md).
-
-The figures and tables below show each tool at the setting its documentation gives for this kind of registration, with one
-exception: FLIRT's two headers are scaled x10, because its schedule resamples the images to fixed voxel sizes in mm. The other
-starts and settings are in the stored table [affine.md](../results/I58/baselines/affine.md). I58 has no reference, so the tools
-are shown, not scored. The first table gives the scale per OCT axis (the length of a unit step along each OCT array axis after
-the transform, 1 = voxel size kept) and the determinant of each affine, and for each run the setting, start, wall time and
-hardware.
+[README.md](README.md) gives the inputs, settings and starts, and the stored table
+[affine.md](../results/I58/baselines/affine.md) the scale per OCT axis and the determinant of each run's affine.
 
 Each panel is one freeview screenshot of the whole MRI crop at one screen pixel per 0.08 mm voxel, showing the MRI or the 20 µm
 OCT resampled through the tool's transform by octreg's resampler. The planes are the sagittal, coronal and axial planes through
@@ -26,19 +15,6 @@ anterior on the right, coronal and axial planes show the subject's right on the 
 planes, anterior up on axial planes. Left, right, top and bottom in the text and the captions refer to the image. On the
 sagittal and coronal planes the OCT sections show as fine stripes parallel to the top and bottom edges of the block, horizontal
 at the start. `bench/figures.py` makes the panels.
-
-| method | run | setting | start | scale per OCT axis | det | wall time | hardware |
-|---|---|---|---|---|---|---|---|
-| image box centres aligned (the start) | `reference_centres` | not a registration: the OCT translated so that the centres of the two image boxes coincide, header orientation kept | image box centres aligned | 1.00 / 1.00 / 1.00 | 1.00 |  |  |
-| octreg | `octreg` | default parameters | own orientation search (8,000 rotations) inside the MRI crop | 0.96 / 0.95 / 0.97 | 0.88 | 10 min | GPU |
-| NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 5 min | CPU, 8 threads |
-| greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 63 s | CPU, 8 threads |
-| elastix 5.3.1 | `elastix_center` | model-zoo Parameters_Rigid then Parameters_Affine (AdvancedMattesMutualInformation), no mask | geometric centres (GeometricalCenter) | 0.92 / 0.84 / 0.97 | 0.74 | 26 s | CPU, 12 threads |
-| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com` | --cost NMI, rigid then --affine --ixform, tool defaults | centres of mass (default) | 0.99 / 1.00 / 1.07 | 1.06 | 14 min | CPU, 20 threads |
-| ANTs 2.6.5 | `ants_com` | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask | centres of mass (script default) | 0.86 / 0.62 / 0.92 | 0.49 | 45 s | CPU, 12 threads |
-| FreeSurfer 8.2.0 mri_coreg | `mri_coreg_default` | NMI, --dof 6 then --dof 12 --init-reg, tool defaults | volume centres + the default brute-force search | 0.92 / 0.81 / 1.00 | 0.74 | 22 min | CPU, 20 threads |
-| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document) | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 53 min | CPU (FLIRT runs single-threaded) |
-| FreeSurfer 8.2.0 mri_synthmorph | `synthmorph_affine` | register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block | none (the network predicts the affine) | 0.82 / 0.62 / 1.20 | 0.49 | 38 s | CPU, 20 threads |
 
 | | sagittal | coronal | axial |
 |---|---|---|---|

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The freeview figures of the I58 pair in docs/figures.
 
-    python bench/figures.py [--mri MRI] [--oct OCT] [--octreg-run DIR] [--baselines DIR] [--ablation DIR] [--stages S]
+    python bench/figures.py [--mri MRI] [--oct OCT] [--octreg-run DIR] [--baselines DIR] [--ablation DIR]
                             [--window-from OCT] [-o docs/figures] [--work DIR]
 
   result/       octreg's result on a sagittal, a coronal and an axial plane through the centroid of the MRI tissue: the MRI,
@@ -15,8 +15,6 @@ The boundary is the MRI foreground octreg uses (§1, on its 0.15 mm base grid) r
 surface by mri_mc and mris_smooth -n 3 -nw and drawn as a 2-pixel red line. Every panel shows the whole plane at one screen
 pixel per MRI voxel. The MRI takes freeview's default grey window and every OCT panel that of --window-from. The windows, the
 plane centre and the MRI tissue go to figures.json.
-freeview's default orientation applies: anterior on the right in sagittal planes, the subject's right on the left in coronal
-and axial planes.
 
 The baseline overlays are read from the bench/baselines run directories under --baselines (default
 <project root>/baselines). FreeSurfer 8.2 (freeview, mri_mc, mris_smooth) must be set up in the shell with FS_LICENSE
@@ -37,7 +35,7 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 from bench.ablate import VARIANTS  # noqa: E402
-from bench.paths import BENCH_RUNS, MRI_I58, OCT_I58, PROJECT_ROOT, WSL, host_path  # noqa: E402
+from bench.paths import BASELINES, BENCH_RUNS, MRI_I58, OCT_I58, WSL, host_path  # noqa: E402
 
 AFFINE = [  # panel, overlay: RUN/... in the octreg run, else under --baselines
     ("start", "affine/reference/centres"), ("octreg", "RUN/oct_in_mri.nii.gz"), ("reg_aladin", "affine/niftyreg/center"),
@@ -48,7 +46,6 @@ ABLATION = [(v, v) for v in VARIANTS] + [  # panel, under --ablation: a bench/ab
     ("turned_start", "turned/no_search/T_start.txt"), ("turned_no_search", "turned/no_search"),
     ("turned_octreg", "turned/base"), ("fine_no_outline", "fine/no_outline")]
 PLANES = {"sagittal": (0, 1, 2), "coronal": (1, 0, 2), "axial": (2, 0, 1)}   # normal, horizontal, vertical world axis
-STAGES = ("result", "affine", "ablation")
 
 
 def freeview_window(path):
@@ -119,8 +116,8 @@ def mri_tissue(path, img):
     return G.resample_to(fg.astype(np.float32), A, img.shape[:3], img.affine, np.eye(4)) > 0.5, info
 
 
-def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, stages=STAGES):
-    """freeview -cmd sessions, one per panel size, for the folders in stages. -> [(name, lines)], {png path: (W, H)}
+def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None):
+    """freeview -cmd sessions, one per panel size. -> [(name, lines)], {png path: (W, H)}
     middle is the RAS point (mm) of the planes, windows the (lo, hi) of the MRI and of the OCT."""
     img = nib.load(str(mri))
     grey_mri, grey_oct = windows
@@ -129,28 +126,26 @@ def sessions(mri, run, baselines, out, surf, middle, windows, ablation=None, sta
     oct_v = lambda f: "-v {}:grayscale={!r},{!r}".format(host_path(f), *grey_oct)
     ss = lambda p: f"-ss {host_path(p)} 1 0"
     S, expect = [], {}
-    for plane in PLANES if "result" in stages else ():
+    for plane in PLANES:
         lines, wh = view(img, plane, middle)
         d = out / "result"
         S.append((f"result_{plane}", [v_mri, *lines, ss(d / f"{plane}_mri.png"), "-hide volume",
                                       oct_v(run / "oct_in_mri.nii.gz"), ss(d / f"{plane}_oct.png"), f_line,
                                       ss(d / f"{plane}_oct_boundary.png"), "-quit"]))
         expect.update({d / f"{plane}_{n}.png": wh for n in ("mri", "oct", "oct_boundary")})
-    if "affine" in stages:
-        d = out / "affine"
-        srcs = {name: run / sub[4:] if sub.startswith("RUN/") else baselines / sub / "oct_in_mri.nii.gz"
-                for name, sub in AFFINE}
-        missing = [str(f) for f in srcs.values() if not f.is_file()]
-        if missing:
-            raise FileNotFoundError(", ".join(missing))
-        for plane in PLANES:
-            lines, wh = view(img, plane, middle)
-            cmd = [v_mri, f_line, *lines, ss(d / f"mri_{plane}.png"), "-hide volume"]
-            for name, src in srcs.items():
-                cmd += [oct_v(src), ss(d / f"{name}_{plane}.png"), "-unload volume"]
-            S.append((f"affine_{plane}", cmd + ["-quit"]))
-            expect.update({d / f"{n}_{plane}.png": wh for n in ["mri"] + list(srcs)})
-    if ablation and "ablation" in stages:
+    d = out / "affine"
+    srcs = {name: run / sub[4:] if sub.startswith("RUN/") else baselines / sub / "oct_in_mri.nii.gz" for name, sub in AFFINE}
+    missing = [str(f) for f in srcs.values() if not f.is_file()]
+    if missing:
+        raise FileNotFoundError(", ".join(missing))
+    for plane in PLANES:
+        lines, wh = view(img, plane, middle)
+        cmd = [v_mri, f_line, *lines, ss(d / f"mri_{plane}.png"), "-hide volume"]
+        for name, src in srcs.items():
+            cmd += [oct_v(src), ss(d / f"{name}_{plane}.png"), "-unload volume"]
+        S.append((f"affine_{plane}", cmd + ["-quit"]))
+        expect.update({d / f"{n}_{plane}.png": wh for n in ["mri"] + list(srcs)})
+    if ablation:
         lines, wh = view(img, "sagittal", middle)
         d = out / "ablation"
         cmd = [v_mri, f_line, *lines, "-hide volume"]
@@ -182,20 +177,19 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--mri", type=Path, default=MRI_I58)
     ap.add_argument("--octreg-run", type=Path, default=BENCH_RUNS / "I58" / "octreg")
-    ap.add_argument("--baselines", type=Path, default=PROJECT_ROOT / "baselines")
+    ap.add_argument("--baselines", type=Path, default=BASELINES)
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "ablation",
                     help="the output of bench/ablate.py on the I58 pair (bench/README.md). Its panels are "
                     "skipped when it does not exist")
     ap.add_argument("--oct", type=Path, default=OCT_I58)
-    ap.add_argument("--stages", default=",".join(STAGES), help="comma-separated folders to make (default: all three)")
-    ap.add_argument("--window-from", type=Path, default=PROJECT_ROOT / "baselines" / "inputs" / "oct_0.08mm.nii.gz",
+    ap.add_argument("--window-from", type=Path, default=BASELINES / "inputs" / "oct_0.08mm.nii.gz",
                     help="the volume whose freeview default window every OCT panel takes (default: the moving image of "
                     "bench/baselines)")
     ap.add_argument("-o", "--out", type=Path, default=REPO / "docs" / "figures")
     ap.add_argument("--work", type=Path, default=BENCH_RUNS / "I58" / "figures")
     a = ap.parse_args()
     a.work.mkdir(parents=True, exist_ok=True)
-    for d in STAGES:
+    for d in ("result", "affine", "ablation"):
         (a.out / d).mkdir(parents=True, exist_ok=True)
 
     mi = nib.load(str(a.mri))
@@ -214,12 +208,10 @@ def main():
     nib.save(nib.Nifti1Image(tissue.astype(np.uint8), mi.affine, hdr), str(a.work / "mri_tissue.nii.gz"))
 
     surf = a.work / "mri_tissue.surf"
-    stages = a.stages.split(",")
-    abl = overlays(a.ablation, a.octreg_run, a.oct, a.mri) if a.ablation.is_dir() and "ablation" in stages else None
+    abl = overlays(a.ablation, a.octreg_run, a.oct, a.mri) if a.ablation.is_dir() else None
     if abl is None:
-        print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again"
-              if "ablation" in stages else "the ablation panels are not made (--stages)")
-    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, windows, abl, stages)
+        print(f"no ablation directory {a.ablation}: the panels in {a.out / 'ablation'} are not made again")
+    S, expect = sessions(a.mri, a.octreg_run, a.baselines, a.out, surf, middle, windows, abl)
     sh = fs_script(a.work, ["mri_mc mri_tissue.nii.gz 1 mri_tissue_raw.surf > mri_mc.log 2>&1",
                             "mris_smooth -n 3 -nw mri_tissue_raw.surf mri_tissue.surf > mris_smooth.log 2>&1"])
     for name, lines in S:

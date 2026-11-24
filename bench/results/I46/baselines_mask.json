@@ -24,7 +24,6 @@
    1.3519,
    1.1459
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.8307,
   "strain_only_mm": 2.2272,
   "rotation_axis_cos_depth": 0.404,
@@ -105,7 +104,6 @@
    1.0022,
    0.9653
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4407,
   "strain_only_mm": 0.1769,
   "rotation_axis_cos_depth": 0.457,
@@ -165,7 +163,6 @@
   "crop": "flip1_C3_k0",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -200,7 +197,6 @@
    0.9662,
    0.9571
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.5143,
   "strain_only_mm": 0.1899,
   "rotation_axis_cos_depth": 0.459,
@@ -281,7 +277,6 @@
    1.0371,
    0.9435
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.3365,
   "strain_only_mm": 0.7345,
   "rotation_axis_cos_depth": 0.429,
@@ -362,7 +357,6 @@
    1.1166,
    0.4581
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.3695,
   "strain_only_mm": 2.0307,
   "rotation_axis_cos_depth": 0.479,
@@ -443,7 +437,6 @@
    0.0977,
    0.0919
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.544,
   "strain_only_mm": 4.4391,
   "rotation_axis_cos_depth": 0.521,
@@ -524,7 +517,6 @@
    1.3332,
    0.9424
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.9076,
   "strain_only_mm": 2.376,
   "rotation_axis_cos_depth": 0.269,
@@ -605,7 +597,6 @@
    1.0125,
    0.9083
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.563,
   "strain_only_mm": 0.3951,
   "rotation_axis_cos_depth": 0.496,
@@ -665,7 +656,6 @@
   "crop": "flip1_C3_k1",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -700,7 +690,6 @@
    1.0553,
    0.9882
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4621,
   "strain_only_mm": 0.2447,
   "rotation_axis_cos_depth": 0.446,
@@ -781,7 +770,6 @@
    1.0301,
    0.9512
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4189,
   "strain_only_mm": 0.2751,
   "rotation_axis_cos_depth": 0.458,
@@ -862,7 +850,6 @@
    1.0048,
    0.5887
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.1735,
   "strain_only_mm": 2.4215,
   "rotation_axis_cos_depth": 0.339,
@@ -943,7 +930,6 @@
    0.9449,
    0.8983
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.8877,
   "strain_only_mm": 0.3494,
   "rotation_axis_cos_depth": 0.566,
@@ -1024,7 +1010,6 @@
    1.3887,
    1.2939
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.0738,
   "strain_only_mm": 2.1947,
   "rotation_axis_cos_depth": 0.228,
@@ -1105,7 +1090,6 @@
    0.9996,
    0.9386
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4404,
   "strain_only_mm": 0.3775,
   "rotation_axis_cos_depth": 0.463,
@@ -1165,7 +1149,6 @@
   "crop": "flip1_C3_k2",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -1200,7 +1183,6 @@
    1.0131,
    0.9392
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.2203,
   "strain_only_mm": 0.2396,
   "rotation_axis_cos_depth": 0.383,
@@ -1260,7 +1242,6 @@
   "crop": "flip1_C3_k2",
   "tool": "mri_robust_register_mask",
   "setting": "NMI, default start, --maskmov",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: affine.lta",
    "",
@@ -1295,7 +1276,6 @@
    0.9926,
    0.9027
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.375,
   "strain_only_mm": 0.4181,
   "rotation_axis_cos_depth": 0.49,
@@ -1376,7 +1356,6 @@
    0.7962,
    0.7549
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.0511,
   "strain_only_mm": 1.0458,
   "rotation_axis_cos_depth": 0.531,
@@ -1457,7 +1436,6 @@
    1.4866,
    1.2472
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6308,
   "strain_only_mm": 2.6696,
   "rotation_axis_cos_depth": 0.322,
@@ -1538,7 +1516,6 @@
    0.6776,
    0.3265
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.598,
   "strain_only_mm": 12.0634,
   "rotation_axis_cos_depth": 0.542,
@@ -1598,7 +1575,6 @@
   "crop": "flip1_C3_k3",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -1633,7 +1609,6 @@
    1.0006,
    0.9549
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.5808,
   "strain_only_mm": 0.2203,
   "rotation_axis_cos_depth": 0.438,
@@ -1714,7 +1689,6 @@
    1.0703,
    1.0038
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4128,
   "strain_only_mm": 4.5354,
   "rotation_axis_cos_depth": 0.453,
@@ -1795,7 +1769,6 @@
    0.4399,
    0.3732
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.7771,
   "strain_only_mm": 5.3143,
   "rotation_axis_cos_depth": 0.241,
@@ -1876,7 +1849,6 @@
    0.1144,
    0.1106
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.1978,
   "strain_only_mm": 4.3481,
   "rotation_axis_cos_depth": 0.375,
@@ -1957,7 +1929,6 @@
    1.3612,
    1.1948
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.146,
   "strain_only_mm": 2.7199,
   "rotation_axis_cos_depth": 0.283,
@@ -2038,7 +2009,6 @@
    1.0069,
    0.9597
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.5003,
   "strain_only_mm": 0.1938,
   "rotation_axis_cos_depth": 0.439,
@@ -2098,7 +2068,6 @@
   "crop": "flip1_C3_k4",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -2133,7 +2102,6 @@
    1.037,
    0.9484
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.281,
   "strain_only_mm": 0.3349,
   "rotation_axis_cos_depth": 0.502,
@@ -2214,7 +2182,6 @@
    0.9863,
    0.9402
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.357,
   "strain_only_mm": 0.9142,
   "rotation_axis_cos_depth": 0.502,
@@ -2295,7 +2262,6 @@
    0.6032,
    0.522
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.1472,
   "strain_only_mm": 2.6239,
   "rotation_axis_cos_depth": 0.352,
@@ -2376,7 +2342,6 @@
    1.1384,
    1.0802
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.6759,
   "strain_only_mm": 0.6461,
   "rotation_axis_cos_depth": 0.185,
@@ -2457,7 +2422,6 @@
    1.2901,
    1.0031
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.0404,
   "strain_only_mm": 2.4349,
   "rotation_axis_cos_depth": 0.206,
@@ -2538,7 +2502,6 @@
    1.0002,
    0.9237
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6787,
   "strain_only_mm": 0.2543,
   "rotation_axis_cos_depth": 0.524,
@@ -2598,7 +2561,6 @@
   "crop": "flip1_C3_k5",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -2633,7 +2595,6 @@
    1.0037,
    0.9108
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4362,
   "strain_only_mm": 0.3313,
   "rotation_axis_cos_depth": 0.47,
@@ -2714,7 +2675,6 @@
    1.0315,
    0.9945
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.2684,
   "strain_only_mm": 0.2469,
   "rotation_axis_cos_depth": 0.385,
@@ -2795,7 +2755,6 @@
    0.6862,
    0.5579
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.2167,
   "strain_only_mm": 2.1564,
   "rotation_axis_cos_depth": 0.364,
@@ -2876,7 +2835,6 @@
    0.0788,
    0.0747
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.611,
   "strain_only_mm": 4.5278,
   "rotation_axis_cos_depth": 0.069,
@@ -2957,7 +2915,6 @@
    1.1681,
    0.9235
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.8847,
   "strain_only_mm": 2.6036,
   "rotation_axis_cos_depth": 0.157,
@@ -3038,7 +2995,6 @@
    1.0078,
    0.96
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6059,
   "strain_only_mm": 0.2003,
   "rotation_axis_cos_depth": 0.528,
@@ -3098,7 +3054,6 @@
   "crop": "flip1_C3_k6",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -3133,7 +3088,6 @@
    1.0149,
    0.938
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4748,
   "strain_only_mm": 0.2306,
   "rotation_axis_cos_depth": 0.485,
@@ -3214,7 +3168,6 @@
    1.0091,
    0.9569
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4524,
   "strain_only_mm": 0.207,
   "rotation_axis_cos_depth": 0.456,
@@ -3295,7 +3248,6 @@
    0.1239,
    0.0008
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.4651,
   "strain_only_mm": 11.4029,
   "rotation_axis_cos_depth": 0.622,
@@ -3376,7 +3328,6 @@
    0.6065,
    0.5773
   ],
-  "tier": "beyond",
   "rotation_only_mm": 3.6887,
   "strain_only_mm": 1.9572,
   "rotation_axis_cos_depth": 0.201,
@@ -3457,7 +3408,6 @@
    1.1231,
    0.928
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.9444,
   "strain_only_mm": 2.3757,
   "rotation_axis_cos_depth": 0.177,
@@ -3538,7 +3488,6 @@
    1.0044,
    0.9593
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6072,
   "strain_only_mm": 0.1928,
   "rotation_axis_cos_depth": 0.496,
@@ -3598,7 +3547,6 @@
   "crop": "flip1_C3_k7",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -3633,7 +3581,6 @@
    1.0278,
    0.9929
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.5035,
   "strain_only_mm": 0.2007,
   "rotation_axis_cos_depth": 0.455,
@@ -3693,7 +3640,6 @@
   "crop": "flip1_C3_k7",
   "tool": "mri_robust_register_mask",
   "setting": "NMI, default start, --maskmov",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: affine.lta",
    "",
@@ -3728,7 +3674,6 @@
    1.0308,
    0.4898
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.33,
   "strain_only_mm": 3.4421,
   "rotation_axis_cos_depth": 0.328,
@@ -3809,7 +3754,6 @@
    0.218,
    0.2086
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.8091,
   "strain_only_mm": 3.8428,
   "rotation_axis_cos_depth": 0.352,
@@ -3890,7 +3834,6 @@
    1.2639,
    1.0128
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.6548,
   "strain_only_mm": 1.8778,
   "rotation_axis_cos_depth": 0.187,
@@ -3971,7 +3914,6 @@
    1.0076,
    0.9633
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6003,
   "strain_only_mm": 0.1923,
   "rotation_axis_cos_depth": 0.515,
@@ -4031,7 +3973,6 @@
   "crop": "flip1_C3_k8",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -4066,7 +4007,6 @@
    1.0417,
    0.9761
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.391,
   "strain_only_mm": 0.3261,
   "rotation_axis_cos_depth": 0.441,
@@ -4147,7 +4087,6 @@
    1.0258,
    0.9421
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4283,
   "strain_only_mm": 0.2625,
   "rotation_axis_cos_depth": 0.449,
@@ -4228,7 +4167,6 @@
    0.8703,
    0.6272
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.1579,
   "strain_only_mm": 2.1119,
   "rotation_axis_cos_depth": 0.357,
@@ -4309,7 +4247,6 @@
    0.0395,
    0.039
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.5326,
   "strain_only_mm": 4.7145,
   "rotation_axis_cos_depth": 0.096,
@@ -4390,7 +4327,6 @@
    1.3478,
    1.0694
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.6808,
   "strain_only_mm": 1.9394,
   "rotation_axis_cos_depth": 0.406,
@@ -4471,7 +4407,6 @@
    1.0011,
    0.9571
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4468,
   "strain_only_mm": 0.1939,
   "rotation_axis_cos_depth": 0.451,
@@ -4531,7 +4466,6 @@
   "crop": "flip1_C3_k9",
   "tool": "elastix_mask",
   "setting": "model zoo, geometric centre, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -4566,7 +4500,6 @@
    0.9883,
    0.9605
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4835,
   "strain_only_mm": 0.1847,
   "rotation_axis_cos_depth": 0.462,
@@ -4647,7 +4580,6 @@
    1.0047,
    0.9723
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.4652,
   "strain_only_mm": 0.164,
   "rotation_axis_cos_depth": 0.458,
@@ -4728,7 +4660,6 @@
    1.0657,
    0.9845
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.3628,
   "strain_only_mm": 0.3668,
   "rotation_axis_cos_depth": 0.437,
@@ -4809,7 +4740,6 @@
    0.9995,
    0.9511
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.1147,
   "strain_only_mm": 0.1995,
   "rotation_axis_cos_depth": 0.019,

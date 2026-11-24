@@ -1,11 +1,7 @@
 """Transform files of the baseline tools as one 4x4 matrix T: moving world -> fixed world, NIfTI RAS mm.
 The conventions follow ITK ComputeOffset, the ANTs wiki, the reg_aladin usage text, the FLIRT FAQ with fslpy, FreeSurfer
-include/transform.h and the greedy reference docs.
-
-    python bench/baselines/convert_affines.py scale-header in.nii.gz out.nii.gz 10
-"""
+include/transform.h and the greedy reference docs."""
 import re
-import sys
 
 import numpy as np
 import nibabel as nib
@@ -83,13 +79,8 @@ def elastix_tp_to_mov2fix_ras(path):
     return np.linalg.inv(lps_to_ras_matrix(elastix_tp_fixed2moving_lps(path)))
 
 
-def niftyreg_txt_to_mov2fix_ras(path):
-    """T from a reg_aladin -aff file, which maps reference to floating in RAS mm."""
-    return np.linalg.inv(np.loadtxt(path))
-
-
-def greedy_mat_to_mov2fix_ras(path):
-    """T from a greedy -a -o file, which maps fixed to moving in RAS mm."""
+def fix2mov_txt_to_mov2fix_ras(path):
+    """T from a reg_aladin -aff or a greedy -a -o file, a text matrix that maps fixed to moving in RAS mm."""
     return np.linalg.inv(np.loadtxt(path))
 
 
@@ -138,10 +129,3 @@ def unscale_world_transform(T_scaled, s):
     """The transform between the original worlds from one between headers both scaled by s."""
     S = np.diag([s, s, s, 1.0])
     return np.linalg.inv(S) @ T_scaled @ S
-
-
-if __name__ == "__main__":
-    if len(sys.argv) >= 5 and sys.argv[1] == "scale-header":
-        nib.save(scale_header(nib.load(sys.argv[2]), float(sys.argv[4])), sys.argv[3])
-    else:
-        print(__doc__)

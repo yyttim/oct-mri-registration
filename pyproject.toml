@@ -18,7 +18,6 @@ tilestack = ["h5py"]
 
 [project.urls]
 Homepage = "https://github.com/yyttim/oct-mri-registration"
-Repository = "https://github.com/yyttim/oct-mri-registration"
 
 [project.scripts]
 octreg = "octreg.cli:main"

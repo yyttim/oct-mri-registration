@@ -1,17 +1,4 @@
-"""The block, its slabs and their cut surfaces.
-
-The block is described by a JSON file, named by the environment variable TILESTACK_BLOCK (python -m tilestack sets it):
-    slab_file   path of a slab with {} for its number, e.g. "/data/block/Mus_slice{:03d}.mat"
-    work        folder for the caches of the run
-    slabs       slab numbers in cut order, all with the same imaging window
-    voxel_mm    the isotropic voxel of the maps
-    neighbours  slabs ahead that still share tissue: the window's depth against the cut step
-    margin_mm   skipped under the cut surface: the surface reflection
-    deep_mm     end of the reliable planes: below it the estimate rises toward the window's bottom
-    deep_a_mm   deepest raw plane matched in the older slab of a pair and taken by the volume
-A slab is a MATLAB v7.3 file with one array M (z, y, x) of mu_s per um, read as h5py returns it: z grows with depth
-and plane 0 lies above the cut surface. Lengths of the method are given in mm and converted to voxels here, once.
-"""
+"""The block (docs/TILESTACK.md, Usage), its slabs and their cut surfaces."""
 import json
 import os
 
@@ -19,13 +6,15 @@ import h5py
 import numpy as np
 from scipy.ndimage import distance_transform_edt, median_filter
 
+from . import BELOW
+
 if not os.environ.get("TILESTACK_BLOCK"):
     raise RuntimeError("TILESTACK_BLOCK is not set: python -m tilestack BLOCK_JSON OUT_DIR sets it to the block's JSON")
 BLOCK = json.load(open(os.environ["TILESTACK_BLOCK"]))
 SLAB_FILE, WORK, SLABS = BLOCK["slab_file"], BLOCK["work"], [int(s) for s in BLOCK["slabs"]]
+assert all(0 <= s < BELOW for s in SLABS), f"slab numbers run from 0 to {BELOW - 1}: the source map adds {BELOW} to them"
 VOX, NEIGHBOURS = float(BLOCK["voxel_mm"]), int(BLOCK["neighbours"])
 MARGIN, DEEP, DEEP_A = (int(round(float(BLOCK[k]) / VOX)) for k in ("margin_mm", "deep_mm", "deep_a_mm"))
-MATCH_MM = (0.08, 0.16, 0.24, 0.32, 0.40)     # depths under the newer slab's cut that the dense matcher reads
 PAD = int(round(0.64 / VOX))                   # margin of the output grid around the raw field
 LEVEL_MM = 0.04                                # working grid in-plane: the 40 um volume
 SURFACE_TOL = round(0.06 / VOX, 6)             # planes a column may lie off its 3 x 3 neighbourhood's median cut
@@ -47,7 +36,7 @@ def _shape():
 
 
 NP, NY, NX = _shape()                          # planes of the imaging window, in-plane size of the maps
-XC, YC = NX / 2.0, (NY + 1) / 2.0              # centre of the field, the origin of the linear terms
+XC, YC = NX / 2.0, (NY + 1) / 2.0              # centre of the field, the origin of a pair's depth offset plane
 
 
 def check_work(settings):
@@ -85,12 +74,9 @@ def load40(s):
     return np.load(path)
 
 
-def surface(M, tol=SURFACE_TOL):
-    """Cut surface (plane index) per pixel and the coverage mask. The cut is the plane where log10 mu_s rises most
-    sharply along depth: the three planes from it down all lie above the three planes over it, by as much as possible.
-    A rise, not a level: water reads brighter the less signal lies under it in the window, so no level separates it
-    from the material in every column. A column more than tol planes from the median of its 3 x 3 neighbourhood takes
-    that median: single columns are not pits. The coverage mask is where the middle plane of the window holds data."""
+def surface(M):
+    """Cut surface (plane index) per pixel (docs/TILESTACK.md, Cut surface) and the coverage mask: where the middle
+    plane of the window holds data."""
     valid = M[M.shape[0] // 2] > 0
     L = np.log10(np.clip(M, 1e-6, None))
     J = np.minimum(np.minimum(L[:-2], L[1:-1]), L[2:])                  # the three planes from z down
@@ -102,8 +88,8 @@ def surface(M, tol=SURFACE_TOL):
     S = J.argmax(0).astype(np.float32)
     del J
     iy, ix = distance_transform_edt(~valid, return_distances=False, return_indices=True)
-    med = median_filter(S[iy, ix], size=3, mode="nearest")
-    return np.where(valid & (np.abs(S - med) > tol), med, S).astype(np.float32), valid
+    med = median_filter(S[iy, ix], size=3, mode="nearest")             # single columns are not pits
+    return np.where(valid & (np.abs(S - med) > SURFACE_TOL), med, S).astype(np.float32), valid
 
 
 def geometry(s):

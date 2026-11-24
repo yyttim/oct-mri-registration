@@ -2,21 +2,13 @@
 """Standard registration tools on the I46 crops (bench/i46/README.md), one documented setting each and no mask.
 
 The settings and commands are in bench/baselines/standard_tools.py. The moving image is the OCT box-averaged to 0.15 mm, the
-fixed image the C3 crops k = 0..9 of the 10 deg FLASH and k = 0 of the 20 and 30 deg FLASH. Each option changes the runs on
-the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>:
-
---search       the tools' own global searches
---mask         the test's specimen mask as the moving mask of the tools that take one
---near         a start near R as the header of the moving image, each tool started from the header
---near-mask    --near and --mask together, for the tools that take a mask
---near-zeroed  --near on the moving OCT zeroed outside the specimen mask, every tool
---atR          the start at R, its closest shear-free pose, as the header, each tool started from the header
---atR-mask     --atR and --mask together
+fixed image the C3 crops k = 0..9 of the 10 deg FLASH and k = 0 of the 20 and 30 deg FLASH. Each option from --search
+to --atR-mask changes the runs on the 10 deg C3 crops, into <project root>/bench_runs/I46/baselines_<kind>.
 
     python bench/i46/baselines.py prepare [--search | --mask | --near | ...]   the inputs, the run.sh of every run and queue.sh
     bash <project root>/bench_runs/I46/baselines/queue.sh                     one run at a time (baselines_<kind>/queue.sh)
     python bench/i46/baselines.py octreg --near | --atR                       octreg's refinement from the start of every crop
-    python bench/i46/baselines.py collect [--search | --mask | --near | ...] [--runs DIR] [-o FILE]
+    python bench/i46/baselines.py collect [--search | --mask | --near | ...]
 
 collect writes <run>/T_oct2mri.txt, scores it against R and checks the conversion of every run that has the tool's own
 resampling. The scores go to bench/results/I46/baselines[_<kind>].json. A run without a readable transform is a tool error.
@@ -35,11 +27,13 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from common import (FLIPS, MASK, OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_name, error,  # noqa: E402
-                    reference, tissue, vessel_score)
+from common import (FLIPS, MASK, OCT, PRIMARY, PRIMARY_C3, REPO, RESULTS, WORK, crop_file, crop_name, error,  # noqa: E402
+                    homogeneous, reference, tissue, vessel_score)
 
 sys.path.insert(0, str(REPO / "bench/baselines"))
 import standard_tools as H  # noqa: E402
+from convert_affines import scale_header  # noqa: E402
+from octreg import io  # noqa: E402
 
 BL = WORK / "baselines"
 VARIANTS = {"search": H.SEARCH, "mask": H.MASK, "near": H.NEAR, "near_mask": H.NEAR_MASK, "near_zeroed": H.NEAR,
@@ -51,13 +45,12 @@ NEAR_SEED, NEAR_DEG, NEAR_MM = 4700, 10.0, 1.0
 TURN = {"near": (NEAR_DEG, NEAR_MM), "atR": (0.0, 0.0)}                                                 # degrees, mm
 OCTREG = {"near": "octreg_near", "atR": "octreg_atR"}                  # the kinds octreg runs from, its row
 OCTREG_SETTING = "§4 from the start, no search"
-ZEROED = "the OCT zeroed outside the specimen mask"
 
 
 def runs(kind=None):
     if kind:
-        return [(crop_name(PRIMARY, "C3", k), t) for k in range(SEEDS) for t in VARIANTS[kind]]
-    crops = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)] + [crop_name(im, "C3", 0) for im in FLIPS if im != PRIMARY]
+        return [(c, t) for c in PRIMARY_C3 for t in VARIANTS[kind]]
+    crops = PRIMARY_C3 + [crop_name(im, "C3", 0) for im in FLIPS if im != PRIMARY]
     return [(c, t) for c in crops for t in H.TOOLS]
 
 
@@ -103,18 +96,13 @@ def near_start(k, A, degrees=NEAR_DEG, mm=NEAR_MM):
 
 def start_from_S(st):
     """Mean and max distance (mm) of H_k from S_k over the tissue points."""
-    X = np.c_[tissue(), np.ones(len(tissue()))].T
-    e = np.linalg.norm(((np.array(st["H"]) - np.array(st["S"])) @ X)[:3], axis=0)
+    e = np.linalg.norm(((np.array(st["H"]) - np.array(st["S"])) @ homogeneous())[:3], axis=0)
     return {"mean_mm": round(float(e.mean()), 4), "max_mm": round(float(e.max()), 4)}
 
 
 def with_header(arr, hdr, path):
     """Save arr as path with the qform and sform hdr, and check the saved header holds hdr. -> max |sform - qform|"""
-    img = nib.Nifti1Image(arr, hdr)
-    img.header.set_xyzt_units("mm")
-    img.header.set_qform(hdr, code=1)
-    img.header.set_sform(hdr, code=1)
-    nib.save(img, str(path))
+    io.save_nifti(arr, hdr, path)
     back = nib.load(str(path)).header
     q, s = back.get_qform(), back.get_sform()
     if np.abs(s - hdr).max() > 1e-9 or np.abs(q - s).max() > 1e-5:
@@ -130,7 +118,6 @@ def near_inputs(crop, kind="near"):
     record = json.loads((src / "inputs.json").read_text(encoding="utf-8"))
     if H.made_from(d / "inputs.json", record):
         return d
-    from convert_affines import scale_header
     d.mkdir(parents=True, exist_ok=True)
     o = nib.load(str(src / "oct.nii.gz"))
     st = near_start(int(crop.rsplit("_k", 1)[1]), o.affine, *TURN[kind])
@@ -148,7 +135,6 @@ def near_inputs(crop, kind="near"):
 def header_mask(crop, kind):
     """Write the specimen mask of the main inputs into the header-start inputs of a crop with their OCT header H_k A (the
     mask resampled through the pose would be misplaced), and its x10 copy."""
-    from convert_affines import scale_header
     d, m = near_inputs(crop, kind), H.prepare_mask(inputs(crop), MASK) / "oct_mask.nii.gz"
     src = {"mask": str(m.resolve())}
     if H.made_from(d / "mask.json", src):
@@ -162,7 +148,6 @@ def header_mask(crop, kind):
 
 def zeroed_inputs(crop):
     """Inputs of the near runs of a crop on the OCT zeroed outside the specimen mask: the near inputs with that OCT."""
-    from convert_affines import scale_header
     d, src = BASE["near_zeroed"] / crop / "inputs", near_inputs(crop)
     m = H.prepare_mask(inputs(crop), MASK) / "oct_mask.nii.gz"
     record = {**json.loads((src / "inputs.json").read_text(encoding="utf-8")), "mask": str(m.resolve())}
@@ -240,22 +225,20 @@ def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
     hk = HEADER.get(kind)
 
     def extra(crop):
-        """The start H_k of the crop, scored, and the input where it is not the main one: in every row, tool errors too."""
+        """The start H_k of the crop, scored: in every row, tool errors too."""
         out = {}
         if hk:
             st = start_of(crop, hk)
             out.update(H=H.as_list(st["H"]), start_pose=error(np.array(st["H"])), start_from_S=st["start_from_S"])
-        if kind == "near_zeroed":
-            out["input"] = ZEROED
         return out
 
     def score(crop, T):
         return {**error(T), **vessel_score(T), **extra(crop)}
     start = (lambda crop: np.array(start_of(crop, hk)["H"])) if hk else None
-    rows = H.collect(base, score, lambda crop: True, tools=list(VARIANTS[kind]) if kind else H.TOOLS,
+    rows = H.collect(base, score, tools=list(VARIANTS[kind]) if kind else H.TOOLS,
                      inputs=(lambda crop: SHARED[kind] / crop / "inputs") if kind in SHARED else None, start=start)
     for r in rows:
-        if r["tier"] == "tool error":
+        if "mean_mm" not in r:
             r.update(extra(r["crop"]))
     expected = set(runs(kind))
     if kind in OCTREG:
@@ -282,15 +265,10 @@ if __name__ == "__main__":
                    help="--near on the OCT zeroed outside the specimen mask")
     g.add_argument("--atR", dest="kind", action="store_const", const="atR", help="the start at R in the moving header")
     g.add_argument("--atR-mask", dest="kind", action="store_const", const="atR_mask", help="--atR with the moving mask")
-    ap.add_argument("--runs", type=Path, help="collect: the folder of runs (default "
-                                              "<project root>/bench_runs/I46/baselines, or baselines_<kind>)")
-    ap.add_argument("-o", "--out", type=Path, help="collect: the JSON file to write (default bench/results/I46/baselines.json, "
-                                                   "or baselines_<kind>.json)")
     a = ap.parse_args()
     if a.step == "prepare":
         prepare(a.kind)
     elif a.step == "octreg":
         octreg(a.kind)
     else:
-        collect(a.runs or BASE.get(a.kind, BL),
-                a.out or RESULTS / (f"baselines_{a.kind}.json" if a.kind else "baselines.json"), a.kind)
+        collect(BASE.get(a.kind, BL), RESULTS / (f"baselines_{a.kind}.json" if a.kind else "baselines.json"), a.kind)

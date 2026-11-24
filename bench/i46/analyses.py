@@ -28,7 +28,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import OCT, PRIMARY, REPO, RESULTS, SEEDS, WORK, crop_file, crop_name, error, vessel_score  # noqa: E402
+from common import OCT, PRIMARY, PRIMARY_C3, REPO, RESULTS, WORK, crop_file, crop_name, error, vessel_score  # noqa: E402
 from bench.ablate import VARIANTS as CHANGES, code_id, header_start, made_by  # noqa: E402
 
 ABL, STARTS = WORK / "ablation", WORK / "starts"
@@ -81,7 +81,7 @@ def turned_start(turn):
 def collect():
     from octreg import __version__
     code = code_id()
-    abl = [(crop_name(PRIMARY, "C3", k), v) for k in range(SEEDS) for v in VARIANTS]
+    abl = [(crop, v) for crop in PRIMARY_C3 for v in VARIANTS]
     st = list(starts().items())
     runs = [ABL / crop / v for crop, v in abl] + [STARTS / name / "base" for name, _ in st]
     other = [str(run) for run in runs if made_by(run) != code]
@@ -107,8 +107,7 @@ def main():
     code, failed = code_id(), []
     if a.step == "ablate":
         for v in VARIANTS:
-            for k in range(SEEDS):
-                crop = crop_name(PRIMARY, "C3", k)
+            for crop in PRIMARY_C3:
                 if made_by(ABL / crop / v) != code and not ablate_one(crop, ABL / crop, v):
                     failed.append(f"{crop}/{v}")
     elif a.step == "starts":

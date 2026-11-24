@@ -24,7 +24,6 @@
    1.3425,
    1.2875
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.6594,
   "strain_only_mm": 2.4906,
   "rotation_axis_cos_depth": 0.868,
@@ -93,7 +92,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -116,7 +114,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -177,7 +174,6 @@
    1.0053,
    0.9666
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8982,
   "strain_only_mm": 0.0961,
   "rotation_axis_cos_depth": 0.414,
@@ -246,7 +242,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -269,7 +264,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": null,
   "check_dice": null,
   "check_voxels": {
@@ -309,7 +303,6 @@
   "crop": "flip1_C3_k0",
   "tool": "elastix_near",
   "setting": "model zoo, no initialisation",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -366,7 +359,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -388,8 +380,7 @@
   "start_from_S": {
    "mean_mm": 0.0818,
    "max_mm": 0.2322
-  },
-  "input": "the OCT zeroed outside the specimen mask"
+  }
  },
  {
   "crop": "flip1_C3_k0",
@@ -416,7 +407,6 @@
    1.1255,
    1.0087
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2704,
   "strain_only_mm": 0.8063,
   "rotation_axis_cos_depth": 0.846,
@@ -485,7 +475,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -508,7 +497,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -569,7 +557,6 @@
    1.1491,
    0.8007
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.0824,
   "strain_only_mm": 2.9299,
   "rotation_axis_cos_depth": 0.057,
@@ -638,7 +625,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -661,7 +647,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -722,7 +707,6 @@
    1.017,
    0.5018
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.1003,
   "strain_only_mm": 1.1721,
   "rotation_axis_cos_depth": 0.323,
@@ -791,7 +775,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -814,7 +797,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9999,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -875,7 +857,6 @@
    1.0046,
    0.9649
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.7116,
   "strain_only_mm": 0.1006,
   "rotation_axis_cos_depth": 0.337,
@@ -944,7 +925,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -967,7 +947,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -1028,7 +1007,6 @@
    0.6986,
    0.5327
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.9383,
   "strain_only_mm": 1.4503,
   "rotation_axis_cos_depth": 0.195,
@@ -1097,7 +1075,6 @@
     1.0046,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.675,
    "strain_only_mm": 0.1006,
    "rotation_axis_cos_depth": 0.579,
@@ -1120,7 +1097,6 @@
    "mean_mm": 0.0818,
    "max_mm": 0.2322
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -1181,7 +1157,6 @@
    1.3641,
    1.2924
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4529,
   "strain_only_mm": 2.2813,
   "rotation_axis_cos_depth": 0.63,
@@ -1250,7 +1225,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -1273,7 +1247,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -1334,7 +1307,6 @@
    0.9859,
    0.9601
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.9836,
   "strain_only_mm": 0.1373,
   "rotation_axis_cos_depth": 0.85,
@@ -1403,7 +1375,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -1426,7 +1397,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -1487,7 +1457,6 @@
    1.1211,
    1.0214
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3416,
   "strain_only_mm": 1.303,
   "rotation_axis_cos_depth": 0.513,
@@ -1556,7 +1525,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -1579,7 +1547,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.997,
   "check_dice": 0.6942,
   "check_voxels": {
@@ -1640,7 +1607,6 @@
    1.043,
    1.0115
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3232,
   "strain_only_mm": 0.2394,
   "rotation_axis_cos_depth": 0.685,
@@ -1709,7 +1675,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -1732,7 +1697,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -1793,7 +1757,6 @@
    1.1962,
    0.8158
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.3068,
   "strain_only_mm": 3.6989,
   "rotation_axis_cos_depth": 0.035,
@@ -1862,7 +1825,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -1885,7 +1847,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -1946,7 +1907,6 @@
    0.9797,
    0.6407
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0771,
   "strain_only_mm": 1.0741,
   "rotation_axis_cos_depth": 0.029,
@@ -2015,7 +1975,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -2038,7 +1997,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -2099,7 +2057,6 @@
    1.0616,
    1.018
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.8021,
   "strain_only_mm": 0.2906,
   "rotation_axis_cos_depth": 0.089,
@@ -2168,7 +2125,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -2191,7 +2147,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": null,
   "check_dice": null,
   "check_voxels": {
@@ -2252,7 +2207,6 @@
    0.7048,
    0.5042
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0017,
   "strain_only_mm": 1.4147,
   "rotation_axis_cos_depth": 0.087,
@@ -2321,7 +2275,6 @@
     1.0061,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6322,
    "strain_only_mm": 0.1012,
    "rotation_axis_cos_depth": 0.124,
@@ -2344,7 +2297,6 @@
    "mean_mm": 0.0681,
    "max_mm": 0.1891
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -2405,7 +2357,6 @@
    1.4935,
    1.3383
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.1173,
   "strain_only_mm": 2.8686,
   "rotation_axis_cos_depth": 0.879,
@@ -2474,7 +2425,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -2497,7 +2447,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -2558,7 +2507,6 @@
    0.9928,
    0.9671
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8776,
   "strain_only_mm": 0.1117,
   "rotation_axis_cos_depth": 0.265,
@@ -2627,7 +2575,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -2650,7 +2597,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -2711,7 +2657,6 @@
    1.1628,
    0.9044
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2029,
   "strain_only_mm": 1.8455,
   "rotation_axis_cos_depth": 0.583,
@@ -2780,7 +2725,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -2803,7 +2747,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9967,
   "check_dice": 0.7504,
   "check_voxels": {
@@ -2864,7 +2807,6 @@
    1.044,
    0.9806
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0724,
   "strain_only_mm": 0.245,
   "rotation_axis_cos_depth": 0.41,
@@ -2933,7 +2875,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -2956,7 +2897,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -3017,7 +2957,6 @@
    1.4815,
    0.8073
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.1176,
   "strain_only_mm": 5.7471,
   "rotation_axis_cos_depth": 0.028,
@@ -3086,7 +3025,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -3109,7 +3047,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -3170,7 +3107,6 @@
    0.7246,
    0.5596
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8677,
   "strain_only_mm": 1.6822,
   "rotation_axis_cos_depth": 0.105,
@@ -3239,7 +3175,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -3262,7 +3197,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9998,
   "check_voxels": {
@@ -3323,7 +3257,6 @@
    0.9027,
    0.8703
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.7501,
   "strain_only_mm": 0.4962,
   "rotation_axis_cos_depth": 0.312,
@@ -3392,7 +3325,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -3415,7 +3347,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9489,
   "check_dice": 0.8759,
   "check_voxels": {
@@ -3476,7 +3407,6 @@
    0.7329,
    0.4114
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5279,
   "strain_only_mm": 1.4979,
   "rotation_axis_cos_depth": 0.711,
@@ -3545,7 +3475,6 @@
     1.0024,
     0.967
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7165,
    "strain_only_mm": 0.0994,
    "rotation_axis_cos_depth": 0.865,
@@ -3568,7 +3497,6 @@
    "mean_mm": 0.102,
    "max_mm": 0.2466
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -3629,7 +3557,6 @@
    1.4132,
    1.2904
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.3562,
   "strain_only_mm": 2.7955,
   "rotation_axis_cos_depth": 0.924,
@@ -3698,7 +3625,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -3721,7 +3647,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -3782,7 +3707,6 @@
    0.9951,
    0.9728
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6929,
   "strain_only_mm": 0.0616,
   "rotation_axis_cos_depth": 0.163,
@@ -3851,7 +3775,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -3874,7 +3797,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -3935,7 +3857,6 @@
    1.2504,
    0.9243
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5245,
   "strain_only_mm": 2.6013,
   "rotation_axis_cos_depth": 0.958,
@@ -4004,7 +3925,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4027,7 +3947,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9969,
   "check_dice": 0.7337,
   "check_voxels": {
@@ -4088,7 +4007,6 @@
    1.047,
    0.9881
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2155,
   "strain_only_mm": 0.3138,
   "rotation_axis_cos_depth": 0.942,
@@ -4157,7 +4075,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4180,7 +4097,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -4241,7 +4157,6 @@
    1.0818,
    0.9227
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.8777,
   "strain_only_mm": 0.9396,
   "rotation_axis_cos_depth": 0.418,
@@ -4310,7 +4225,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4333,7 +4247,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -4394,7 +4307,6 @@
    1.1859,
    0.5158
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8128,
   "strain_only_mm": 1.4338,
   "rotation_axis_cos_depth": 0.046,
@@ -4463,7 +4375,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4486,7 +4397,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9999,
   "check_dice": 0.9998,
   "check_voxels": {
@@ -4547,7 +4457,6 @@
    0.1506,
    0.1457
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.1129,
   "strain_only_mm": 4.1722,
   "rotation_axis_cos_depth": 0.354,
@@ -4616,7 +4525,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4639,7 +4547,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -4700,7 +4607,6 @@
    0.7506,
    0.5024
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.058,
   "strain_only_mm": 1.3401,
   "rotation_axis_cos_depth": 0.081,
@@ -4769,7 +4675,6 @@
     1.0014,
     0.9655
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.626,
    "strain_only_mm": 0.1014,
    "rotation_axis_cos_depth": 0.124,
@@ -4792,7 +4697,6 @@
    "mean_mm": 0.089,
    "max_mm": 0.2221
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9999,
   "check_dice": 0.9997,
   "check_voxels": {
@@ -4853,7 +4757,6 @@
    1.4449,
    1.3294
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.541,
   "strain_only_mm": 2.4396,
   "rotation_axis_cos_depth": 0.744,
@@ -4922,7 +4825,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -4945,7 +4847,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -5006,7 +4907,6 @@
    0.9998,
    0.9659
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3231,
   "strain_only_mm": 0.0994,
   "rotation_axis_cos_depth": 0.93,
@@ -5075,7 +4975,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5098,7 +4997,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -5159,7 +5057,6 @@
    1.1293,
    0.8906
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4564,
   "strain_only_mm": 1.3628,
   "rotation_axis_cos_depth": 0.74,
@@ -5228,7 +5125,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5251,7 +5147,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9969,
   "check_dice": 0.7128,
   "check_voxels": {
@@ -5312,7 +5207,6 @@
    1.0222,
    0.9886
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1674,
   "strain_only_mm": 0.1904,
   "rotation_axis_cos_depth": 0.964,
@@ -5381,7 +5275,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5404,7 +5297,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -5465,7 +5357,6 @@
    1.0785,
    0.9895
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.8626,
   "strain_only_mm": 0.4172,
   "rotation_axis_cos_depth": 0.456,
@@ -5534,7 +5425,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5557,7 +5447,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -5618,7 +5507,6 @@
    0.9697,
    0.6526
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7094,
   "strain_only_mm": 0.9794,
   "rotation_axis_cos_depth": 0.707,
@@ -5687,7 +5575,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5710,7 +5597,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9997,
   "check_voxels": {
@@ -5771,7 +5657,6 @@
    0.9995,
    0.9661
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.2023,
   "strain_only_mm": 0.0992,
   "rotation_axis_cos_depth": 0.665,
@@ -5840,7 +5725,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -5863,7 +5747,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": NaN,
   "check_dice": 0.0,
   "check_voxels": {
@@ -5924,7 +5807,6 @@
    0.7045,
    0.4704
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.78,
   "strain_only_mm": 1.4435,
   "rotation_axis_cos_depth": 0.887,
@@ -5993,7 +5875,6 @@
     0.9995,
     0.9661
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7022,
    "strain_only_mm": 0.0992,
    "rotation_axis_cos_depth": 0.923,
@@ -6016,7 +5897,6 @@
    "mean_mm": 0.1084,
    "max_mm": 0.302
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": null,
   "check_dice": null,
   "check_voxels": {
@@ -6077,7 +5957,6 @@
    1.4672,
    1.3434
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6558,
   "strain_only_mm": 2.7037,
   "rotation_axis_cos_depth": 0.969,
@@ -6146,7 +6025,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6169,7 +6047,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -6230,7 +6107,6 @@
    0.1877,
    0.1472
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3911,
   "strain_only_mm": 3.6989,
   "rotation_axis_cos_depth": 0.559,
@@ -6299,7 +6175,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6322,7 +6197,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -6383,7 +6257,6 @@
    1.1328,
    0.9667
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.3064,
   "strain_only_mm": 1.9157,
   "rotation_axis_cos_depth": 0.831,
@@ -6452,7 +6325,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6475,7 +6347,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9971,
   "check_dice": 0.7055,
   "check_voxels": {
@@ -6536,7 +6407,6 @@
    1.0463,
    1.0058
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0899,
   "strain_only_mm": 0.3247,
   "rotation_axis_cos_depth": 0.678,
@@ -6605,7 +6475,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6628,7 +6497,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -6689,7 +6557,6 @@
    0.954,
    0.9208
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.2769,
   "strain_only_mm": 0.3275,
   "rotation_axis_cos_depth": 0.229,
@@ -6758,7 +6625,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6781,7 +6647,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -6842,7 +6707,6 @@
    0.8895,
    0.7089
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4268,
   "strain_only_mm": 1.0609,
   "rotation_axis_cos_depth": 0.466,
@@ -6911,7 +6775,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -6934,7 +6797,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -6995,7 +6857,6 @@
    1.0018,
    0.9675
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8055,
   "strain_only_mm": 0.0989,
   "rotation_axis_cos_depth": 0.955,
@@ -7064,7 +6925,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -7087,7 +6947,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9998,
   "check_dice": 0.9998,
   "check_voxels": {
@@ -7148,7 +7007,6 @@
    0.7302,
    0.5442
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5625,
   "strain_only_mm": 1.249,
   "rotation_axis_cos_depth": 0.267,
@@ -7217,7 +7075,6 @@
     1.0026,
     0.9677
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7524,
    "strain_only_mm": 0.099,
    "rotation_axis_cos_depth": 0.977,
@@ -7240,7 +7097,6 @@
    "mean_mm": 0.1103,
    "max_mm": 0.2594
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -7301,7 +7157,6 @@
    1.4108,
    1.3261
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2431,
   "strain_only_mm": 2.9915,
   "rotation_axis_cos_depth": 0.946,
@@ -7370,7 +7225,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -7393,7 +7247,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -7454,7 +7307,6 @@
    0.0755,
    0.0475
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5637,
   "strain_only_mm": 4.5218,
   "rotation_axis_cos_depth": 0.879,
@@ -7523,7 +7375,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -7546,7 +7397,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -7607,7 +7457,6 @@
    1.0932,
    0.9778
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.2307,
   "strain_only_mm": 0.8921,
   "rotation_axis_cos_depth": 0.911,
@@ -7676,7 +7525,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -7699,7 +7547,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9971,
   "check_dice": 0.6709,
   "check_voxels": {
@@ -7760,7 +7607,6 @@
    1.0363,
    1.0286
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.5678,
   "strain_only_mm": 0.2837,
   "rotation_axis_cos_depth": 0.024,
@@ -7829,7 +7675,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -7852,7 +7697,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -7913,7 +7757,6 @@
    1.345,
    0.7498
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.6284,
   "strain_only_mm": 3.7273,
   "rotation_axis_cos_depth": 0.135,
@@ -7982,7 +7825,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -8005,7 +7847,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -8066,7 +7907,6 @@
    0.9731,
    0.5807
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0121,
   "strain_only_mm": 0.9,
   "rotation_axis_cos_depth": 0.502,
@@ -8135,7 +7975,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -8158,7 +7997,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -8219,7 +8057,6 @@
    1.124,
    1.0772
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.7315,
   "strain_only_mm": 0.5864,
   "rotation_axis_cos_depth": 0.452,
@@ -8288,7 +8125,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -8311,7 +8147,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -8372,7 +8207,6 @@
    0.7207,
    0.5367
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.1628,
   "strain_only_mm": 1.2717,
   "rotation_axis_cos_depth": 0.182,
@@ -8441,7 +8275,6 @@
     1.0065,
     0.9648
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6227,
    "strain_only_mm": 0.1016,
    "rotation_axis_cos_depth": 0.097,
@@ -8464,7 +8297,6 @@
    "mean_mm": 0.0637,
    "max_mm": 0.1773
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -8525,7 +8357,6 @@
    1.3587,
    1.266
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.3334,
   "strain_only_mm": 2.7711,
   "rotation_axis_cos_depth": 0.957,
@@ -8594,7 +8425,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -8617,7 +8447,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -8678,7 +8507,6 @@
    0.0843,
    0.0555
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4612,
   "strain_only_mm": 4.5085,
   "rotation_axis_cos_depth": 0.616,
@@ -8747,7 +8575,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -8770,7 +8597,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -8831,7 +8657,6 @@
    1.2813,
    0.9268
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6376,
   "strain_only_mm": 2.5419,
   "rotation_axis_cos_depth": 0.729,
@@ -8900,7 +8725,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -8923,7 +8747,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9969,
   "check_dice": 0.7314,
   "check_voxels": {
@@ -8984,7 +8807,6 @@
    1.085,
    1.0171
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5859,
   "strain_only_mm": 0.4922,
   "rotation_axis_cos_depth": 0.464,
@@ -9053,7 +8875,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -9076,7 +8897,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -9137,7 +8957,6 @@
    1.4753,
    0.8994
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.1134,
   "strain_only_mm": 4.474,
   "rotation_axis_cos_depth": 0.058,
@@ -9206,7 +9025,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -9229,7 +9047,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -9290,7 +9107,6 @@
    1.0902,
    0.5864
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3517,
   "strain_only_mm": 1.4196,
   "rotation_axis_cos_depth": 0.516,
@@ -9359,7 +9175,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -9382,7 +9197,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -9443,7 +9257,6 @@
    0.7399,
    0.7078
   ],
-  "tier": "beyond",
   "rotation_only_mm": 3.2021,
   "strain_only_mm": 1.3048,
   "rotation_axis_cos_depth": 0.531,
@@ -9512,7 +9325,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -9535,7 +9347,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -9596,7 +9407,6 @@
    0.6996,
    0.5214
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.055,
   "strain_only_mm": 1.3896,
   "rotation_axis_cos_depth": 0.08,
@@ -9665,7 +9475,6 @@
     1.0067,
     0.9649
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.6243,
    "strain_only_mm": 0.1017,
    "rotation_axis_cos_depth": 0.242,
@@ -9688,7 +9497,6 @@
    "mean_mm": 0.0623,
    "max_mm": 0.1716
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -9749,7 +9557,6 @@
    1.3926,
    1.3291
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4862,
   "strain_only_mm": 2.406,
   "rotation_axis_cos_depth": 0.909,
@@ -9818,7 +9625,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -9841,7 +9647,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -9902,7 +9707,6 @@
    0.0579,
    0.0466
   ],
-  "tier": "beyond",
   "rotation_only_mm": 4.4107,
   "strain_only_mm": 4.1288,
   "rotation_axis_cos_depth": 0.663,
@@ -9971,7 +9775,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -9994,7 +9797,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -10055,7 +9857,6 @@
    1.2331,
    0.9419
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8262,
   "strain_only_mm": 2.6934,
   "rotation_axis_cos_depth": 0.551,
@@ -10124,7 +9925,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10147,7 +9947,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.997,
   "check_dice": 0.7269,
   "check_voxels": {
@@ -10208,7 +10007,6 @@
    1.0423,
    0.9944
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.4002,
   "strain_only_mm": 0.3679,
   "rotation_axis_cos_depth": 0.852,
@@ -10277,7 +10075,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10300,7 +10097,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -10361,7 +10157,6 @@
    1.2981,
    1.0119
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.6742,
   "strain_only_mm": 2.2857,
   "rotation_axis_cos_depth": 0.659,
@@ -10430,7 +10225,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10453,7 +10247,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -10514,7 +10307,6 @@
    0.9546,
    0.6484
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2127,
   "strain_only_mm": 0.9347,
   "rotation_axis_cos_depth": 0.329,
@@ -10583,7 +10375,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10606,7 +10397,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -10667,7 +10457,6 @@
    0.9072,
    0.8628
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.7278,
   "strain_only_mm": 0.5016,
   "rotation_axis_cos_depth": 0.733,
@@ -10736,7 +10525,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10759,7 +10547,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -10820,7 +10607,6 @@
    0.7411,
    0.5533
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.1822,
   "strain_only_mm": 1.2321,
   "rotation_axis_cos_depth": 0.617,
@@ -10889,7 +10675,6 @@
     1.0036,
     0.9651
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7042,
    "strain_only_mm": 0.1002,
    "rotation_axis_cos_depth": 0.753,
@@ -10912,7 +10697,6 @@
    "mean_mm": 0.0898,
    "max_mm": 0.2571
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -10973,7 +10757,6 @@
    1.3149,
    1.2381
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.5185,
   "strain_only_mm": 2.6673,
   "rotation_axis_cos_depth": 0.894,
@@ -11042,7 +10825,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11065,7 +10847,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -11126,7 +10907,6 @@
    0.1183,
    0.0765
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5432,
   "strain_only_mm": 4.3341,
   "rotation_axis_cos_depth": 0.856,
@@ -11195,7 +10975,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11218,7 +10997,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -11279,7 +11057,6 @@
    1.1444,
    0.9582
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5867,
   "strain_only_mm": 2.8251,
   "rotation_axis_cos_depth": 0.41,
@@ -11348,7 +11125,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11371,7 +11147,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9968,
   "check_dice": 0.7635,
   "check_voxels": {
@@ -11432,7 +11207,6 @@
    1.0119,
    0.982
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.4354,
   "strain_only_mm": 0.1702,
   "rotation_axis_cos_depth": 0.934,
@@ -11501,7 +11275,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11524,7 +11297,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -11585,7 +11357,6 @@
    1.3425,
    0.9271
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.3638,
   "strain_only_mm": 4.4963,
   "rotation_axis_cos_depth": 0.386,
@@ -11654,7 +11425,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11677,7 +11447,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {
@@ -11738,7 +11507,6 @@
    1.0907,
    0.9873
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2764,
   "strain_only_mm": 0.9826,
   "rotation_axis_cos_depth": 0.881,
@@ -11807,7 +11575,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11830,7 +11597,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 0.9999,
   "check_voxels": {
@@ -11891,7 +11657,6 @@
    0.9965,
    0.9634
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.5793,
   "strain_only_mm": 0.1017,
   "rotation_axis_cos_depth": 0.921,
@@ -11960,7 +11725,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -11983,7 +11747,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 0.9998,
   "check_dice": 0.9998,
   "check_voxels": {
@@ -12044,7 +11807,6 @@
    0.6708,
    0.5618
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.227,
   "strain_only_mm": 1.2916,
   "rotation_axis_cos_depth": 0.776,
@@ -12113,7 +11875,6 @@
     1.0006,
     0.9659
    ],
-   "tier": "beyond",
    "rotation_only_mm": 0.7269,
    "strain_only_mm": 0.0993,
    "rotation_axis_cos_depth": 0.964,
@@ -12136,7 +11897,6 @@
    "mean_mm": 0.1076,
    "max_mm": 0.3045
   },
-  "input": "the OCT zeroed outside the specimen mask",
   "check_r": 1.0,
   "check_dice": 1.0,
   "check_voxels": {

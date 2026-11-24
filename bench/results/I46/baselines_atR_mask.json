@@ -24,7 +24,6 @@
    1.1942,
    1.0892
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.8729,
   "strain_only_mm": 1.9697,
   "rotation_axis_cos_depth": 0.906,
@@ -93,7 +92,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -176,7 +174,6 @@
    1.0032,
    0.9657
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0337,
   "strain_only_mm": 0.0992,
   "rotation_axis_cos_depth": 0.17,
@@ -245,7 +242,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -307,7 +303,6 @@
   "crop": "flip1_C3_k0",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -364,7 +359,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -413,7 +407,6 @@
    1.0242,
    0.9824
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0766,
   "strain_only_mm": 0.1203,
   "rotation_axis_cos_depth": 0.646,
@@ -482,7 +475,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -565,7 +557,6 @@
    1.0727,
    0.5874
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.016,
   "strain_only_mm": 2.8303,
   "rotation_axis_cos_depth": 0.085,
@@ -634,7 +625,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -717,7 +707,6 @@
    1.1002,
    0.4914
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7704,
   "strain_only_mm": 1.1813,
   "rotation_axis_cos_depth": 0.011,
@@ -786,7 +775,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -869,7 +857,6 @@
    0.4762,
    0.4585
   ],
-  "tier": "beyond",
   "rotation_only_mm": 3.3836,
   "strain_only_mm": 2.5825,
   "rotation_axis_cos_depth": 0.6,
@@ -938,7 +925,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1021,7 +1007,6 @@
    1.2094,
    1.0292
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.7472,
   "strain_only_mm": 1.9651,
   "rotation_axis_cos_depth": 0.881,
@@ -1090,7 +1075,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1173,7 +1157,6 @@
    1.0039,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.04,
   "strain_only_mm": 0.099,
   "rotation_axis_cos_depth": 0.452,
@@ -1242,7 +1225,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1304,7 +1286,6 @@
   "crop": "flip1_C3_k1",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -1361,7 +1342,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1410,7 +1390,6 @@
    1.017,
    0.9869
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1221,
   "strain_only_mm": 0.1407,
   "rotation_axis_cos_depth": 0.034,
@@ -1479,7 +1458,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1562,7 +1540,6 @@
    1.4728,
    1.0916
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.8399,
   "strain_only_mm": 4.2583,
   "rotation_axis_cos_depth": 0.016,
@@ -1631,7 +1608,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1714,7 +1690,6 @@
    0.9229,
    0.4809
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.384,
   "strain_only_mm": 1.1971,
   "rotation_axis_cos_depth": 0.017,
@@ -1783,7 +1758,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -1866,7 +1840,6 @@
    0.9431,
    0.9087
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3692,
   "strain_only_mm": 0.3052,
   "rotation_axis_cos_depth": 0.01,
@@ -1935,7 +1908,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2018,7 +1990,6 @@
    1.2699,
    1.0989
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.2218,
   "strain_only_mm": 2.2228,
   "rotation_axis_cos_depth": 0.864,
@@ -2087,7 +2058,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2170,7 +2140,6 @@
    1.0028,
    0.9662
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0356,
   "strain_only_mm": 0.0986,
   "rotation_axis_cos_depth": 0.3,
@@ -2239,7 +2208,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2301,7 +2269,6 @@
   "crop": "flip1_C3_k2",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -2358,7 +2325,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2407,7 +2373,6 @@
    1.0197,
    0.9913
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0728,
   "strain_only_mm": 0.151,
   "rotation_axis_cos_depth": 0.021,
@@ -2476,7 +2441,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2559,7 +2523,6 @@
    1.0959,
    0.6558
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.9393,
   "strain_only_mm": 2.222,
   "rotation_axis_cos_depth": 0.103,
@@ -2628,7 +2591,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2711,7 +2673,6 @@
    1.0827,
    0.657
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.114,
   "strain_only_mm": 12.6254,
   "rotation_axis_cos_depth": 0.345,
@@ -2780,7 +2741,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -2863,7 +2823,6 @@
    0.9026,
    0.8706
   ],
-  "tier": "beyond",
   "rotation_only_mm": 4.741,
   "strain_only_mm": 0.5097,
   "rotation_axis_cos_depth": 0.239,
@@ -2932,7 +2891,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3015,7 +2973,6 @@
    1.2328,
    1.0407
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.5124,
   "strain_only_mm": 1.9691,
   "rotation_axis_cos_depth": 0.879,
@@ -3084,7 +3041,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3167,7 +3123,6 @@
    1.0033,
    0.9662
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0361,
   "strain_only_mm": 0.0983,
   "rotation_axis_cos_depth": 0.293,
@@ -3236,7 +3191,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3298,7 +3252,6 @@
   "crop": "flip1_C3_k3",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -3355,7 +3308,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3404,7 +3356,6 @@
    1.0315,
    0.9752
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.082,
   "strain_only_mm": 0.2063,
   "rotation_axis_cos_depth": 0.383,
@@ -3473,7 +3424,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3556,7 +3506,6 @@
    1.2787,
    0.737
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.6913,
   "strain_only_mm": 3.9685,
   "rotation_axis_cos_depth": 0.036,
@@ -3625,7 +3574,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3708,7 +3656,6 @@
    0.9444,
    0.5896
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3317,
   "strain_only_mm": 1.5919,
   "rotation_axis_cos_depth": 0.62,
@@ -3777,7 +3724,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -3860,7 +3806,6 @@
    0.925,
    0.8915
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.2526,
   "strain_only_mm": 0.3907,
   "rotation_axis_cos_depth": 0.618,
@@ -3929,7 +3874,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4012,7 +3956,6 @@
    1.2438,
    1.1699
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.626,
   "strain_only_mm": 1.8714,
   "rotation_axis_cos_depth": 0.812,
@@ -4081,7 +4024,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4164,7 +4106,6 @@
    1.003,
    0.966
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0315,
   "strain_only_mm": 0.0989,
   "rotation_axis_cos_depth": 0.306,
@@ -4233,7 +4174,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4295,7 +4235,6 @@
   "crop": "flip1_C3_k4",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -4352,7 +4291,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4401,7 +4339,6 @@
    1.0047,
    0.9493
   ],
-  "tier": "<= 0.30 mm",
   "rotation_only_mm": 0.0737,
   "strain_only_mm": 0.1773,
   "rotation_axis_cos_depth": 0.657,
@@ -4470,7 +4407,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4532,7 +4468,6 @@
   "crop": "flip1_C3_k4",
   "tool": "mri_robust_register_atR_mask",
   "setting": "NMI, --noinit, --maskmov",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: affine.lta",
    "",
@@ -4589,7 +4524,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4638,7 +4572,6 @@
    0.9308,
    0.6479
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6636,
   "strain_only_mm": 1.1022,
   "rotation_axis_cos_depth": 0.297,
@@ -4707,7 +4640,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4790,7 +4722,6 @@
    0.8068,
    0.7775
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.4437,
   "strain_only_mm": 0.9641,
   "rotation_axis_cos_depth": 0.373,
@@ -4859,7 +4790,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -4942,7 +4872,6 @@
    1.2477,
    1.0453
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.4231,
   "strain_only_mm": 2.0552,
   "rotation_axis_cos_depth": 0.912,
@@ -5011,7 +4940,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5094,7 +5022,6 @@
    1.0028,
    0.9662
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0314,
   "strain_only_mm": 0.0983,
   "rotation_axis_cos_depth": 0.097,
@@ -5163,7 +5090,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5225,7 +5151,6 @@
   "crop": "flip1_C3_k5",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -5282,7 +5207,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5331,7 +5255,6 @@
    1.011,
    0.9941
   ],
-  "tier": "<= 0.30 mm",
   "rotation_only_mm": 0.0873,
   "strain_only_mm": 0.1486,
   "rotation_axis_cos_depth": 0.01,
@@ -5400,7 +5323,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5483,7 +5405,6 @@
    1.3318,
    0.7872
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.4079,
   "strain_only_mm": 5.1769,
   "rotation_axis_cos_depth": 0.235,
@@ -5552,7 +5473,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5635,7 +5555,6 @@
    0.8972,
    0.5725
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7251,
   "strain_only_mm": 1.0621,
   "rotation_axis_cos_depth": 0.217,
@@ -5704,7 +5623,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5787,7 +5705,6 @@
    1.0392,
    1.0023
   ],
-  "tier": "beyond",
   "rotation_only_mm": 5.9153,
   "strain_only_mm": 0.1971,
   "rotation_axis_cos_depth": 0.22,
@@ -5856,7 +5773,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -5939,7 +5855,6 @@
    1.2422,
    1.0903
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.4903,
   "strain_only_mm": 2.1496,
   "rotation_axis_cos_depth": 0.956,
@@ -6008,7 +5923,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6091,7 +6005,6 @@
    1.0048,
    0.966
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0311,
   "strain_only_mm": 0.0995,
   "rotation_axis_cos_depth": 0.368,
@@ -6160,7 +6073,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6222,7 +6134,6 @@
   "crop": "flip1_C3_k6",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -6279,7 +6190,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6328,7 +6238,6 @@
    1.0175,
    0.9924
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0987,
   "strain_only_mm": 0.1086,
   "rotation_axis_cos_depth": 0.319,
@@ -6397,7 +6306,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6480,7 +6388,6 @@
    1.29,
    0.7799
   ],
-  "tier": "beyond",
   "rotation_only_mm": 2.6961,
   "strain_only_mm": 3.8797,
   "rotation_axis_cos_depth": 0.157,
@@ -6549,7 +6456,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6632,7 +6538,6 @@
    0.9093,
    0.6472
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7065,
   "strain_only_mm": 0.9092,
   "rotation_axis_cos_depth": 0.455,
@@ -6701,7 +6606,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6784,7 +6688,6 @@
    1.1352,
    1.0748
   ],
-  "tier": "beyond",
   "rotation_only_mm": 6.61,
   "strain_only_mm": 0.6085,
   "rotation_axis_cos_depth": 0.496,
@@ -6853,7 +6756,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -6936,7 +6838,6 @@
    1.2595,
    1.1233
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.6437,
   "strain_only_mm": 2.3156,
   "rotation_axis_cos_depth": 0.967,
@@ -7005,7 +6906,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7088,7 +6988,6 @@
    1.0036,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0381,
   "strain_only_mm": 0.0987,
   "rotation_axis_cos_depth": 0.575,
@@ -7157,7 +7056,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7219,7 +7117,6 @@
   "crop": "flip1_C3_k7",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -7276,7 +7173,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7325,7 +7221,6 @@
    1.0119,
    0.9781
   ],
-  "tier": "<= 0.30 mm",
   "rotation_only_mm": 0.062,
   "strain_only_mm": 0.1252,
   "rotation_axis_cos_depth": 0.256,
@@ -7394,7 +7289,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7477,7 +7371,6 @@
    1.7787,
    1.1169
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.8636,
   "strain_only_mm": 3.9913,
   "rotation_axis_cos_depth": 0.784,
@@ -7546,7 +7439,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7629,7 +7521,6 @@
    1.0598,
    0.5245
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.9547,
   "strain_only_mm": 1.0018,
   "rotation_axis_cos_depth": 0.475,
@@ -7698,7 +7589,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7781,7 +7671,6 @@
    1.0056,
    0.9693
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.4887,
   "strain_only_mm": 0.0999,
   "rotation_axis_cos_depth": 0.254,
@@ -7850,7 +7739,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -7933,7 +7821,6 @@
    1.246,
    1.1793
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.5734,
   "strain_only_mm": 1.78,
   "rotation_axis_cos_depth": 0.972,
@@ -8002,7 +7889,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8085,7 +7971,6 @@
    1.0036,
    0.966
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.0367,
   "strain_only_mm": 0.098,
   "rotation_axis_cos_depth": 0.402,
@@ -8154,7 +8039,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8216,7 +8100,6 @@
   "crop": "flip1_C3_k8",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -8273,7 +8156,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8322,7 +8204,6 @@
    1.0492,
    0.9881
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1756,
   "strain_only_mm": 0.2122,
   "rotation_axis_cos_depth": 0.969,
@@ -8391,7 +8272,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8474,7 +8354,6 @@
    1.5146,
    0.9899
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7531,
   "strain_only_mm": 6.685,
   "rotation_axis_cos_depth": 0.836,
@@ -8543,7 +8422,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8626,7 +8504,6 @@
    0.8812,
    0.6233
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.0123,
   "strain_only_mm": 1.1032,
   "rotation_axis_cos_depth": 0.232,
@@ -8695,7 +8572,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8778,7 +8654,6 @@
    1.0177,
    0.9814
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.5683,
   "strain_only_mm": 0.1206,
   "rotation_axis_cos_depth": 0.696,
@@ -8847,7 +8722,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -8930,7 +8804,6 @@
    1.2435,
    1.0464
   ],
-  "tier": "beyond",
   "rotation_only_mm": 1.3132,
   "strain_only_mm": 2.0278,
   "rotation_axis_cos_depth": 0.914,
@@ -8999,7 +8872,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9082,7 +8954,6 @@
    1.0033,
    0.966
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.039,
   "strain_only_mm": 0.0982,
   "rotation_axis_cos_depth": 0.414,
@@ -9151,7 +9022,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9213,7 +9083,6 @@
   "crop": "flip1_C3_k9",
   "tool": "elastix_atR_mask",
   "setting": "model zoo, no initialisation, -mMask",
-  "tier": "tool error",
   "error": [
    "FileNotFoundError: No such file or directory: TransformParameters.0.txt",
    "Error occurred during actual registration.",
@@ -9270,7 +9139,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9319,7 +9187,6 @@
    0.9844,
    0.9821
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.1962,
   "strain_only_mm": 0.1446,
   "rotation_axis_cos_depth": 0.936,
@@ -9388,7 +9255,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9471,7 +9337,6 @@
    1.4643,
    1.052
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.7191,
   "strain_only_mm": 3.6241,
   "rotation_axis_cos_depth": 0.602,
@@ -9540,7 +9405,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9623,7 +9487,6 @@
    0.8501,
    0.705
   ],
-  "tier": "beyond",
   "rotation_only_mm": 0.6866,
   "strain_only_mm": 1.0381,
   "rotation_axis_cos_depth": 0.161,
@@ -9692,7 +9555,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,
@@ -9775,7 +9637,6 @@
    1.0172,
    0.979
   ],
-  "tier": "beyond",
   "rotation_only_mm": 7.6869,
   "strain_only_mm": 0.1202,
   "rotation_axis_cos_depth": 0.379,
@@ -9844,7 +9705,6 @@
     1.0026,
     0.9662
    ],
-   "tier": "<= 0.30 mm",
    "rotation_only_mm": 0.0332,
    "strain_only_mm": 0.0984,
    "rotation_axis_cos_depth": 0.215,

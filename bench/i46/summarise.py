@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
-"""Write bench/results/I46/tables.md from the JSON files in bench/results/I46, and the start rows, the scales of R and the
-residual of L from the inputs of bench/i46/prepare.py.
+"""Write bench/results/I46/tables.md from the JSON files in bench/results/I46 (bench/i46/README.md, Stored results), and the
+start rows, the scales of R and the residual of L from the inputs of bench/i46/prepare.py.
 
     python bench/i46/summarise.py
-
-    octreg.json                                 the octreg runs (run.py collect)
-    baselines.json, baselines_search.json       the standard tools at their documented settings and with their own search
-    baselines_mask.json, baselines_near.json    the tools with the test's specimen mask as moving mask, and from a start near R
-    baselines_near_mask.json, baselines_near_zeroed.json, baselines_atR.json, baselines_atR_mask.json
-                                                the controls on the start near R (baselines.py --near-mask and the others)
-    ablation.json, starts.json                  analyses.py collect
-    reference_check.json, context.json          the reference and the contrast of the images
 """
 from __future__ import annotations
 
 import itertools
 import json
 import re
+import statistics
 import sys
 import textwrap
 from collections import Counter
@@ -25,10 +18,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import (CONDITIONS, FLIPS, OCT, PRIMARY, RESULTS, SEEDS, TIERS, crop_file, crop_name, distance,  # noqa: E402
+from common import (CONDITIONS, FLIPS, OCT, PRIMARY, PRIMARY_C3, RESULTS, SEEDS, crop_file, crop_name, distance,  # noqa: E402
                     error, label_fit, reference, rigid_fit, rotation)
 from analyses import N_RANDOM, SEED  # noqa: E402
-from baselines import NEAR_DEG, NEAR_MM, NEAR_SEED  # noqa: E402
+from baselines import NEAR_DEG, NEAR_MM  # noqa: E402
 from bench.ablate import VARIANTS as CHANGES, header_start  # noqa: E402
 
 INF = float("inf")
@@ -41,11 +34,7 @@ def load(name):
 
 
 def med(x):
-    x = sorted(x)
-    if not x:
-        return None
-    n = len(x)
-    return x[n // 2] if n % 2 else 0.5 * (x[n // 2 - 1] + x[n // 2])
+    return statistics.median(x) if x else None
 
 
 def fmt(v, nd=2):
@@ -138,7 +127,7 @@ def reference_section(ref, ctx):
         "R is the authors' registration, from the OCT world to the MRI world in the test's OCT frame. The label-only fit "
         f"L (reference_check.py, an affine fitted to the vessels alone) lies {a['mean_mm']:.3f} mm from R on average "
         f"(p95 {a['p95_mm']:.2f} mm, rotation {a['rotation_deg']:.2f}°), {th} mm in the upper, middle and deepest third "
-        f"of the OCT depth, so distances below {TIERS[0]:.2f} mm are not interpreted.")
+        "of the OCT depth.")
     if "vessels" in ref:
         out += para(vessel_text(ref["vessels"]))
     return out + para("Grey/white contrast-to-noise ratio of the images inside the box of the OCT: " + ", ".join(
@@ -149,25 +138,23 @@ def reference_section(ref, ctx):
 def octreg_section(rows, st):
     out = ["## octreg", ""] + para(
         "octreg at its default parameters on the released OCT, with its own specimen mask and MRI foreground (§1). The last "
-        "row repeats the first with the test's specimen mask as --oct-mask in place of octreg's own. p95 / max and vessels "
-        "are medians over the runs of the row. The vessel check is the median distance of the MRI vessel labels to the "
-        "nearest OCT vessel through the affine (common.vessel_score), the search rank the rank of the search pose that won "
-        "the refinement, with its number of runs.")
+        "row repeats the first with the test's specimen mask as --oct-mask in place of octreg's own. p95 / max and the "
+        "vessel distance are medians over the runs of the row. The search rank is the rank of the search pose that won the "
+        "refinement, with its number of runs.")
     out += ["| condition | distance from R, median (range) (mm) | p95 / max (mm) | from L, median (mm) "
             "| rotation from R (°) | vessel distance (mm) | search rank |", "|---|---|---|---|---|---|---|"]
     for im, cond, masked in conditions():
         r = [x for x in rows if x["image"] == im and x["cond"] == cond and x["oct_mask"] == masked]
         d = [x["mean_mm"] for x in r]
         out.append(f"| {label(im, cond, masked)} | {fmt(med(d))} ({rng(d)}) | {tails(r)} | "
-                   f"{fmt(med([x['mean_L_mm'] for x in r if 'mean_L_mm' in x]))} | {rng([x['rotation_deg'] for x in r], 1)} | "
+                   f"{fmt(med([x['mean_L_mm'] for x in r]))} | {rng([x['rotation_deg'] for x in r], 1)} | "
                    f"{vessels(r)} | {ranks(r)} |")
     main = [x for x in rows if not x["oct_mask"]]
     axes = []
     for im in FLIPS:
-        a = np.array([x["rotation_axis"] for x in main if x["image"] == im and x["cond"] == "C3"]).reshape(-1, 3)
-        axes.append(f"{FLIPS[im][1]}° FLASH " + (str((a.mean(0) / np.linalg.norm(a.mean(0))).round(2).tolist()) if len(a)
-                                                  else "none"))
-    sc = np.array([x["scales"] for x in main]).reshape(-1, 3)
+        a = np.array([x["rotation_axis"] for x in main if x["image"] == im and x["cond"] == "C3"]).mean(0)
+        axes.append(f"{FLIPS[im][1]}° FLASH {(a / np.linalg.norm(a)).round(2).tolist()}")
+    sc = np.array([x["scales"] for x in main])
     out += [""] + para(
         f"Over the {len(main)} runs without --oct-mask: the rotation axis of T R^-1 (MRI world), "
         "mean over the C3 runs of each image, " + ", ".join(axes) + f". Over the same runs the scale along the OCT axes is "
@@ -285,23 +272,22 @@ def tool_row(method, setting, r):
 
 
 def tools_section(rows, bl, bls):
-    names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
-    start = [start_pose(n) for n in names]
+    start = [start_pose(n) for n in PRIMARY_C3]
     out = ["## Standard tools", ""] + para(
         "Each tool at its documented setting (bench/baselines/standard_tools.py), and the three tools that have a global "
-        "rotation search with that search turned on, on the C3 crops of the 10° FLASH. The moving image is the released OCT "
-        "box-averaged to 0.15 mm, the fixed image the crop. The start is the pose before any registration: the header "
-        "orientation of the OCT with the image box centres aligned, turned by "
+        "rotation search with that search turned on, on the C3 crops of the 10° FLASH. The start is the pose before any "
+        "registration: the header orientation of the OCT with the image box centres aligned, turned by "
         f"{fmt(med([x['rotation_deg'] for x in start]), 0)}° from R (median).")
-    octreg = [x for x in rows if not x["oct_mask"] and x["name"] in names]
+    octreg = [x for x in rows if not x["oct_mask"] and x["name"] in PRIMARY_C3]
     out += TOOL_HEAD + [tool_row("the start", "no registration", start),
                         tool_row("octreg", "its default parameters", octreg)]
     for tr in (bl, bls):
         for t in dict.fromkeys(x["tool"] for x in tr):
-            r = [x for x in tr if x["tool"] == t and x["crop"] in names]
+            r = [x for x in tr if x["tool"] == t and x["crop"] in PRIMARY_C3]
             out.append(tool_row(t, r[0]["setting"], r))
-    out += [""] + para(f"Over all {len(bl)} runs at the documented settings, on the crops of this table and of the next, the "
-                       f"median rotation from R is {fmt(med([x.get('rotation_deg', INF) for x in bl]), 0)}°.")
+    out += [""] + errors_text([x for x in bl + bls if x["crop"] in PRIMARY_C3])
+    out += para(f"Over all {len(bl)} runs at the documented settings, on the crops of this table and of the next, the "
+                f"median rotation from R is {fmt(med([x.get('rotation_deg', INF) for x in bl]), 0)}°.")
     others = [im for im in FLIPS if im != PRIMARY]
     k0 = [("octreg", {x["name"]: x for x in rows})]
     k0 += [(t, {x["crop"]: x for x in bl if x["tool"] == t}) for t in dict.fromkeys(x["tool"] for x in bl)]
@@ -336,7 +322,6 @@ def errors_text(rows):
 
 def mask_section(bl, blm):
     """The tools with the test's specimen mask as the moving mask (baselines.py --mask), each under its unmasked row."""
-    names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
     out = ["## Standard tools with a moving mask", ""] + para(
         "Each tool whose options take a mask of the moving image, at its documented setting with the test's specimen mask on "
         "the grid of the moving image as that mask, on the C3 crops of the 10° FLASH. Each masked row follows the tool's "
@@ -349,32 +334,27 @@ def mask_section(bl, blm):
     same = {}
     for t in dict.fromkeys(x["tool"] for x in blm):
         base = t.removesuffix("_mask")
-        r0 = [x for x in bl if x["tool"] == base and x["crop"] in names]
-        r1 = [x for x in blm if x["tool"] == t and x["crop"] in names]
+        r0 = [x for x in bl if x["tool"] == base and x["crop"] in PRIMARY_C3]
+        r1 = [x for x in blm if x["tool"] == t]
         out += [tool_row(base, r0[0]["setting"], r0), tool_row(t, r1[0]["setting"], r1)]
         d0 = {x["crop"]: x.get("mean_mm") for x in r0}
         same[t] = (sum(x["crop"] in d0 and x.get("mean_mm") == d0[x["crop"]] for x in r1), len(r1))
     out += [""] + para(
         "Masked runs that end at the distance from R of the unmasked run (to 0.1 µm), or in a tool error where it does: "
         + ", ".join(f"{t} {k}/{n}" for t, (k, n) in same.items()) + ".")
-    return trim(out + errors_text([x for x in blm if x["crop"] in names]))
+    return trim(out + errors_text(blm))
 
 
 def near_section(bln):
     """The tools from a start near R, given as the header of the moving image (baselines.py --near)."""
-    names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
-    bln = [x for x in bln if x["crop"] in names]
     st = list({x["crop"]: x["start_pose"] for x in bln if "start_pose" in x}.values())
     hs = list({x["crop"]: x["start_from_S"] for x in bln if "start_from_S" in x}.values())
     out = ["## Start near R", ""] + para(
-        "The tools at their documented settings, started near R, on the C3 crops of the 10° FLASH. The start of crop k is R "
-        f"turned by {NEAR_DEG:g}° about a random axis through the centre of the OCT tissue and shifted by {NEAR_MM:g} mm in a "
-        f"random direction (numpy default_rng({NEAR_SEED} + k)). The tools get it as the header of the moving image, with the "
-        "option that starts from the header alignment (bench/baselines/standard_tools.py). A NIfTI qform cannot hold the "
-        "shear of R (ANTs, elastix and greedy read the qform), so the start is the pose with a rotation and a scale per axis "
-        f"closest to the turned and shifted R over the OCT tissue: {rng([h['mean_mm'] for h in hs])} mm from it (mean over "
-        f"the tissue, at most {fmt(max([h['max_mm'] for h in hs], default=None))} mm), {rng([x['mean_mm'] for x in st])} mm "
-        f"and {rng([x['rotation_deg'] for x in st], 1)}° from R. The start row is that pose without registration.")
+        "The tools at their documented settings on the C3 crops of the 10° FLASH, started from the pose with a rotation and "
+        f"a scale per axis closest to R turned by {NEAR_DEG:g}° and shifted by {NEAR_MM:g} mm (bench/i46/README.md). That pose "
+        f"lies {rng([h['mean_mm'] for h in hs])} mm from the turned and shifted R (mean over the tissue, at most "
+        f"{fmt(max([h['max_mm'] for h in hs], default=None))} mm), and {rng([x['mean_mm'] for x in st])} mm and "
+        f"{rng([x['rotation_deg'] for x in st], 1)}° from R. The start row is that pose without registration.")
     out += TOOL_HEAD + [tool_row("the start", "no registration", st)]
     for t in dict.fromkeys(x["tool"] for x in bln):
         r = [x for x in bln if x["tool"] == t]
@@ -391,13 +371,11 @@ CONTROLS = (("near_mask", "the near start with the test's specimen mask as the m
 
 def controls_section(groups):
     """The controls on the start near R (baselines.py --near-mask, --near-zeroed, --atR, --atR-mask), one table each."""
-    names = [crop_name(PRIMARY, "C3", k) for k in range(SEEDS)]
     out = ["## Controls on the start near R", ""] + para(
-        "The tools at their documented settings on the C3 crops of the 10° FLASH, from the start near R of the previous "
-        "table or from the shear-free pose closest to R, with the test's specimen mask as the moving mask or with the moving "
-        "OCT zeroed outside it (bench/i46/README.md). The start row of each table is its start without registration.")
+        "The tools at their documented settings on the C3 crops of the 10° FLASH (bench/i46/README.md). The start row of "
+        "each table is its start without registration.")
     for kind, what in CONTROLS:
-        rows = [x for x in groups.get(kind) or [] if x["crop"] in names]
+        rows = groups.get(kind) or []
         if not rows:
             continue
         st = list({x["crop"]: x["start_pose"] for x in rows if "start_pose" in x}.values())
@@ -410,39 +388,12 @@ def controls_section(groups):
     return trim(out)
 
 
-def check_section(*groups):
-    """One convention-check table over the tool runs of every file."""
-    rows = [x for g in groups for x in g]
-    out = ["## Convention check", ""] + para(
-        "Each converted transform against the tool's own resampling of the OCT it ran on (bench/baselines/standard_tools.py "
-        "check), on every run: the Pearson r over the voxels where either is non-zero, the Dice of the two supports, and the "
-        "number of non-zero voxels of each. Where few voxels of the registered OCT fall inside the crop, r and Dice are over "
-        "those few. r is none where neither image has "
-        "a voxel inside the crop and nan where one of them is zero on every voxel compared. elastix resamples with a cubic "
-        "B-spline (FinalBSplineInterpolationOrder 3), which overshoots at the hard edge of the zeroed OCT and leaves small "
-        "non-zero values around the tissue, so on that OCT its own resampling has more non-zero voxels than the converted one.")
-    out += ["| tool | setting | crop | r | Dice | voxels: the tool's, the converted |", "|---|---|---|---|---|---|"]
-    for x in rows:
-        if "check_r" in x:
-            v = x.get("check_voxels")
-            out.append(f"| {x['tool']} | {x['setting']} | {x['crop']} | {fmt(x['check_r'])} | {fmt(x['check_dice'])} | "
-                       + ("" if v is None else f"{v['tool']}, {v['converted']}") + " |")
-    by = {}
-    for x in rows:
-        if "mean_mm" not in x:
-            by.setdefault((x["tool"], x["crop"].rsplit("_k", 1)[0]), []).append(x)
-    none = [f"{t} on {c} k = {ks(r)}" for (t, c), r in by.items()]
-    return trim(out + [""] + para("Runs without a transform, so without a check: "
-                                  + (", ".join(none) if none else "none") + "."))
-
-
 def ablation_section(abl, rows):
     main = {x["name"]: x for x in rows if not x["oct_mask"]}
     out = ["## Ablation", ""] + para(
         "bench/ablate.py: the method with one change, on the C3 crops of the 10° FLASH, on the released OCT with octreg's own "
         "masks as in the main runs (analyses.py). The difference is the variant's distance from R minus the method's on the "
-        "same crop. The variants of the outline are shown on I58 (bench/README.md). The vessel column gives the median "
-        "distance of the MRI vessel labels to the nearest OCT vessel through the affine (common.vessel_score), median over "
+        "same crop. The variants of the outline are shown on I58 (bench/README.md). The vessel distance is the median over "
         "the crops.")
     out += ["| variant | change | distance from R, median (range) (mm) | difference, median (range) (mm) "
             "| vessel distance (mm) |", "|---|---|---|---|---|"]
@@ -472,13 +423,12 @@ def main():
     bl, bls, blm, bln = (load(f"baselines{s}.json") for s in ("", "_search", "_mask", "_near"))
     ctl = {kind: load(f"baselines_{kind}.json") for kind, _ in CONTROLS}
     ctl["near_zeroed"] = [{**x, "tool": x["tool"] + "_zeroed"} for x in ctl["near_zeroed"] or []]   # the near tools by name
-    groups = [g for g in (bl, bls, blm, bln, *ctl.values()) if g]
     out = ["# I46: results", ""] + para(
         "Generated by bench/i46/summarise.py from the JSON files next to this one, and for the start rows, the scales of R "
         "and the residual of L from the inputs of prepare.py. bench/i46/README.md describes the test. Distances are the mean "
         "displacement over the OCT tissue from the authors' registration R, or from the label-only fit L where named. Medians "
-        "are over all runs of a row, the ten crops of a condition being shifted boxes around the same block. A run that ended "
-        "without a readable transform (a tool error) counts as beyond every other.")
+        "are over all runs of a row. A run that ended without a readable transform (a tool error) counts as beyond every "
+        "other.")
     out += reference_section(load("reference_check.json"), load("context.json"))
     if rows:
         out += octreg_section(rows, st) + [""]
@@ -492,8 +442,6 @@ def main():
         out += near_section(bln) + [""]
     if any(ctl.values()):
         out += controls_section(ctl) + [""]
-    if groups:
-        out += check_section(*groups) + [""]
     if abl:
         out += ablation_section(abl, rows) + [""]
     (RESULTS / "tables.md").write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")

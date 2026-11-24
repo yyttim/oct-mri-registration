@@ -55,7 +55,6 @@
    0.993,
    0.9682
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2903,
   "strain_only_mm": 0.1826,
   "rotation_axis_cos_depth": 0.811,
@@ -76,12 +75,6 @@
   "vessel_n": 3016,
   "vessel_mean_mm": 0.1753,
   "vessel_median_mm": 0.1535,
-  "search": {
-   "mean_mm": 0.6823,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.1958
-  },
   "search_rank": 0,
   "search_F": 0.5943567156791687,
   "search_O": null,
@@ -296,7 +289,6 @@
    0.9948,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2916,
   "strain_only_mm": 0.1823,
   "rotation_axis_cos_depth": 0.839,
@@ -317,12 +309,6 @@
   "vessel_n": 3031,
   "vessel_mean_mm": 0.1767,
   "vessel_median_mm": 0.1551,
-  "search": {
-   "mean_mm": 0.947,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2238
-  },
   "search_rank": 0,
   "search_F": 0.6016631722450256,
   "search_O": null,
@@ -537,7 +523,6 @@
    0.9942,
    0.9682
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2889,
   "strain_only_mm": 0.1829,
   "rotation_axis_cos_depth": 0.821,
@@ -558,12 +543,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1759,
   "vessel_median_mm": 0.1537,
-  "search": {
-   "mean_mm": 1.2858,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2334
-  },
   "search_rank": 0,
   "search_F": 0.5941221714019775,
   "search_O": null,
@@ -778,7 +757,6 @@
    0.9944,
    0.9683
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2889,
   "strain_only_mm": 0.1826,
   "rotation_axis_cos_depth": 0.818,
@@ -799,12 +777,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1758,
   "vessel_median_mm": 0.1534,
-  "search": {
-   "mean_mm": 0.9931,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.216
-  },
   "search_rank": 0,
   "search_F": 0.6008399724960327,
   "search_O": null,
@@ -1019,7 +991,6 @@
    0.9941,
    0.9684
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2904,
   "strain_only_mm": 0.1826,
   "rotation_axis_cos_depth": 0.826,
@@ -1040,12 +1011,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1762,
   "vessel_median_mm": 0.1536,
-  "search": {
-   "mean_mm": 1.611,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2089
-  },
   "search_rank": 0,
   "search_F": 0.5936472415924072,
   "search_O": null,
@@ -1260,7 +1225,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2938,
   "strain_only_mm": 0.1824,
   "rotation_axis_cos_depth": 0.842,
@@ -1281,12 +1245,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1772,
   "vessel_median_mm": 0.1566,
-  "search": {
-   "mean_mm": 1.0753,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2252
-  },
   "search_rank": 0,
   "search_F": 0.6012229323387146,
   "search_O": null,
@@ -1501,7 +1459,6 @@
    0.9948,
    0.9678
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2913,
   "strain_only_mm": 0.1819,
   "rotation_axis_cos_depth": 0.839,
@@ -1522,12 +1479,6 @@
   "vessel_n": 3032,
   "vessel_mean_mm": 0.1767,
   "vessel_median_mm": 0.1548,
-  "search": {
-   "mean_mm": 0.7602,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2122
-  },
   "search_rank": 0,
   "search_F": 0.5957674384117126,
   "search_O": null,
@@ -1742,7 +1693,6 @@
    0.9947,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2915,
   "strain_only_mm": 0.1819,
   "rotation_axis_cos_depth": 0.84,
@@ -1763,12 +1713,6 @@
   "vessel_n": 3031,
   "vessel_mean_mm": 0.1768,
   "vessel_median_mm": 0.1549,
-  "search": {
-   "mean_mm": 0.7019,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2031
-  },
   "search_rank": 0,
   "search_F": 0.5953720211982727,
   "search_O": null,
@@ -1983,7 +1927,6 @@
    0.9947,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2907,
   "strain_only_mm": 0.1816,
   "rotation_axis_cos_depth": 0.843,
@@ -2004,12 +1947,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1766,
   "vessel_median_mm": 0.1555,
-  "search": {
-   "mean_mm": 0.7611,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2169
-  },
   "search_rank": 0,
   "search_F": 0.5936586260795593,
   "search_O": null,
@@ -2224,7 +2161,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2937,
   "strain_only_mm": 0.1823,
   "rotation_axis_cos_depth": 0.842,
@@ -2245,12 +2181,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1772,
   "vessel_median_mm": 0.1567,
-  "search": {
-   "mean_mm": 0.7871,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2056
-  },
   "search_rank": 0,
   "search_F": 0.5964110493659973,
   "search_O": null,
@@ -2465,7 +2395,6 @@
    1.0292,
    0.9602
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2117,
   "strain_only_mm": 0.2307,
   "rotation_axis_cos_depth": 0.707,
@@ -2486,12 +2415,6 @@
   "vessel_n": 3009,
   "vessel_mean_mm": 0.1712,
   "vessel_median_mm": 0.1465,
-  "search": {
-   "mean_mm": 0.8661,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2314
-  },
   "search_rank": 0,
   "search_F": 0.5704143047332764,
   "search_O": null,
@@ -2706,7 +2629,6 @@
    1.028,
    0.9594
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2154,
   "strain_only_mm": 0.23,
   "rotation_axis_cos_depth": 0.723,
@@ -2727,12 +2649,6 @@
   "vessel_n": 3005,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.1485,
-  "search": {
-   "mean_mm": 0.9551,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2454
-  },
   "search_rank": 0,
   "search_F": 0.5698815584182739,
   "search_O": null,
@@ -2947,7 +2863,6 @@
    1.0288,
    0.9599
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2123,
   "strain_only_mm": 0.2308,
   "rotation_axis_cos_depth": 0.712,
@@ -2968,12 +2883,6 @@
   "vessel_n": 3007,
   "vessel_mean_mm": 0.1712,
   "vessel_median_mm": 0.1467,
-  "search": {
-   "mean_mm": 1.8922,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2433
-  },
   "search_rank": 0,
   "search_F": 0.5678219795227051,
   "search_O": null,
@@ -3188,7 +3097,6 @@
    1.0288,
    0.9599
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2123,
   "strain_only_mm": 0.2308,
   "rotation_axis_cos_depth": 0.712,
@@ -3209,12 +3117,6 @@
   "vessel_n": 3007,
   "vessel_mean_mm": 0.1712,
   "vessel_median_mm": 0.1467,
-  "search": {
-   "mean_mm": 0.9238,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2428
-  },
   "search_rank": 0,
   "search_F": 0.5629321336746216,
   "search_O": null,
@@ -3429,7 +3331,6 @@
    1.0282,
    0.9597
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.213,
   "strain_only_mm": 0.2297,
   "rotation_axis_cos_depth": 0.714,
@@ -3450,12 +3351,6 @@
   "vessel_n": 3005,
   "vessel_mean_mm": 0.1714,
   "vessel_median_mm": 0.1475,
-  "search": {
-   "mean_mm": 1.4436,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2345
-  },
   "search_rank": 0,
   "search_F": 0.5737633109092712,
   "search_O": null,
@@ -3670,7 +3565,6 @@
    1.0277,
    0.9591
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2148,
   "strain_only_mm": 0.2298,
   "rotation_axis_cos_depth": 0.725,
@@ -3691,12 +3585,6 @@
   "vessel_n": 3003,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.148,
-  "search": {
-   "mean_mm": 1.0086,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2499
-  },
   "search_rank": 0,
   "search_F": 0.5700746178627014,
   "search_O": null,
@@ -3911,7 +3799,6 @@
    1.0279,
    0.9593
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2147,
   "strain_only_mm": 0.2299,
   "rotation_axis_cos_depth": 0.725,
@@ -3932,12 +3819,6 @@
   "vessel_n": 3004,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.1483,
-  "search": {
-   "mean_mm": 1.167,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2437
-  },
   "search_rank": 0,
   "search_F": 0.5736509561538696,
   "search_O": null,
@@ -4152,7 +4033,6 @@
    1.0278,
    0.9592
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2147,
   "strain_only_mm": 0.2298,
   "rotation_axis_cos_depth": 0.725,
@@ -4173,12 +4053,6 @@
   "vessel_n": 3004,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.1479,
-  "search": {
-   "mean_mm": 1.5701,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2446
-  },
   "search_rank": 0,
   "search_F": 0.5688565969467163,
   "search_O": null,
@@ -4393,7 +4267,6 @@
    1.0279,
    0.9593
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.215,
   "strain_only_mm": 0.23,
   "rotation_axis_cos_depth": 0.723,
@@ -4414,12 +4287,6 @@
   "vessel_n": 3004,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.1481,
-  "search": {
-   "mean_mm": 1.1677,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2473
-  },
   "search_rank": 0,
   "search_F": 0.5796725749969482,
   "search_O": null,
@@ -4634,7 +4501,6 @@
    1.0277,
    0.9591
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.215,
   "strain_only_mm": 0.2298,
   "rotation_axis_cos_depth": 0.725,
@@ -4655,12 +4521,6 @@
   "vessel_n": 3003,
   "vessel_mean_mm": 0.172,
   "vessel_median_mm": 0.148,
-  "search": {
-   "mean_mm": 1.2244,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2543
-  },
   "search_rank": 0,
   "search_F": 0.5734891891479492,
   "search_O": null,
@@ -4875,7 +4735,6 @@
    1.0298,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2596,
   "strain_only_mm": 0.216,
   "rotation_axis_cos_depth": 0.5,
@@ -4896,12 +4755,6 @@
   "vessel_n": 3028,
   "vessel_mean_mm": 0.1629,
   "vessel_median_mm": 0.1348,
-  "search": {
-   "mean_mm": 1.3138,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2528
-  },
   "search_rank": 1,
   "search_F": 0.4887060225009918,
   "search_O": null,
@@ -5116,7 +4969,6 @@
    1.029,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2608,
   "strain_only_mm": 0.2139,
   "rotation_axis_cos_depth": 0.494,
@@ -5137,12 +4989,6 @@
   "vessel_n": 3023,
   "vessel_mean_mm": 0.1619,
   "vessel_median_mm": 0.1337,
-  "search": {
-   "mean_mm": 2.8257,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2358
-  },
   "search_rank": 0,
   "search_F": 0.4927607774734497,
   "search_O": null,
@@ -5357,7 +5203,6 @@
    1.0292,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2603,
   "strain_only_mm": 0.2145,
   "rotation_axis_cos_depth": 0.495,
@@ -5378,12 +5223,6 @@
   "vessel_n": 3024,
   "vessel_mean_mm": 0.1622,
   "vessel_median_mm": 0.1342,
-  "search": {
-   "mean_mm": 1.8922,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2433
-  },
   "search_rank": 0,
   "search_F": 0.4907112717628479,
   "search_O": null,
@@ -5598,7 +5437,6 @@
    1.0293,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2603,
   "strain_only_mm": 0.2145,
   "rotation_axis_cos_depth": 0.495,
@@ -5619,12 +5457,6 @@
   "vessel_n": 3024,
   "vessel_mean_mm": 0.1623,
   "vessel_median_mm": 0.1342,
-  "search": {
-   "mean_mm": 2.6835,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2414
-  },
   "search_rank": 0,
   "search_F": 0.4952286183834076,
   "search_O": null,
@@ -5839,7 +5671,6 @@
    1.029,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2605,
   "strain_only_mm": 0.2138,
   "rotation_axis_cos_depth": 0.493,
@@ -5860,12 +5691,6 @@
   "vessel_n": 3023,
   "vessel_mean_mm": 0.1621,
   "vessel_median_mm": 0.1343,
-  "search": {
-   "mean_mm": 2.0093,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2519
-  },
   "search_rank": 0,
   "search_F": 0.49891236424446106,
   "search_O": null,
@@ -6080,7 +5905,6 @@
    1.0288,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2612,
   "strain_only_mm": 0.2137,
   "rotation_axis_cos_depth": 0.489,
@@ -6101,12 +5925,6 @@
   "vessel_n": 3024,
   "vessel_mean_mm": 0.1615,
   "vessel_median_mm": 0.1331,
-  "search": {
-   "mean_mm": 2.6471,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2378
-  },
   "search_rank": 0,
   "search_F": 0.4963326156139374,
   "search_O": null,
@@ -6321,7 +6139,6 @@
    1.0289,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2606,
   "strain_only_mm": 0.2136,
   "rotation_axis_cos_depth": 0.494,
@@ -6342,12 +6159,6 @@
   "vessel_n": 3023,
   "vessel_mean_mm": 0.1618,
   "vessel_median_mm": 0.1334,
-  "search": {
-   "mean_mm": 1.7114,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2505
-  },
   "search_rank": 0,
   "search_F": 0.4922392964363098,
   "search_O": null,
@@ -6562,7 +6373,6 @@
    1.0288,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2612,
   "strain_only_mm": 0.2138,
   "rotation_axis_cos_depth": 0.49,
@@ -6583,12 +6393,6 @@
   "vessel_n": 3024,
   "vessel_mean_mm": 0.1615,
   "vessel_median_mm": 0.1332,
-  "search": {
-   "mean_mm": 1.5701,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2446
-  },
   "search_rank": 1,
   "search_F": 0.49006912112236023,
   "search_O": null,
@@ -6803,7 +6607,6 @@
    1.0289,
    0.9658
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2607,
   "strain_only_mm": 0.2137,
   "rotation_axis_cos_depth": 0.494,
@@ -6824,12 +6627,6 @@
   "vessel_n": 3023,
   "vessel_mean_mm": 0.1618,
   "vessel_median_mm": 0.1335,
-  "search": {
-   "mean_mm": 1.7101,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2524
-  },
   "search_rank": 0,
   "search_F": 0.4958690106868744,
   "search_O": null,
@@ -7044,7 +6841,6 @@
    1.0288,
    0.9659
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2609,
   "strain_only_mm": 0.2134,
   "rotation_axis_cos_depth": 0.489,
@@ -7065,12 +6861,6 @@
   "vessel_n": 3024,
   "vessel_mean_mm": 0.1614,
   "vessel_median_mm": 0.1322,
-  "search": {
-   "mean_mm": 1.2244,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2543
-  },
   "search_rank": 0,
   "search_F": 0.498826265335083,
   "search_O": null,
@@ -7285,7 +7075,6 @@
    0.9944,
    0.968
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2917,
   "strain_only_mm": 0.1845,
   "rotation_axis_cos_depth": 0.82,
@@ -7306,12 +7095,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1765,
   "vessel_median_mm": 0.1544,
-  "search": {
-   "mean_mm": 1.5254,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2023
-  },
   "search_rank": 0,
   "search_F": 0.5859225392341614,
   "search_O": null,
@@ -7526,7 +7309,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2936,
   "strain_only_mm": 0.1813,
   "rotation_axis_cos_depth": 0.845,
@@ -7547,12 +7329,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1775,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 1.434,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2122
-  },
   "search_rank": 0,
   "search_F": 0.5912232398986816,
   "search_O": null,
@@ -7767,7 +7543,6 @@
    0.993,
    0.9681
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2904,
   "strain_only_mm": 0.1826,
   "rotation_axis_cos_depth": 0.811,
@@ -7788,12 +7563,6 @@
   "vessel_n": 3016,
   "vessel_mean_mm": 0.1753,
   "vessel_median_mm": 0.1535,
-  "search": {
-   "mean_mm": 1.3537,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2267
-  },
   "search_rank": 0,
   "search_F": 0.5955126285552979,
   "search_O": null,
@@ -8008,7 +7777,6 @@
    0.9943,
    0.9686
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2892,
   "strain_only_mm": 0.1818,
   "rotation_axis_cos_depth": 0.821,
@@ -8029,12 +7797,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.176,
   "vessel_median_mm": 0.1532,
-  "search": {
-   "mean_mm": 1.1417,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2342
-  },
   "search_rank": 0,
   "search_F": 0.5921600461006165,
   "search_O": null,
@@ -8249,7 +8011,6 @@
    0.9946,
    0.9677
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2909,
   "strain_only_mm": 0.1815,
   "rotation_axis_cos_depth": 0.842,
@@ -8270,12 +8031,6 @@
   "vessel_n": 3033,
   "vessel_mean_mm": 0.1766,
   "vessel_median_mm": 0.1558,
-  "search": {
-   "mean_mm": 0.7081,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2094
-  },
   "search_rank": 0,
   "search_F": 0.5987631678581238,
   "search_O": null,
@@ -8490,7 +8245,6 @@
    0.9949,
    0.9678
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2937,
   "strain_only_mm": 0.1806,
   "rotation_axis_cos_depth": 0.846,
@@ -8511,12 +8265,6 @@
   "vessel_n": 3037,
   "vessel_mean_mm": 0.1776,
   "vessel_median_mm": 0.1577,
-  "search": {
-   "mean_mm": 0.694,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.207
-  },
   "search_rank": 0,
   "search_F": 0.5938581824302673,
   "search_O": null,
@@ -8731,7 +8479,6 @@
    0.9947,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2908,
   "strain_only_mm": 0.1821,
   "rotation_axis_cos_depth": 0.84,
@@ -8752,12 +8499,6 @@
   "vessel_n": 3030,
   "vessel_mean_mm": 0.1763,
   "vessel_median_mm": 0.1553,
-  "search": {
-   "mean_mm": 1.1985,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2275
-  },
   "search_rank": 0,
   "search_F": 0.5955978631973267,
   "search_O": null,
@@ -8972,7 +8713,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2936,
   "strain_only_mm": 0.1816,
   "rotation_axis_cos_depth": 0.844,
@@ -8993,12 +8733,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1775,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 0.7776,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2167
-  },
   "search_rank": 0,
   "search_F": 0.5987350344657898,
   "search_O": null,
@@ -9213,7 +8947,6 @@
    0.9949,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2934,
   "strain_only_mm": 0.1818,
   "rotation_axis_cos_depth": 0.844,
@@ -9234,12 +8967,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1774,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 0.7242,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2073
-  },
   "search_rank": 0,
   "search_F": 0.5995600819587708,
   "search_O": null,
@@ -9454,7 +9181,6 @@
    0.9949,
    0.9678
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2937,
   "strain_only_mm": 0.1806,
   "rotation_axis_cos_depth": 0.846,
@@ -9475,12 +9201,6 @@
   "vessel_n": 3037,
   "vessel_mean_mm": 0.1776,
   "vessel_median_mm": 0.1577,
-  "search": {
-   "mean_mm": 1.5254,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2023
-  },
   "search_rank": 0,
   "search_F": 0.5905223488807678,
   "search_O": null,
@@ -9695,7 +9415,6 @@
    0.9938,
    0.9687
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2841,
   "strain_only_mm": 0.1781,
   "rotation_axis_cos_depth": 0.83,
@@ -9716,12 +9435,6 @@
   "vessel_n": 3025,
   "vessel_mean_mm": 0.1763,
   "vessel_median_mm": 0.1539,
-  "search": {
-   "mean_mm": 1.3537,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2267
-  },
   "search_rank": 12,
   "search_F": 0.5911244750022888,
   "search_O": 0.004578097723424435,
@@ -9936,7 +9649,6 @@
    0.9949,
    0.968
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2943,
   "strain_only_mm": 0.1803,
   "rotation_axis_cos_depth": 0.848,
@@ -9957,12 +9669,6 @@
   "vessel_n": 3041,
   "vessel_mean_mm": 0.1778,
   "vessel_median_mm": 0.1581,
-  "search": {
-   "mean_mm": 1.1007,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2413
-  },
   "search_rank": 1,
   "search_F": 0.5844285488128662,
   "search_O": null,
@@ -10177,7 +9883,6 @@
    0.9922,
    0.9684
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2896,
   "strain_only_mm": 0.1793,
   "rotation_axis_cos_depth": 0.812,
@@ -10198,12 +9903,6 @@
   "vessel_n": 3009,
   "vessel_mean_mm": 0.1758,
   "vessel_median_mm": 0.1549,
-  "search": {
-   "mean_mm": 0.7611,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2169
-  },
   "search_rank": 17,
   "search_F": 0.5916994214057922,
   "search_O": 0.004578400403261185,
@@ -10418,7 +10117,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2933,
   "strain_only_mm": 0.1819,
   "rotation_axis_cos_depth": 0.843,
@@ -10439,12 +10137,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1773,
   "vessel_median_mm": 0.1568,
-  "search": {
-   "mean_mm": 1.4477,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2304
-  },
   "search_rank": 15,
   "search_F": 0.589353621006012,
   "search_O": -8.451310714008287e-05,
@@ -10659,7 +10351,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2935,
   "strain_only_mm": 0.1815,
   "rotation_axis_cos_depth": 0.844,
@@ -10680,12 +10371,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1774,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 0.7871,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2056
-  },
   "search_rank": 0,
   "search_F": 0.5917339324951172,
   "search_O": null,
@@ -10900,7 +10585,6 @@
    0.9948,
    0.9679
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2946,
   "strain_only_mm": 0.1802,
   "rotation_axis_cos_depth": 0.848,
@@ -10921,12 +10605,6 @@
   "vessel_n": 3042,
   "vessel_mean_mm": 0.1779,
   "vessel_median_mm": 0.1583,
-  "search": {
-   "mean_mm": 0.7611,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2169
-  },
   "search_rank": 1,
   "search_F": 0.590644121170044,
   "search_O": null,
@@ -11141,7 +10819,6 @@
    0.9949,
    0.9679
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2959,
   "strain_only_mm": 0.1803,
   "rotation_axis_cos_depth": 0.848,
@@ -11162,12 +10839,6 @@
   "vessel_n": 3040,
   "vessel_mean_mm": 0.1782,
   "vessel_median_mm": 0.1584,
-  "search": {
-   "mean_mm": 0.694,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.207
-  },
   "search_rank": 3,
   "search_F": 0.5913125276565552,
   "search_O": null,
@@ -11382,7 +11053,6 @@
    0.995,
    0.9679
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2967,
   "strain_only_mm": 0.1797,
   "rotation_axis_cos_depth": 0.852,
@@ -11403,12 +11073,6 @@
   "vessel_n": 3042,
   "vessel_mean_mm": 0.1785,
   "vessel_median_mm": 0.1589,
-  "search": {
-   "mean_mm": 1.0213,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2377
-  },
   "search_rank": 4,
   "search_F": 0.5868699550628662,
   "search_O": null,
@@ -11623,7 +11287,6 @@
    0.995,
    0.9676
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2935,
   "strain_only_mm": 0.1813,
   "rotation_axis_cos_depth": 0.845,
@@ -11644,12 +11307,6 @@
   "vessel_n": 3035,
   "vessel_mean_mm": 0.1775,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 1.434,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2122
-  },
   "search_rank": 0,
   "search_F": 0.5908252596855164,
   "search_O": null,
@@ -11864,7 +11521,6 @@
    0.9949,
    0.9678
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.2964,
   "strain_only_mm": 0.1802,
   "rotation_axis_cos_depth": 0.849,
@@ -11885,12 +11541,6 @@
   "vessel_n": 3040,
   "vessel_mean_mm": 0.1783,
   "vessel_median_mm": 0.1585,
-  "search": {
-   "mean_mm": 1.3537,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2267
-  },
   "search_rank": 8,
   "search_F": 0.5940249562263489,
   "search_O": null,
@@ -12105,7 +11755,6 @@
    1.0018,
    0.969
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.315,
   "strain_only_mm": 0.1813,
   "rotation_axis_cos_depth": 0.802,
@@ -12126,12 +11775,6 @@
   "vessel_n": 3029,
   "vessel_mean_mm": 0.1783,
   "vessel_median_mm": 0.1561,
-  "search": {
-   "mean_mm": 0.6823,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.1958
-  },
   "search_rank": 0,
   "search_F": 0.611358642578125,
   "search_O": null,
@@ -12346,7 +11989,6 @@
    1.0011,
    0.9687
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3199,
   "strain_only_mm": 0.1811,
   "rotation_axis_cos_depth": 0.8,
@@ -12367,12 +12009,6 @@
   "vessel_n": 3030,
   "vessel_mean_mm": 0.1795,
   "vessel_median_mm": 0.1572,
-  "search": {
-   "mean_mm": 0.947,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2238
-  },
   "search_rank": 0,
   "search_F": 0.6177204847335815,
   "search_O": null,
@@ -12587,7 +12223,6 @@
    1.0016,
    0.9691
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3158,
   "strain_only_mm": 0.1812,
   "rotation_axis_cos_depth": 0.802,
@@ -12608,12 +12243,6 @@
   "vessel_n": 3032,
   "vessel_mean_mm": 0.1786,
   "vessel_median_mm": 0.1567,
-  "search": {
-   "mean_mm": 1.2858,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2334
-  },
   "search_rank": 0,
   "search_F": 0.6087043285369873,
   "search_O": null,
@@ -12828,7 +12457,6 @@
    1.0016,
    0.9691
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3158,
   "strain_only_mm": 0.1812,
   "rotation_axis_cos_depth": 0.802,
@@ -12849,12 +12477,6 @@
   "vessel_n": 3032,
   "vessel_mean_mm": 0.1786,
   "vessel_median_mm": 0.1566,
-  "search": {
-   "mean_mm": 0.9931,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.216
-  },
   "search_rank": 0,
   "search_F": 0.6161811947822571,
   "search_O": null,
@@ -13069,7 +12691,6 @@
    1.0013,
    0.9688
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3189,
   "strain_only_mm": 0.1813,
   "rotation_axis_cos_depth": 0.8,
@@ -13090,12 +12711,6 @@
   "vessel_n": 3034,
   "vessel_mean_mm": 0.1792,
   "vessel_median_mm": 0.1571,
-  "search": {
-   "mean_mm": 1.611,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2089
-  },
   "search_rank": 0,
   "search_F": 0.6067805290222168,
   "search_O": null,
@@ -13310,7 +12925,6 @@
    1.001,
    0.9686
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3206,
   "strain_only_mm": 0.181,
   "rotation_axis_cos_depth": 0.802,
@@ -13331,12 +12945,6 @@
   "vessel_n": 3029,
   "vessel_mean_mm": 0.1797,
   "vessel_median_mm": 0.1579,
-  "search": {
-   "mean_mm": 1.0753,
-   "rotation_deg": 10.327,
-   "tier": "beyond",
-   "vessel_median_mm": 0.2252
-  },
   "search_rank": 0,
   "search_F": 0.6169018149375916,
   "search_O": null,
@@ -13551,7 +13159,6 @@
    1.0011,
    0.9686
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3203,
   "strain_only_mm": 0.181,
   "rotation_axis_cos_depth": 0.801,
@@ -13572,12 +13179,6 @@
   "vessel_n": 3030,
   "vessel_mean_mm": 0.1796,
   "vessel_median_mm": 0.1576,
-  "search": {
-   "mean_mm": 0.7602,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2122
-  },
   "search_rank": 0,
   "search_F": 0.6148526668548584,
   "search_O": null,
@@ -13792,7 +13393,6 @@
    1.0011,
    0.9686
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3206,
   "strain_only_mm": 0.181,
   "rotation_axis_cos_depth": 0.801,
@@ -13813,12 +13413,6 @@
   "vessel_n": 3029,
   "vessel_mean_mm": 0.1796,
   "vessel_median_mm": 0.1576,
-  "search": {
-   "mean_mm": 0.7019,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2031
-  },
   "search_rank": 0,
   "search_F": 0.613464891910553,
   "search_O": null,
@@ -14033,7 +13627,6 @@
    1.0011,
    0.9686
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3203,
   "strain_only_mm": 0.181,
   "rotation_axis_cos_depth": 0.801,
@@ -14054,12 +13647,6 @@
   "vessel_n": 3030,
   "vessel_mean_mm": 0.1796,
   "vessel_median_mm": 0.1576,
-  "search": {
-   "mean_mm": 0.7611,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2169
-  },
   "search_rank": 0,
   "search_F": 0.6126305460929871,
   "search_O": null,
@@ -14274,7 +13861,6 @@
    1.001,
    0.9685
   ],
-  "tier": "<= 1 mm",
   "rotation_only_mm": 0.3205,
   "strain_only_mm": 0.181,
   "rotation_axis_cos_depth": 0.802,
@@ -14295,12 +13881,6 @@
   "vessel_n": 3029,
   "vessel_mean_mm": 0.1797,
   "vessel_median_mm": 0.1582,
-  "search": {
-   "mean_mm": 0.7871,
-   "rotation_deg": 10.327,
-   "tier": "<= 1 mm",
-   "vessel_median_mm": 0.2056
-  },
   "search_rank": 0,
   "search_F": 0.6149318218231201,
   "search_O": null,

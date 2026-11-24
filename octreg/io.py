@@ -1,6 +1,5 @@
 """Volumes in their file frames, read plane by plane, and the output writers.
-Axes follow the storage order with the plane axis last: NIfTI (i, j, k), TIFF and NPY (x, y, z), the numpy axes reversed.
-World: NIfTI sform, else qform, else diag(pixdim), and TIFF and NPY diag(spacing)."""
+Axes follow the storage order with the plane axis last: NIfTI (i, j, k), TIFF and NPY (x, y, z), the numpy axes reversed."""
 from __future__ import annotations
 
 import dataclasses

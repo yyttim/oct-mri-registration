@@ -1,9 +1,6 @@
-"""The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR):
-1. the tile layout of the mosaics (from the coverage masks, or given), 2. the overlap correspondences of every pair of
-slabs that overlap in depth (first and second neighbours, cached), 3. the placement of all slabs and tiles, 4. the
-transforms in physical units and the registered volume on the working grid (and at the raw voxel with full), each with
-its source map, 5. with an MRI, the affine of the volume to it (mri.py).
-"""
+"""The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR): the tile layout, the correspondences of
+every pair of slabs up to data.NEIGHBOURS apart, the placement of all slabs and tiles, the transforms and the registered
+volume with its source map, and with an MRI the affine of the volume to it (mri.py)."""
 import glob
 import hashlib
 import json
@@ -25,7 +22,7 @@ def settings():
 
 
 def correspondences():
-    """The good matches of every pair of slabs up to data.NEIGHBOURS apart (cached), and the pairs without overlap."""
+    """The good matches of every pair of slabs up to data.NEIGHBOURS apart (cached), and the pairs left out (match.NoOverlap)."""
     os.makedirs(f"{data.WORK}/corr", exist_ok=True)
     m, L, skipped = [], {}, []
     for k in range(1, data.NEIGHBOURS + 1):
@@ -72,10 +69,11 @@ def run(out, full=False, layout=None, mri=None):
     export.save_volume(vol, vz0, data.LEVEL_MM * 1000, f"{out}/registered_40um.nii.gz", src)
     del vol, src
     if full:
-        vol, vz0, src = compose.compose(sol, lay, full=True, out_path=f"{out}/registered_20um_tmp.npy")
-        export.save_volume(vol, vz0, data.VOX * 1000, f"{out}/registered_20um.nii", src)
+        raw = f"registered_{data.VOX * 1000:g}um"
+        vol, vz0, src = compose.compose(sol, lay, full=True, out_path=f"{out}/{raw}_tmp.npy")
+        export.save_volume(vol, vz0, data.VOX * 1000, f"{out}/{raw}.nii", src)
         del vol, src
-        os.remove(f"{out}/registered_20um_tmp.npy")
+        os.remove(f"{out}/{raw}_tmp.npy")
     res = {}
     for k in range(1, data.NEIGHBOURS + 1):
         r = [np.abs(np.stack(solve.residuals(sol, lay, c))) for c in m if data.SLABS.index(int(c["t"])) - data.SLABS.index(int(c["s"])) == k]

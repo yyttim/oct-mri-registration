@@ -1,9 +1,5 @@
-"""The block's MRI as the reference of the registered volume (docs/TILESTACK.md, MRI reference).
-
-A transform that all slabs share changes no match, and octreg finds its affine part: one affine of the registered
-volume to the MRI. octreg reads a tissue mask, since the gel can be the larger part of a mosaic, and a levelled copy of
-the volume, every voxel divided by the median of the tissue of its slab at its depth under the cut. Its base grid is
-the MRI voxel and its refinement continues down to two base voxels. Needs only the written volume and its source map.
+"""The block's MRI as the reference of the registered volume (docs/TILESTACK.md, MRI reference): the tissue mask and the
+levelled copy that octreg reads, and octreg's parameters for the MRI. Needs only the written volume and its source map.
 """
 import dataclasses
 from pathlib import Path
@@ -18,8 +14,9 @@ from octreg.params import Params
 from octreg.preprocess import _fill_planes
 from octreg.register import apply, register
 
+from . import BELOW
+
 SMOOTH_MM = 0.16                # Gaussian sigma of log10 mu_s before the tissue threshold
-BELOW = 1000                    # source-map offset of the voxels below the reliable planes (compose.BELOW)
 
 
 def tissue(vol, src, spacing_mm):
@@ -72,7 +69,7 @@ def octreg_params(mri):
 def register_mri(volume, mri, out_dir):
     """octreg of the volume file, with its source map *_source.nii* next to it, to the MRI file. out_dir gets octreg's
     outputs for the levelled copy, the copy (levelled.nii.gz), the tissue mask (tissue.nii.gz) and the volume itself on
-    the MRI grid (*_in_mri.nii.gz). -> octreg's result dict"""
+    the MRI grid (*_in_mri.nii.gz)."""
     out, vo = Path(out_dir), io.load_volume(volume)
     vol = np.asarray(nib.load(str(volume)).dataobj, np.float32)
     src = np.asarray(nib.load(str(volume).replace(".nii", "_source.nii")).dataobj)
@@ -80,6 +77,5 @@ def register_mri(volume, mri, out_dir):
     io.save_nifti(mask.astype(np.uint8), vo.affine, out / "tissue.nii.gz")
     io.save_nifti(levelled(vol, mask, src), vo.affine, out / "levelled.nii.gz")
     del vol, src, mask
-    res = register(out / "levelled.nii.gz", mri, out, oct_mask=out / "tissue.nii.gz", params=octreg_params(mri))
+    register(out / "levelled.nii.gz", mri, out, oct_mask=out / "tissue.nii.gz", params=octreg_params(mri))
     apply(out, volume, mri, out / Path(volume).name.replace(".nii", "_in_mri.nii"))
-    return res

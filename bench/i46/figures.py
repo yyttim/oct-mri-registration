@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """freeview panels of the I46 test (bench/i46/README.md, Pictures), made like the I58 panels of bench/figures.py.
 
-The crop is the C3 crop of the 10 deg FLASH at the lower median distance from R under octreg (--scores, default
-bench/results/I46/octreg.json). On OCT planes 102, 300 and 498 the panels show the OCT, the OCT with the white-matter boundary
+The crop is the C3 crop of the 10 deg FLASH at the lower median distance from R under octreg
+(bench/results/I46/octreg.json). On OCT planes 102, 300 and 498 the panels show the OCT, the OCT with the white-matter boundary
 placed through R and octreg in one panel (R red, octreg yellow), and the MRI crop placed through each. Plane 300 also has
-the boundary through R, through octreg and through each standard tool (--baselines, --search), one panel each. The panels
-go to -o/enface and figures.json to -o. Needs FreeSurfer 8.2 with its licence (in WSL on Windows).
+the boundary through R, through octreg and through each standard tool (the runs of baselines.py and baselines.py --search),
+one panel each. The panels go to docs/figures/i46/enface and figures.json to docs/figures/i46. Needs FreeSurfer 8.2 with its
+licence (in WSL on Windows).
 
-    python bench/i46/figures.py [-o docs/figures/i46] [--octreg RUNS] [--baselines DIR] [--search DIR] [--scores FILE]
+    python bench/i46/figures.py
 """
 from __future__ import annotations
 
@@ -22,8 +23,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from common import (INPUTS, LABELS, OCT, PRIMARY, REPO, RESULTS, RUNS, SEEDS, WORK, crop_file, crop_name,  # noqa: E402
-                    reference)
+from common import LABELS, OCT, PRIMARY_C3, REPO, RESULTS, RUNS, WORK, crop_file, reference  # noqa: E402
 from bench.figures import check_sizes, freeview_window, fs_script, view  # noqa: E402
 from bench.paths import WSL, host_path  # noqa: E402
 
@@ -114,27 +114,21 @@ def enface(crop, main, tools, wm, out_dir, prefix, work):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("-o", "--out", type=Path, default=REPO / "docs/figures/i46")
-    ap.add_argument("--octreg", type=Path, default=RUNS, help="the folder of the octreg runs "
-                                                                 "(default <project root>/bench_runs/I46/runs)")
-    ap.add_argument("--baselines", type=Path, default=WORK / "baselines", help="the folder of the standard-tool runs")
-    ap.add_argument("--search", type=Path, default=WORK / "baselines_search",
-                    help="the folder of the runs of the tools with their own search")
-    ap.add_argument("--scores", type=Path, default=RESULTS / "octreg.json", help="the octreg scores that choose the crop")
-    a = ap.parse_args()
-    scores = {x["name"]: x for x in json.loads(a.scores.read_text(encoding="utf-8"))}
-    errs = sorted((scores[n]["mean_mm"], n) for n in (crop_name(PRIMARY, "C3", k) for k in range(SEEDS)))
+    ap.parse_args()
+    out = REPO / "docs/figures/i46"
+    scores = {x["name"]: x for x in json.loads((RESULTS / "octreg.json").read_text(encoding="utf-8"))}
+    errs = sorted((scores[n]["mean_mm"], n) for n in PRIMARY_C3)
     crop = errs[(len(errs) - 1) // 2][1]                                                  # the lower median
     print("crop:", crop)
-    box = next(x for x in json.loads((INPUTS / "crops.json").read_text(encoding="utf-8")) if x["name"] == crop)
+    box = next(x for x in json.loads((RESULTS / "crops.json").read_text(encoding="utf-8")) if x["name"] == crop)
     lo, hi = (np.array(x) for x in box["crop_voxels"])
     wm = np.asarray(nib.load(str(LABELS["layers"])).dataobj[lo[0]:hi[0], lo[1]:hi[1], lo[2]:hi[2]]) == 1   # flip-1 grid
-    main = {"reference": reference(), "octreg": np.loadtxt(a.octreg / crop / "T_oct2mri.txt")}
-    tools = {f.parent.name: np.loadtxt(f) for folder in (a.baselines, a.search)
+    main = {"reference": reference(), "octreg": np.loadtxt(RUNS / crop / "T_oct2mri.txt")}
+    tools = {f.parent.name: np.loadtxt(f) for folder in (WORK / "baselines", WORK / "baselines_search")
              for f in sorted((folder / crop).glob("*/T_oct2mri.txt"))}
-    files = enface(crop_file(crop), main, tools, wm, a.out / "enface", crop, WORK / "figures" / "enface" / crop)
-    (a.out / "figures.json").write_text(json.dumps(INFO, indent=1) + "\n", encoding="utf-8")
-    print(len(files), "panels in", a.out / "enface")
+    files = enface(crop_file(crop), main, tools, wm, out / "enface", crop, WORK / "figures" / "enface" / crop)
+    (out / "figures.json").write_text(json.dumps(INFO, indent=1) + "\n", encoding="utf-8")
+    print(len(files), "panels in", out / "enface")
 
 
 if __name__ == "__main__":

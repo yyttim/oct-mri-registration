@@ -6,12 +6,11 @@
 Writes DIR/affine.md (default bench/results/I58/baselines/) and copies the summary of evaluate_runs.py next to it.
 NOTES.json (default bench/results/I58/baselines/notes.json) gives the tool, version, setting and start of each run (key
 affine). The table has the main runs, one per tool at the setting its documentation gives (the panels of AFFINE in
-bench/figures.py), and, when there are more, a supplement with every stored run.
+bench/figures.py), and, when there are more, a supplement with the other runs.
 From the bench/ablate.py runs under --ablation (default <project root>/bench_runs/I58/ablation, subfolders included), when
-that directory exists: bench/results/I58/ablation.json, the pose and the search candidates of every run, no accuracy, and
-ablation/no_outline.json, the result.json of that run with the input paths cut to file names. Then, from result.json and
-ablation.json in bench/results/I58, search.md: the candidates of the orientation search in the I58 run and in the
-no_outline and outline_decides variants and in the runs under fine/.
+that directory exists: bench/results/I58/ablation.json, the pose and the search candidates of every run, no accuracy.
+Then, from result.json and ablation.json in bench/results/I58, search.md: the candidates of the orientation search in the
+I58 run and in the no_outline and outline_decides variants and in the runs under fine/.
 """
 from __future__ import annotations
 
@@ -27,7 +26,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from bench.ablate import VARIANTS, code_id, made_by  # noqa: E402
 from bench.figures import AFFINE  # noqa: E402
-from bench.paths import BENCH_RUNS, PROJECT_ROOT as ROOT, REPO  # noqa: E402
+from bench.paths import BASELINES, BENCH_RUNS, REPO  # noqa: E402
 from octreg.params import Params  # noqa: E402
 
 DEFAULTS = json.loads(json.dumps(Params().to_dict()))      # as variant.json stores them
@@ -36,15 +35,13 @@ I58 = REPO / "bench" / "results" / "I58"
 MAIN = ["octreg" if sub.startswith("RUN/") else "_".join(sub.split("/")[1:]) for _, sub in AFFINE]
 HEAD = ["| method | run | setting | start | scale per OCT axis | det | rotation from the header (°) | wall time | hardware |",
         "|---|---|---|---|---|---|---|---|---|"]
-INTRO = ("The pair has no reference, so the table has no accuracy column, and BASELINES.md shows the overlays. "
+INTRO = ("BASELINES.md shows the overlays. "
          "Scale per OCT axis: the length of the transform applied to a unit step along each array axis "
          "of the OCT header (1 = voxel size kept). det: the determinant of its 3x3 (1 = volume kept). Rotation from the "
-         "header: the angle of the rotation part of the transform from the header orientation, that of the first row. The "
+         "header: the angle of the rotation part of the transform from the header orientation, that of the start. The "
          "summary JSON next to this table also holds each transform, the shift of the OCT box centre from the start (mm) "
          "and the correlation and support Dice of its check (rundir.py). Wall times as each run recorded them. octreg's is "
-         "the sum of its §1 to §4 step times in result.json. FLIRT's main run has both headers scaled x10, because its "
-         "schedule resamples the images to fixed voxel sizes in mm, and its run on the unscaled headers is "
-         "flirt_search_native.")
+         "the sum of its §1 to §4 step times in result.json.")
 MAIN_TITLE = "Main: each tool at the setting its documentation gives (FLIRT with both headers scaled x10)"
 
 
@@ -71,12 +68,12 @@ def table(rows, notes):
     missing = [run for run in MAIN if run not in rows]
     if missing:
         raise KeyError(f"main runs without a summary row: {missing}")
-    rest = sorted(rows.values(), key=lambda r: (r["run"] != "reference_centres", r["run"] != "octreg", r["tool"], r["run"]))
+    rest = sorted((r for r in rows.values() if r["run"] not in MAIN), key=lambda r: (r["tool"], r["run"]))
     intro = "\n".join(textwrap.wrap(INTRO, 124, break_on_hyphens=False, break_long_words=False))
     out = ["# I58 baselines", "", intro, "", f"## {MAIN_TITLE}", "", *HEAD,
            *[line(rows[run], note(notes, run)) for run in MAIN]]
-    if len(rows) > len(MAIN):
-        out += ["", "## Supplement: every stored run", "", *HEAD, *[line(r, note(notes, r["run"])) for r in rest]]
+    if rest:
+        out += ["", "## Supplement: the other runs", "", *HEAD, *[line(r, note(notes, r["run"])) for r in rest]]
     return "\n".join(out) + "\n"
 
 
@@ -98,14 +95,6 @@ def ablation_rows(abl):
                      **{k: res["pose"][k] for k in ("search_rank", "search_F", "search_O", "L", "outline_used")},
                      "search_topk": res["params"]["topk"], "candidates": res["candidates"]})
     return rows
-
-
-def cut_paths(res):
-    """A result.json with the input paths cut to file names, as the stored copy of the I58 run."""
-    for v in res["inputs"].values():
-        if isinstance(v, dict):
-            v["path"] = Path(v["path"]).name
-    return res
 
 
 def num(x, nd):
@@ -149,7 +138,7 @@ def search_md(res, abl):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--affine", type=Path, default=ROOT / "baselines" / "summary_affine.json")
+    ap.add_argument("--affine", type=Path, default=BASELINES / "summary_affine.json")
     ap.add_argument("--notes", type=Path, default=I58 / "baselines" / "notes.json")
     ap.add_argument("--out", type=Path, default=I58 / "baselines")
     ap.add_argument("--ablation", type=Path, default=BENCH_RUNS / "I58" / "ablation",
@@ -167,10 +156,7 @@ def main():
         missing = sorted(set(VARIANTS) - {r["run"] for r in abl})
         if missing:
             sys.exit(f"{a.ablation}: no run of {missing}")
-        res = cut_paths(json.loads((a.ablation / "no_outline" / "result.json").read_text(encoding="utf-8")))
         (I58 / "ablation.json").write_text(json.dumps(abl, indent=1), encoding="utf-8")
-        (I58 / "ablation").mkdir(exist_ok=True)
-        (I58 / "ablation" / "no_outline.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
         print(f"ablation: {len(abl)} runs -> {I58 / 'ablation.json'}")
     if (I58 / "ablation.json").is_file():
         res, abl = (json.loads((I58 / f).read_text(encoding="utf-8")) for f in ("result.json", "ablation.json"))

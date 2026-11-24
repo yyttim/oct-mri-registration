@@ -23,7 +23,6 @@ Tiles not listed have e = 0. The NIfTI volumes place the common-frame point (X, 
 
 
 def save_transforms(sol, lay, path):
-    assert sol["field"] is not None and not np.abs(sol["aff"][:, :, 1:]).any(), "the transforms are written for the method's model"
     v = data.VOX
     L = lay.to_dict()
     layout = {k: (L[k] * v if k in ("X0", "Y0", "PX", "PY", "SX", "SY", "W", "H") else L[k]) for k in L}
@@ -31,20 +30,18 @@ def save_transforms(sol, lay, path):
     out = dict(description=DOC, voxel_mm_of_fit=v, shape_zyx=[data.NP, data.NY, data.NX], slabs=sol["slabs"], layout=layout,
                bspline=dict(G_mm=sol["G"] * v, n_rows=spl.gy, n_cols=spl.gx), settings=sol["settings"], per_slab={})
     for k, s in enumerate(sol["slabs"]):
-        e = dict(ax_mm=float(sol["aff"][k, 0, 0]) * v, ay_mm=float(sol["aff"][k, 1, 0]) * v, az_mm=float(sol["aff"][k, 2, 0]) * v,
+        e = dict(ax_mm=float(sol["shift"][k, 0]) * v, ay_mm=float(sol["shift"][k, 1]) * v, az_mm=float(sol["shift"][k, 2]) * v,
                  tiles={str(t): [round(float(x) * v, 6) for x in sol["tiles"][k, t]] for t in range(lay.n)
                         if np.abs(sol["tiles"][k, t]).max() > 1e-3})
         for i, a in enumerate("xyz"):
             e[f"f{a}_mm"] = (sol["field"][k, i] * v).round(8).tolist()
         out["per_slab"][str(s)] = e
     json.dump(out, open(path, "w"))
-    return path
 
 
 def _affine(z0, level_um):
-    """Voxel -> world mm: (X, Y, -Z) of the common frame, the third axis up out of the block face. With a plane of the
-    maps, shown as MATLAB shows it (x down, y across), being the block face seen from above, this is the specimen's
-    handedness."""
+    """Voxel -> world mm: (X, Y, -Z) of the common frame, the third axis up out of the block face
+    (docs/TILESTACK.md, Scope)."""
     s = level_um / 1000.0
     aff = np.diag([s, s, -data.VOX, 1.0])
     aff[2, 3] = -z0 * data.VOX
@@ -52,14 +49,12 @@ def _affine(z0, level_um):
     return aff
 
 
-def save_volume(vol, z0, level_um, path, src=None):
+def save_volume(vol, z0, level_um, path, src):
     """vol (Z, Y, X) -> NIfTI (X, Y, Z), voxel level_um in-plane and the raw voxel in depth, in the world of _affine.
     The grid has a margin of data.PAD raw pixels: voxel 0 of a working-grid volume is centred at raw pixel
     (DOWN - 1) / 2 - PAD. src: the source map, written next to it."""
     aff = _affine(z0, level_um)
-    for a, p in ((np.asarray(vol, np.float32), path), (None if src is None else np.asarray(src, np.int16), path.replace(".nii", "_source.nii"))):
-        if a is not None:
-            img = nib.Nifti1Image(np.transpose(a, (2, 1, 0)), aff)
-            img.header.set_xyzt_units("mm")
-            nib.save(img, p)
-    return path
+    for a, p in ((np.asarray(vol, np.float32), path), (np.asarray(src, np.int16), path.replace(".nii", "_source.nii"))):
+        img = nib.Nifti1Image(np.transpose(a, (2, 1, 0)), aff)
+        img.header.set_xyzt_units("mm")
+        nib.save(img, p)

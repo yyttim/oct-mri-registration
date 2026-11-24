@@ -4,7 +4,7 @@ each tool's transform into a run directory of octreg with its check.
 
     python bench/baselines/i58/runs.py prepare [RUN ...]
     bash <project root>/baselines/affine/queue.sh
-    python bench/baselines/i58/runs.py convert [RUN ...] [--template RESULT.json] [--force]
+    python bench/baselines/i58/runs.py convert [RUN ...] [--force]
 
 RUN is a run directory under <project root>/baselines/affine, for example ants/com (default every run of the table). The
 project root is that of bench/paths.py, and the shared inputs are those of prepare_inputs.py in <project root>/baselines/inputs.
@@ -33,9 +33,8 @@ REPO = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(REPO), str(REPO / "bench"), str(REPO / "bench" / "baselines")]
 import convert_affines as C  # noqa: E402
 import rundir  # noqa: E402
-from paths import PROJECT_ROOT, WSL, host_path  # noqa: E402
+from paths import BASELINES, WSL, host_path  # noqa: E402
 
-BASELINES = PROJECT_ROOT / "baselines"
 ELASTIX = REPO / "bench" / "baselines" / "elastix_defaults"
 PY = Path(sys.executable).as_posix()
 TOOLS, FS = "source ~/baselines/tools/env.sh", "source ~/baselines/fs_env.sh"
@@ -104,13 +103,9 @@ def ants_antsai(run):
 def elastix(run, mask=""):
     """The model-zoo rigid then affine stages, with the parameter files that prepare writes."""
     return ["set -e", ". ~/baselines/tools/env.sh", "IN=$BASELINES/inputs", f"DIR=$BASELINES/affine/{run}", 'cd "$DIR"',
-            "echo 12 > threads.txt", "t0=$(date +%s.%N)",
+            "echo 12 > threads.txt",
             f"/usr/bin/time -f %e -o time.txt   elastix -f $IN/mri_0.08mm.nii.gz -m $IN/oct_0.08mm.nii.gz{mask}     "
-            "-p $DIR/rigid.txt -p $DIR/affine.txt -out $DIR -threads 12 > log.txt 2>&1",
-            "t1=$(date +%s.%N)",
-            "awk -v a=$t0 -v b=$t1 'BEGIN{printf \"# date arithmetic around the elastix command: %.1f s\\n\", b-a}' "
-            ">> time.txt",
-            "cp result.1.nii.gz warped_tool.nii.gz"]
+            "-p $DIR/rigid.txt -p $DIR/affine.txt -out $DIR -threads 12 > log.txt 2>&1"]
 
 
 def flirt(run, search="", weight="", x10=True):
@@ -153,16 +148,13 @@ def fs_head(run, mask=False):
 
 
 def mri_coreg(run, log1, opt1="", log2="", opt2=""):
-    """mri_coreg --dof 6, then --dof 12 from it, with VOX2VOX LTAs converted by lta_convert."""
+    """mri_coreg --dof 6, then --dof 12 from it, with the VOX2VOX affine LTA converted by lta_convert."""
     reg = '/usr/bin/time -f %e -o time_{0}.txt mri_coreg --mov "$MOV" --ref "$DST" --reg {0}.lta --dof {1}{2} --threads 20 '
     return [*fs_head(run, "MASK" in opt1),
             '{ echo "--threads 20"; echo "OMP_NUM_THREADS=$OMP_NUM_THREADS"; echo "nproc=$(nproc)"; } > threads.txt',
             f'echo "### step 1: rigid (--dof 6), {log1}" > log.txt', reg.format("rigid", 6, opt1) + ">> log.txt 2>&1",
-            "echo \"### rigid.lta type line: $(grep '^type' rigid.lta)\" >> log.txt",
-            "lta_convert --inlta rigid.lta --outlta rigid_ras.lta >> log.txt 2>&1",
             f'echo "### step 2: affine (--dof 12), initialised with rigid.lta{log2}" >> log.txt',
             reg.format("affine", 12, " --init-reg rigid.lta" + opt2) + ">> log.txt 2>&1",
-            "echo \"### affine.lta type line: $(grep '^type' affine.lta)\" >> log.txt",
             "lta_convert --inlta affine.lta --outlta affine_ras.lta >> log.txt 2>&1",
             SUM + "time_rigid.txt time_affine.txt > time.txt", VOL2VOL.format("affine_ras.lta"),
             'echo "done $(date)" >> log.txt']
@@ -344,11 +336,11 @@ def transform(run, d):
         src, s = (BASELINES / "affine" / "flirt" / "inputs_x10", "x10") if x10 else (BASELINES / "inputs", "0.08mm")
         T = C.flirt_mat_to_mov2fix_world(f, nib.load(str(src / f"oct_{s}.nii.gz")), nib.load(str(src / f"mri_{s}.nii.gz")))
         return C.unscale_world_transform(T, 10.0) if x10 else T
-    read = {"ants": C.ants_mat_to_mov2fix_ras, "greedy": C.greedy_mat_to_mov2fix_ras, "niftyreg": C.niftyreg_txt_to_mov2fix_ras}
+    read = {"ants": C.ants_mat_to_mov2fix_ras, "greedy": C.fix2mov_txt_to_mov2fix_ras, "niftyreg": C.fix2mov_txt_to_mov2fix_ras}
     return read.get(tool, C.lta_to_mov2fix_ras)(f)
 
 
-def convert(runs, template, force=False):
+def convert(runs, force=False):
     inputs = BASELINES / "inputs"
     for run in runs:
         d = BASELINES / "affine" / run
@@ -358,7 +350,7 @@ def convert(runs, template, force=False):
         if not (d / transform_file(run)).is_file():
             print(f"{run}: no {transform_file(run)}, no transform")
             continue
-        rundir.init(d, transform(run, d), template)
+        rundir.init(d, transform(run, d))
         warped = d / ("warped_tool_linear.nii.gz" if run.split("/")[0] in ("elastix", "niftyreg") else "warped_tool.nii.gz")
         rundir.check(d, warped, inputs / "oct_0.08mm.nii.gz", inputs / "mri_0.08mm.nii.gz")
 
@@ -367,7 +359,6 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("step", choices=["prepare", "convert"])
     ap.add_argument("runs", nargs="*", help="run directories under <project root>/baselines/affine (default all)")
-    ap.add_argument("--template", type=Path, default=None, help="result.json of an octreg run for rundir.py init")
     ap.add_argument("--force", action="store_true", help="convert: also the runs that have a check.json")
     a = ap.parse_args()
     unknown = [r for r in a.runs if r not in RUNS]
@@ -376,7 +367,7 @@ def main():
     if a.step == "prepare":
         prepare(a.runs or list(RUNS))
     else:
-        convert(a.runs or list(RUNS), a.template, a.force)
+        convert(a.runs or list(RUNS), a.force)
 
 
 if __name__ == "__main__":

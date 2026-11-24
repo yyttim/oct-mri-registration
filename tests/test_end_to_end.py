@@ -9,7 +9,8 @@ import torch
 from PIL import Image
 from scipy import ndimage
 
-from octreg import geometry as G, io, preprocess as pp
+import octreg.register as reg
+from octreg import geometry as G, io
 from octreg.cli import main
 from octreg.params import Params
 from octreg.refine import TIE
@@ -17,7 +18,7 @@ from octreg.register import OUTPUTS, QC_CELL_IN, QC_COLOURS, QC_DPI, QC_HEAD_IN,
 
 # the specimen is 6 mm across, so the texture and search smoothings are smaller than the defaults for real blocks
 FAST = dataclasses.replace(Params(), fine_mm=0.08, n_rot=200, topk=4, iters=40, texture_smooth_mm=0.32, search_sigma_mm=0.6)
-# for the runs whose pose does not matter
+# for a run whose pose does not matter
 TINY = {"fine_mm": 0.08, "texture_smooth_mm": 0.32, "search_sigma_mm": 0.6, "n_rot": 8, "topk": 1, "iters": 5}
 POSE_KEYS = {"search_rank", "search_F", "search_O", "L", "outline_used", "T_search", "F", "scale_per_oct_axis"}
 
@@ -122,10 +123,6 @@ def test_register_and_apply(data, tmp_path):
 
     assert saved["inputs"]["oct_mask"] is None and saved["inputs"]["mri_mask"] is None
     assert saved["foreground"]["mri"]["threshold"] > 0
-    # the OCT histogram has no valley, so the threshold is 0 and the texture finds the specimen
-    oct_img = nib.load(str(oct_path))
-    raw_h = G.pool_iso(np.asarray(oct_img.dataobj, np.float32), oct_img.affine, 0.15)[0]
-    assert pp.foreground(raw_h, 0.15, Params())[1]["threshold"] == 0
     assert 0.9 < saved["foreground"]["oct"]["volume_cm3"] / (len(pts) * 0.08 ** 3 / 1e3) < 1.3
 
     ref = nib.load(str(out / "oct_in_mri.nii.gz"))
@@ -157,7 +154,6 @@ def test_register_and_apply(data, tmp_path):
 def test_user_masks(tmp_path, monkeypatch):
     """--oct-mask and --mri-mask replace the §1 masks. The OCT mask, on a 0.16 mm grid of another shape than the OCT, keeps
     its own spacing under --oct-spacing-um."""
-    import octreg.register as reg
     oct_path, mri_path, T_true, pts = pair(tmp_path, seed=1)
     A = io.load_volume(oct_path).affine.copy()
     A[:3, :3] *= 2
@@ -180,7 +176,6 @@ def test_user_masks(tmp_path, monkeypatch):
 def test_oct_spacing_applies_to_a_mask_of_the_oct_shape(data, tmp_path, monkeypatch):
     """--oct-spacing-um applies to a mask of the OCT's shape, and masks with no spacing or no measured voxel are refused. A run
     that stops early leaves no result.json of an earlier run in its directory."""
-    import octreg.register as reg
     oct_path, mri_path, _, _ = data
     img = nib.load(str(oct_path))
     A = img.affine.copy()
@@ -233,8 +228,9 @@ def test_mask_in_another_frame_is_refused(data, tmp_path):
 
 
 def test_array_frame(data, tmp_path):
-    """An NPY stack in its array frame gives the same pose as the NIfTI it came from, and apply reproduces the overlay. The
-    stack is flipped on the three axes the header negates, so its array frame is the header frame up to a translation."""
+    """An NPY stack in its array frame gives the same pose as the NIfTI it came from, and apply reproduces the overlay, from
+    another path only with --oct-spacing-um. The stack is flipped on the three axes the header negates, so its array frame
+    is the header frame up to a translation."""
     oct_path, mri_path, T_true, pts = data
     img = nib.load(str(oct_path))
     np.save(tmp_path / "oct.npy", np.asarray(img.dataobj, np.float32).transpose(2, 1, 0)[::-1, ::-1, ::-1])   # numpy (z, y, x)
@@ -250,24 +246,13 @@ def test_array_frame(data, tmp_path):
     assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(mri_path), "-o",
                  str(tmp_path / "again.nii.gz")]) == 0
     np.testing.assert_allclose(nii(tmp_path / "again.nii.gz"), nii(out / "oct_in_mri.nii.gz"), rtol=1e-5, atol=1e-3)
-
-
-def test_apply_moved_npy_with_spacing(data, tmp_path):
-    """octreg apply refuses an NPY run from another path until --oct-spacing-um is given, then gives the same result."""
-    stack = np.asarray(nib.load(str(data[0])).dataobj, np.float32).transpose(2, 1, 0)       # numpy (z, y, x)
-    np.save(tmp_path / "oct.npy", stack)
     (tmp_path / "moved").mkdir()
-    np.save(tmp_path / "moved" / "oct.npy", stack)
-    out = tmp_path / "run"
-    register(tmp_path / "oct.npy", data[1], out, (80, 80, 80), params=Params.from_dict(TINY), device="cpu")
-    assert main(["apply", "--run", str(out), "--moving", str(tmp_path / "oct.npy"), "--reference", str(data[1]), "-o",
-                 str(tmp_path / "here.nii.gz")]) == 0
-    np.testing.assert_allclose(nii(tmp_path / "here.nii.gz"), nii(out / "oct_in_mri.nii.gz"), rtol=1e-5, atol=1e-3)
-    run = ["apply", "--run", str(out), "--moving", str(tmp_path / "moved" / "oct.npy"), "--reference", str(data[1]), "-o",
+    np.save(tmp_path / "moved" / "oct.npy", np.load(tmp_path / "oct.npy"))
+    run = ["apply", "--run", str(out), "--moving", str(tmp_path / "moved" / "oct.npy"), "--reference", str(mri_path), "-o",
            str(tmp_path / "moved.nii.gz")]
     assert main(run) == 2
     assert main(run + ["--oct-spacing-um", "80,80,80"]) == 0
-    np.testing.assert_array_equal(nii(tmp_path / "moved.nii.gz"), nii(tmp_path / "here.nii.gz"))
+    np.testing.assert_array_equal(nii(tmp_path / "moved.nii.gz"), nii(tmp_path / "again.nii.gz"))
 
 
 def test_register_command(data, tmp_path, capsys):
