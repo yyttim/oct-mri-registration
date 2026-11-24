@@ -21,8 +21,12 @@ with 2.56 mm blocks at the first two depths gives the pair's depth offset as a p
 pass with 1.28 mm blocks searches ±0.10 mm in depth around that plane. The in-plane peak is refined on an upsampled DFT
 (Guizar-Sicairos et al., 2008) and the depth by a Gaussian through the correlation peaks of stacks of the older slab
 interpolated at quarter planes. A match is kept when its correlation peak, the phase correlation averaged over the three
-planes, exceeds 0.12 and lies inside the depth search. A pair is left out when fewer than 8 coarse blocks agree on its
-depth offset within 0.04 mm, or when that offset does not lie between 0 and `deep_a_mm`.
+planes, exceeds 0.12 and lies inside the depth search. The plane of a pair is fitted to the kept matches of the coarse
+pass by least squares with the distances capped at 0.04 mm and a ridge on its tilt, in which a tilt of 0.005 (5 µm per
+mm) weighs as one match at the cap. It is the best of 500 such fits, each to the matches within 0.04 mm of the plane
+through a sample of three matches (RANSAC with a capped cost, Torr and Zisserman, 2000). A pair is left out when fewer
+than 8 kept coarse matches lie within 0.04 mm of its plane, when the plane at the in-plane centre of the slabs does not
+lie between 0 and `deep_a_mm`, or when no dense match is kept.
 
 **Placement.** Slab s maps its raw voxel (x, y, z) in mosaic tile k to the common frame by
 

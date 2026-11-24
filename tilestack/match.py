@@ -19,6 +19,8 @@ SEARCH = int(round(0.10 / data.VOX))                  # planes either side of th
 PEAK = 0.12                                           # smallest correlation peak kept
 MIN_BLOCKS = 8                                        # coarse blocks that must agree on the pair's plane offset
 AGREE = 0.04 / data.VOX                               # planes within which they agree
+TRIPLES = 500                                         # samples of three coarse blocks tried for the pair's plane
+TILT = 0.005                                          # tilt of that plane that weighs as much as one block at AGREE from it
 
 
 class NoOverlap(Exception):
@@ -128,15 +130,22 @@ def _block_grid(vA, vB, b, step, pre=(0, 0)):
     return np.array(ys, int), np.array(xs, int)
 
 
-def _robust_plane(x, y, v):
-    """Plane v = c0 + c1 (x - xc)/1000 + c2 (y - yc)/1000, refitted three times without outliers."""
+def _plane(x, y, v):
+    """Plane v = c0 + c1 (x - data.XC)/1000 + c2 (y - data.YC)/1000 of the blocks, and the number of blocks within AGREE of
+    it: the plane with the smallest sum of squared distances capped at AGREE, plus a ridge on its tilt, among TRIPLES
+    least-squares fits with that ridge, each to the blocks within AGREE of the plane through a sample of three blocks, the
+    least tilted one where the three fix none (RANSAC with the capped cost of Torr and Zisserman 2000)."""
     A = np.c_[np.ones_like(x), (x - data.XC) / 1000, (y - data.YC) / 1000]
-    k = np.ones(len(v), bool)
-    for _ in range(4):
-        c = np.linalg.lstsq(A[k], v[k], rcond=None)[0]
-        r = np.abs(v - A @ c)
-        k = r < 3 * np.median(r[k]) + 0.006 / data.VOX
-    return c
+    R = AGREE / (1000 * TILT) * np.eye(3)[1:]
+    rng, best = np.random.default_rng(0), np.inf
+    for _ in range(TRIPLES):
+        i = rng.choice(len(v), 3, replace=False)
+        k = np.abs(v - A @ np.linalg.lstsq(np.r_[A[i], 1e-6 * R], np.r_[v[i], 0, 0], rcond=None)[0]) < AGREE
+        p = np.linalg.lstsq(np.r_[A[k], R], np.r_[v[k], 0, 0], rcond=None)[0]
+        cost = (np.minimum(np.abs(v - A @ p), AGREE) ** 2).sum() + ((R @ p) ** 2).sum()
+        if cost < best:
+            best, c = cost, p
+    return c, int((np.abs(v - A @ c) < AGREE).sum())
 
 
 def good(m):
@@ -175,8 +184,7 @@ def match_pair(s, t, LA, LB, out):
         raise NoOverlap(f"pair {s}-{t}: only {g.sum()} coarse matches")
     xc, yc = xs + bc / 2, ys + bc / 2
     zr = r[:, 0] - q                                                         # raw plane offset zA - zB
-    rplane = _robust_plane(xc[g], yc[g], zr[g])
-    agree = int((np.abs(zr[g] - rplane[0] - rplane[1] * (xc[g] - data.XC) / 1000 - rplane[2] * (yc[g] - data.YC) / 1000) < AGREE).sum())
+    rplane, agree = _plane(xc[g], yc[g], zr[g])
     if agree < MIN_BLOCKS or not 0 < rplane[0] < data.DEEP_A:
         raise NoOverlap(f"pair {s}-{t}: {agree} coarse matches agree on the plane offset {np.round(rplane, 2)}")
     pre = (int(round(np.median(r[g, 1]))), int(round(np.median(r[g, 2]))))

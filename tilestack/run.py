@@ -18,11 +18,12 @@ def settings():
     """What the caches in data.WORK depend on."""
     return dict(block={k: v for k, v in data.BLOCK.items() if k != "work"}, surface_tol=data.SURFACE_TOL, level_mm=data.LEVEL_MM,
                 match=dict(block=match.BLOCK, coarse=match.COARSE, depths=match.DEPTHS, search=match.SEARCH, peak=match.PEAK,
-                           min_blocks=match.MIN_BLOCKS, agree=match.AGREE))
+                           min_blocks=match.MIN_BLOCKS, agree=match.AGREE, triples=match.TRIPLES, tilt=match.TILT))
 
 
 def correspondences():
-    """The good matches of every pair of slabs up to data.NEIGHBOURS apart (cached), and the pairs left out (match.NoOverlap)."""
+    """The good matches of every pair of slabs up to data.NEIGHBOURS apart (cached), and the pairs left out (match.NoOverlap,
+    or no good match)."""
     os.makedirs(f"{data.WORK}/corr", exist_ok=True)
     m, L, skipped = [], {}, []
     for k in range(1, data.NEIGHBOURS + 1):
@@ -39,7 +40,11 @@ def correspondences():
             except match.NoOverlap as e:
                 skipped.append(str(e))
                 continue
-            m.append(match.keep(c, match.good(c)))
+            c = match.keep(c, match.good(c))
+            if len(c["zB"]):
+                m.append(c)
+            else:
+                skipped.append(f"pair {s}-{t}: no dense match kept")
     del L
     torch.cuda.empty_cache()
     joined = {data.SLABS[0]}
