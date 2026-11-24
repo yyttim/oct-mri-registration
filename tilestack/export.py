@@ -18,8 +18,9 @@ fx, fy, fz: cubic B-splines, control (i, j) at x = (j - 1) G, y = (i - 1) G, G =
 raw field (0 to {data.NX * data.VOX:g} and 0 to {data.NY * data.VOX:g} mm). A slab's fx_mm, fy_mm and fz_mm list the n_rows x n_cols
 control values row by row (control (i, j) at index i * n_cols + j).
 Tile k = i * cols + j: solve x = X0 + j PX + i SX + W / 2, y = Y0 + i PY + j SY + H / 2 (layout, mm) for (i, j), round
-both and clip them to the lattice. If the slab has no tile there, use the present tile with the nearest (i, j).
-Tiles not listed have e = 0. The NIfTI volumes place the common-frame point (X, Y, Z) at world (X, Y, -Z) mm."""
+both and clip them to the lattice. If the slab has no tile there, use the present tile whose (i, j) is nearest in
+straight-line distance. On a tie, use the lowest k. A slab's tiles give ex, ey and ez of each tile present in it.
+The NIfTI volumes place the common-frame point (X, Y, Z) at world (X, Y, -Z) mm."""
 
 
 def save_transforms(sol, lay, path):
@@ -31,8 +32,7 @@ def save_transforms(sol, lay, path):
                bspline=dict(G_mm=sol["G"] * v, n_rows=spl.gy, n_cols=spl.gx), settings=sol["settings"], per_slab={})
     for k, s in enumerate(sol["slabs"]):
         e = dict(ax_mm=float(sol["shift"][k, 0]) * v, ay_mm=float(sol["shift"][k, 1]) * v, az_mm=float(sol["shift"][k, 2]) * v,
-                 tiles={str(t): [round(float(x) * v, 6) for x in sol["tiles"][k, t]] for t in range(lay.n)
-                        if np.abs(sol["tiles"][k, t]).max() > 1e-3})
+                 tiles={str(t): [round(float(x) * v, 6) for x in sol["tiles"][k, t]] for t in lay.exists[s]})
         for i, a in enumerate("xyz"):
             e[f"f{a}_mm"] = (sol["field"][k, i] * v).round(8).tolist()
         out["per_slab"][str(s)] = e

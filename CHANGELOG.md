@@ -107,10 +107,11 @@ normalised gradients of the two volumes, which needs no intensity mapping and no
 - §3: candidates within 3 mm and 20° (`nms_deg`) count as one pose.
 - §5: the score is the weighted correlation of the trace-free orientation tensors of the two normalised gradients, with a finite
   gradient where the OCT and the MRI points do not overlap.
-- bench: `bench/i46/` is new, a test on block I46 of Costantini et al. (2023) against the authors' registration, with eight
-  standard tools, a start test and ablations of the steps of the method. `bench/baselines/` is new, a comparison with standard
-  registration tools on the I58 pair, eight for the affine and five deformable ones started from octreg's affine, each at the
-  setting its documentation gives. `bench/figures.py` is new and makes the freeview figures of the I58 pair in `docs/figures/`.
+- bench: `bench/i46/` is new, a test on block I46 of Costantini et al. (2023) against the authors' registration, with
+  eight standard tools, a start test and ablations of the steps of the method. `bench/baselines/` is new, a comparison with
+  standard registration tools on the I58 pair, eight for the affine and five deformable ones started from octreg's affine, each at
+  the setting its documentation gives. `bench/figures.py` is new and makes the freeview figures of the I58 pair in
+  `docs/figures/`.
   `bench/ablate.py` has two more variants (the outline alone, no orientation search), start tests from turned and from random
   starts, and runs on other pairs. `bench/dandi.py` and the stored results in `bench/results/I58/ngf_lam/` are gone.
 - Every bench script imports the octreg package of its own checkout, also when another copy is installed.

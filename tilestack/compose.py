@@ -1,7 +1,7 @@
 """The registered volume in the common frame from all slabs and their tile placements (docs/TILESTACK.md, Volume).
 
-Each slab is resampled tile by tile: an output pixel takes the tile whose moved cell contains it, the one deepest inside
-its cell where two moved cells overlap, and none where moved cells leave a gap, where the volume takes another slab.
+Each slab is resampled tile by tile: an output pixel takes the tile whose moved cell holds it, the one it lies farthest
+inside where moved cells overlap, and none where moved cells leave a gap, where the volume takes another slab.
 Along depth the raw plane of a common-frame voxel follows the slab's depth offset. The output grid is the raw field
 with a margin of data.PAD pixels on every side.
 """
@@ -33,8 +33,7 @@ def inverse_map(sol, lay, s, ny, nx, scale):
     a = torch.tensor(sol["shift"][k], dtype=torch.float32, device=dev)
     Li = torch.tensor(np.linalg.inv(lay._A), dtype=torch.float32, device=dev)
     E = torch.tensor(sol["tiles"][k], dtype=torch.float32, device=dev)            # (n, 3)
-    ok_grid = torch.zeros((lay.rows + 2, lay.cols + 2), dtype=torch.bool, device=dev)    # present tiles, padded
-    ok_grid[1:-1, 1:-1] = torch.as_tensor(lay.present(s), device=dev)
+    cpad = torch.as_tensor(np.pad(lay.cellmap(s), 1, mode="edge"), device=dev)    # tile of every cell, padded
     cmap = torch.as_tensor(lay.cellmap(s), device=dev)
     Y = (torch.arange(ny, device=dev).float() + 0.5) * scale - 0.5 - data.PAD
     X = (torch.arange(nx, device=dev).float() + 0.5) * scale - 0.5 - data.PAD
@@ -57,7 +56,8 @@ def inverse_map(sol, lay, s, ny, nx, scale):
     p0 = q
     for _ in range(3):
         p0 = q - field(p0[0], p0[1])
-    i0, j0 = (torch.round(v) for v in lattice(p0))
+    i0, j0 = lattice(p0)
+    i0, j0 = torch.round(i0).clamp(0, lay.rows - 1), torch.round(j0).clamp(0, lay.cols - 1)
     best = torch.full_like(X, -1e9); cell = torch.full(X.shape, -1, dtype=torch.long, device=dev)
     py, px = Y.clone(), X.clone()
     for di in (-1, 0, 1):
@@ -65,8 +65,7 @@ def inverse_map(sol, lay, s, ny, nx, scale):
             ii = (i0 + di).long(); jj = (j0 + dj).long()
             inside = (ii >= 0) & (ii < lay.rows) & (jj >= 0) & (jj < lay.cols)
             ic, jc = ii.clamp(0, lay.rows - 1), jj.clamp(0, lay.cols - 1)
-            ok = inside & ok_grid[ic + 1, jc + 1]
-            kc = torch.where(ok, ic * lay.cols + jc, torch.zeros_like(ii))
+            kc, ok = cmap[ic, jc], inside                       # the tile that holds that cell
             e = E[kc][..., :2].permute(2, 0, 1)
             p = p0
             for _ in range(3):
@@ -74,12 +73,13 @@ def inverse_map(sol, lay, s, ny, nx, scale):
             fi, fj = lattice(p)
             ci = torch.round(fi).long().clamp(0, lay.rows - 1); cj = torch.round(fj).long().clamp(0, lay.cols - 1)
             ok &= cmap[ci, cj] == kc
-            dI = fi - ii; dJ = fj - jj                      # sides without a present neighbour tile are open
-            dI = torch.where(~ok_grid[ic, jc + 1], torch.clamp(dI, min=0), dI)
-            dI = torch.where(~ok_grid[ic + 2, jc + 1], torch.clamp(dI, max=0), dI)
-            dJ = torch.where(~ok_grid[ic + 1, jc], torch.clamp(dJ, min=0), dJ)
-            dJ = torch.where(~ok_grid[ic + 1, jc + 2], torch.clamp(dJ, max=0), dJ)
-            margin = torch.where(ok, 0.5 - torch.maximum(dI.abs(), dJ.abs()), torch.full_like(dI, -1e9))
+            u, v = fi - ci, fj - cj                         # the distance to the nearest cell of another tile
+            margin = torch.full_like(u, 0.5)
+            for si, sj in ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)):
+                d = torch.hypot(torch.clamp(0.5 - si * u, min=0) if si else torch.zeros_like(u),
+                                torch.clamp(0.5 - sj * v, min=0) if sj else torch.zeros_like(v))
+                margin = torch.where(cpad[ci + 1 + si, cj + 1 + sj] == kc, margin, torch.minimum(margin, d))
+            margin = torch.where(ok, margin, torch.full_like(u, -1e9))
             take = margin > best
             best = torch.where(take, margin, best); cell = torch.where(take, kc, cell)
             px = torch.where(take, p[0], px); py = torch.where(take, p[1], py)
