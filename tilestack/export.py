@@ -1,62 +1,71 @@
-"""Write a solution as physical-unit transforms (JSON) and the registered volume as NIfTI."""
-import json
+"""Write the registered volume and, for every slab, its placement as an ITK displacement field, both as NIfTI.
+
+The world: voxel (i, j, k) of a slab file, unplaced, lies at (i vx, j vy, -k vz) mm, the third axis up out of the block
+face. The common frame (X, Y, Z) of the working grid, in working voxels w, lies at (X w + (w - vx) / 2, Y w + (w - vy) / 2,
+-Z w - (w - vz) / 2).
+"""
+import os
 
 import nibabel as nib
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 
-from . import data
-from .solve import Spline
-
-DOC = f"""Raw slab coordinates in mm, from 0-based voxel indices of the {data.VOX * 1000:g} um maps (shape_zyx): x = i_x * {data.VOX:g} with
-i_x the index along the {data.NX}-voxel axis (the first MATLAB dimension), y = i_y * {data.VOX:g} along the {data.NY}-voxel axis,
-z = i_z * {data.VOX:g} along depth. If the maps are n x n x n block means of finer data, the fine voxel j sits at
-(j - (n - 1) / 2) * {data.VOX:g} / n mm on the same axes. A point of slab s in mosaic tile k maps to the common frame (mm) by
-    X = x + ax + fx(x, y) + ex[k]
-    Y = y + ay + fy(x, y) + ey[k]
-    Z = z + az + fz(x, y) + ez[k]
-fx, fy, fz: cubic B-splines, control (i, j) at x = (j - 1) G, y = (i - 1) G, G = bspline.G_mm, with x and y clipped to the
-raw field (0 to {data.NX * data.VOX:g} and 0 to {data.NY * data.VOX:g} mm). A slab's fx_mm, fy_mm and fz_mm list the n_rows x n_cols
-control values row by row (control (i, j) at index i * n_cols + j).
-Tile k = i * cols + j: solve x = X0 + j PX + i SX + W / 2, y = Y0 + i PY + j SY + H / 2 (layout, mm) for (i, j), round
-both and clip them to the lattice. If the slab has no tile there, use the present tile with the nearest (i, j).
-Tiles not listed have e = 0."""
+from . import compose, data
 
 
-def save_transforms(sol, lay, path):
-    assert sol["field"] is not None and not np.abs(sol["aff"][:, :, 1:]).any(), "the transforms are written for the method's model"
-    v = data.VOX
-    L = lay.to_dict()
-    layout = {k: (L[k] * v if k in ("X0", "Y0", "PX", "PY", "SX", "SY", "W", "H") else L[k]) for k in L}
-    spl = Spline(sol["G"])
-    out = dict(description=DOC, voxel_mm_of_fit=v, shape_zyx=[data.NP, data.NY, data.NX], slabs=sol["slabs"], layout=layout,
-               bspline=dict(G_mm=sol["G"] * v, n_rows=spl.gy, n_cols=spl.gx), settings=sol["settings"], per_slab={})
-    for k, s in enumerate(sol["slabs"]):
-        e = dict(ax_mm=float(sol["aff"][k, 0, 0]) * v, ay_mm=float(sol["aff"][k, 1, 0]) * v, az_mm=float(sol["aff"][k, 2, 0]) * v,
-                 tiles={str(t): [round(float(x) * v, 6) for x in sol["tiles"][k, t]] for t in range(lay.n)
-                        if np.abs(sol["tiles"][k, t]).max() > 1e-3})
-        for i, a in enumerate("xyz"):
-            e[f"f{a}_mm"] = (sol["field"][k, i] * v).round(8).tolist()
-        out["per_slab"][str(s)] = e
-    json.dump(out, open(path, "w"))
-    return path
+def _nifti(a, aff):
+    img = nib.Nifti1Image(a, aff)
+    img.header.set_xyzt_units("mm")
+    img.set_sform(aff, 1)
+    img.set_qform(aff, 1)
+    return img
 
 
-def _affine(z0, level_um):
-    s = level_um / 1000.0
-    aff = np.diag([s, s, data.VOX, 1.0])
-    aff[2, 3] = z0 * data.VOX
-    aff[0, 3] = aff[1, 3] = ((s / data.VOX - 1) / 2 - data.PAD) * data.VOX
+def _affine(z0):
+    """Voxel to world of a volume at the voxel of the slab files whose plane 0 begins at common working plane z0."""
+    vz, vy, vx = data.RES_MM
+    aff = np.diag([vx, vy, -vz, 1.0])
+    aff[:3, 3] = -data.PAD * data.VOX, -data.PAD * data.VOX, -z0 * data.VOX
     return aff
 
 
-def save_volume(vol, z0, level_um, path, src=None):
-    """vol (Z, Y, X) -> NIfTI (X, Y, Z), voxel level_um in-plane and the raw voxel in depth, origin at the common frame.
-    The grid has a margin of data.PAD raw pixels: voxel 0 of a working-grid volume is centred at raw pixel
-    (DOWN - 1) / 2 - PAD. src: the source map, written next to it."""
-    aff = _affine(z0, level_um)
-    for a, p in ((np.asarray(vol, np.float32), path), (None if src is None else np.asarray(src, np.int16), path.replace(".nii", "_source.nii"))):
-        if a is not None:
-            img = nib.Nifti1Image(np.transpose(a, (2, 1, 0)), aff)
-            img.header.set_xyzt_units("mm")
-            nib.save(img, p)
+def slab_affine():
+    """Voxel (x, y, depth) of a slab file to the world in which the warps place it."""
+    vz, vy, vx = data.RES_MM
+    return np.diag([vx, vy, -vz, 1.0])
+
+
+def name():
+    """registered_<voxel>um, from the voxel of the slab files (x, y, depth)."""
+    um = [f"{v * 1000:g}" for v in data.RES_MM[::-1]]
+    return f"registered_{um[0] if len(set(um)) == 1 else 'x'.join(um)}um"
+
+
+def save_volume(vol, z0, path, src=None):
+    """vol (Z, Y, X) at the voxel of the slab files -> NIfTI (X, Y, Z), and src, the source map, next to it."""
+    aff = _affine(z0)
+    nib.save(_nifti(np.transpose(np.asarray(vol, np.float32), (2, 1, 0)), aff), path)
+    if src is not None:
+        nib.save(_nifti(np.transpose(np.asarray(src, np.int16), (2, 1, 0)), aff), path.replace(".nii", "_source.nii"))
     return path
+
+
+def save_warps(sol, lay, out, z0, nz):
+    """warps/slab_NNN.nii.gz: the placement of slab NNN on the in-plane grid of the registered volume (nz planes), at
+    each point the displacement to the point of the slab placed there, and between moved tiles that of the nearest tile,
+    as an ITK displacement field (LPS mm, intent vector) with two planes, at the top and the bottom of the volume, since
+    it does not change with depth."""
+    os.makedirs(f"{out}/warps", exist_ok=True)
+    f = data.FACTOR[1]
+    ny, nx = (n + 2 * data.PAD * f for n in data.SHAPE[1:])
+    aff = _affine(z0)
+    aff[2, 2] = -max(nz - 1, 1) * data.RES_MM[0]
+    Y, X = (np.mgrid[0:ny, 0:nx] + 0.5) / f - 0.5 - data.PAD                # working pixels, as compose places them
+    for s in sol["slabs"]:
+        y, x, cell, zo = (v.cpu().numpy() for v in compose.inverse_map(sol, lay, s, ny, nx, 1 / f))
+        d = np.stack([X - x, Y - y, zo]) * data.VOX                   # (L, P, S) mm: RAS (x - X, y - Y, zo)
+        iy, ix = distance_transform_edt(cell < 0, return_distances=False, return_indices=True)
+        d = d[:, iy, ix].transpose(2, 1, 0)[:, :, None, None]
+        img = _nifti(np.repeat(d, 2, axis=2).astype(np.float32), aff)
+        img.header.set_intent("vector")
+        nib.save(img, f"{out}/warps/slab_{s:03d}.nii.gz")

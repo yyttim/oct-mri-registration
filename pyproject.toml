@@ -13,7 +13,7 @@ dependencies = ["torch>=1.11", "numpy>=1.20", "scipy>=1.6", "scikit-image>=0.19"
                 "pillow"]
 
 [project.optional-dependencies]
-test = ["pytest", "SimpleITK"]
+test = ["pytest", "SimpleITK", "h5py"]
 tilestack = ["h5py"]
 
 [project.urls]

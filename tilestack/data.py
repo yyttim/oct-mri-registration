@@ -4,13 +4,14 @@ The block is described by a JSON file, named by the environment variable TILESTA
     slab_file   path of a slab with {} for its number, e.g. "/data/block/Mus_slice{:03d}.mat"
     work        folder for the caches of the run
     slabs       slab numbers in cut order, all with the same imaging window
-    voxel_mm    the isotropic voxel of the maps
     neighbours  slabs ahead that still share tissue: the window's depth against the cut step
     margin_mm   skipped under the cut surface: the surface reflection
     deep_mm     end of the reliable planes: below it the estimate rises toward the window's bottom
     deep_a_mm   deepest raw plane matched in the older slab of a pair and taken by the volume
 A slab is a MATLAB v7.3 file with one array M (z, y, x) of mu_s per um, read as h5py returns it: z grows with depth
-and plane 0 lies above the cut surface. Lengths of the method are given in mm and converted to voxels here, once.
+and plane 0 lies above the cut surface, and res_um, its voxel in um (x, y, depth). The method works on the working
+grid: the slabs averaged over the whole number of in-plane voxels nearest GRID_MM, and over as many planes as give the
+same spacing in depth (FACTOR). Lengths are given in mm and converted to working voxels.
 """
 import json
 import os
@@ -23,30 +24,39 @@ if not os.environ.get("TILESTACK_BLOCK"):
     raise RuntimeError("TILESTACK_BLOCK is not set: python -m tilestack BLOCK_JSON OUT_DIR sets it to the block's JSON")
 BLOCK = json.load(open(os.environ["TILESTACK_BLOCK"]))
 SLAB_FILE, WORK, SLABS = BLOCK["slab_file"], BLOCK["work"], [int(s) for s in BLOCK["slabs"]]
-VOX, NEIGHBOURS = float(BLOCK["voxel_mm"]), int(BLOCK["neighbours"])
-MARGIN, DEEP, DEEP_A = (int(round(float(BLOCK[k]) / VOX)) for k in ("margin_mm", "deep_mm", "deep_a_mm"))
-MATCH_MM = (0.08, 0.16, 0.24, 0.32, 0.40)     # depths under the newer slab's cut that the dense matcher reads
-PAD = int(round(0.64 / VOX))                   # margin of the output grid around the raw field
-LEVEL_MM = 0.04                                # working grid in-plane: the 40 um volume
-SURFACE_TOL = round(0.06 / VOX, 6)             # planes a column may lie off its 3 x 3 neighbourhood's median cut
-DOWN = int(round(LEVEL_MM / VOX))              # raw voxels per working voxel, in-plane
-assert abs(DOWN * VOX - LEVEL_MM) < 1e-9, f"the working grid ({LEVEL_MM} mm) must hold a whole number of voxels"
+NEIGHBOURS = int(BLOCK["neighbours"])
+GRID_MM = 0.02                                 # spacing of the working grid the method is set for
 os.makedirs(WORK, exist_ok=True)
 
 
-def _shape():
-    path = f"{WORK}/shape.json"
-    if not os.path.exists(path):
-        shapes = {}
-        for s in SLABS:
-            with h5py.File(SLAB_FILE.format(s), "r") as f:
-                shapes[s] = f["M"].shape
-        assert len(set(shapes.values())) == 1, f"the slabs differ in shape: {shapes}"
-        json.dump(list(shapes[SLABS[0]]), open(path, "w"))
-    return tuple(json.load(open(path)))
+def _slabs():
+    """Shape (z, y, x) and voxel in mm (z, y, x) of the slab files, the same for every slab."""
+    found = {}
+    for s in SLABS:
+        with h5py.File(SLAB_FILE.format(s), "r") as f:
+            um = np.ravel(f["res_um"]).astype(float) if "res_um" in f else np.zeros(0)
+            if um.size != 3:
+                raise ValueError(f"slab {s}: res_um must hold the voxel (x, y, depth) in um, three values")
+            found[s] = (f["M"].shape, tuple(float(v) / 1000 for v in um[::-1]))
+    if len(set(found.values())) > 1:
+        raise ValueError(f"the slabs differ in shape or voxel: {found}")
+    return found[SLABS[0]]
 
 
-NP, NY, NX = _shape()                          # planes of the imaging window, in-plane size of the maps
+SHAPE, RES_MM = _slabs()                       # the slab files: shape and voxel in mm, (z, y, x)
+_f = max(1, int(round(GRID_MM / RES_MM[2])))
+VOX = RES_MM[2] * _f                           # the working voxel, mm
+FACTOR = (int(round(VOX / RES_MM[0])), _f, _f)
+if not np.isclose(RES_MM[1], RES_MM[2], rtol=1e-6) or not np.isclose(FACTOR[0] * RES_MM[0], VOX, rtol=1e-6):
+    raise ValueError(f"the voxel {[v * 1000 for v in RES_MM[::-1]]} um (x, y, depth) has no working grid: x and y must be "
+                     f"equal and the depth voxel must divide {VOX * 1000:g} um")
+NP, NY, NX = (n // f for n, f in zip(SHAPE, FACTOR))   # the working grid: planes of the window, in-plane size
+MARGIN, DEEP, DEEP_A = (int(round(float(BLOCK[k]) / VOX)) for k in ("margin_mm", "deep_mm", "deep_a_mm"))
+if DEEP_A + 2 >= NP:
+    raise ValueError(f"deep_a_mm ({BLOCK['deep_a_mm']}) reaches the end of the imaging window ({NP * VOX:g} mm)")
+MATCH_MM = (0.08, 0.16, 0.24, 0.32, 0.40)     # depths under the newer slab's cut that the dense matcher reads
+PAD = int(round(0.64 / VOX))                   # margin of the output grid around the field, working pixels
+SURFACE_TOL = round(0.06 / VOX, 6)             # planes a column may lie off its 3 x 3 neighbourhood's median cut
 XC, YC = NX / 2.0, (NY + 1) / 2.0              # centre of the field, the origin of the linear terms
 
 
@@ -64,25 +74,32 @@ def check_work(settings):
 
 
 def load(s):
+    """mu_s of slab s at the voxel of its file, float32 (z, y, x)."""
     with h5py.File(SLAB_FILE.format(s), "r") as f:
         return f["M"][()].astype(np.float32)
 
 
+def load_grid(s):
+    """mu_s of slab s on the working grid: means over FACTOR blocks, read row by row (cached unless FACTOR is 1)."""
+    if FACTOR == (1, 1, 1):
+        return load(s)
+    path = f"{WORK}/grid_{s:03d}.npy"
+    if not os.path.exists(path):
+        fz, fy, fx = FACTOR
+        out = np.empty((NP, NY, NX), np.float32)
+        with h5py.File(SLAB_FILE.format(s), "r") as f:
+            for j in range(NY):
+                b = f["M"][:NP * fz, j * fy:(j + 1) * fy, :NX * fx].astype(np.float32)
+                out[:, j] = b.reshape(NP, fz, fy, NX, fx).mean((1, 2, 4))
+        np.save(path, out)
+    return np.load(path)
+
+
 def load_log(s):
-    M = load(s)
+    M = load_grid(s)
     np.clip(M, 1e-5, None, out=M)
     np.log10(M, out=M)
     return M
-
-
-def load40(s):
-    """mu_s on the working grid: the in-plane mean over DOWN x DOWN voxels, float32, cached."""
-    path = f"{WORK}/slab040_{s:03d}.npy"
-    if not os.path.exists(path):
-        M = load(s)
-        ny, nx = M.shape[1] // DOWN * DOWN, M.shape[2] // DOWN * DOWN
-        np.save(path, M[:, :ny, :nx].reshape(M.shape[0], ny // DOWN, DOWN, nx // DOWN, DOWN).mean((2, 4), dtype=np.float32))
-    return np.load(path)
 
 
 def surface(M, tol=SURFACE_TOL):
@@ -107,21 +124,11 @@ def surface(M, tol=SURFACE_TOL):
 
 
 def geometry(s):
-    """Cached cut surface and coverage mask of slab s on the raw grid."""
+    """Cached cut surface and coverage mask of slab s on the working grid."""
     path = f"{WORK}/geom_{s:03d}.npz"
     if not os.path.exists(path):
-        surf, valid = surface(load(s))
+        surf, valid = surface(load_grid(s))
         np.savez_compressed(path, surf=surf, valid=valid)
     z = np.load(path)
     return z["surf"], z["valid"]
-
-
-def geometry40(s):
-    """The cut surface and coverage of slab s on the working grid, as load40 reduces mu_s: the deepest cut of the raw
-    pixels of a working pixel, so that the margin under the cut holds for all of them, and coverage by all of them."""
-    surf, valid = geometry(s)
-    my, mx = surf.shape[0] // DOWN, surf.shape[1] // DOWN
-    S = surf[:my * DOWN, :mx * DOWN].reshape(my, DOWN, mx, DOWN).max((1, 3)).astype(np.float32)
-    V = valid[:my * DOWN, :mx * DOWN].reshape(my, DOWN, mx, DOWN).all((1, 3))
-    return S, V
 
