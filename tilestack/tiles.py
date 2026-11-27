@@ -111,11 +111,15 @@ def fit_layout(masks):
 
 
 def layout(spec=None):
-    """Cached layout of the slabs. spec: the lattice from the acquisition metadata (X0, Y0, PX, PY, SX, SY, W, H in
-    pixels, rows, cols); the tiles present in each slab are then read from the coverage masks. Without it the lattice
-    is read from the masks (fit_layout)."""
+    """Cached layout of the slabs on the working grid. spec: the lattice from the acquisition metadata (X0, Y0, PX, PY,
+    SX, SY, W, H in pixels of the slab files, rows, cols); the tiles present in each slab are then read from the
+    coverage masks. Without it the lattice is read from the masks (fit_layout)."""
     path = f"{data.WORK}/layout.json"
     if spec or not os.path.exists(path):
+        if spec:
+            f = data.FACTOR[2]                     # the working grid's factor in-plane (the same on x and y)
+            spec = {k: (v - (f - 1) / 2) / f if k in ("X0", "Y0") else v / f if k in ("PX", "PY", "SX", "SY", "W", "H") else v
+                    for k, v in spec.items()}
         masks = {s: data.geometry(s)[1] for s in data.SLABS}
         lay = present_tiles(Layout(**spec), masks) if spec else fit_layout(masks)
         json.dump(lay.to_dict(), open(path, "w"), indent=1)

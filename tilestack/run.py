@@ -1,15 +1,13 @@
 """The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR):
 1. the tile layout of the mosaics (from the coverage masks, or given), 2. the overlap correspondences of every pair of
 slabs that overlap in depth (first and second neighbours, cached), 3. the placement of all slabs and tiles, 4. the
-transforms in physical units and the registered volume on the working grid (and at the raw voxel with full), each with
-its source map.
+registered volume at the voxel of the slab files with its source map, and the placement of every slab as a displacement
+field.
 """
 import glob
 import hashlib
 import json
 import os
-import pickle
-import time
 
 import numpy as np
 import torch
@@ -19,7 +17,8 @@ from . import compose, data, export, match, solve, tiles
 
 def settings():
     """What the caches in data.WORK depend on."""
-    return dict(block={k: v for k, v in data.BLOCK.items() if k != "work"}, surface_tol=data.SURFACE_TOL, level_mm=data.LEVEL_MM,
+    return dict(block={k: v for k, v in data.BLOCK.items() if k != "work"}, res_mm_zyx=data.RES_MM, factor_zyx=data.FACTOR,
+                surface_tol=data.SURFACE_TOL,
                 match=dict(block=match.BLOCK, coarse=match.COARSE, depths=match.DEPTHS, search=match.SEARCH, peak=match.PEAK,
                            min_blocks=match.MIN_BLOCKS, agree=match.AGREE))
 
@@ -56,23 +55,18 @@ def correspondences():
     return m, skipped
 
 
-def run(out, full=False, layout=None):
+def run(out, layout=None):
     os.makedirs(out, exist_ok=True)
-    t0 = time.time()
     data.check_work(settings())
     lay = tiles.layout(json.load(open(layout)) if layout else None)
     m, skipped = correspondences()
     sol = solve.solve(m, lay, data.SLABS)
-    pickle.dump(sol, open(f"{out}/solution.pkl", "wb"))
-    export.save_transforms(sol, lay, f"{out}/transforms.json")
-    vol, vz0, src = compose.compose(sol, lay)
-    export.save_volume(vol, vz0, data.LEVEL_MM * 1000, f"{out}/registered_40um.nii.gz", src)
+    tmp = f"{out}/{export.name()}_tmp.npy"
+    vol, vz0, src = compose.compose(sol, lay, tmp)
+    export.save_volume(vol, vz0, f"{out}/{export.name()}.nii.gz", src)
+    export.save_warps(sol, lay, out, vz0, vol.shape[0])
     del vol, src
-    if full:
-        vol, vz0, src = compose.compose(sol, lay, full=True, out_path=f"{out}/registered_20um_tmp.npy")
-        export.save_volume(vol, vz0, data.VOX * 1000, f"{out}/registered_20um.nii", src)
-        del vol
-        os.remove(f"{out}/registered_20um_tmp.npy")
+    os.remove(tmp)
     res = {}
     for k in range(1, data.NEIGHBOURS + 1):
         r = [np.abs(np.stack(solve.residuals(sol, lay, c))) for c in m if data.SLABS.index(int(c["t"])) - data.SLABS.index(int(c["s"])) == k]
@@ -81,8 +75,7 @@ def run(out, full=False, layout=None):
             xy = np.hypot(r[0], r[1])
             res[f"neighbours_{k}"] = dict(matches=int(r.shape[1]), inplane_um_median=float(np.median(xy)), inplane_um_p95=float(np.percentile(xy, 95)),
                                           depth_um_median=float(np.median(r[2])), depth_um_p95=float(np.percentile(r[2], 95)))
-    code = hashlib.sha256(b"".join(open(p, "rb").read() for p in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))))).hexdigest()
-    json.dump(dict(seconds=round(time.time() - t0), pairs=len(m), skipped=skipped, residuals=res, solver_iterations=sol["iterations"],
-                   settings=sol["settings"], block=data.BLOCK, code=code[:12]),
-              open(f"{out}/run.json", "w"), indent=1)
-    print("done", out, round(time.time() - t0), "s")
+    code = hashlib.sha256(b"".join(open(p, "rb").read().replace(b"\r\n", b"\n") for p in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))))).hexdigest()
+    json.dump(dict(code=code[:12], block={k: v for k, v in data.BLOCK.items() if k != "work"}, pairs=len(m),
+                   skipped=skipped, residuals=res), open(f"{out}/run.json", "w"), indent=1)
+    print("done", out)

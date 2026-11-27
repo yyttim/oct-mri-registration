@@ -7,8 +7,9 @@ slab is resampled tile by tile: an output pixel takes the tile whose moved cell 
 cell where two moved cells overlap), and none where moved cells leave a gap, where the volume takes another slab. Along
 depth the raw plane of a common-frame voxel follows the slab's depth offset. Nothing else changes a value: no brightness correction, no blending at the seams, no
 filling of empty voxels, which stay 0. A source map records the slab of every voxel, +1000 where its raw plane lies
-below the reliable planes (data.DEEP), -1 for no data. The output grid is the raw field with a margin of data.PAD
-pixels on every side.
+below the reliable planes (data.DEEP), -1 for no data. The output grid has the voxel of the slab files and is their
+field with a margin of data.PAD working pixels on every side. The cut, the margin and the planes are taken on the
+working grid, where the placement is solved; the coverage and the values are read from the slab files.
 """
 import numpy as np
 import torch
@@ -38,7 +39,8 @@ def _b3(u):
 
 
 def inverse_map(sol, lay, s, ny, nx, scale):
-    """Raw (y, x) in raw pixels, the tile and the common-frame depth offset (planes) for every output pixel of slab s;
+    """Slab (y, x) in working pixels, the tile and the common-frame depth offset (working planes) for every output pixel
+    of slab s, the output pixel being scale working pixels;
     tile -1 where no tile of the slab lands. Per tile the forward map is the translation plus
     the smooth field, inverted by fixed-point iteration (the field sampled on a 16 px lattice); the depth offset is
     the slab's at the raw position found."""
@@ -113,18 +115,19 @@ def inverse_map(sol, lay, s, ny, nx, scale):
     return py, px, cell, zo
 
 
-def compose(sol, lay, full=False, out_path=None):
-    """Returns (volume mu_s float32 (Z, Y, X), 0 where no data, z0 = common plane of index 0, source map int16), on the
-    working grid, or at the raw voxel with full (written to the .npy out_path when given)."""
+def compose(sol, lay, out_path):
+    """Returns (volume mu_s float32 (Z, Y, X) at the voxel of the slab files, written to the .npy out_path, 0 where no
+    data, z0 = the common working plane at which plane 0 begins, source map int16)."""
     slabs = sol["slabs"]
-    scale = 1 if full else data.DOWN
+    fz, fy, fx = data.FACTOR
+    nz_r, ny_r, nx_r = data.SHAPE
     reach = 0.0
     for s in slabs:                                  # how far the placement moves the raw field: it must stay in PAD
         yy, xx = (v.ravel().astype(float) for v in np.mgrid[0:data.NY:16, 0:data.NX:16])
         u, v, _ = displacement(sol, lay, s, xx, yy)
         reach = max(reach, float(np.abs(u).max()), float(np.abs(v).max()))
     assert reach < data.PAD, f"a slab is placed {reach:.0f} px beyond the raw field, more than data.PAD ({data.PAD})"
-    ny, nx = (data.NY + 2 * data.PAD) // scale, (data.NX + 2 * data.PAD) // scale
+    ny, nx = ny_r + 2 * data.PAD * fy, nx_r + 2 * data.PAD * fx
     lo, hi = np.inf, -np.inf
     for s in slabs:                                  # the depth range of the volume, from the placement on a 16 px grid
         surf, valid = data.geometry(s)
@@ -132,37 +135,33 @@ def compose(sol, lay, full=False, out_path=None):
         w = displacement(sol, lay, s, xx, yy)[2]
         lo = min(lo, float(w.min()) + float(surf.min()) - 4)
         hi = max(hi, float(w.max()) + data.NP + 3)
-    z0 = int(np.floor(lo)); NZ = int(np.ceil(hi)) - z0
-    vol = np.lib.format.open_memmap(out_path, "w+", np.float32, (NZ, ny, nx)) if out_path else np.zeros((NZ, ny, nx), np.float32)
-    src = np.full((NZ, ny, nx), -1, np.int16)
+    z0 = int(np.floor(lo)); NZ = int(np.ceil(hi)) - z0                 # working planes
+    vol = np.lib.format.open_memmap(out_path, "w+", np.float32, (NZ * fz, ny, nx))
+    src = np.full((NZ * fz, ny, nx), -1, np.int16)
     for s in slabs:                                                  # newer slabs overwrite older ones
-        Mv = data.load(s) if full else data.load40(s)
-        surf, valid = data.geometry(s) if full else data.geometry40(s)
-        Mt = torch.from_numpy(Mv).to(dev)
-        nzr, my, mx = Mv.shape
-        del Mv
-        St = torch.from_numpy(np.ascontiguousarray(surf)).float().to(dev)
-        Vt = torch.from_numpy(valid.astype(np.float32)).to(dev)
-        y, x, cell, zo = inverse_map(sol, lay, s, ny, nx, scale)
-        ly = (y + 0.5) / scale - 0.5; lx = (x + 0.5) / scale - 0.5                  # raw pixels at this grid
-        gy = ly / (my - 1) * 2 - 1; gx = lx / (mx - 1) * 2 - 1
-        g2 = torch.stack([gx, gy], -1)[None]
+        Mt = torch.from_numpy(data.load(s)).to(dev)
+        St = torch.from_numpy(np.ascontiguousarray(data.geometry(s)[0])).float().to(dev)
+        Vt = (Mt[nz_r // 2] > 0).float()                                # coverage: the middle plane holds data
+        y, x, cell, zo = inverse_map(sol, lay, s, ny, nx, 1 / fy)      # working pixels of every output pixel
+        g2 = torch.stack([x / (data.NX - 1) * 2 - 1, y / (data.NY - 1) * 2 - 1], -1)[None]
+        gy = ((y + 0.5) * fy - 0.5) / (ny_r - 1) * 2 - 1               # the same points on the files' grid
+        gx = ((x + 0.5) * fx - 0.5) / (nx_r - 1) * 2 - 1
         surf_s = Fnn.grid_sample(St[None, None], g2, align_corners=True, padding_mode="border")[0, 0]
-        val_s = (Fnn.grid_sample(Vt[None, None], g2, align_corners=True, padding_mode="zeros")[0, 0] > 0.99) & (cell >= 0)
+        val_s = (Fnn.grid_sample(Vt[None, None], torch.stack([gx, gy], -1)[None], align_corners=True,
+                                 padding_mode="zeros")[0, 0] > 0.99) & (cell >= 0)
         Zlo = int(np.floor(float((zo + surf_s)[val_s].min()))) if val_s.any() else z0
         Zhi = int(np.ceil(float(zo[val_s].max()))) + data.DEEP_A + 2 if val_s.any() else z0
-        for Zc in range(max(Zlo, z0), min(Zhi, z0 + NZ), 16):
-            Zs = torch.arange(Zc, min(Zc + 16, Zhi, z0 + NZ), device=dev).float()
-            rz = Zs[:, None, None] - zo[None]                                # the raw plane of every common plane
-            gz = rz / (nzr - 1) * 2 - 1
+        for i0 in range((max(Zlo, z0) - z0) * fz, (min(Zhi, z0 + NZ) - z0) * fz, 16):
+            i = torch.arange(i0, min(i0 + 16, (min(Zhi, z0 + NZ) - z0) * fz), device=dev).float()
+            rz = (z0 + (i + 0.5) / fz - 0.5)[:, None, None] - zo[None]   # the working raw plane of every output plane
+            gz = (rz * fz + (fz - 1) / 2) / (nz_r - 1) * 2 - 1
             g3 = torch.stack([gx[None].expand_as(rz), gy[None].expand_as(rz), gz], -1)[None]
             val = Fnn.grid_sample(Mt[None, None], g3, align_corners=True, padding_mode="border")[0, 0]
             ok = (val_s[None] & (rz - surf_s[None] >= data.MARGIN) & (rz <= data.DEEP_A)).cpu().numpy()
-            i0, i1 = int(Zs[0]) - z0, int(Zs[-1]) - z0 + 1
+            i1 = i0 + len(i)
             vol[i0:i1][ok] = val.cpu().numpy()[ok]
             src[i0:i1][ok] = (s + BELOW * (rz > data.DEEP)).to(torch.int16).cpu().numpy()[ok]
         del Mt
         torch.cuda.empty_cache()
-    if out_path:
-        vol.flush()
+    vol.flush()
     return vol, z0, src
