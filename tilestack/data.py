@@ -1,17 +1,7 @@
-"""The block, its slabs and their cut surfaces.
+"""The block, its slabs and their cut surfaces (docs/TILESTACK.md, Grid and Cut surface).
 
-The block is described by a JSON file, named by the environment variable TILESTACK_BLOCK (python -m tilestack sets it):
-    slab_file   path of a slab with {} for its number, e.g. "/data/block/Mus_slice{:03d}.mat"
-    work        folder for the caches of the run
-    slabs       slab numbers in cut order, all with the same imaging window
-    neighbours  slabs ahead that still share tissue: the window's depth against the cut step
-    margin_mm   skipped under the cut surface: the surface reflection
-    deep_mm     end of the reliable planes: below it the estimate rises toward the window's bottom
-    deep_a_mm   deepest raw plane matched in the older slab of a pair and taken by the volume
-A slab is a MATLAB v7.3 file with one array M (z, y, x) of mu_s per um, read as h5py returns it: z grows with depth
-and plane 0 lies above the cut surface, and res_um, its voxel in um (x, y, depth). The method works on the working
-grid: the slabs averaged over the whole number of in-plane voxels nearest GRID_MM, and over as many planes as give the
-same spacing in depth (FACTOR). Lengths are given in mm and converted to working voxels.
+The block is the JSON named by the environment variable TILESTACK_BLOCK, which python -m tilestack sets
+(docs/TILESTACK.md, Usage). Its lengths are in mm, converted here to working voxels.
 """
 import json
 import os
@@ -103,11 +93,8 @@ def load_log(s):
 
 
 def surface(M, tol=SURFACE_TOL):
-    """Cut surface (plane index) per pixel and the coverage mask. The cut is the plane where log10 mu_s rises most
-    sharply along depth: the three planes from it down all lie above the three planes over it, by as much as possible.
-    A rise, not a level: water reads brighter the less signal lies under it in the window, so no level separates it
-    from the material in every column. A column more than tol planes from the median of its 3 x 3 neighbourhood takes
-    that median: single columns are not pits. The coverage mask is where the middle plane of the window holds data."""
+    """Cut surface (plane index per pixel, float32) of M (z, y, x) on the working grid (docs/TILESTACK.md, Cut surface)
+    and the coverage mask, where the middle plane of the window holds data."""
     valid = M[M.shape[0] // 2] > 0
     L = np.log10(np.clip(M, 1e-6, None))
     J = np.minimum(np.minimum(L[:-2], L[1:-1]), L[2:])                  # the three planes from z down

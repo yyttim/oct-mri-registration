@@ -1,11 +1,6 @@
-"""Mosaic tile layout of the slabs.
-
-Each slab is stitched from W x H pixel tiles whose top-left corners lie on a slightly rotated lattice,
-    x = X0 + j * PX + i * SX,   y = Y0 + i * PY + j * SY      (row i along y, column j along x, pixels),
-the same in every slab. The tile cells used by the model are bounded in the middle of the tile overlaps, i.e. a pixel
-belongs to the tile whose centre is nearest in lattice coordinates. The lattice comes from the acquisition metadata
-when given (layout(spec)), else it is read from the staircase outline of the coverage masks: the left edge steps by
-SX once per tile row, the top edge by SY once per tile column.
+"""Mosaic tile layout of the slabs: W x H tiles with top-left corners x = X0 + j PX + i SX, y = Y0 + i PY + j SY (row i
+along y, column j along x, working pixels), the same in every slab. A pixel belongs to the tile whose centre is nearest
+in lattice coordinates.
 """
 import json
 import os
@@ -99,8 +94,8 @@ def fit_layout(masks):
     lv, ln, ls = _runs(U[ys].argmax(1))
     tv, tn, ts = _runs(U[:, xs].argmax(0))
     if len(lv) < 3 or len(tv) < 3:
-        raise ValueError("the coverage outline shows no tile staircase (lattice not rotated by about 0.4 degrees or more): "
-                         "give the tile lattice from the acquisition metadata with --layout")
+        raise ValueError("the coverage outline shows no tile staircase (a step of a working pixel or more per tile row "
+                         "and column): give the tile lattice from the acquisition metadata with --layout")
     SX, X0 = np.polyfit(np.arange(len(lv)), lv.astype(float), 1)
     SY, Y0 = np.polyfit(np.arange(len(tv)), tv.astype(float), 1)
     PY = np.polyfit(np.arange(1, len(lv)), ys[ls[1:]].astype(float), 1)[0]     # run starts advance by one pitch

@@ -1,8 +1,6 @@
-"""The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR):
-1. the tile layout of the mosaics (from the coverage masks, or given), 2. the overlap correspondences of every pair of
-slabs that overlap in depth (first and second neighbours, cached), 3. the placement of all slabs and tiles, 4. the
-registered volume at the voxel of the slab files with its source map, and the placement of every slab as a displacement
-field.
+"""The internal registration of a block (python -m tilestack BLOCK_JSON OUT_DIR): the tile layout, the correspondences
+of every pair of slabs up to data.NEIGHBOURS apart (cached), the placement, then the volume with its source map and the
+warps.
 """
 import glob
 import hashlib

@@ -1,15 +1,6 @@
-"""The registered volume in the common frame from all slabs and their tile placements.
-
-Every output voxel takes the newest slab whose cut surface lies at least MARGIN planes above it and that holds it in
-its window, raw planes down to data.DEEP_A: the slab that imaged it nearest its cut, after a deep cut the deep planes
-of the slab above. The voxel holds that slab's raw mu_s resampled at the registered position, trilinear in mu_s. Each
-slab is resampled tile by tile: an output pixel takes the tile whose moved cell contains it (the one deepest inside its
-cell where two moved cells overlap), and none where moved cells leave a gap, where the volume takes another slab. Along
-depth the raw plane of a common-frame voxel follows the slab's depth offset. Nothing else changes a value: no brightness correction, no blending at the seams, no
-filling of empty voxels, which stay 0. A source map records the slab of every voxel, +1000 where its raw plane lies
-below the reliable planes (data.DEEP), -1 for no data. The output grid has the voxel of the slab files and is their
-field with a margin of data.PAD working pixels on every side. The cut, the margin and the planes are taken on the
-working grid, where the placement is solved; the coverage and the values are read from the slab files.
+"""The registered volume at the voxel of the slab files and its source map (docs/TILESTACK.md, Volume). The output grid
+is the field of the slab files with data.PAD working pixels on every side. The cut, the margin and the planes are taken
+on the working grid, where the placement is solved, and the coverage and the values are read from the slab files.
 """
 import numpy as np
 import torch
@@ -39,11 +30,8 @@ def _b3(u):
 
 
 def inverse_map(sol, lay, s, ny, nx, scale):
-    """Slab (y, x) in working pixels, the tile and the common-frame depth offset (working planes) for every output pixel
-    of slab s, the output pixel being scale working pixels;
-    tile -1 where no tile of the slab lands. Per tile the forward map is the translation plus
-    the smooth field, inverted by fixed-point iteration (the field sampled on a 16 px lattice); the depth offset is
-    the slab's at the raw position found."""
+    """Slab point (y, x) in working pixels, tile (the moved cell that holds it deepest, -1 where none does) and depth
+    offset in working planes of every output pixel of slab s, an output pixel being scale working pixels."""
     k = sol["slabs"].index(s)
     a = sol["aff"][k]
     M = np.eye(2) + np.array([[a[0, 1], a[0, 2]], [a[1, 1], a[1, 2]]]) / 1000

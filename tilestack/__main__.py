@@ -3,7 +3,7 @@ import argparse
 import os
 
 ap = argparse.ArgumentParser(prog="python -m tilestack", description="Internal registration of the slabs of a serial-sectioning OCT block.")
-ap.add_argument("block", help="JSON with the block's slabs and settings (see tilestack/data.py)")
+ap.add_argument("block", help="JSON with the block's slabs and settings (see docs/TILESTACK.md)")
 ap.add_argument("out", help="output folder")
 ap.add_argument("--layout", help="JSON with the tile lattice from the acquisition metadata: X0, Y0, PX, PY, SX, SY, W, H in pixels of the slab files, rows, cols")
 a = ap.parse_args()

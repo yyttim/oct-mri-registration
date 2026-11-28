@@ -47,7 +47,7 @@
   },
   "flirt_search_x10": {
    "tool": "FSL FLIRT 6.0.7.23",
-   "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document)",
+   "setting": "normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10",
    "start": "FLIRT default rotation search (±90°, coarse 60°, fine 18°)"
   },
   "flirt_fullsearch_x10": {
@@ -117,7 +117,7 @@
   },
   "mri_robust_register_noinit_rigid_only": {
    "tool": "FreeSurfer 8.2.0 mri_robust_register",
-   "setting": "--cost NMI, the rigid step only: the affine step found no overlap of the two images and made no iteration",
+   "setting": "--cost NMI, the rigid step only: the affine step maps the OCT outside the MRI crop",
    "start": "header alignment (--noinit)"
   },
   "niftyreg_center": {

@@ -76,8 +76,7 @@ class Searcher:
     @torch.no_grad()
     def score(self, R, outline=True):
         """Orientation R (numpy 3x3) -> (F, O) maps [D', H', W'], O None without the outline.
-        Index u means x_mri = R (x_oct - c_o) + t_u. O weights the OCT voxels by q (1 - (1 - w) E), so medium over MRI
-        tissue costs nothing, as the crop may hold tissue beyond a cut face (docs/METHOD.md §2)."""
+        Index u means x_mri = R (x_oct - c_o) + t_u. O weights the OCT voxels by q (1 - (1 - w) E) (docs/METHOD.md §2)."""
         n = self.n
         pts = self.c_t + self.tgrid @ torch.as_tensor(np.asarray(R), dtype=torch.float32, device=self.dev)   # x_o = c_o + R^T y
         v, w, q, inner = G.sample_world(self.src, self.A_src, pts).reshape(4, n, n, n)

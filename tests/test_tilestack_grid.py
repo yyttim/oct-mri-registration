@@ -38,10 +38,10 @@ def _python(block, code, check=True):
 
 COMPOSE = """
 import json, numpy as np
-from tilestack import compose, data, export, tiles
+from tilestack import compose, data, export, solve, tiles
 compose.dev = "cpu"
 W = data.WORK
-tiles2 = {tiles2}
+tiles2, field = {tiles2}, {field}
 if tiles2:                                               # 2 x 2 tiles in working pixels, moving apart at the seams
     lay = tiles.Layout(0.0, 0.0, data.NX / 2, data.NY / 2, 0.0, 0.0, data.NX / 2, data.NY / 2, 2, 2, exists={{1: [0, 1, 2, 3], 2: [0, 1, 2, 3]}})
     e = np.array([[-0.7, -0.6, 0.0], [0.8, -0.5, 0.1], [-0.6, 0.7, -0.1], [0.7, 0.9, 0.0]])
@@ -50,6 +50,8 @@ else:
     e = np.zeros((1, 3))
 aff = np.zeros((2, 3, 3)); aff[:, :, 0] = [[0.3, -0.6, 0.25], [-0.3, 0.6, -0.25]]      # working pixels and planes
 sol = dict(slabs=[1, 2], aff=aff, tiles=np.stack([e, e]), field=None, G=None)
+if field:                                                # a smooth field of up to 1 working pixel or plane, 4 px spacing
+    sol.update(G=4, field=np.random.default_rng(0).uniform(-1, 1, (2, 3, solve.Spline(4).n)))
 vol, z0, src = compose.compose(sol, lay, W + "/v.npy")
 vol = np.asarray(vol)
 """
@@ -73,18 +75,21 @@ def test_voxel_without_working_grid_is_refused(tmp_path, um):
     assert r.returncode != 0 and "has no working grid" in r.stderr
 
 
-@pytest.mark.parametrize("um", [20, 10, 5])
-def test_volume_voxel_and_slab_voxel_share_the_world(tmp_path, um):
-    """With no placement, output voxel (j, l, i) holds slab voxel (j - PAD f, l - PAD f, i + z0 f): both at one world point."""
-    out = _python(_block(tmp_path, [um, um, um]), """
+@pytest.mark.parametrize("um,name", [([20, 20, 20], "registered_20um"), ([10, 10, 10], "registered_10um"),
+                                     ([5, 5, 5], "registered_5um"), ([5, 5, 2.5], "registered_5x5x2.5um")])
+def test_volume_voxel_and_slab_voxel_share_the_world(tmp_path, um, name):
+    """With no placement, output voxel (j, l, i) holds slab voxel (j - PAD fx, l - PAD fy, i + z0 fz): both at one world point.
+    The volume is named by the voxel of the slab files."""
+    out = _python(_block(tmp_path, um), """
 import json
 from tilestack import data, export
-print(json.dumps(dict(aff=export._affine(-7).tolist(), slab=export.slab_affine().tolist(), f=data.FACTOR[0], pad=data.PAD)))
+print(json.dumps(dict(aff=export._affine(-7).tolist(), slab=export.slab_affine().tolist(), f=data.FACTOR, pad=data.PAD,
+                      name=export.name())))
 """)
-    aff, slab, f, pad = np.array(out["aff"]), np.array(out["slab"]), out["f"], out["pad"]
-    assert np.linalg.det(aff[:3, :3]) < 0 and aff[2, 2] < 0
+    aff, slab, (fz, fy, fx), pad = np.array(out["aff"]), np.array(out["slab"]), out["f"], out["pad"]
+    assert out["name"] == name and np.linalg.det(aff[:3, :3]) < 0 and aff[2, 2] < 0
     for j, l, i in ((0, 0, 0), (70, 33, 9), (5, 140, 31)):
-        assert np.allclose(aff @ [j, l, i, 1], slab @ [j - pad * f, l - pad * f, i - 7 * f, 1])
+        assert np.allclose(aff @ [j, l, i, 1], slab @ [j - pad * fx, l - pad * fy, i - 7 * fz, 1])
 
 
 def test_layout_in_file_pixels(tmp_path):
@@ -101,39 +106,67 @@ print(json.dumps(dict(err=float(np.abs(a - b).max()))))
     assert out["err"] < 1e-9
 
 
-def test_volume_samples_the_files_at_the_placed_points(tmp_path):
-    """compose at factor 4 (files of 5 um, sizes not multiples of 4) writes the trilinear samples of the newest slab,
-    nothing of slab 2 where its file holds no data, and nothing within the margin under a cut."""
-    out = _python(_block(tmp_path, [5, 5, 5], shape=(90, 59, 49), empty_cols=12), COMPOSE.format(tiles2=False) + """
+def test_volume_takes_the_slab_point_the_placement_puts_there(tmp_path):
+    """With a smooth field and moved tiles, compose takes for every output pixel the slab point and tile that the solve's
+    forward map puts there: exactly in depth, in-plane within the sampling of the field on a 16 px lattice."""
+    out = _python(_block(tmp_path, [20, 20, 20], shape=(64, 70, 40)), """
+import json, numpy as np
+from tilestack import compose, data, solve, tiles
+compose.dev = "cpu"
+lay = tiles.Layout(0.0, 0.0, data.NX / 2, data.NY / 2, 0.0, 0.0, data.NX / 2, data.NY / 2, 2, 2, exists={1: [0, 1, 2, 3]})
+e = np.array([[-0.7, -0.6, 0.0], [0.8, -0.5, 0.1], [-0.6, 0.7, -0.1], [0.7, 0.9, 0.0]])
+aff = np.zeros((1, 3, 3)); aff[0, :, 0] = [0.3, -0.6, 0.25]
+sol = dict(slabs=[1], aff=aff, tiles=e[None], G=64, field=np.random.default_rng(0).uniform(-1, 1, (1, 3, solve.Spline(64).n)))
+ny, nx = data.NY + 2 * data.PAD, data.NX + 2 * data.PAD
+y, x, cell, zo = (v.numpy() for v in compose.inverse_map(sol, lay, 1, ny, nx, 1.0))
+Y, X = np.mgrid[0:ny, 0:nx] - data.PAD
+k = cell >= 0
+u, v, w = solve.displacement(sol, lay, 1, x[k], y[k])
+print(json.dumps(dict(n=int(k.sum()), tile=bool((lay.cell(x[k], y[k], 1) == cell[k]).all()),
+                      inplane=float(np.hypot(x[k] + u - X[k], y[k] + v - Y[k]).max()), depth=float(np.abs(w - zo[k]).max()))))
+""")
+    assert out["n"] > 1000 and out["tile"] and out["inplane"] < 0.1 and out["depth"] < 1e-5
+
+
+@pytest.mark.parametrize("um,factor", [([5, 5, 5], [4, 4, 4]), ([5, 5, 2.5], [8, 4, 4])])
+def test_volume_samples_the_files_at_the_placed_points(tmp_path, um, factor):
+    """compose at factor 4, or 8 in depth (files of 5 um or 5 x 5 x 2.5 um, sizes not multiples of the factors), writes
+    the trilinear samples of the newest slab, nothing of slab 2 where its file holds no data, and nothing within the
+    margin under a cut."""
+    out = _python(_block(tmp_path, um, shape=(90, 59, 49), empty_cols=12), COMPOSE.format(tiles2=False, field=False) + """
 from scipy.ndimage import map_coordinates
-f, err, n, under = data.FACTOR[0], 0.0, 0, 1e9
+(fz, fy, fx), err, n, under = data.FACTOR, 0.0, 0, 1e9
 for k, s in enumerate((1, 2)):
     jz, jy, jx = np.nonzero((src == s) | (src == s + 1000))
-    rz = z0 + (jz + 0.5) / f - 0.5 - aff[k, 2, 0]
-    cut = map_coordinates(data.geometry(s)[0].astype(float), [(jy + 0.5) / f - 0.5 - data.PAD - aff[k, 1, 0],
-                          (jx + 0.5) / f - 0.5 - data.PAD - aff[k, 0, 0]], order=1, mode="nearest")
+    rz = z0 + (jz + 0.5) / fz - 0.5 - aff[k, 2, 0]
+    cut = map_coordinates(data.geometry(s)[0].astype(float), [(jy + 0.5) / fy - 0.5 - data.PAD - aff[k, 1, 0],
+                          (jx + 0.5) / fx - 0.5 - data.PAD - aff[k, 0, 0]], order=1, mode="nearest")
     under = min(under, float((rz - cut).min()))
     iz, iy, ix = np.nonzero(src == s)
-    w = [z0 + (iz + 0.5) / f - 0.5 - aff[k, 2, 0], (iy + 0.5) / f - 0.5 - data.PAD - aff[k, 1, 0], (ix + 0.5) / f - 0.5 - data.PAD - aff[k, 0, 0]]
-    c = np.array([(v + 0.5) * f - 0.5 for v in w])                               # the points in the file's voxels
+    w = [z0 + (iz + 0.5) / fz - 0.5 - aff[k, 2, 0], (iy + 0.5) / fy - 0.5 - data.PAD - aff[k, 1, 0], (ix + 0.5) / fx - 0.5 - data.PAD - aff[k, 0, 0]]
+    c = np.array([(v + 0.5) * f - 0.5 for v, f in zip(w, data.FACTOR)])        # the points in the file's voxels
     inside = np.all((c >= 0) & (c <= np.array(data.SHAPE)[:, None] - 1), 0)
     err = max(err, float(np.abs(vol[iz[inside], iy[inside], ix[inside]] - map_coordinates(data.load(s), c[:, inside], order=1)).max()))
     n += int(inside.sum())
     if s == 2:
         last = float(c[2].max())
-print(json.dumps(dict(err=err, n=n, factor=data.FACTOR, last=last, nx=data.SHAPE[2], under=under, margin=data.MARGIN)))
+print(json.dumps(dict(err=err, n=n, factor=data.FACTOR, last=last, nx=data.SHAPE[2], under=under, margin=data.MARGIN,
+                      plane=vol.shape[1:], pad=data.PAD)))
 """)
-    assert out["factor"] == [4, 4, 4] and out["n"] > 500 and out["err"] < 1e-5
+    assert out["factor"] == factor and out["n"] > 500 and out["err"] < 1e-5
+    assert out["plane"] == [59 + 2 * out["pad"] * factor[1], 49 + 2 * out["pad"] * factor[2]]
     assert out["last"] <= out["nx"] - 13 + 0.01
     assert out["under"] >= out["margin"] - 1e-4                  # no voxel closer to its slab's cut than the margin
 
 
-@pytest.mark.parametrize("um,tiles2", [(20, False), (5, False), (20, True), (5, True)])
-def test_warps_resample_the_slabs_as_composed(tmp_path, um, tiles2):
-    """SimpleITK, given a slab in the world of export.slab_affine and its warp, resamples it as compose placed it; between
-    moved tiles the warp holds the nearest placement, never no displacement."""
+@pytest.mark.parametrize("um,tiles2,field", [([20, 20, 20], False, False), ([5, 5, 5], False, False), ([20, 20, 20], True, False),
+                                             ([5, 5, 5], True, False), ([20, 20, 20], True, True), ([5, 5, 2.5], True, True)])
+def test_warps_resample_the_slabs_as_composed(tmp_path, um, tiles2, field):
+    """SimpleITK, given a slab in the world of export.slab_affine and its warp, resamples it as compose placed it, also
+    with a smooth field and at 5 x 5 x 2.5 um; between moved tiles the warp holds the nearest placement, never no
+    displacement."""
     pytest.importorskip("SimpleITK")
-    out = _python(_block(tmp_path, [um, um, um], shape=(90, 59, 49)), COMPOSE.format(tiles2=tiles2) + """
+    out = _python(_block(tmp_path, um, shape=(90, 59, 49)), COMPOSE.format(tiles2=tiles2, field=field) + """
 import nibabel as nib, SimpleITK as sitk
 export.save_volume(vol, z0, W + "/reg.nii", src)
 export.save_warps(sol, lay, W, z0, vol.shape[0])
@@ -149,5 +182,5 @@ for s in (1, 2):
 print(json.dumps(dict(err=err, n=n, low=low, vox=data.VOX)))
 """)
     assert out["n"] > 500 and out["err"] < 1e-5
-    if tiles2:
+    if tiles2 and not field:
         assert out["low"] > 0.2 * out["vox"]                 # every in-plane displacement at least 0.2 working voxels

@@ -71,7 +71,7 @@ def freeview_window(path):
 
 
 def view(img, plane, point):
-    """freeview options that show `plane` of the MRI grid through `point` (RAS mm) at one screen pixel per voxel.
+    """freeview options that show `plane` of the grid of img through `point` (RAS mm) at one screen pixel per voxel.
     -> (lines, (W, H))"""
     A, shape = img.affine, img.shape[:3]
     ax = [int(np.argmax(np.abs(A[w, :3]))) for w in range(3)]      # array axis along each world axis
@@ -79,7 +79,7 @@ def view(img, plane, point):
     for slot, w in enumerate(PLANES[plane][1:]):
         centre[w] = A[w, 3] + A[w, ax[w]] * (shape[ax[w]] - 1) / 2
         size[slot] = shape[ax[w]]
-    zoom = (max(shape) - 1) / size[1]     # at zoom 1 the largest extent of the crop fills the height of the view
+    zoom = (max(shape) - 1) / size[1]     # at zoom 1 the largest extent of the grid fills the height of the view
     return [f"-viewport {plane}", f"-viewsize {size[0]} {size[1]}", f"-zoom {zoom:.6f}", "-nocursor",
             "-ras {:.3f} {:.3f} {:.3f} -cc".format(*centre)], tuple(size)
 

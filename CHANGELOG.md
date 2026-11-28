@@ -3,13 +3,10 @@
 ## Unreleased
 
 - New: `tilestack`, the internal registration of the slabs of a serial-sectioning OCT block ([docs/TILESTACK.md](docs/TILESTACK.md)).
-- New in bench, with octreg unchanged: `bench/repeat.py` and `bench/results/repeat.json`, the ablation variants with the scale
-  and shear prior at other weights, a rigid refinement, F without the subtraction of the means, the MRI divided by its blur, the
-  OCT specimen mask from the signal threshold alone, the OCT voxel size 5 % off and the OCT mirrored, the options `--start` and
-  `--params` of `bench/ablate.py`, the I58 ablation poses in `bench/results/I58/ablation.json` and the search candidates in
-  `search.md`, the tools started near R with the mask or on the zeroed OCT and started at R, and octreg's refinement alone from
-  the near start and from the start at R, in `bench/results/I46/`, the SHA-256 sums of the I46 download in
-  `bench/i46/checksums.txt`, which `fetch.sh` checks, and one I46 panel per plane with the lines through R and octreg.
+- New in bench, with octreg unchanged: `bench/repeat.py`, nine ablation variants and the options `--start` and `--params` of
+  `bench/ablate.py`, the I58 ablation poses and search candidates, the standard tools on I46 started near R with the mask or on
+  the zeroed OCT and started at R, octreg's refinement alone from the near start and the start at R, the SHA-256 sums of the
+  I46 download, which `fetch.sh` checks, and one I46 panel per plane with the lines through R and octreg.
 - The I46 comparisons give the median distance from R over the ten crops of a condition, and the vessel distance where those
   distances differ by less than 0.3 mm, in place of counts of runs within 0.30 and 1 mm of R.
 - The red line of the I58 figures is the MRI foreground octreg uses, from its 0.15 mm base grid, in place of the same rule run
@@ -99,8 +96,6 @@ normalised gradients of the two volumes, which needs no intensity mapping and no
   `octreg.blockmatch`, and their parameters are gone.
 
 ## 2.1.0
-
-Params hash 9148790ad6c39454.
 
 - §1: an MRI histogram valley is the tissue edge only when its darker peak lies below `medium_fraction` (0.5) of the brightest
   peak. A valley between two tissue peaks is passed over and flagged `mri_tissue_valley_passed`.

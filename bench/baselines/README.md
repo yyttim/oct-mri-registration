@@ -7,7 +7,7 @@ the two volumes up to its own global search where it has one. The results are in
 
 ## Inputs
 
-Both volumes keep their NIfTI headers, which place them roughly together. The fixed image is the MRI crop as given (0.08 mm).
+Both volumes keep their NIfTI headers. The fixed image is the MRI crop as given (0.08 mm).
 The moving image is the 20 µm OCT box-averaged to 0.08 mm isotropic, the voxel size of the MRI (`oct_0.08mm.nii.gz`). The only
 mask a tool receives is a field-of-view (FOV) mask of the OCT (voxels > 0), and only in separate runs.
 The antsAI rotation search of one ANTs run works on copies at 0.15 mm, `oct_0.15mm.nii.gz` and the MRI resampled by ANTs'

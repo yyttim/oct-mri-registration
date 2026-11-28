@@ -21,7 +21,7 @@ flirt_search_native.
 | FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com` | --cost NMI, rigid then --affine --ixform, tool defaults | centres of mass (default) | 0.99 / 1.00 / 1.07 | 1.06 | 1.2 | 14 min | CPU, 20 threads |
 | ANTs 2.6.5 | `ants_com` | antsRegistrationSyN.sh -t a: rigid then affine, Mattes MI, the script's large-image schedule, no mask | centres of mass (script default) | 0.86 / 0.62 / 0.92 | 0.49 | 3.7 | 45 s | CPU, 12 threads |
 | FreeSurfer 8.2.0 mri_coreg | `mri_coreg_default` | NMI, --dof 6 then --dof 12 --init-reg, tool defaults | volume centres + the default brute-force search | 0.92 / 0.81 / 1.00 | 0.74 | 9.3 | 22 min | CPU, 20 threads |
-| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document) | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 163.9 | 53 min | CPU (FLIRT runs single-threaded) |
+| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 163.9 | 53 min | CPU (FLIRT runs single-threaded) |
 | FreeSurfer 8.2.0 mri_synthmorph | `synthmorph_affine` | register -m affine as documented. A model of 1 mm whole-brain images, run on a 0.08 mm block | none (the network predicts the affine) | 0.82 / 0.62 / 1.20 | 0.49 | 31.3 | 38 s | CPU, 20 threads |
 
 ## Supplement: every stored run
@@ -39,7 +39,7 @@ flirt_search_native.
 | elastix 5.3.1 | `elastix_cog_fov` | as elastix_center, with the OCT FOV mask | centres of gravity | 1.03 / 0.99 / 1.01 | 1.03 | 1.1 | 29 s | CPU, 12 threads |
 | FSL FLIRT 6.0.7.23 | `flirt_fullsearch_x10` | as flirt_search_x10 | rotation search over ±180° | 0.73 / 0.73 / 0.73 | 0.39 | 162.1 | 2.4 h | CPU (FLIRT runs single-threaded) |
 | FSL FLIRT 6.0.7.23 | `flirt_search_native` | normmi, -dof 6 then -dof 12, as documented, on the unscaled 0.08 mm headers | FLIRT default rotation search | 0.76 / 0.78 / 0.61 | 0.36 | 175.7 | 63 min | CPU (FLIRT runs single-threaded) |
-| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 because FLIRT's schedule resamples the images to fixed voxel sizes in mm (an adaptation FSL does not document) | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 163.9 | 53 min | CPU (FLIRT runs single-threaded) |
+| FSL FLIRT 6.0.7.23 | `flirt_search_x10` | normmi, -dof 6 then -dof 12 -nosearch, both headers scaled x10 | FLIRT default rotation search (±90°, coarse 60°, fine 18°) | 0.76 / 0.76 / 0.67 | 0.39 | 163.9 | 53 min | CPU (FLIRT runs single-threaded) |
 | FSL FLIRT 6.0.7.23 | `flirt_search_x10_fov` | as flirt_search_x10, with -inweight (OCT FOV) | FLIRT default rotation search | 0.86 / 0.81 / 0.78 | 0.54 | 15.0 | 74 min | CPU (FLIRT runs single-threaded) |
 | FSL FLIRT 6.0.7.23 | `flirt_sqform_x10` | as flirt_search_x10 with -usesqform -nosearch | header alignment | 1.17 / 1.18 / 1.17 | 1.62 | 77.2 | 23 min | CPU (FLIRT runs single-threaded) |
 | greedy 1.4.0 | `greedy_centers` | NMI, -dof 6 then -dof 12, -n 100x50x10, no mask | image centres (-ia-image-centers) | 1.19 / 0.93 / 0.90 | 0.91 | 9.7 | 63 s | CPU, 8 threads |
@@ -51,7 +51,7 @@ flirt_search_native.
 | FreeSurfer 8.2.0 mri_coreg | `mri_coreg_regheader` | as mri_coreg_default | header alignment (--regheader) | 1.05 / 1.06 / 1.02 | 1.14 | 4.7 | 19 min | CPU, 20 threads |
 | FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com` | --cost NMI, rigid then --affine --ixform, tool defaults | centres of mass (default) | 0.99 / 1.00 / 1.07 | 1.06 | 1.2 | 14 min | CPU, 20 threads |
 | FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_default_com_maskmov` | as mri_robust_register_default_com, with --maskmov (OCT FOV) | centres of mass | 0.99 / 1.00 / 1.07 | 1.06 | 1.2 | 18 min | CPU, 20 threads |
-| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_noinit_rigid_only` | --cost NMI, the rigid step only: the affine step found no overlap of the two images and made no iteration | header alignment (--noinit) | 1.00 / 1.00 / 1.00 | 1.00 | 0.7 | 5 min | CPU, 20 threads |
+| FreeSurfer 8.2.0 mri_robust_register | `mri_robust_register_noinit_rigid_only` | --cost NMI, the rigid step only: the affine step maps the OCT outside the MRI crop | header alignment (--noinit) | 1.00 / 1.00 / 1.00 | 1.00 | 0.7 | 5 min | CPU, 20 threads |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center` | defaults: symmetric block matching, rigid then affine | image centres (default) | 0.97 / 0.96 / 0.98 | 0.91 | 11.6 | 5 min | CPU, 8 threads |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_center_fov` | as niftyreg_center with -fmask (OCT FOV). This version ignores the mask, and the output equals niftyreg_center | image centres | 0.97 / 0.96 / 0.98 | 0.91 | 11.6 | 4 min | CPU, 8 threads |
 | NiftyReg 2.1.2 reg_aladin | `niftyreg_nac` | defaults | header origin (-nac) | 1.07 / 0.95 / 1.04 | 1.02 | 22.6 | 3 min | CPU, 8 threads |
