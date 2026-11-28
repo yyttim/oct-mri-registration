@@ -252,7 +252,7 @@ def collect(base=BL, out=RESULTS / "baselines.json", kind=None):
     def score(crop, T):
         return {**error(T), **vessel_score(T), **extra(crop)}
     start = (lambda crop: np.array(start_of(crop, hk)["H"])) if hk else None
-    rows = H.collect(base, score, lambda crop: True, tools=list(VARIANTS[kind]) if kind else H.TOOLS,
+    rows = H.collect(base, score, tools=list(VARIANTS[kind]) if kind else H.TOOLS,
                      inputs=(lambda crop: SHARED[kind] / crop / "inputs") if kind in SHARED else None, start=start)
     for r in rows:
         if r["tier"] == "tool error":

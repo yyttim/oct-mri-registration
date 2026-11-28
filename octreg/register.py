@@ -63,7 +63,7 @@ def register(oct_path, mri_path, out_dir, oct_spacing_um=None, oct_mask=None, mr
     pool = lambda x, A: G.pool_iso(np.asarray(x, np.float32), A, P.search_mm)
     (ms, A_ms), (os_, A_os) = pool(mri_h, A_m), pool(oct_h, A_o)
     candidates = search(ms, pool(mask_m, A_m)[0], A_ms, os_, pool(mask_o, A_o)[0], pool(measured_o, A_o)[0], A_os, P,
-                                     device, outline)
+                        device, outline)
     lap("search")
     poses = refine([c["T"] for c in candidates], mri_b, oct_b, P, device)
     best = poses[0]

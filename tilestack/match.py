@@ -1,15 +1,6 @@
-"""Correspondences between neighbouring slabs inside their depth overlap (batched GPU phase correlation).
-
-Slab s (A, older) and slab t (B, newer) image the same tissue: B's raw plane q shows what A shows near plane q + r(x, y).
-A block of B (3 planes of log mu_s at a fixed depth below B's cut) is compared with candidate 3-plane stacks of A within
-+-SEARCH planes of q + r by phase correlation (tiles can sit a few planes off the pair's plane). The in-plane peak is
-refined on an upsampled DFT (Guizar-Sicairos et al. 2008), the plane on stacks of A interpolated at quarter planes
-around the best whole plane, with a Gaussian through the highest of the seven and its two neighbours. A match says that
-B's block centre (zB, yB, xB) and A's point (zA, yA, xA) are the same tissue.
-
-Two passes per pair: a sparse coarse pass (large blocks, wide plane search) finds the depth offset plane r(x, y) and
-the in-plane translation; the dense pass (small blocks) is pre-shifted by them. A pair is dropped (NoOverlap) when fewer
-than MIN_BLOCKS coarse blocks agree on a plane offset within AGREE, or the plane lies outside the older slab's window.
+"""Correspondences between neighbouring slabs inside their depth overlap, by batched phase correlation on the GPU
+(docs/TILESTACK.md, Correspondences): a match says that the block centre (zB, yB, xB) of slab t (B, newer) and the point
+(zA, yA, xA) of slab s (A, older) are the same tissue.
 """
 import os
 
@@ -68,9 +59,7 @@ def _upsampled(Rs, iy, ix, b, up, half):
 def correlate(LA, LB, zB, yB, xB, cand, yA, xA, b, chunk=512):
     """Phase correlation of B stacks (first planes zB, corners yB, xB) with A stacks (first planes cand (N, P), -1 =
     invalid, corners yA, xA). Returns, per item, the fractional best candidate index, the in-plane peak (dy, dx)
-    relative to the A corner offset, the peak height and whether the best candidate is interior.
-    The in-plane peak is refined on an upsampled DFT (no pull towards whole pixels), the candidate index by a Gaussian
-    through the neighbouring candidates' peak heights at that position."""
+    relative to the A corner offset, the peak height and whether the best candidate is interior."""
     win = torch.hann_window(b, device=dev)
     win = win[:, None] * win[None, :]
     out = []

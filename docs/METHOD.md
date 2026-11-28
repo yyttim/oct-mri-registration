@@ -90,8 +90,8 @@ the MRI grid.
 The crop bounds the position, so the search is over all rotations and every translation inside the crop. The rotations are 8,000
 points of the Super-Fibonacci spiral, a deterministic near-uniform set on SO(3) (Alexa, CVPR 2022). For each rotation R, the OCT
 on the search grid (intensities, specimen mask, its erosion by 0.8 mm and measured fraction) is turned about its box centre and
-resampled onto a cube of MRI voxels that holds its bounding sphere, N = ⌈2r/h⌉ + 3 voxels on a side for the radius r and the
-grid spacing h. Its tensors are computed after the turn, in the MRI axes, with σ 1.2 mm, and F takes the form of §2 over the
+resampled onto a cube of MRI voxels that holds its bounding sphere, N = ⌈2ρ / 0.6 mm⌉ + 3 voxels on a side for the radius ρ of
+the box. Its tensors are computed after the turn, in the MRI axes, with σ 1.2 mm, and F takes the form of §2 over the
 voxels of the turned erosion, except that the OCT gradients are taken inside that erosion too: at this scale a margin of medium
 inside the specimen mask would add an edge that reaches the points. Their ε is the median |g| of the unturned OCT over the
 erosion, held for every rotation. F and O at every translation are masked correlations, and each of their sums is an FFT

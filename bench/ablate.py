@@ -66,7 +66,7 @@ VARIANTS = {
     "tracefree": "the trace-free tensor n n^T - |n|^2 I / 3 instead of n n^T",
     "uncentred": "F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised)",
     "search_whole_mask": "in the search, the OCT gradients taken inside the whole specimen mask, not its erosion",
-    "flatfield": "the MRI divided by its Gaussian blur (normalised convolution, σ 5 mm) inside the foreground",
+    "flatfield": "the MRI divided by its Gaussian blur (normalised convolution, sigma 5 mm) inside the foreground",
     "signal_only": "the OCT specimen mask from the signal threshold alone (small components dropped, holes filled as in §1)",
     "spacing_p5": "the OCT voxel size given 5 % too large",
     "spacing_m5": "the OCT voxel size given 5 % too small",

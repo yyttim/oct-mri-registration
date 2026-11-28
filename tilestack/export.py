@@ -1,8 +1,6 @@
-"""Write the registered volume and, for every slab, its placement as an ITK displacement field, both as NIfTI.
-
-The world: voxel (i, j, k) of a slab file, unplaced, lies at (i vx, j vy, -k vz) mm, the third axis up out of the block
-face. The common frame (X, Y, Z) of the working grid, in working voxels w, lies at (X w + (w - vx) / 2, Y w + (w - vy) / 2,
--Z w - (w - vz) / 2).
+"""Write the registered volume and, for every slab, its placement as an ITK displacement field, both as NIfTI. Voxel
+(i, j, k) of a slab file, unplaced, lies at world (i vx, j vy, -k vz) mm, and the common frame (X, Y, Z), in working
+voxels w, at (X w + (w - vx) / 2, Y w + (w - vy) / 2, -Z w - (w - vz) / 2).
 """
 import os
 
@@ -46,15 +44,14 @@ def save_volume(vol, z0, path, src=None):
     aff = _affine(z0)
     nib.save(_nifti(np.transpose(np.asarray(vol, np.float32), (2, 1, 0)), aff), path)
     if src is not None:
-        nib.save(_nifti(np.transpose(np.asarray(src, np.int16), (2, 1, 0)), aff), path.replace(".nii", "_source.nii"))
+        nib.save(_nifti(np.transpose(np.asarray(src, np.int16), (2, 1, 0)), aff), "_source.nii".join(path.rsplit(".nii", 1)))
     return path
 
 
 def save_warps(sol, lay, out, z0, nz):
-    """warps/slab_NNN.nii.gz: the placement of slab NNN on the in-plane grid of the registered volume (nz planes), at
-    each point the displacement to the point of the slab placed there, and between moved tiles that of the nearest tile,
-    as an ITK displacement field (LPS mm, intent vector) with two planes, at the top and the bottom of the volume, since
-    it does not change with depth."""
+    """warps/slab_NNN.nii.gz: the placement of slab NNN as an ITK displacement field (LPS mm) on the in-plane
+    grid of the registered volume of nz planes, in two planes at its top and bottom, and between moved tiles
+    that of the nearest tile."""
     os.makedirs(f"{out}/warps", exist_ok=True)
     f = data.FACTOR[1]
     ny, nx = (n + 2 * data.PAD * f for n in data.SHAPE[1:])

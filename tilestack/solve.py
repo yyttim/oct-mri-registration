@@ -1,13 +1,6 @@
-"""Joint placement of all slabs and their mosaic tiles from the overlap correspondences.
-
-Slab s maps its raw voxel (z, y, x) in mosaic tile k = cell(x, y) to the common frame by
-    (X, Y, Z) = (x, y, z) + a_s + f_s(x, y) + e_s[k]:
-a translation a_s, a smooth deformation f_s (a cubic B-spline, which carries the slab's tilts) and a translation e_s[k]
-per mosaic tile, each in-plane and in depth. A correspondence says that its two ends land on the same point. The
-in-plane and the depth residuals enter two robust (Huber) least-squares problems with one design. The tile translations
-carry a group-L1 penalty and a fused-L1 penalty between neighbouring tiles of a slab (tile errors come in rows and
-columns; Tibshirani et al. 2005), by reweighted least squares, and the field a weak ridge. The common frame is the mean slab: the
-mean translation over the slabs is held at zero, and the ridge settles the field all slabs share.
+"""Joint placement of all slabs and their mosaic tiles from the correspondences (docs/TILESTACK.md, Placement). The
+in-plane and the depth residuals enter two robust least-squares problems with one design, the L1 penalties by reweighted
+least squares. The mean translation of the slabs is held at zero, and the ridge settles the field they share.
 """
 import numpy as np
 import scipy.sparse as sp
@@ -43,34 +36,20 @@ class Spline:
         idx = ((jy[:, None] + np.arange(4))[:, :, None] * self.gx + (jx[:, None] + np.arange(4))[:, None, :]).reshape(-1, 16)
         return idx, (by[:, :, None] * bx[:, None, :]).reshape(-1, 16)
 
-    def bending(self):
-        idx = np.arange(self.n).reshape(self.gy, self.gx)
-        rows, cols, vals, r = [], [], [], 0
-        for a, b, c in ((idx[:-2], idx[1:-1], idx[2:]), (idx[:, :-2], idx[:, 1:-1], idx[:, 2:])):
-            for i, j, k in zip(a.ravel(), b.ravel(), c.ravel()):
-                rows += [r] * 3; cols += [i, j, k]; vals += [1.0, -2.0, 1.0]; r += 1
-        s2 = np.sqrt(2.0)
-        for i, j, k, l in zip(idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, :-1].ravel(), idx[1:, 1:].ravel()):
-            rows += [r] * 4; cols += [i, j, k, l]; vals += [s2, -s2, -s2, s2]; r += 1
-        D = sp.csr_matrix((vals, (rows, cols)), shape=(r, self.n))
-        return D.T @ D
-
 
 def _design(m, lay, slabs, spl, na):
-    """The design shared by the three axes, the right-hand sides and the tiles each slab has matches in. Columns per
-    slab: the translation (and the two linear terms without a field, na 3), the tiles, the field."""
+    """The design shared by the three axes and the right-hand sides. Columns per slab: the translation (and the two
+    linear terms without a field, na 3), the tiles, the field."""
     kof = {s: i for i, s in enumerate(slabs)}
     K, n = len(slabs), lay.n
     per = na + n + (spl.n if spl else 0)
     R, C, V = [], [], []
-    has = np.zeros((K, n), bool)
     off = 0
     for c in m:
         N = len(c["xB"])
         r = np.arange(off, off + N)
         for k, x, y, sg in ((kof[int(c["t"])], c["xB"], c["yB"], 1.0), (kof[int(c["s"])], c["xA"], c["yA"], -1.0)):
             cell = lay.cell(x, y, slabs[k])
-            has[k, np.unique(cell)] = True
             base = k * per
             R += [r, r]; C += [np.full(N, base), base + na + cell]; V += [np.full(N, sg), np.full(N, sg)]
             if na == 3:
@@ -83,7 +62,7 @@ def _design(m, lay, slabs, spl, na):
     cat = np.concatenate
     A = sp.csr_matrix((cat(V), (cat(R), cat(C))), shape=(off, K * per))
     b = [cat([c[f"{a}A"] - c[f"{a}B"] for c in m]) for a in "xyz"]
-    return A, b, per, na, has
+    return A, b, per, na
 
 
 def _mean_zero(groups, size, w=1e6):
@@ -93,50 +72,39 @@ def _mean_zero(groups, size, w=1e6):
     return sp.csr_matrix((np.full(len(r), w), (r, c)), shape=(size, size))
 
 
-def solve(m, lay, slabs, frame=None, huber=HUBER, penalty="l1", lam_tile=LAM_TILE, lam_fuse=LAM_FUSE, eps=EPS, G=FIELD,
-          lam_bend=0.0, lam_field=LAM_FIELD, fuse="both", tiles=True, iters=60, tol=0.01):
-    """m: correspondence sets (dicts with zA, yA, xA, zB, yB, xB, s, t), in pixels and planes.
-    frame: the slabs whose mean placement is the common frame (default all). penalty: "l1" (group-L1 lam_tile and
-    fused-L1 lam_fuse between neighbouring tiles, reweighted with eps) or "l2" (ridge lam_tile) on the tile
-    translations. fuse: "both" lattice directions or "columns". G: control spacing (pixels) of the smooth field, None
-    for no field. lam_field: the ridge on the field; lam_bend: a bending penalty on it (none by default; the control
-    spacing sets the smoothness). tiles: False holds every tile translation at zero. huber, eps and tol in pixels."""
+def solve(m, lay, slabs, huber=HUBER, lam_tile=LAM_TILE, lam_fuse=LAM_FUSE, eps=EPS, G=FIELD, lam_field=LAM_FIELD,
+          iters=60, tol=0.01):
+    """m: correspondence sets (dicts with zA, yA, xA, zB, yB, xB, s, t), in pixels and planes. G: control spacing of the
+    field in pixels, None for two linear terms instead. huber, eps and tol in pixels."""
     slabs = list(slabs)
     K, n = len(slabs), lay.n
     if G and lam_field <= 0:
         raise ValueError("the field needs its ridge, lam_field > 0")
     spl = Spline(G) if G else None
-    A, (bx, by, bz), per, na, has = _design(m, lay, slabs, spl, 1 if spl else 3)
-    fk = [slabs.index(s) for s in (slabs if frame is None else frame)]
+    A, (bx, by, bz), per, na = _design(m, lay, slabs, spl, 1 if spl else 3)
     tcol = np.concatenate([k * per + na + np.arange(n) for k in range(K)])
     reg = np.full(K * per, 1e-6)
     for k in range(K):
         reg[k * per + na + n: (k + 1) * per] = lam_field
-    Gm = _mean_zero([[k * per + j for k in fk] for j in range(na)], K * per)
-    Rb = sp.csr_matrix((K * per, K * per))
-    if spl and lam_bend:
-        Bd = spl.bending()
-        Rb = sp.block_diag([sp.csr_matrix((na + n, na + n)) if i % 2 == 0 else lam_bend * Bd for i in range(2 * K)]).tocsr()
-    RG = (Rb + Gm).tocsr()
+    RG = _mean_zero([[k * per + j for k in range(K)] for j in range(na)], K * per)
     fr, fc, fv = [], [], []                             # neighbour differences of tile translations
     for k, s in enumerate(slabs):
         present = set(lay.exists[s])
         for t in sorted(present):
-            for d in [lay.cols] + ([1] if fuse == "both" and (t + 1) % lay.cols else []):
+            for d in [lay.cols] + ([1] if (t + 1) % lay.cols else []):
                 if t + d in present:
                     r = len(fr) // 2
                     fr += [r, r]; fc += [t + k * n, t + d + k * n]; fv += [1.0, -1.0]
     nf = len(fr) // 2
     Dt = sp.csr_matrix((fv, (fr, fc)), shape=(nf, K * n))
     D = (Dt @ sp.csr_matrix((np.ones(K * n), (np.arange(K * n), tcol)), shape=(K * n, K * per))).tocsr()
-    use_f = penalty == "l1" and lam_fuse > 0 and tiles
-    l1 = penalty == "l1" and tiles
+    use_f = lam_fuse > 0
     wx, wz = np.ones(A.shape[0]), np.ones(A.shape[0])
-    lx = np.full(K * n, 1e9 if not tiles else (lam_tile / eps if penalty == "l1" else lam_tile))
+    lx = np.full(K * n, lam_tile / eps)
     lz = lx.copy()
     fx_w = np.full(nf, lam_fuse / eps); fz_w = fx_w.copy()
     prev = None
-    for it in range(iters):
+    for _ in range(iters):
         R = reg.copy(); R[tcol] += lx
         M = A.T @ sp.diags(wx) @ A + RG + sp.diags(R)
         if use_f:
@@ -152,11 +120,10 @@ def solve(m, lay, slabs, frame=None, huber=HUBER, penalty="l1", lam_tile=LAM_TIL
         pz = splu(Mz.tocsc()).solve(A.T @ (wz * bz))
         rz = np.abs(A @ pz - bz)
         wz = np.where(rz <= huber, 1.0, huber / np.maximum(rz, 1e-9))
-        if l1:
-            lx = lam_tile / (np.hypot(px[tcol], py[tcol]) + eps)
-            fx_w = lam_fuse / (np.hypot(D @ px, D @ py) + eps)
-            lz = lam_tile / (np.abs(pz[tcol]) + eps)
-            fz_w = lam_fuse / (np.abs(D @ pz) + eps)
+        lx = lam_tile / (np.hypot(px[tcol], py[tcol]) + eps)
+        fx_w = lam_fuse / (np.hypot(D @ px, D @ py) + eps)
+        lz = lam_tile / (np.abs(pz[tcol]) + eps)
+        fz_w = lam_fuse / (np.abs(D @ pz) + eps)
         cur = np.r_[px, py, pz]
         if prev is not None and np.abs(cur - prev).max() < tol:
             break
@@ -164,10 +131,7 @@ def solve(m, lay, slabs, frame=None, huber=HUBER, penalty="l1", lam_tile=LAM_TIL
     P = np.stack([px.reshape(K, per), py.reshape(K, per), pz.reshape(K, per)], 1)                 # (K, 3, per)
     aff = np.zeros((K, 3, 3))                                                                       # [a, b_x, b_y] per axis
     aff[:, :, :na] = P[:, :, :na]
-    return dict(slabs=slabs, aff=aff, field=P[:, :, na + n:] if spl else None, G=G, tiles=np.transpose(P[:, :, na:na + n], (0, 2, 1)),
-                has=has, iterations=it + 1,
-                settings=dict(huber=huber, penalty=penalty, lam_tile=lam_tile, lam_fuse=lam_fuse, eps=eps, G=G,
-                              lam_bend=lam_bend, lam_field=lam_field, fuse=fuse, tiles=tiles))
+    return dict(slabs=slabs, aff=aff, field=P[:, :, na + n:] if spl else None, G=G, tiles=np.transpose(P[:, :, na:na + n], (0, 2, 1)))
 
 
 def displacement(sol, lay, s, x, y):
@@ -181,16 +145,6 @@ def displacement(sol, lay, s, x, y):
         idx, w = Spline(sol["G"]).weights(y.ravel(), x.ravel())
         d = [d[i] + (sol["field"][k, i][idx] * w).sum(1).reshape(x.shape) for i in range(3)]
     return d
-
-
-def inplane(sol, lay, s, x, y):
-    """In-plane displacement (u, v) of raw points of slab s, pixels."""
-    return displacement(sol, lay, s, x, y)[:2]
-
-
-def depth(sol, lay, s, x, y):
-    """Common-frame depth offset (planes) of raw points of slab s."""
-    return displacement(sol, lay, s, x, y)[2]
 
 
 def residuals(sol, lay, c):

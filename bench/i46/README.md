@@ -115,7 +115,7 @@ Every estimate T is compared with R. Both map the OCT world to the MRI world.
   angle and axis of T R⁻¹. The points are the specimen mask on a grid of every eighth OCT voxel (96 × 96 × 121 µm), 843,465
   points (context.json). The mean distance from L is given beside it.
 - **Medians:** over the ten crops of a condition, shifted boxes around the same block, a run without a transform counted as
-  beyond every other. Distances from R below about 0.3 mm, the precision of the reference, are not interpreted.
+  beyond every other.
 - **Vessels:** the MRI vessel labels that T places in the OCT tissue, at least 0.15 mm from its edge and within the segmented
   planes 0 to 560, and their distance to the nearest OCT vessel of the dataset's segmentation, median over the labels. The
   vessels are independent of what octreg fits, while R was fitted partly to them.

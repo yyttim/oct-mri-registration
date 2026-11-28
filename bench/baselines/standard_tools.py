@@ -1,7 +1,6 @@
-"""The standard registration tools on the I46 test data, each at one setting from its own documentation, and variants
-that each make one change (SEARCH, MASK, NEAR) or two (NEAR_MASK). AT_R and AT_R_MASK are the NEAR options under another
-name, for the runs whose moving header holds the pose at R. For each run: the inputs, the tool's script, the conversion
-of its transform to OCT world -> MRI world and the check of that conversion against the tool's own resampling."""
+"""The standard registration tools of the I46 test, each at one setting from its own documentation, and variants with one
+change (SEARCH, MASK, NEAR, AT_R: NEAR from the pose at R) or two (NEAR_MASK, AT_R_MASK). For each run: the inputs, the
+script, the conversion of its transform to OCT world -> MRI world and its check against the tool's own resampling."""
 from __future__ import annotations
 
 import json
@@ -258,8 +257,8 @@ def as_list(T):
     return [[float(f"{v:.10f}") for v in row] for row in np.asarray(T, float)]
 
 
-def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
-    """Convert, write and score every finished run base/<crop>/<tool>, with the check where checked(crop). -> list of rows.
+def collect(base, score, tools=TOOLS, inputs=None, start=None):
+    """Convert, write and score every finished run base/<crop>/<tool>, with its check. -> list of rows.
     start(crop) is the start S that the moving header carries: the check runs on T, and T S is written and scored."""
     rows, setting = [], {**SETTING, **SEARCH, **MASK, **NEAR, **NEAR_MASK, **AT_R, **AT_R_MASK}
     for crop in sorted(p for p in Path(base).iterdir() if p.is_dir()):
@@ -275,7 +274,7 @@ def collect(base, score, checked, tools=TOOLS, inputs=None, start=None):
                              "error": tool_error(e, run), "log_error": log_error(run)})
                 print(crop.name, tool, "tool error", flush=True)
                 continue
-            chk = check(tool, run, inp, T) if checked(crop.name) else {}
+            chk = check(tool, run, inp, T)
             if start is not None:
                 T = T @ start(crop.name)
             np.savetxt(run / "T_oct2mri.txt", T, fmt="%.10f")

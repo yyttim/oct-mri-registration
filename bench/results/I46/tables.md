@@ -847,7 +847,7 @@ labels to the nearest OCT vessel through the affine (common.vessel_score), media
 | tracefree | the trace-free tensor n n^T - \|n\|^2 I / 3 instead of n n^T | 0.38 (0.38) | 0.023 (0.020 to 0.028) | 0.159 |
 | uncentred | F without the subtraction of the channel means (the squared NGF of Cross-Sim-NGF, normalised) | 0.34 (0.33 to 0.34) | -0.018 (-0.021 to -0.016) | 0.151 |
 | search_whole_mask | in the search, the OCT gradients taken inside the whole specimen mask, not its erosion | 0.36 (0.35 to 11.61) | 0.000 (-0.001 to 11.243) | 0.155 |
-| flatfield | the MRI divided by its Gaussian blur (normalised convolution, σ 5 mm) inside the foreground | 0.35 (0.34 to 0.36) | -0.003 (-0.009 to 0.001) | 0.153 |
+| flatfield | the MRI divided by its Gaussian blur (normalised convolution, sigma 5 mm) inside the foreground | 0.35 (0.34 to 0.36) | -0.003 (-0.009 to 0.001) | 0.153 |
 | signal_only | the OCT specimen mask from the signal threshold alone (small components dropped, holes filled as in §1) | 0.35 (0.34 to 0.36) | -0.011 (-0.015 to -0.005) | 0.154 |
 | spacing_p5 | the OCT voxel size given 5 % too large | 0.42 (0.40 to 0.42) | 0.060 (0.055 to 0.063) | 0.163 |
 | spacing_m5 | the OCT voxel size given 5 % too small | 0.48 (0.47 to 0.48) | 0.119 (0.113 to 0.126) | 0.173 |

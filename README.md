@@ -113,13 +113,13 @@ Costantini et al. imaged a block of Broca's area from one fixed human hemisphere
 hemisphere with 7 T MRI at 0.15 mm and registered the MRI to the OCT with an affine transform
 ([Science Advances 9:eadg3844, 2023](https://doi.org/10.1126/sciadv.adg3844)). The data are public in
 [DANDI:000026](https://dandiarchive.org/dandiset/000026/draft) (sample I46, CC BY 4.0), and their affine serves as the reference
-R. R is their own registration, not ground truth: a fit of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
+R. R is their own registration, not ground truth: a fit L of the OCT vessels to the MRI vessel labels alone lies 0.16 mm from it
 on average and 0.31 mm at the 95th percentile, so distances below about 0.3 mm are not interpreted. octreg was developed on I58
-and run on these data during its development, so this is not a held-out test. Results on I46 led to changes of the MRI
-foreground rule and the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression
-and the erosion of the search gradients (§3), the rounding of the resampling positions and the removal of a deformable stage
-([CHANGELOG.md](CHANGELOG.md), 2.1 to 3.2). The values of `outline_min_outside` and `nms_deg` were set in 2.1 with runs on I46,
-that of `nms_deg` also with runs on public blocks of [DANDI:000874](https://dandiarchive.org/dandiset/000874/draft).
+and run on these data during its development, so this is not a held-out test. Results on I46 shaped the MRI foreground rule and
+the specimen mask threshold (§1), the condition for computing the outline (§2), the non-maximum suppression and the erosion of
+the search gradients (§3), the rounding of the resampling positions and the choice of an affine with no deformable stage. The
+values of `outline_min_outside` and `nms_deg` were set with runs on I46, that of `nms_deg` also with runs on public blocks of
+[DANDI:000874](https://dandiarchive.org/dandiset/000874/draft).
 
 The MRI was cropped around the block as R places it, ten times per condition (crops k = 0 to 9) with a seeded random shift: with
 a 3 mm margin on the three 7 T FLASH images, of flip angles 10°, 20° and 30°, and with 6 and 12 mm margins on the 10° FLASH.
@@ -145,9 +145,9 @@ boxes around the same block of one specimen, a run without a transform counted a
 From the OCT turned by 90° and 180° about each array axis and by 10 random rotations, on the k = 0 crop of the 10° FLASH with a
 3 mm margin, octreg ends 0.35 to 0.37 mm from R.
 
-The standard tools ran on the ten crops of the 10° FLASH with a 3 mm margin, each at the setting its documentation gives, from
-the header orientation with the image box centres aligned (7.0 mm and 122° from R), and FLIRT, ANTs and greedy also with their
-own global rotation search:
+The standard tools ran on the ten crops of the 10° FLASH with a 3 mm margin, each at the setting its documentation gives, with
+its own start from the header orientation (7.0 mm and 122° from R with the image box centres aligned), and FLIRT, ANTs and
+greedy also with their own global rotation search:
 
 | method | distance from R (mm) |
 |---|---|
@@ -245,7 +245,7 @@ and [bench/i46/README.md](bench/i46/README.md) those of the test on the data of 
 the tables and figures. The stored results are in `bench/results/`. octreg has no random element: run once more on the same GPU,
 it gives byte-identical affines, on I58 and on the k = 0 crop of the test (`bench/repeat.py`,
 [bench/results/repeat.json](bench/results/repeat.json), which also records the Python, PyTorch, CUDA, GPU and OS of these runs).
-Another GPU or PyTorch build can change the order of the floating-point sums and move an affine at round-off level.
+Another GPU or PyTorch build can change the order of the floating-point sums, so the affine need not be byte-identical.
 
 ## tilestack
 

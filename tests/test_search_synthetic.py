@@ -149,7 +149,7 @@ def test_search_recovers_the_pose(rot_index, outline, cut):
     best = cands[0]
     assert angle_deg(best["T"][:3, :3], T[:3, :3]) < 1e-3
     err = np.linalg.norm(centres[0] - G.apply_affine(T, c_o))
-    # a cut block may slide about a voxel toward its cut face, where no OCT point is scored
+    # a cut block may slide about a voxel towards its cut face, where no OCT point is scored
     assert err < (H if cut is None else 1.5 * H), err
     assert best["F"] > 0.85 and key(best) > key(cands[1]) + 0.1, (best, cands[1])
     if outline:

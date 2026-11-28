@@ -104,12 +104,9 @@ def ants_antsai(run):
 def elastix(run, mask=""):
     """The model-zoo rigid then affine stages, with the parameter files that prepare writes."""
     return ["set -e", ". ~/baselines/tools/env.sh", "IN=$BASELINES/inputs", f"DIR=$BASELINES/affine/{run}", 'cd "$DIR"',
-            "echo 12 > threads.txt", "t0=$(date +%s.%N)",
+            "echo 12 > threads.txt",
             f"/usr/bin/time -f %e -o time.txt   elastix -f $IN/mri_0.08mm.nii.gz -m $IN/oct_0.08mm.nii.gz{mask}     "
             "-p $DIR/rigid.txt -p $DIR/affine.txt -out $DIR -threads 12 > log.txt 2>&1",
-            "t1=$(date +%s.%N)",
-            "awk -v a=$t0 -v b=$t1 'BEGIN{printf \"# date arithmetic around the elastix command: %.1f s\\n\", b-a}' "
-            ">> time.txt",
             "cp result.1.nii.gz warped_tool.nii.gz"]
 
 
@@ -141,9 +138,9 @@ def greedy(run, start, mm=""):
 
     head, io = "-d 3 -a -dof {} -m NMI -n 100x50x10 -threads 8 -seed 42", f"-i {i}/mri_0.08mm.nii.gz {i}/oct_0.08mm.nii.gz"
     return ["set -euo pipefail", f'PY="{PY}"', f'DIR="{r}"', 'cd "$DIR"', "echo 8 > threads.txt", "T0=$(date +%s.%N)",
-            g(f"{head.format(6)} {start} {io} -o {r}/rigid.mat"), "T1=$(date +%s.%N)",
-            g(f"{head.format(12)} -ia {r}/rigid.mat{mm} {io} -o {r}/affine.mat"), "T2=$(date +%s.%N)",
-            "awk -v a=$T0 -v b=$T2 'BEGIN{printf \"%.2f\\n\", b-a}' > time.txt",
+            g(f"{head.format(6)} {start} {io} -o {r}/rigid.mat"),
+            g(f"{head.format(12)} -ia {r}/rigid.mat{mm} {io} -o {r}/affine.mat"), "T1=$(date +%s.%N)",
+            "awk -v a=$T0 -v b=$T1 'BEGIN{printf \"%.2f\\n\", b-a}' > time.txt",
             g(f"-d 3 -threads 8 -rf {i}/mri_0.08mm.nii.gz -rm {i}/oct_0.08mm.nii.gz {r}/warped_tool.nii.gz -r {r}/affine.mat")]
 
 
